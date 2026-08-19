@@ -1,0 +1,155 @@
+<div class="gestimmo-layout p-4">
+
+  <!-- En-tête de la page -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="text-xl font-bold m-0">Gestion des utilisateurs et des rôles (Admin)</h2>
+    <button 
+      pButton 
+      label="+ Ajouter un utilisateur" 
+      class="p-button-success"
+      (click)="ouvrirModalAjout()">
+    </button>
+  </div>
+
+  <!-- SECTION 1 & 2 : Liste des utilisateurs -->
+  <p-card styleClass="mb-5 shadow-2">
+    <ng-template pTemplate="title">Utilisateurs</ng-template>
+    
+    <p-table [value]="utilisateurs()" [loading]="isLoading()" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Nom & Prénom</th>
+          <th>Rôle</th>
+          <th>Statut</th>
+          <th>Dernière connexion</th>
+          <th style="width: 100px;" class="text-right">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-user>
+        <tr>
+          <td>{{ user.nom }} {{ user.prenom }}</td>
+          <td>{{ getRoleLabel(user.role) }}</td>
+          <td>
+            <p-tag [value]="user.statut ? 'Actif' : 'Inactif'" [severity]="user.statut ? 'success' : 'danger'"></p-tag>
+          </td>
+          <td>{{ user.derniereConnexion ? (user.derniereConnexion | date:'dd/MM/yyyy HH:mm') : 'Jamais' }}</td>
+          <td style="width: 140px; text-align: right;">
+            <div style="display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
+              
+              <!-- Bouton Modifier -->
+              <button 
+                type="button" 
+                class="action-btn edit-btn" 
+                (click)="ouvrirModalModification(user)" 
+                title="Modifier">
+                <i class="pi pi-pencil"></i>
+              </button>
+
+              <!-- Bouton Suspendre / Activer -->
+              <button 
+                type="button" 
+                class="action-btn" 
+                [class.lock-btn]="user.statut"
+                [class.unlock-btn]="!user.statut"
+                (click)="basculerStatut(user)" 
+                [title]="user.statut ? 'Suspendre' : 'Activer'">
+                <i [class]="user.statut ? 'pi pi-lock' : 'pi pi-lock-open'"></i>
+              </button>
+
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="5" class="text-center p-4 text-500">Aucun utilisateur trouvé.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- SECTION 3 : Matrice des permissions par rôle -->
+  <p-card styleClass="shadow-2">
+    <ng-template pTemplate="title">Matrice des permissions par rôle</ng-template>
+    
+    <p-table [value]="matrixData" responsiveLayout="scroll">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Module / Action</th>
+          <th>Admin</th>
+          <th>Gestionnaire</th>
+          <th>Propriétaire</th>
+          <th>Agent</th>
+          <th>Locataire</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td class="font-bold">{{ row.module }}</td>
+          <td><i class="pi" [ngClass]="row.admin ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+          <td><i class="pi" [ngClass]="row.gestionnaire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+          <td><i class="pi" [ngClass]="row.proprietaire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+          <td><i class="pi" [ngClass]="row.agent ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+          <td><i class="pi" [ngClass]="row.locataire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- MODAL AJOUT / MODIFICATION -->
+  <p-dialog 
+    [header]="isEditMode() ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'" 
+    [(visible)]="displayModal" 
+    [modal]="true" 
+    [style]="{width: '450px'}"
+    [draggable]="false"
+    [resizable]="false">
+    
+    <form [formGroup]="userForm" (ngSubmit)="enregistrerUtilisateur()" class="flex flex-column gap-3 pt-2">
+      
+      <div class="field flex flex-column gap-1">
+        <label class="font-semibold">Nom</label>
+        <input pInputText formControlName="nom" placeholder="Ex: Mbarga" />
+      </div>
+
+      <div class="field flex flex-column gap-1">
+        <label class="font-semibold">Prénom</label>
+        <input pInputText formControlName="prenom" placeholder="Ex: Jean" />
+      </div>
+
+      <div class="field flex flex-column gap-1">
+        <label class="font-semibold">Email</label>
+        <input pInputText formControlName="email" type="email" placeholder="jean.mbarga@gestimmo.com" />
+      </div>
+
+      <div class="field flex flex-column gap-1">
+        <label class="font-semibold">Téléphone</label>
+        <input pInputText formControlName="telephone" placeholder="+237..." />
+      </div>
+
+      <div class="field flex flex-column gap-1">
+        <label class="font-semibold">Rôle</label>
+        <p-select [options]="rolesList" formControlName="role" optionLabel="label" optionValue="value" styleClass="w-full"></p-select>
+      </div>
+
+      @if (!isEditMode()) {
+        <div class="field flex flex-column gap-1">
+          <label class="font-semibold">Mot de passe provisoire</label>
+          <input pInputText formControlName="motDePasseProvisoire" type="password" placeholder="Mot de passe temporaire" />
+        </div>
+      }
+
+      <div class="field-checkbox flex align-items-center gap-2 mt-2">
+        <p-checkbox formControlName="statut" [binary]="true" id="statutCheck"></p-checkbox>
+        <label for="statutCheck" class="font-semibold cursor-pointer">Compte Actif</label>
+      </div>
+
+      <div class="flex justify-content-end gap-2 mt-4">
+        <button pButton label="Annuler" type="button" class="p-button-text" (click)="displayModal.set(false)"></button>
+        <button pButton [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [disabled]="userForm.invalid" class="p-button-success"></button>
+      </div>
+
+    </form>
+  </p-dialog>
+
+</div>

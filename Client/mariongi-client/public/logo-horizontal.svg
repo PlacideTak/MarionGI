@@ -1,0 +1,7 @@
+<svg width="260" height="100" viewBox="0 0 260 100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="15" width="70" height="70" rx="16" fill="#1b5e20"/>
+  <path d="M18 67 L18 43 L35 28 L52 43 L52 67" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="18" y1="67" x2="52" y2="67" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round"/>
+  <text x="85" y="48" font-size="28" font-weight="500" fill="#1b5e20" font-family="Arial, sans-serif">MarionGI</text>
+  <text x="85" y="70" font-size="13" fill="#64748b" font-family="Arial, sans-serif">Gestion immobilière</text>
+</svg>

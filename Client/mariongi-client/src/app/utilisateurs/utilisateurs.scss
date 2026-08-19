@@ -1,0 +1,249 @@
+// Variables de couleurs harmonisées avec le Dashboard Gestimmo
+$primary-color: #2e7d5b;
+$primary-hover: #246348;
+$bg-light: #f8fafc;
+$border-color: #e2e8f0;
+$text-main: #1e293b;
+$text-muted: #64748b;
+
+.gestimmo-layout {
+  background-color: $bg-light;
+  min-height: 100vh;
+  padding: 1.5rem;
+
+  // En-tête de page
+  h2 {
+    color: $text-main;
+    font-weight: 700;
+  }
+
+  // Personnalisation globale des cartes PrimeNG pour un rendu plus épuré
+  ::ng-deep {
+    .p-card {
+      border-radius: 12px;
+      border: 1px solid rgba($border-color, 0.8);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+      margin-bottom: 2rem;
+
+      .p-card-body {
+        padding: 1.5rem;
+      }
+
+      .p-card-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: $text-main;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid #f1f5f9;
+        padding-bottom: 0.75rem;
+      }
+    }
+
+    // Modernisation des tableaux PrimeNG
+    .p-datatable {
+      .p-datatable-wrapper {
+        overflow-x: auto;
+      }
+
+      .p-datatable-header {
+        background: transparent;
+        border: none;
+      }
+
+      .p-datatable-thead > tr > th {
+        background-color: #f8fafc;
+        color: $text-muted;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        border-bottom: 2px solid $border-color;
+        padding: 1rem 1rem;
+      }
+
+      .p-datatable-tbody > tr {
+        transition: background-color 0.2s ease;
+
+        > td {
+          padding: 1rem 1rem;
+          color: $text-main;
+          border-bottom: 1px solid $border-color;
+          font-size: 0.925rem;
+
+          &.text-right {
+            white-space: nowrap;
+            text-align: right;
+          }
+        }
+
+        &:hover {
+          background-color: #f1f5f9 !important;
+        }
+      }
+    }
+
+    // Visibilité et style explicite pour les boutons d'action du tableau
+    .p-button.p-button-text {
+      background: transparent !important;
+      border: none !important;
+      padding: 0.5rem 0.75rem !important;
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+
+      // Bouton Modifier (par défaut / neutre)
+      &:not([class*="p-button-"]) {
+        color: #475569 !important;
+        
+        &:hover {
+          background-color: #f1f5f9 !important;
+          color: #1e293b !important;
+        }
+      }
+
+      // Bouton Suspendre / Verrouiller (Avertissement)
+      &.p-button-warning {
+        color: #d97706 !important;
+        
+        &:hover {
+          background-color: #fef3c7 !important;
+        }
+      }
+
+      // Bouton Activer / Déverrouiller (Succès)
+      &.p-button-success {
+        color: $primary-color !important;
+        
+        &:hover {
+          background-color: #e6f4ed !important;
+        }
+      }
+    }
+
+    // Bouton principal d'action d'en-tête aux couleurs de l'app
+    .p-button-success:not(.p-button-text) {
+      background-color: $primary-color !important;
+      border-color: $primary-color !important;
+      font-weight: 600;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $primary-hover !important;
+        border-color: $primary-hover !important;
+      }
+    }
+
+    // Dialogues plus modernes
+// Mode formulaire compact : Libellé à gauche, champ à droite
+::ng-deep {
+  .p-dialog {
+    width: 550px !important; // Modale un peu plus large pour laisser de la place
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    // Structure en ligne (Libellé / Champ)
+    .field {
+      display: grid !important;
+      grid-template-columns: 140px 1fr !important; // 140px pour le texte, le reste pour le champ
+      align-items: center !important;
+      gap: 1rem !important;
+      margin-bottom: 0 !important;
+
+      label {
+        font-weight: 600;
+        color: #334155;
+        font-size: 0.9rem;
+        text-align: right; // Aligné à droite vers le champ
+      }
+
+      .p-inputtext, .p-select {
+        width: 100% !important;
+      }
+    }
+
+    // Cas particulier de la case à cocher du statut
+    .field-checkbox {
+      display: flex !important;
+      align-items: center !important;
+      padding-left: 140px !important; // Aligné avec les inputs au-dessus
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+
+      label {
+        text-align: left !important;
+        margin: 0;
+        color: #1e293b;
+      }
+    }
+
+    // Zone des boutons en bas
+    .justify-content-end {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e2e8f0;
+    }
+  }
+}
+
+    // Harmonisation des champs de formulaires dans la modale
+    .p-inputtext, .p-select {
+      width: 100%;
+      border-radius: 8px;
+      border-color: $border-color;
+      padding: 0.75rem;
+
+      &:enabled:focus {
+        border-color: $primary-color;
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+    }
+  }
+}
+
+// Style direct et garanti pour les boutons d'action personnalisés
+.action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+
+  i {
+    font-size: 1rem;
+  }
+
+  // Bouton Modifier (Gris neutre élégant)
+  &.edit-btn {
+    color: #475569;
+    &:hover {
+      background-color: #f1f5f9;
+      color: #1e293b;
+    }
+  }
+
+  // Bouton Suspendre / Verrouiller (Orange/Ambre)
+  &.lock-btn {
+    color: #d97706;
+    &:hover {
+      background-color: #fef3c7;
+    }
+  }
+
+  // Bouton Activer / Déverrouiller (Vert principal de l'app)
+  &.unlock-btn {
+    color: #2e7d5b;
+    &:hover {
+      background-color: #e6f4ed;
+    }
+  }
+}

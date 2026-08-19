@@ -1,0 +1,34 @@
+.p-dialog {
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+}
+
+.field {
+  margin-bottom: 1rem;
+
+  label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: block;
+    color: var(--text-color);
+  }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="number"],
+  p-select {
+    width: 100%;
+  }
+}
+
+.formgrid {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  .field {
+    flex: 1;
+    margin-bottom: 0;
+  }
+}

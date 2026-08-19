@@ -1,0 +1,63 @@
+<div class="p-4">
+  <!-- En-tête -->
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="m-0">Gestion des Paiements</h2>
+  </div>
+
+  <!-- Filtres rapides -->
+  <div class="card p-3 mb-4 flex flex-wrap gap-3 align-items-center">
+    <span class="p-input-icon-left">
+      <i class="pi pi-search"></i>
+      <input pInputText type="text" [(ngModel)]="filtreTexte" (input)="appliquerFiltres()" placeholder="Rechercher..." />
+    </span>
+
+    <p-select [options]="statutsOptions" [(ngModel)]="filtreStatut" (onChange)="appliquerFiltres()" placeholder="Filtrer par statut" [showClear]="true"></p-select>
+    <p-select [options]="modesOptions" [(ngModel)]="filtreMode" (onChange)="appliquerFiltres()" placeholder="Filtrer par mode" [showClear]="true"></p-select>
+  </div>
+
+  <!-- Tableau PrimeNG -->
+  <div class="card">
+    <p-table [value]="paiementsFiltres" [loading]="chargementEnCours" [paginator]="true" [rows]="10" [rowHover]="true"
+             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} paiements"
+             [showCurrentPageReport]="true">
+      
+      <ng-template pTemplate="header">
+        <tr>
+          <th>N° Quittance</th>
+          <th>Bien / Contrat</th>
+          <th>Montant</th>
+          <th>Mode</th>
+          <th>Statut</th>
+          <th>Date</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-paiement>
+        <tr>
+          <td class="font-bold">{{ paiement.numeroQuittance }}</td>
+          <td>{{ paiement.bienReference || 'N/A' }}</td>
+          <td>{{ paiement.montant | number }} FCFA</td>
+          <td>{{ getLibelleMode(paiement.mode) }}</td>
+          <td>
+            <p-tag [value]="getLibelleStatut(paiement.statut)" [severity]="getSeverity(paiement.statut)"></p-tag>
+          </td>
+          <td>{{ paiement.datePaiement | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td class="text-center">
+            <button pButton icon="pi pi-download" class="p-button-text p-button-sm"
+                    *ngIf="paiement.statut === StatutTransaction.Confirme"
+                    pTooltip="Télécharger la quittance"
+                    (click)="telechargerQuittance(paiement.id)">
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7" class="text-center p-4">Aucun paiement trouvé.</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

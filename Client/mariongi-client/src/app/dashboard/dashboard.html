@@ -1,0 +1,77 @@
+<div class="gestimmo-layout">
+
+  <!-- ===== TEMPLATE REUTILISABLE MENU ===== -->
+  <ng-template #navigationList>
+    <nav class="nav-list">
+      @for (item of navItems(); track item.route) {
+        <a
+          class="nav-item"
+          [routerLink]="item.route"
+          routerLinkActive="nav-item--active"
+          (click)="closeMobileSidebar()"
+        >
+          <i [class]="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  </ng-template>
+
+  <!-- ===== SIDEBAR (desktop) ===== -->
+  <aside class="gestimmo-sidebar">
+    <div class="brand">
+      <a routerLink="/home" class="brand-link">
+        <img src="logo-horizontal.svg" alt="MarionGI" style="height: 70px;" />
+      </a>
+    </div>
+    <ng-container *ngTemplateOutlet="navigationList"></ng-container>
+  </aside>
+
+  <!-- ===== SIDEBAR (mobile drawer) ===== -->
+  <p-drawer 
+    [visible]="mobileSidebarVisible()" 
+    (onHide)="mobileSidebarVisible.set(false)"
+    position="left" 
+    styleClass="gestimmo-mobile-sidebar">
+    <div class="brand">
+      <img src="logo-horizontal.svg" alt="MarionGI" style="height: 40px;" />
+    </div>
+    <ng-container *ngTemplateOutlet="navigationList"></ng-container>
+  </p-drawer>
+
+<!-- ===== CONTENU PRINCIPAL ===== -->
+  <div class="gestimmo-main">
+
+    <!-- Header (Reste fixe et commun à toutes les pages) -->
+    <header class="gestimmo-header">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-bars"
+        class="p-button-text p-button-plain burger-btn"
+        (click)="toggleMobileSidebar()"
+      ></button>
+
+      <span class="header-title">MarionGI</span>
+
+      <div class="user-zone">
+        <span class="user-name">
+          {{ currentUser().name }} ({{ currentUser().role }})
+        </span>
+        <p-avatar
+          [label]="userInitials()"
+          shape="circle"
+          styleClass="user-avatar"
+          (click)="userMenu.toggle($event)"
+        ></p-avatar>
+        <p-menu #userMenu [model]="userMenuItems" [popup]="true"></p-menu>
+      </div>
+    </header>
+
+    <!-- 🔑 C'est ici que le contenu va changer dynamiquement selon la route active -->
+    <div class="p-4">
+      <router-outlet></router-outlet>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,199 @@
+:host {
+  --gestimmo-accent: #2e7d5b;
+  --gestimmo-accent-dark: #245e46;
+  --gestimmo-text: #1f2937;
+  --gestimmo-text-muted: #6b7280;
+  --gestimmo-border: #d9dee2;
+  --gestimmo-bg: #f4f5f6;
+
+  display: block;
+  min-height: 100vh;
+  background: var(--gestimmo-bg);
+  color: var(--gestimmo-text);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.login-shell {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ===== Bandeau marque ===== */
+.brand-banner {
+  background: var(--gestimmo-accent);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 1.1rem 1.5rem;
+  text-align: center;
+}
+
+.brand-title {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.03em;
+}
+
+.brand-subtitle {
+  font-size: 0.82rem;
+  opacity: 0.9;
+  margin-top: 0.2rem;
+}
+
+/* ===== Carte de connexion ===== */
+.login-card {
+  background: #ffffff;
+  border: 1px solid var(--gestimmo-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  padding: 1.75rem 1.75rem 2rem;
+}
+
+.card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 1.5rem;
+}
+
+.otp-hint {
+  font-size: 0.88rem;
+  color: var(--gestimmo-text-muted);
+  text-align: center;
+  margin: 0 0 1.25rem;
+}
+
+.dev-otp-banner {
+  background: #fff7e6;
+  border: 1px dashed #d97706;
+  color: #92400e;
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0 0 1.25rem;
+}
+
+/* ===== Champs ===== */
+.field-group {
+  margin-bottom: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.82rem;
+    color: var(--gestimmo-text-muted);
+  }
+
+  input[pInputText] {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--gestimmo-border);
+    font-size: 0.92rem;
+
+    &:focus {
+      outline: none;
+      border-color: var(--gestimmo-accent);
+      box-shadow: 0 0 0 2px rgba(46, 125, 91, 0.15);
+    }
+
+    &.ng-invalid {
+      border-color: #dc2626;
+    }
+  }
+}
+
+.field-error {
+  color: #dc2626;
+  font-size: 0.78rem;
+}
+
+::ng-deep .field-group .p-password {
+  width: 100%;
+}
+
+::ng-deep .field-group .p-password-input {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--gestimmo-border);
+  font-size: 0.92rem;
+}
+
+.forgot-link {
+  display: block;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--gestimmo-accent);
+  text-decoration: none;
+  margin: 0 0 1.25rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ===== Bouton principal ===== */
+::ng-deep .submit-btn.p-button {
+  display: block;
+  margin: 0 auto;
+  min-width: 220px;
+  background: var(--gestimmo-accent);
+  border-color: var(--gestimmo-accent);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+
+  &:not(:disabled):hover {
+    background: var(--gestimmo-accent-dark);
+    border-color: var(--gestimmo-accent-dark);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+/* ===== Actions OTP ===== */
+.otp-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--gestimmo-accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    color: var(--gestimmo-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+/* ===== Légende des étapes ===== */
+.steps-legend {
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--gestimmo-text-muted);
+}

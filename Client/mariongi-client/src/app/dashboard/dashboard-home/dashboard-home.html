@@ -1,0 +1,99 @@
+<div class="flex flex-column gap-4">
+
+  <!-- Section 1 : Indicateurs clés (KPIs) -->
+  <section class="kpi-grid">
+    @for (kpi of kpis(); track kpi.label) {
+      <p-card styleClass="kpi-card">
+        <div class="kpi-label">{{ kpi.label }}</div>
+        <div class="kpi-value">
+          @if (kpi.isCurrency) {
+            {{ kpi.value | currency:'XAF':'symbol':'1.0-0' }}
+          } @else {
+            {{ kpi.value }} {{ kpi.unit ?? '' }}
+          }
+        </div>
+      </p-card>
+    }
+  </section>
+
+<!-- Section 2 : Statistiques + Alertes -->
+  <section class="stats-grid">
+    <!-- Graphique évolution -->
+    <p-card styleClass="chart-card">
+      <ng-template pTemplate="title">
+        Évolution des encaissements (Orange Money / MTN Money / Espèces)
+      </ng-template>
+      <div class="chart-wrapper">
+        <p-chart type="line" [data]="chartData()" [options]="chartOptions"></p-chart>
+      </div>
+    </p-card>
+
+    <!-- Panneau des alertes -->
+    <p-card styleClass="alerts-card">
+      <ng-template pTemplate="title">
+        <div class="flex align-items-center justify-content-between">
+            <span>Alertes &amp; échéances</span>
+            @if (alerts().length > 0) {
+                <p-tag [value]="alerts().length + ''" severity="danger" [rounded]="true"></p-tag>
+            }
+        </div>
+      </ng-template>
+      
+      <ul class="alerts-list">
+        @for (alert of alerts(); track alert.id || $index) {
+          <li class="alerts-list__item" [class]="'alerts-list__item--' + alert.severite">
+            <i [class]="getAlertIcon(alert.severite)" class="alerts-list__icon mr-2 text-xl"></i>
+            <div class="alerts-list__content flex-grow-1">
+                @if (alert.titre) {
+                    <span class="block font-bold text-sm mb-1 text-900">{{ alert.titre }}</span>
+                }
+                <span class="block text-sm text-700">{{ alert.message }}</span>
+            </div>
+          </li>
+        } @empty {
+          <li class="p-3 text-center text-500 text-sm">
+            <i class="pi pi-check-circle mr-2 text-green-500"></i>
+            Aucune alerte en attente.
+          </li>
+        }
+      </ul>
+    </p-card>
+  </section>
+  <!-- Section 3 : Derniers biens ajoutés -->
+  <section class="properties-section">
+    <p-card styleClass="properties-card">
+      <ng-template pTemplate="title">Derniers biens ajoutés</ng-template>
+
+      <p-table [value]="properties()" [loading]="isLoading()" responsiveLayout="scroll">
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Référence</th>
+            <th>Type de bien</th>
+            <th>Ville / Quartier</th>
+            <th>Statut</th>
+            <th>Loyer</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-property>
+          <tr>
+            <td>{{ property.reference }}</td>
+            <td>{{ property.type }}</td>
+            <td>{{ property.location }}</td>
+            <td>
+              <p-tag [value]="property.status" [severity]="this.biensService.getStatutLibelleSeverity(property.status)"></p-tag>
+            </td>
+            <td>{{ property.rent | currency:'XAF':'symbol':'1.0-0' }}</td>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="5" class="text-center p-4 text-500">
+              Aucun bien immobilier enregistré pour le moment.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </section>
+
+</div>

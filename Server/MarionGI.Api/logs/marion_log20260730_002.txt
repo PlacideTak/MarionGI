@@ -1,0 +1,34 @@
+2026-07-30 17:03:43.125 -04:00 [WRN] Entity 'Bien' has a global query filter defined and is the required end of a relationship with the entity 'DemandeVisite'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:03:43.213 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'Notification'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:03:43.213 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:03:43.258 -04:00 [WRN] The property 'Bien.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-07-30 17:04:38.262 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:04:38.688 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:04:38.690 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:04:39.060 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:04:39.062 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:04:39.064 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 17:05:41.445 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:05:42.024 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:05:42.046 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:05:42.303 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:05:42.318 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:05:42.321 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 17:06:32.130 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:06:32.618 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:06:32.620 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:06:33.149 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:06:33.151 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:06:33.154 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 17:07:55.063 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:07:55.579 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:07:55.686 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:07:55.874 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:07:55.876 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:07:55.878 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 17:10:15.987 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:10:16.640 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:10:16.644 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:10:16.890 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:10:16.992 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:10:17.048 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api

@@ -1,0 +1,156 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card">
+  <div class="flex justify-content-between align-items-center mb-4">
+    <h2 class="m-0">Gestion des Contrats</h2>
+    <button pButton label="Nouveau Contrat" icon="pi pi-plus" class="p-button-success" (click)="ouvrirModalAjout()"></button>
+  </div>
+
+  <p-table 
+    #dt 
+    [value]="contrats" 
+    [loading]="chargement" 
+    [paginator]="true" 
+    [rows]="10" 
+    [globalFilterFields]="['bien.reference', 'locataire.nom', 'locataire.prenom']"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="caption">
+      <div class="flex justify-content-between align-items-center">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input 
+            pInputText 
+            type="text" 
+            (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
+            placeholder="Rechercher un contrat..." />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="bien.reference">Bien <p-sortIcon field="bien.reference"></p-sortIcon></th>
+        <th>Locataire</th>
+        <th pSortableColumn="dateDebut">Début <p-sortIcon field="dateDebut"></p-sortIcon></th>
+        <th pSortableColumn="dateFin">Fin <p-sortIcon field="dateFin"></p-sortIcon></th>
+        <th>Loyer</th>
+        <th>Fréquence</th>
+        <th>Délai tolérance</th>
+        <th>Statut</th>
+        <th style="text-align: center;">Actions</th>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="body" let-contrat>
+      <tr>
+        <td><strong>{{ contrat.bien?.reference || 'N/A' }}</strong></td>
+        <td>{{ contrat.locataire ? (contrat.locataire.prenom + ' ' + contrat.locataire.nom) : 'Inconnu' }}</td>
+        <td>{{ contrat.dateDebut | date:'dd/MM/yyyy' }}</td>
+        <td>{{ contrat.dateFin | date:'dd/MM/yyyy' }}</td>
+        <td>{{ contrat.montantLoyer | number }} XAF</td>
+        <td>
+          <span *ngIf="contrat.frequencePaiement === 1">Mensuel</span>
+          <span *ngIf="contrat.frequencePaiement === 3">Trimestriel</span>
+          <span *ngIf="contrat.frequencePaiement === 12">Annuel</span>
+        </td>
+        <td>{{ contrat.delaiJoursTolerance }} jour(s)</td>
+        <td>
+          <p-tag [value]="getStatutLibelle(contrat.statut)" [severity]="getStatutSeverity(contrat.statut)"></p-tag>
+        </td>
+        <td style="text-align: center;">
+          <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning mr-2" (click)="ouvrirModalModification(contrat)" pTooltip="Modifier"></button>
+          <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="supprimerContrat(contrat)" pTooltip="Résilier"></button>
+        </td>
+      </tr>
+    </ng-template>
+    
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="9" class="text-center p-4">Aucun contrat trouvé.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Modale Ajout / Modification -->
+<p-dialog [(visible)]="displayModal" [header]="isEditMode ? 'Modifier le contrat' : 'Nouveau Contrat'" [modal]="true" [style]="{width: '550px'}">
+  <form [formGroup]="contratForm" (ngSubmit)="sauvegarder()">
+    
+    <div class="field">
+      <label for="bienId">Bien Immobilier *</label>
+      <p-select 
+        id="bienId" 
+        [options]="biensDisponibles" 
+        formControlName="bienId" 
+        placeholder="Sélectionner un bien" 
+        [filter]="true">
+      </p-select>
+    </div>
+
+    <div class="field">
+      <label for="locataireId">Locataire *</label>
+      <p-select 
+        id="locataireId" 
+        [options]="locataires" 
+        formControlName="locataireId" 
+        placeholder="Sélectionner un locataire" 
+        [filter]="true">
+      </p-select>
+    </div>
+
+    <div class="formgrid">
+      <div class="field">
+        <label for="dateDebut">Date de début *</label>
+        <input pInputText id="dateDebut" type="date" formControlName="dateDebut" />
+      </div>
+      <div class="field">
+        <label for="dateFin">Date de fin *</label>
+        <input pInputText id="dateFin" type="date" formControlName="dateFin" />
+      </div>
+    </div>
+
+    <div class="formgrid">
+      <div class="field">
+        <label for="montantLoyer">Montant Loyer *</label>
+        <input pInputText id="montantLoyer" type="number" formControlName="montantLoyer" />
+      </div>
+      <div class="field">
+        <label for="montantCaution">Montant Caution *</label>
+        <input pInputText id="montantCaution" type="number" formControlName="montantCaution" />
+      </div>
+    </div>
+
+    <div class="formgrid">
+      <div class="field">
+        <label for="frequencePaiement">Fréquence de Paiement *</label>
+        <p-select 
+          id="frequencePaiement" 
+          [options]="frequencesPaiement" 
+          formControlName="frequencePaiement" 
+          placeholder="Sélectionner la fréquence">
+        </p-select>
+      </div>
+      <div class="field">
+        <label for="delaiJoursTolerance">Délai de tolérance (jours) *</label>
+        <input pInputText id="delaiJoursTolerance" type="number" formControlName="delaiJoursTolerance" />
+      </div>
+    </div>
+
+    <div class="field" *ngIf="isEditMode">
+      <label for="statut">Statut du contrat *</label>
+      <p-select 
+        id="statut" 
+        [options]="statutsContrat" 
+        formControlName="statut">
+      </p-select>
+    </div>
+
+    <div class="flex justify-content-end gap-2 mt-4">
+      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text" type="button" (click)="displayModal=false"></button>
+      <button pButton label="Enregistrer" icon="pi pi-check" class="p-button-success" type="submit"></button>
+    </div>
+
+  </form>
+</p-dialog>

@@ -1,0 +1,44 @@
+<p-toast></p-toast>
+
+<div class="p-4 parametres-container">
+  <!-- En-tête -->
+  <div class="flex justify-content-between align-items-center mb-3">
+    <h2 class="m-0">Paramètres de l'application</h2>
+  </div>
+
+  <div class="card p-3 md:p-4">
+    <h3 class="mt-0 mb-3">Informations de l'entreprise (En-tête & Pied de page PDF)</h3>
+    
+    <div class="p-fluid grid gap-2">
+      <div class="field col-12 md:col-6">
+        <label for="nomSociete" class="font-bold block mb-1">Nom de la société / Agence</label>
+        <input id="nomSociete" pInputText type="text" [(ngModel)]="parametres.nomSociete" placeholder="Ex: MarionGI Immobilier" />
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="telephone" class="font-bold block mb-1">Téléphone</label>
+        <input id="telephone" pInputText type="text" [(ngModel)]="parametres.telephone" placeholder="Ex: +1 819 555-0199" />
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="email" class="font-bold block mb-1">E-mail</label>
+        <input id="email" pInputText type="text" [(ngModel)]="parametres.email" placeholder="Ex: contact@mariongi.com" />
+      </div>
+
+      <div class="field col-12">
+        <label for="adresse" class="font-bold block mb-1">Adresse postale</label>
+        <input id="adresse" pInputText type="text" [(ngModel)]="parametres.adresse" placeholder="Ex: 123 Rue Principale, Mauricie, QC" />
+      </div>
+
+      <div class="field col-12">
+        <label for="piedDePage" class="font-bold block mb-1">Texte du pied de page (PDF)</label>
+        <input id="piedDePage" pInputText type="text" [(ngModel)]="parametres.piedDePage" placeholder="Mentions légales ou texte de bas de page" />
+      </div>
+    </div>
+
+    <!-- Actions alignées à droite avec espacement -->
+    <div class="form-actions">
+      <button pButton label="Enregistrer les modifications" icon="pi pi-save" class="p-button-success" (click)="sauvegarderParametres()"></button>
+    </div>
+  </div>
+</div>

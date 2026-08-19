@@ -1,0 +1,249 @@
+:host {
+  --gestimmo-accent: #2e7d5b;
+  --gestimmo-accent-light: #e6f2ec;
+  --gestimmo-text: #1f2937;
+  --gestimmo-text-muted: #6b7280;
+  --gestimmo-border: #e5e7eb;
+  --gestimmo-bg: #f7f8f9;
+
+  display: block;
+  color: var(--gestimmo-text);
+  background: var(--gestimmo-bg);
+  min-height: 100vh;
+}
+
+.gestimmo-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ===== Sidebar ===== */
+.gestimmo-sidebar {
+  width: 250px;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid var(--gestimmo-border);
+  padding: 1.5rem 1rem;
+
+  @media (max-width: 900px) {
+    display: none;
+  }
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--gestimmo-text);
+  padding: 0 0.5rem 1.5rem;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  color: var(--gestimmo-text-muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  i {
+    font-size: 0.95rem;
+  }
+
+  &:hover {
+    background: var(--gestimmo-accent-light);
+    color: var(--gestimmo-accent);
+  }
+
+  &--active {
+    background: var(--gestimmo-accent-light);
+    color: var(--gestimmo-accent);
+    font-weight: 600;
+  }
+}
+
+::ng-deep .gestimmo-mobile-sidebar .p-drawer-content {
+  padding: 1.5rem 1rem;
+}
+
+/* ===== Main content ===== */
+.gestimmo-main {
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem 1.75rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.gestimmo-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--gestimmo-accent);
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 0.85rem 1.25rem;
+}
+
+.header-title {
+  font-weight: 600;
+  flex: 1;
+}
+
+.burger-btn {
+  display: none;
+  color: #ffffff;
+
+  @media (max-width: 900px) {
+    display: inline-flex;
+  }
+}
+
+.user-zone {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.user-name {
+  font-size: 0.9rem;
+
+  @media (max-width: 640px) {
+    display: none;
+  }
+}
+
+::ng-deep .user-avatar {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  cursor: pointer;
+}
+
+/* ===== KPI cards ===== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 560px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+::ng-deep .kpi-card {
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  border: 1px solid var(--gestimmo-border);
+
+  .p-card-body {
+    padding: 1.1rem 1.25rem;
+  }
+
+  .p-card-content {
+    padding: 0;
+  }
+}
+
+.kpi-label {
+  font-size: 0.82rem;
+  color: var(--gestimmo-text-muted);
+  margin-bottom: 0.4rem;
+}
+
+.kpi-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gestimmo-text);
+}
+
+/* ===== Stats + alerts ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+::ng-deep .chart-card,
+::ng-deep .alerts-card,
+::ng-deep .properties-card {
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  border: 1px solid var(--gestimmo-border);
+
+  .p-card-title {
+    font-size: 0.98rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .p-card-body {
+    padding: 1.25rem;
+  }
+}
+
+.chart-wrapper {
+  height: 260px;
+}
+
+.alerts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.alerts-list__item {
+  font-size: 0.9rem;
+  color: var(--gestimmo-text);
+  padding-left: 1rem;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gestimmo-accent);
+  }
+}
+
+/* ===== Properties table ===== */
+.properties-section {
+  ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+    background: transparent;
+    color: var(--gestimmo-text-muted);
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-bottom: 1px solid var(--gestimmo-border);
+  }
+
+  ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--gestimmo-border);
+  }
+}
+
+

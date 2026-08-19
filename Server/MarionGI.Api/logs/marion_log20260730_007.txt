@@ -1,0 +1,10 @@
+2026-07-30 17:24:17.073 -04:00 [WRN] Entity 'Bien' has a global query filter defined and is the required end of a relationship with the entity 'DemandeVisite'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:24:17.149 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'Notification'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:24:17.150 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-07-30 17:24:17.190 -04:00 [WRN] The property 'Bien.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-07-30 17:24:48.017 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:24:49.081 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:24:49.109 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:24:49.577 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:24:49.602 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:24:49.605 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api

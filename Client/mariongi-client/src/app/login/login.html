@@ -1,0 +1,145 @@
+<div class="login-page">
+  <div class="login-shell">
+
+    <!-- Bandeau marque -->
+    <div>
+      <img src="logo-horizontal.svg" alt="MarionGI" style="height: 70px; " />
+    </div>
+
+    <!-- Carte de connexion -->
+    <div class="login-card">
+
+      @if (step() === 'credentials') {
+        <h1 class="card-title">Connexion</h1>
+
+        @if (errorMessage()) {
+          <p-message severity="error" [text]="errorMessage()!" styleClass="w-full mb-3"></p-message>
+        }
+
+        @if (isLockedOut()) {
+          <p-message
+            severity="warn"
+            [text]="'Trop de tentatives. Réessaie dans ' + lockoutRemaining() + 's.'"
+            styleClass="w-full mb-3"
+          ></p-message>
+        }
+
+        <form [formGroup]="credentialsForm" (ngSubmit)="submitCredentials()" novalidate>
+
+          <!-- ① Identifiant -->
+          <div class="field-group">
+            <label for="identifiant">Téléphone ou adresse e-mail</label>
+            <input
+              id="identifiant"
+              type="text"
+              pInputText
+              formControlName="identifiant"
+              autocomplete="username"
+              placeholder="+237 6XX XX XX XX ou vous@exemple.com"
+              [class.ng-invalid]="credentialsForm.get('identifiant')?.invalid && credentialsForm.get('identifiant')?.touched"
+            />
+            @if (credentialsForm.get('identifiant')?.invalid && credentialsForm.get('identifiant')?.touched) {
+              <small class="field-error">Entre un numéro de téléphone ou un e-mail valide.</small>
+            }
+          </div>
+
+          <!-- ② Mot de passe -->
+          <div class="field-group">
+            <label for="motDePasse">Mot de passe</label>
+            <p-password
+              inputId="motDePasse"
+              formControlName="motDePasse"
+              [toggleMask]="true"
+              [feedback]="false"
+              autocomplete="current-password"
+              styleClass="w-full"
+              inputStyleClass="w-full"
+              placeholder="••••••••"
+            ></p-password>
+            @if (credentialsForm.get('motDePasse')?.invalid && credentialsForm.get('motDePasse')?.touched) {
+              <small class="field-error">Le mot de passe est requis.</small>
+            }
+          </div>
+
+          <a class="forgot-link" routerLink="/mot-de-passe-oublie">Mot de passe oublié ?</a>
+
+          <p-button
+            type="submit"
+            label="Se connecter"
+            styleClass="submit-btn"
+            [disabled]="!canSubmitCredentials()"
+            [loading]="isSubmitting()"
+          ></p-button>
+        </form>
+      }
+
+      @if (step() === 'otp') {
+        <h1 class="card-title">Vérification</h1>
+        <p class="otp-hint">
+          Un code a été envoyé par SMS au
+          <strong>{{ maskedPhone() }}</strong>.
+        </p>
+
+        @if (devOtpCode()) {
+          <div class="dev-otp-banner">
+            🧪 Mode dev (pas de passerelle SMS) — Code : <strong>{{ devOtpCode() }}</strong>
+          </div>
+        }
+
+        @if (errorMessage()) {
+          <p-message severity="error" [text]="errorMessage()!" styleClass="w-full mb-3"></p-message>
+        }
+
+        <form [formGroup]="otpForm" (ngSubmit)="submitOtp()" novalidate>
+
+          <!-- ③ Code OTP -->
+          <div class="field-group">
+            <label for="otp">Code de vérification envoyé par SMS</label>
+            <input
+              id="otp"
+              type="text"
+              pInputText
+              inputmode="numeric"
+              formControlName="codeOtp"
+              autocomplete="one-time-code"
+              placeholder="6 chiffres"
+              maxlength="6"
+              [class.ng-invalid]="otpForm.get('codeOtp')?.invalid && otpForm.get('codeOtp')?.touched"
+            />
+            @if (otpForm.get('codeOtp')?.invalid && otpForm.get('codeOtp')?.touched) {
+              <small class="field-error">Entre le code à 6 chiffres reçu par SMS.</small>
+            }
+          </div>
+
+          <div class="otp-actions">
+            <button
+              type="button"
+              class="link-btn"
+              [disabled]="otpResendCooldown() > 0"
+              (click)="resendOtp()"
+            >
+              @if (otpResendCooldown() > 0) {
+                Renvoyer le code ({{ otpResendCooldown() }}s)
+              } @else {
+                Renvoyer le code
+              }
+            </button>
+            <button type="button" class="link-btn" (click)="backToCredentials()">
+              Retour
+            </button>
+          </div>
+
+          <p-button
+            type="submit"
+            label="Valider le code"
+            styleClass="submit-btn"
+            [disabled]="!canSubmitOtp()"
+            [loading]="isSubmitting()"
+          ></p-button>
+        </form>
+      }
+
+    </div>
+
+  </div>
+</div>

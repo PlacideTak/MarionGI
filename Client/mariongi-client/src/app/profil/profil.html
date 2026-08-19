@@ -1,0 +1,72 @@
+<p-toast></p-toast>
+
+<div class="p-4 profil-page-container">
+  <div class="card profil-container">
+      <div class="flex justify-content-between align-items-center mb-3">
+        <h2 class="m-0">Mon Profil</h2>
+      </div>
+
+    <p class="sous-titre">Modifiez vos informations personnelles ou changez votre mot de passe.</p>
+
+    <form [formGroup]="profilForm" (ngSubmit)="onSubmit()" class="profil-form">
+      
+      <!-- Informations de base -->
+      <div class="field">
+        <label for="nom">Nom</label>
+        <input id="nom" type="text" pInputText formControlName="nom" placeholder="Votre nom" />
+      </div>
+
+      <div class="field">
+        <label for="prenom">Prénom</label>
+        <input id="prenom" type="text" pInputText formControlName="prenom" placeholder="Votre prénom" />
+      </div>
+
+      <hr class="section-divider" />
+      <h4 class="section-title">Changement de mot de passe</h4>
+
+      <div class="field">
+        <label for="ancienMotDePasse">Ancien mot de passe</label>
+        <p-password 
+          id="ancienMotDePasse" 
+          formControlName="ancienMotDePasse" 
+          [feedback]="false" 
+          [toggleMask]="true" 
+          placeholder="••••••••">
+        </p-password>
+      </div>
+
+      <div class="field">
+        <label for="nouveauMotDePasse">Nouveau mot de passe</label>
+        <p-password 
+          id="nouveauMotDePasse" 
+          formControlName="nouveauMotDePasse" 
+          [toggleMask]="true" 
+          placeholder="Nouveau mot de passe">
+        </p-password>
+      </div>
+
+      <div class="field">
+        <label for="confirmationMotDePasse">Confirmer</label>
+        <p-password 
+          id="confirmationMotDePasse" 
+          formControlName="confirmationMotDePasse" 
+          [feedback]="false" 
+          [toggleMask]="true" 
+          placeholder="Confirmer le mot de passe">
+        </p-password>
+      </div>
+
+      <div class="form-actions">
+        <button 
+          pButton 
+          type="submit" 
+          label="Enregistrer les modifications" 
+          icon="pi pi-check" 
+          class="p-button-success" 
+          [loading]="chargement">
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

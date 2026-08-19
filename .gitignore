@@ -1,0 +1,5 @@
+.vs/
+bin/
+obj/
+Client/mariongi-client/node_modules/
+Client/mariongi-client/.angular/

@@ -1,0 +1,64 @@
+2026-07-30 15:47:06.831 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 15:47:07.358 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 15:47:07.418 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 15:47:07.920 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 15:47:07.934 -04:00 [INF] Hosting environment: Development
+2026-07-30 15:47:07.950 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 15:47:36.938 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger - null null
+2026-07-30 15:47:37.219 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger - 301 0 null 283.6203ms
+2026-07-30 15:47:37.249 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/index.html - null null
+2026-07-30 15:47:37.346 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/index.html - 200 null text/html;charset=utf-8 96.5482ms
+2026-07-30 15:47:37.430 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui.css - null null
+2026-07-30 15:47:37.432 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/index.css - null null
+2026-07-30 15:47:37.435 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui-standalone-preset.js - null null
+2026-07-30 15:47:37.435 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui-bundle.js - null null
+2026-07-30 15:47:37.437 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - null null
+2026-07-30 15:47:37.437 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/index.js - null null
+2026-07-30 15:47:37.466 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - 200 16509 application/javascript; charset=utf-8 29.4425ms
+2026-07-30 15:47:37.481 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/index.css - 200 152 text/css 49.1893ms
+2026-07-30 15:47:37.487 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui-standalone-preset.js - 200 77352 text/javascript 52.228ms
+2026-07-30 15:47:37.488 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/index.js - 200 null application/javascript;charset=utf-8 50.5554ms
+2026-07-30 15:47:37.492 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui.css - 200 23647 text/css 62.0182ms
+2026-07-30 15:47:37.507 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/swagger-ui-bundle.js - 200 424767 text/javascript 71.8881ms
+2026-07-30 15:47:37.510 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_vs/browserLink - null null
+2026-07-30 15:47:37.728 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_vs/browserLink - 200 null text/javascript; charset=UTF-8 218.6961ms
+2026-07-30 15:47:37.959 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - null null
+2026-07-30 15:47:38.001 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 42.0786ms
+2026-07-30 15:47:38.260 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/favicon-32x32.png - null null
+2026-07-30 15:47:38.290 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/favicon-32x32.png - 200 628 image/png 29.4791ms
+2026-07-30 15:56:06.328 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - null null
+2026-07-30 15:56:06.328 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_vs/browserLink - null null
+2026-07-30 15:56:06.374 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - 200 16509 application/javascript; charset=utf-8 51.6066ms
+2026-07-30 15:56:06.404 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_vs/browserLink - 200 null text/javascript; charset=UTF-8 79.7288ms
+2026-07-30 15:56:06.672 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - null null
+2026-07-30 15:56:06.797 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 124.7982ms
+2026-07-30 15:56:22.141 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - null null
+2026-07-30 15:56:22.142 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_vs/browserLink - null null
+2026-07-30 15:56:22.179 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - 200 16509 application/javascript; charset=utf-8 38.4156ms
+2026-07-30 15:56:22.209 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_vs/browserLink - 200 null text/javascript; charset=UTF-8 67.4221ms
+2026-07-30 15:56:22.280 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - null null
+2026-07-30 15:56:22.314 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 34.2054ms
+2026-07-30 15:56:33.953 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 15:56:34.498 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 15:56:34.502 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 15:56:34.964 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 15:56:34.965 -04:00 [INF] Hosting environment: Development
+2026-07-30 15:56:34.967 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 15:56:36.281 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - null null
+2026-07-30 15:56:36.281 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/_vs/browserLink - null null
+2026-07-30 15:56:36.304 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_framework/aspnetcore-browser-refresh.js - 200 16509 application/javascript; charset=utf-8 25.0718ms
+2026-07-30 15:56:36.384 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/_vs/browserLink - 200 null text/javascript; charset=UTF-8 106.061ms
+2026-07-30 15:56:36.449 -04:00 [INF] Request starting HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - null null
+2026-07-30 15:56:36.551 -04:00 [INF] Request finished HTTP/1.1 GET http://localhost:5190/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 101.0298ms
+2026-07-30 16:58:34.655 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 16:58:35.334 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 16:58:35.336 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 16:58:35.517 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 16:58:35.519 -04:00 [INF] Hosting environment: Development
+2026-07-30 16:58:35.521 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-07-30 17:00:27.423 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 17:00:28.147 -04:00 [INF] Now listening on: https://localhost:7232
+2026-07-30 17:00:28.168 -04:00 [INF] Now listening on: http://localhost:5190
+2026-07-30 17:00:28.340 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 17:00:28.342 -04:00 [INF] Hosting environment: Development
+2026-07-30 17:00:28.344 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api

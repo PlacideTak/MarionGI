@@ -1,0 +1,67 @@
+.profil-page-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; // Centre horizontalement le contenu
+  width: 100%;
+}
+
+.profil-container {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 800px; // Réduit la largeur maximale du formulaire
+  padding: 2rem;
+
+  h3 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .sous-titre {
+    color: var(--text-color-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.profil-form {
+  .field {
+    margin-bottom: 1rem; // Réduit l'espace vertical
+
+    label {
+      color: var(--text-color);
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+
+    input, 
+    ::ng-deep .p-password {
+      width: 100%;
+    }
+  }
+
+  .section-divider {
+    border: 0;
+    border-top: 1px solid var(--surface-border);
+    margin: 1.5rem 0;
+  }
+
+  .section-title {
+    color: var(--primary-color);
+    font-weight: 500;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+  }
+}

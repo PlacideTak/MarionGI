@@ -1,0 +1,135 @@
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="card p-4">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-bold m-0 text-emerald-800">Gestion des Demandes de Visite</h2>
+    <button pButton label="Nouvelle Demande" icon="pi pi-plus" class="p-button-success" (click)="ouvrirModalCreation()"></button>
+  </div>
+
+  <p-table 
+    [value]="demandes" 
+    [loading]="chargementEnCours" 
+    [paginator]="true" 
+    [rows]="10" 
+    [rowsPerPageOptions]="[5, 10, 20]"
+    [globalFilterFields]="['nomProspect', 'telephoneProspect', 'bien.reference']"
+    #dt
+    styleClass="p-datatable-gridlines"
+    responsiveLayout="scroll">
+    
+    <ng-template pTemplate="caption">
+      <div class="flex justify-between items-center">
+        <span class="p-input-icon-left">
+          <i class="pi pi-search"></i>
+          <input pInputText type="text" (input)="dt.filterGlobal($any($event.target).value, 'contains')" placeholder="Rechercher..." />
+        </span>
+      </div>
+    </ng-template>
+
+    <ng-template pTemplate="header">
+      <tr>
+        <th pSortableColumn="dateSouhaitee">Date Souhaitée <p-sortIcon field="dateSouhaitee"></p-sortIcon></th>
+        <th pSortableColumn="nomProspect">Prospect <p-sortIcon field="nomProspect"></p-sortIcon></th>
+        <th>Téléphone</th>
+        <th>Bien Concerné</th>
+        <th>Agent Assigné</th>
+        <th pSortableColumn="statut">Statut <p-sortIcon field="statut"></p-sortIcon></th>
+        <th class="text-center">Actions</th>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="body" let-demande>
+      <tr>
+        <td>{{ demande.dateSouhaitee | date:'dd/MM/yyyy HH:mm' }}</td>
+        <td>{{ demande.nomProspect }}</td>
+        <td>{{ demande.telephoneProspect }}</td>
+        <td>
+          <span *ngIf="demande.bien">
+            <strong>{{ demande.bien.reference }}</strong> - {{ demande.bien.quartier }}, {{ demande.bien.ville }}
+          </span>
+          <span *ngIf="!demande.bien" class="text-gray-400">N/A</span>
+        </td>
+        <td>
+          <span *ngIf="demande.agent">
+            {{ demande.agent.prenom }} {{ demande.agent.nom }}
+          </span>
+          <span *ngIf="!demande.agent" class="text-orange-500 italic">Non assigné</span>
+        </td>
+        <td>
+          <span [ngClass]="getStatutBadgeClass(demande.statut)" class="px-2 py-1 rounded text-xs font-semibold">
+            {{ getStatutLibelle(demande.statut) }}
+          </span>
+        </td>
+        <td class="text-center">
+          <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-info" pTooltip="Modifier" (click)="ouvrirModalModification(demande)"></button>
+          <button pButton icon="pi pi-check" class="p-button-rounded p-button-text p-button-success" pTooltip="Confirmer" (click)="changerStatut(demande, 2)" *ngIf="demande.statut === 1"></button>
+          <button pButton icon="pi pi-times" class="p-button-rounded p-button-text p-button-danger" pTooltip="Annuler" (click)="changerStatut(demande, 3)" *ngIf="demande.statut === 1"></button>
+          <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-warning" pTooltip="Supprimer" (click)="supprimerDemande(demande.id)"></button>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template pTemplate="emptymessage">
+      <tr>
+        <td colspan="7" class="text-center p-4">Aucune demande de visite trouvée.</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<!-- Fenêtre modale -->
+<p-dialog [(visible)]="displayModal" [header]="isEditMode ? 'Modifier la Demande de Visite' : 'Nouvelle Demande de Visite'" [modal]="true" [style]="{width: '480px'}" [draggable]="false" [resizable]="false">
+  <div class="p-fluid flex flex-column gap-3 mt-2">
+    
+    <div class="field">
+      <label for="bien" class="font-bold mb-1 block">Bien Immobilier *</label>
+      <select id="bien" class="p-inputtext p-component w-full" [(ngModel)]="nouvelleDemande.bienId" required>
+        <option value="" disabled selected>-- Sélectionnez un bien --</option>
+        <option *ngFor="let bien of biensDisponibles" [value]="bien.id">
+          {{ bien.reference }} - {{ bien.quartier }} ({{ bien.ville }})
+        </option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="agent" class="font-bold mb-1 block">Agent Assigné (Optionnel)</label>
+      <select id="agent" class="p-inputtext p-component w-full" [(ngModel)]="nouvelleDemande.agentId">
+        <option [ngValue]="null">-- Aucun agent assigné --</option>
+        <option *ngFor="let agent of agentsDisponibles" [value]="agent.id">
+          {{ agent.prenom }} {{ agent.nom }} ({{ agent.email }})
+        </option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="statut" class="font-bold mb-1 block">Statut *</label>
+      <select id="statut" class="p-inputtext p-component w-full" [(ngModel)]="nouvelleDemande.statut" required>
+        <option *ngFor="let s of statutsDisponibles" [value]="s.value">
+          {{ s.label }}
+        </option>
+      </select>
+    </div>
+    
+    <div class="field">
+      <label for="nomProspect" class="font-bold mb-1 block">Nom du Prospect *</label>
+      <input pInputText id="nomProspect" [(ngModel)]="nouvelleDemande.nomProspect" placeholder="Ex: Jean Dupont" required />
+    </div>
+
+    <div class="field">
+      <label for="telephone" class="font-bold mb-1 block">Téléphone *</label>
+      <input pInputText id="telephone" [(ngModel)]="nouvelleDemande.telephoneProspect" placeholder="Ex: +237 6XXXXXXXX" required />
+    </div>
+
+    <div class="field">
+      <label for="dateSouhaitee" class="font-bold mb-1 block">Date et Heure Souhaitées *</label>
+      <input type="datetime-local" class="p-inputtext p-component w-full" id="dateSouhaitee" [(ngModel)]="nouvelleDemande.dateSouhaitee" [min]="minDateString" required />
+    </div>
+
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayModal = false"></button>
+    <button pButton [label]="isEditMode ? 'Modifier' : 'Enregistrer'" icon="pi pi-check" class="p-button-success" (click)="enregistrerDemande()"></button>
+  </ng-template>
+</p-dialog>

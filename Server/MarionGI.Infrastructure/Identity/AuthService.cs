@@ -197,16 +197,19 @@ public class AuthService : IAuthService
         new Claim("email", user.Email),
         new Claim(ClaimTypes.Role, user.Role.ToString()),
         new Claim("role", user.Role.ToString()),
-        new Claim("given_name", user.Prenom ?? ""),  
+        new Claim("given_name", user.Prenom ?? ""),
         new Claim("family_name", user.Nom ?? ""),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 
+        var expiryMinutes = _config.GetValue<int>("Jwt:ExpiryMinutes");
+        var expires = DateTime.UtcNow.AddMinutes(expiryMinutes);
+
         var token = new JwtSecurityToken(
-            issuer: _config["Jwt:Issuer"]?.Trim(),
-            audience: _config["Jwt:Audience"]?.Trim(),
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(2),
+            expires: expires,
             signingCredentials: creds
         );
 

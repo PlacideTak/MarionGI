@@ -73,7 +73,7 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"]?.Trim(),
 
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.FromMinutes(5),
+        ClockSkew = TimeSpan.Zero,
 
         // Utiliser les ClaimTypes natifs de .NET
         RoleClaimType = ClaimTypes.Role,

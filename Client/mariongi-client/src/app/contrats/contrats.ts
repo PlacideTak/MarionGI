@@ -1,298 +1,330 @@
-import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router, NavigationEnd } from '@angular/router';
-import { filter, Subscription } from 'rxjs';
-import { SelectModule } from 'primeng/select'; 
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MessageService, ConfirmationService } from 'primeng/api';
+
+// Modules PrimeNG
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { SelectModule } from 'primeng/select'; 
+import { TagModule } from 'primeng/tag';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
+// Services & Models
 import { ContratsService } from '../services/contrats.service';
 import { BiensService } from '../services/biens.service';
 import { UtilisateursService } from '../services/utilisateurs.service';
-import { ContratDto, StatutContrat, BienDto } from '../models/gestimmo.models';
+import { ContratDto, StatutContrat } from '../models/gestimmo.models';
+import { AuthService } from '../login/auth.service';
+
+interface DropdownItem {
+  label: string;
+  value: string;
+}
 
 @Component({
   selector: 'app-contrats',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     ReactiveFormsModule,
-    SelectModule,
     TableModule,
     ButtonModule,
     DialogModule,
     InputTextModule,
     InputNumberModule,
-    ToastModule,
-    ConfirmDialogModule,
+    SelectModule,
     TagModule,
-    TooltipModule
+    ToastModule,
+    ConfirmDialogModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './contrats.html',
-  styleUrls: ['./contrats.scss']
+  styleUrl: './contrats.scss'
 })
-export class Contrats implements OnInit, OnDestroy {
+export class Contrats implements OnInit {
+  private readonly fb = inject(FormBuilder);
   private readonly contratsService = inject(ContratsService);
   private readonly biensService = inject(BiensService);
-  private readonly utilisateurService = inject(UtilisateursService);
-  private readonly fb = inject(FormBuilder);
+  private readonly utilisateursService = inject(UtilisateursService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
-  private readonly cdr = inject(ChangeDetectorRef);
-  private readonly router = inject(Router);
-  
-  private routerSub!: Subscription;
-
+  private readonly authService = inject(AuthService);
+  // Propriété pour vérifier les droits d'accès
+  canCreateContrat: boolean = false;
   contrats: ContratDto[] = [];
-  biensDisponibles: any[] = [];
-  locataires: any[] = [];
-  chargement = false;
-  
-  displayModal = false;
-  isEditMode = false;
-  selectedContratId: string | null = null;
+  biensOptions: DropdownItem[] = [];
+  locatairesOptions: DropdownItem[] = [];
+
+  contratDialog: boolean = false;
   contratForm!: FormGroup;
+  isEditMode: boolean = false;
+  selectedContratId?: string;
 
-  statutsContrat = [
+  statutOptions = [
     { label: 'Actif', value: StatutContrat.Actif },
-    { label: 'Résilié', value: StatutContrat.Resilie },
+    { label: 'En Attente', value: StatutContrat.EnAttente },
     { label: 'Expiré', value: StatutContrat.Expire },
-    { label: 'En Attente', value: StatutContrat.EnAttente }
-  ];
-
-  frequencesPaiement = [
-    { label: 'Mensuel', value: 1 },
-    { label: 'Trimestriel', value: 3 },
-    { label: 'Annuel', value: 12 }
+    { label: 'Résilié', value: StatutContrat.Resilie }
   ];
 
   ngOnInit(): void {
     this.initForm();
-    this.chargerDonnees();
-
-    this.routerSub = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.chargerDonnees();
-    });
+    this.chargerContrats();
+    this.chargerListesDeroulantes();
+    this.verifierPermissions();
   }
 
-  ngOnDestroy(): void {
-    if (this.routerSub) {
-      this.routerSub.unsubscribe();
-    }
-  }
-
-  initForm(): void {
+  private initForm(): void {
     this.contratForm = this.fb.group({
       bienId: ['', Validators.required],
       locataireId: ['', Validators.required],
-      dateDebut: ['', Validators.required],
-      dateFin: ['', Validators.required],
-      montantLoyer: [0, [Validators.required, Validators.min(0)]],
+      dateDebut: [null, Validators.required],
+      dateFin: [null, Validators.required],
+      montantLoyer: [null, [Validators.required, Validators.min(0)]],
       montantCaution: [0, [Validators.required, Validators.min(0)]],
-      statut: [StatutContrat.Actif, Validators.required],
-      frequencePaiement: [1, Validators.required],
-      delaiJoursTolerance: [5, [Validators.required, Validators.min(0)]]
+      frequencePaiement: [1, [Validators.required, Validators.min(1)]],
+      delaiJoursTolerance: [5, [Validators.required, Validators.min(0)]],
+      statut: [StatutContrat.EnAttente, Validators.required]
     });
-  }
-
-  chargerDonnees(): void {
-    this.chargerContrats();
-    this.chargerBiens();
-    this.chargerLocataires();
   }
 
   chargerContrats(): void {
-    this.chargement = true;
     this.contratsService.getContrats().subscribe({
       next: (data) => {
-        this.contrats = data || [];
-        this.chargement = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.chargement = false;
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: 'Impossible de charger les contrats.' });
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  chargerBiens(): void {
-    this.biensService.getBiens().subscribe({
-      next: (data: BienDto[]) => {
- 
-        this.biensDisponibles = data.map(b => ({
-          label: `${b.reference} - ${b.ville} (${b.quartier})`,
-          value: b.id
-        }));
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error("Erreur chargement biens", err)
-    });
-  }
-
-  chargerLocataires(): void {
-    this.utilisateurService.getUtilisateurs().subscribe({
-      next: (data: any) => {
-        const liste = Array.isArray(data) ? data : (data.items || []);
-        
-        this.locataires = data.map((u: any) => ({
-          label: `${u.prenom} ${u.nom} (${u.email})`,
-          value: u.id
-        }));
-        this.cdr.detectChanges();
-      },
-      error: (err) => console.error("Erreur chargement locataires", err)
-    });
-  }
-
-  ouvrirModalAjout(): void {
-    this.isEditMode = false;
-    this.selectedContratId = null;
-    this.contratForm.reset({
-      statut: StatutContrat.Actif,
-      montantLoyer: 0,
-      montantCaution: 0,
-      frequencePaiement: 1,
-      delaiJoursTolerance: 5
-    });
-    this.displayModal = true;
-  }
-
-  ouvrirModalModification(contrat: ContratDto): void {
-    this.isEditMode = true;
-    this.selectedContratId = contrat.id;
-    this.contratForm.patchValue({
-      bienId: contrat.bienId,
-      locataireId: contrat.locataireId,
-      dateDebut: contrat.dateDebut ? contrat.dateDebut.split('T')[0] : '',
-      dateFin: contrat.dateFin ? contrat.dateFin.split('T')[0] : '',
-      montantLoyer: contrat.montantLoyer,
-      montantCaution: contrat.montantCaution,
-      statut: contrat.statut,
-      frequencePaiement: contrat.frequencePaiement,
-      delaiJoursTolerance: contrat.delaiJoursTolerance
-    });
-    this.displayModal = true;
-  }
-
-  sauvegarder(): void {
-  if (this.contratForm.invalid) {
-    this.contratForm.markAllAsTouched();
-    return;
-  }
-
-  const valeurs = this.contratForm.value;
-  const aujourdhui = new Date();
-  aujourdhui.setHours(0, 0, 0, 0); // Réinitialiser l'heure pour comparer uniquement les dates
-
-  const debut = new Date(valeurs.dateDebut);
-  const fin = new Date(valeurs.dateFin);
-
-  // 1. Vérification : Pas de date passée
-  /*if (debut < aujourdhui) {
-    this.messageService.add({ 
-      severity: 'error', 
-      summary: 'Date invalide', 
-      detail: 'La date de début du contrat ne peut pas être dans le passé.' 
-    });
-    return;
-  }*/
-
-  // 2. Vérification : Date de fin > Date de début
-  if (fin <= debut) {
-    this.messageService.add({ 
-      severity: 'error', 
-      summary: 'Date invalide', 
-      detail: 'La date de fin doit être postérieure à la date de début.' 
-    });
-    return;
-  }
-
-  // 3. Calcul de la durée en jours pour la cohérence de fréquence
-  const diffTime = Math.abs(fin.getTime() - debut.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  const joursRequis = valeurs.frequencePaiement * 30; 
-
-  if (diffDays < joursRequis) {
-    this.messageService.add({ 
-      severity: 'warn', 
-      summary: 'Incohérence', 
-      detail: `La durée du contrat (${diffDays} jours) est trop courte pour une fréquence de paiement de ${joursRequis} jours.` 
-    });
-    return;
-  }
-
-  // 4. Suite de la logique (Create / Update)
-  if (this.isEditMode && this.selectedContratId) {
-    const payload: ContratDto = { id: this.selectedContratId, ...valeurs };
-    this.contratsService.updateContrat(this.selectedContratId, payload).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat modifié avec succès.' });
-        this.displayModal = false;
-        this.chargerDonnees();
+        this.contrats = Array.isArray(data) ? [...data] : [];
       },
       error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur lors de la modification.' });
-      }
-    });
-  } else {
-    this.contratsService.createContrat(valeurs).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat créé avec succès.' });
-        this.displayModal = false;
-        this.chargerDonnees();
-      },
-      error: (err) => {
-        this.messageService.add({ severity: 'error', summary: 'Erreur', detail: err.error?.message || 'Erreur lors de la création.' });
-      }
-    });
-  }
-}
-  supprimerContrat(contrat: ContratDto): void {
-    this.confirmationService.confirm({
-      message: `Voulez-vous vraiment résilier et archiver ce contrat ?`,
-      header: 'Confirmation de résiliation',
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Oui',
-      rejectLabel: 'Non',
-      accept: () => {
-        this.contratsService.deleteContrat(contrat.id).subscribe({
-          next: () => {
-            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat résilié avec succès.' });
-            this.chargerDonnees();
-          },
-          error: () => {
-            this.messageService.add({ severity: 'error', summary: 'Erreur', detail: "Erreur lors de la résiliation." });
-          }
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur HTTP', 
+          detail: `Impossible de charger les contrats (${err.status || 'Erreur réseau'})` 
         });
       }
     });
   }
 
-  getStatutSeverity(statut: StatutContrat): 'success' | 'info' | 'warn' | 'danger' {
+  chargerListesDeroulantes(): void {
+    this.biensService.getBiens().subscribe({
+      next: (biens) => {
+        if (Array.isArray(biens)) {
+          this.biensOptions = biens.map(b => ({
+            label: b.adresse || b.reference || `Bien ${b.id?.substring(0, 6)}`,
+            value: b.id
+          }));
+        }
+      },
+      error: (err) => console.error('Erreur chargement biens:', err)
+    });
+
+    this.utilisateursService.getLocataires().subscribe({
+      next: (locataires) => {
+        if (Array.isArray(locataires)) {
+          this.locatairesOptions = locataires.map(l => ({
+            label: `${l.nom || ''} ${l.prenom || ''}`.trim() || 'Locataire',
+            value: l.id
+          }));
+        }
+      },
+      error: (err) => console.error('Erreur chargement locataires:', err)
+    });
+  }
+
+  getShortId(id?: string): string {
+    return id ? id.substring(0, 8).toUpperCase() : 'N/A';
+  }
+
+  getStatutLabel(statut: StatutContrat | number): string {
     switch (statut) {
-      case StatutContrat.Actif: return 'success';
-      case StatutContrat.Resilie: return 'danger';
-      case StatutContrat.Expire: return 'warn';
-      default: return 'info';
+      case StatutContrat.Actif:
+      case 0:
+        return 'Actif';
+      case StatutContrat.EnAttente:
+      case 1:
+        return 'En Attente';
+      case StatutContrat.Expire:
+      case 2:
+        return 'Expiré';
+      case StatutContrat.Resilie:
+      case 3:
+        return 'Résilié';
+      default:
+        return 'Inconnu';
     }
   }
 
-  getStatutLibelle(statut: StatutContrat): string {
-    const found = this.statutsContrat.find(s => s.value === statut);
-    return found ? found.label : 'Inconnu';
+  getSeverity(statut: StatutContrat | number | string): 'success' | 'info' | 'warn' | 'danger' | undefined {
+    switch (statut) {
+      case StatutContrat.Actif:
+      case 0:
+      case 'Actif':
+        return 'success';
+      case StatutContrat.EnAttente:
+      case 1:
+      case 'EnAttente':
+        return 'info';
+      case StatutContrat.Expire:
+      case 2:
+      case 'Expiré':
+        return 'warn';
+      case StatutContrat.Resilie:
+      case 3:
+      case 'Resilié':
+        return 'danger';
+      default:
+        return undefined;
+    }
+  }
+
+  openNew(): void {
+    this.isEditMode = false;
+    this.selectedContratId = undefined;
+    this.contratForm.reset({ 
+      statut: StatutContrat.EnAttente, 
+      montantCaution: 0,
+      frequencePaiement: 1,
+      delaiJoursTolerance: 5
+    });
+    this.contratDialog = true;
+  }
+
+  editContrat(contrat: ContratDto): void {
+    this.isEditMode = true;
+    this.selectedContratId = contrat.id;
+
+    if (!this.selectedContratId) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'L\'identifiant du contrat est introuvable.'
+      });
+      return;
+    }
+    
+    const formattedDateDebut = contrat.dateDebut ? new Date(contrat.dateDebut).toISOString().substring(0, 10) : null;
+    const formattedDateFin = contrat.dateFin ? new Date(contrat.dateFin).toISOString().substring(0, 10) : null;
+
+    this.contratForm.patchValue({
+      bienId: contrat.bienId || contrat.bien?.id,
+      locataireId: contrat.locataireId || contrat.locataire?.id,
+      dateDebut: formattedDateDebut,
+      dateFin: formattedDateFin,
+      montantLoyer: contrat.montantLoyer,
+      montantCaution: contrat.montantCaution,
+      frequencePaiement: contrat.frequencePaiement,
+      delaiJoursTolerance: contrat.delaiJoursTolerance,
+      statut: contrat.statut
+    });
+
+    this.contratDialog = true;
+  }
+
+  saveContrat(): void {
+    if (this.contratForm.invalid) {
+      this.contratForm.markAllAsTouched();
+      return;
+    }
+
+    const formValue = this.contratForm.value;
+
+    const payload: Partial<ContratDto> = {
+      bienId: formValue.bienId,
+      locataireId: formValue.locataireId,
+      dateDebut: new Date(formValue.dateDebut).toISOString(),
+      dateFin: new Date(formValue.dateFin).toISOString(),
+      montantLoyer: Number(formValue.montantLoyer),
+      montantCaution: Number(formValue.montantCaution),
+      frequencePaiement: Number(formValue.frequencePaiement || 1),
+      delaiJoursTolerance: Number(formValue.delaiJoursTolerance || 0),
+      statut: Number(formValue.statut)
+    };
+
+    if (this.isEditMode) {
+      if (!this.selectedContratId) {
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: 'L\'identifiant du contrat est manquant pour la modification.' 
+        });
+        return;
+      }
+
+      payload.id = this.selectedContratId;
+
+      this.contratsService.updateContrat(this.selectedContratId, payload as ContratDto).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat mis à jour' });
+          this.chargerContrats();
+          this.contratDialog = false;
+        },
+        error: (err) => this.traiterErreurHttp(err, 'modification')
+      });
+    } else {
+      this.contratsService.createContrat(payload as ContratDto).subscribe({
+        next: () => {
+          this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat créé' });
+          this.chargerContrats();
+          this.contratDialog = false;
+        },
+        error: (err) => this.traiterErreurHttp(err, 'création')
+      });
+    }
+  }
+
+  deleteContrat(contrat: ContratDto): void {
+    if (!contrat.id) return;
+
+    this.confirmationService.confirm({
+      message: `Voulez-vous vraiment supprimer ce contrat ?`,
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui, supprimer',
+      rejectLabel: 'Annuler',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.contratsService.deleteContrat(contrat.id!).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Contrat supprimé' });
+            this.chargerContrats();
+          },
+          error: (err) => this.traiterErreurHttp(err, 'suppression')
+        });
+      }
+    });
+  }
+
+private verifierPermissions(): void {
+  // L'administrateur et le bailleur ont la permission, pas l'agent ni le locataire
+  this.canCreateContrat = this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+}
+
+  private traiterErreurHttp(err: any, action: 'création' | 'modification' | 'suppression'): void {
+    console.error(`Erreur lors de la ${action}:`, err);
+
+    if (err.status === 403) {
+      this.messageService.add({ 
+        severity: 'warn', 
+        summary: 'Accès Refusé', 
+        detail: `Vous n'avez pas les droits nécessaires pour la ${action} d'un contrat.`,
+        life: 5000 
+      });
+    } else if (err.status === 401) {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Non Authentifié', 
+        detail: 'Votre session a expiré. Veuillez vous reconnecter.' 
+      });
+    } else {
+      this.messageService.add({ 
+        severity: 'error', 
+        summary: 'Erreur', 
+        detail: `Une erreur est survenue lors de la ${action} (Code ${err.status || 'inconnu'}).` 
+      });
+    }
   }
 }

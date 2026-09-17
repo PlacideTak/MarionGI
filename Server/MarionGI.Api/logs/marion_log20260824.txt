@@ -1,0 +1,904 @@
+2026-08-24 13:59:57.903 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-08-24 13:59:58.427 -04:00 [INF] Now listening on: https://localhost:7232
+2026-08-24 13:59:58.434 -04:00 [INF] Now listening on: http://localhost:5190
+2026-08-24 13:59:58.621 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-24 13:59:58.639 -04:00 [INF] Hosting environment: Development
+2026-08-24 13:59:58.640 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-08-24 14:05:23.556 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - null null
+2026-08-24 14:05:23.644 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:23.652 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - 204 null null 99.2101ms
+2026-08-24 14:05:23.659 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/connexion - application/json 58
+2026-08-24 14:05:23.682 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:23.751 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 14:05:23.791 -04:00 [INF] Route matched with {action = "Connexion", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Connexion(MarionGI.Application.Dtos.ConnexionRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 14:05:24.850 -04:00 [WRN] Entity 'Bien' has a global query filter defined and is the required end of a relationship with the entity 'DemandeVisite'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 14:05:24.853 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'Notification'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 14:05:24.861 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 14:05:24.910 -04:00 [WRN] The property 'Bien.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-08-24 14:05:24.987 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-08-24 14:05:27.832 -04:00 [INF] Executed DbCommand (174ms) [Parameters=[@__dto_Identifiant_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND ([u].[Email] = @__dto_Identifiant_0 OR [u].[Telephone] = @__dto_Identifiant_0)
+2026-08-24 14:05:29.273 -04:00 [INF] Executed DbCommand (261ms) [Parameters=[@p2='?' (DbType = Guid), @p0='?' (DbType = DateTime), @p1='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [Utilisateurs] SET [OtpExpiration] = @p0, [OtpSecret] = @p1
+OUTPUT 1
+WHERE [Id] = @p2;
+2026-08-24 14:05:29.504 -04:00 [INF] ==================================================
+2026-08-24 14:05:29.506 -04:00 [INF] [MOCK SMS PROVIDER CAMEROUN]
+2026-08-24 14:05:29.507 -04:00 [INF] Destinataire : +23799577123
+2026-08-24 14:05:29.509 -04:00 [INF] Message      : Votre code de confirmation MarionGI est : 456993
+2026-08-24 14:05:29.510 -04:00 [INF] ==================================================
+2026-08-24 14:05:29.520 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 14:05:29.544 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api) in 5745.1404ms
+2026-08-24 14:05:29.546 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 14:05:29.559 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/connexion - 200 null application/json; charset=utf-8 5899.1855ms
+2026-08-24 14:05:31.187 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - null null
+2026-08-24 14:05:31.194 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:31.195 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - 204 null null 8.5417ms
+2026-08-24 14:05:31.198 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - application/json 47
+2026-08-24 14:05:31.203 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:31.206 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 14:05:31.213 -04:00 [INF] Route matched with {action = "ValiderOtp", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] ValiderOtp(MarionGI.Application.Dtos.ValiderOtpRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 14:05:31.322 -04:00 [INF] Executed DbCommand (24ms) [Parameters=[@__dto_Telephone_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Telephone] = @__dto_Telephone_0
+2026-08-24 14:05:31.755 -04:00 [INF] Executed DbCommand (120ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?' (DbType = DateTime), @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (DbType = Guid), @p11='?' (DbType = Guid), @p8='?' (DbType = DateTime), @p9='?' (DbType = DateTime), @p10='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [DateCreation], [DateExpiration], [DateSuppression], [EstRevoque], [EstSupprime], [Token], [UtilisateurId])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+UPDATE [Utilisateurs] SET [DerniereConnexion] = @p8, [OtpExpiration] = @p9, [OtpSecret] = @p10
+OUTPUT 1
+WHERE [Id] = @p11;
+2026-08-24 14:05:31.768 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 14:05:31.771 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api) in 555.5283ms
+2026-08-24 14:05:31.773 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 14:05:31.775 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - 200 null application/json; charset=utf-8 577.1847ms
+2026-08-24 14:05:31.994 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 14:05:31.994 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:31.997 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:32.001 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:32.002 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - 204 null null 7.7932ms
+2026-08-24 14:05:32.003 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 8.8915ms
+2026-08-24 14:05:32.005 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 14:05:32.006 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:32.021 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:32.021 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:32.091 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:32.091 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 14:05:32.101 -04:00 [INF] Route matched with {action = "GetKpis", controller = "Rapports"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetKpis() on controller MarionGI.Api.Controllers.RapportsController (MarionGI.Api).
+2026-08-24 14:05:32.103 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 14:05:32.230 -04:00 [INF] Executed DbCommand (44ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:32.251 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit) AND [b].[Statut] = 2
+2026-08-24 14:05:32.339 -04:00 [INF] Executed DbCommand (66ms) [Parameters=[@__maintenant_Month_0='?' (DbType = Int32), @__maintenant_Year_1='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND DATEPART(month, [p].[DatePaiement]) = @__maintenant_Month_0 AND DATEPART(year, [p].[DatePaiement]) = @__maintenant_Year_1
+2026-08-24 14:05:32.362 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.367 -04:00 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:32.375 -04:00 [INF] Executed DbCommand (5ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.408 -04:00 [INF] Executed DbCommand (27ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.420 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:32.441 -04:00 [INF] Executed DbCommand (27ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.448 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.475 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 365.1822ms
+2026-08-24 14:05:32.477 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:32.478 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 472.117ms
+2026-08-24 14:05:32.588 -04:00 [INF] Executed DbCommand (135ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.595 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.600 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.604 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.611 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.616 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.622 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:05:32.806 -04:00 [INF] Executed DbCommand (103ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [c].[BienId], [c].[DateCreation], [c].[DateDebut], [c].[DateFin], [c].[DateSuppression], [c].[DelaiJoursTolerance], [c].[EstSupprime], [c].[FrequencePaiement], [c].[LocataireId], [c].[MontantCaution], [c].[MontantLoyer], [c].[Statut], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA], [p0].[Id], [p0].[ContratId], [p0].[DateCreation], [p0].[DatePaiement], [p0].[DateSuppression], [p0].[EnregistreParUtilisateurId], [p0].[EstSupprime], [p0].[ModePaiement], [p0].[Montant], [p0].[NumeroQuittance], [p0].[ReferenceTransactionOperateur], [p0].[StatutTransaction]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+LEFT JOIN (
+    SELECT [p].[Id], [p].[ContratId], [p].[DateCreation], [p].[DatePaiement], [p].[DateSuppression], [p].[EnregistreParUtilisateurId], [p].[EstSupprime], [p].[ModePaiement], [p].[Montant], [p].[NumeroQuittance], [p].[ReferenceTransactionOperateur], [p].[StatutTransaction]
+    FROM [Paiements] AS [p]
+    WHERE [p].[EstSupprime] = CAST(0 AS bit)
+) AS [p0] ON [c].[Id] = [p0].[ContratId]
+WHERE [c].[EstSupprime] = CAST(0 AS bit) AND [c].[Statut] = 1
+ORDER BY [c].[Id], [b0].[Id], [u0].[Id]
+2026-08-24 14:05:32.870 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType14`6[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Double, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[<>f__AnonymousType15`2[[System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:32.886 -04:00 [INF] Executed action MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api) in 781.0592ms
+2026-08-24 14:05:32.888 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 14:05:32.890 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - 200 null application/json; charset=utf-8 884.6241ms
+2026-08-24 14:05:42.969 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:42.969 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:42.974 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:42.977 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:42.978 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - 204 null null 9.0633ms
+2026-08-24 14:05:42.979 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 10.5316ms
+2026-08-24 14:05:42.981 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:42.982 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:42.992 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:42.996 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:43.001 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:43.001 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:43.003 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 14:05:43.010 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:05:43.036 -04:00 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:43.043 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:43.052 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 38.7006ms
+2026-08-24 14:05:43.055 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:43.058 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 76.4662ms
+2026-08-24 14:05:43.082 -04:00 [INF] Executed DbCommand (68ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:43.099 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:43.107 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 98.1852ms
+2026-08-24 14:05:43.113 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:43.115 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 133.34ms
+2026-08-24 14:05:43.198 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/uploads/biens/da6e16e0-5c4f-4a43-be99-6938ff658cf8_739486880_2081604515728377_2459821773770041793_n.jpg - null null
+2026-08-24 14:05:43.198 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/uploads/biens/0aef2b59-0c42-4f6c-bf50-255b4ff71ef3_Ap1.jpg - null null
+2026-08-24 14:05:43.198 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/uploads/biens/b86399b9-e845-45b2-85bc-9f41333ffa7d_1000018730.jpg - null null
+2026-08-24 14:05:43.200 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/uploads/biens/3a7b8a91-36cb-4553-803f-45e6f54585a7_WhatsApp Image 2026-08-07 at 6.10.49 AM.jpeg - null null
+2026-08-24 14:05:43.236 -04:00 [INF] Sending file. Request path: '/uploads/biens/da6e16e0-5c4f-4a43-be99-6938ff658cf8_739486880_2081604515728377_2459821773770041793_n.jpg'. Physical path: 'C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api\wwwroot\uploads\biens\da6e16e0-5c4f-4a43-be99-6938ff658cf8_739486880_2081604515728377_2459821773770041793_n.jpg'
+2026-08-24 14:05:43.237 -04:00 [INF] Sending file. Request path: '/uploads/biens/0aef2b59-0c42-4f6c-bf50-255b4ff71ef3_Ap1.jpg'. Physical path: 'C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api\wwwroot\uploads\biens\0aef2b59-0c42-4f6c-bf50-255b4ff71ef3_Ap1.jpg'
+2026-08-24 14:05:43.237 -04:00 [INF] Sending file. Request path: '/uploads/biens/3a7b8a91-36cb-4553-803f-45e6f54585a7_WhatsApp Image 2026-08-07 at 6.10.49 AM.jpeg'. Physical path: 'C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api\wwwroot\uploads\biens\3a7b8a91-36cb-4553-803f-45e6f54585a7_WhatsApp Image 2026-08-07 at 6.10.49 AM.jpeg'
+2026-08-24 14:05:43.240 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/uploads/biens/da6e16e0-5c4f-4a43-be99-6938ff658cf8_739486880_2081604515728377_2459821773770041793_n.jpg - 200 64088 image/jpeg 41.494ms
+2026-08-24 14:05:43.243 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/uploads/biens/0aef2b59-0c42-4f6c-bf50-255b4ff71ef3_Ap1.jpg - 200 88916 image/jpeg 44.3094ms
+2026-08-24 14:05:43.246 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/uploads/biens/3a7b8a91-36cb-4553-803f-45e6f54585a7_WhatsApp Image 2026-08-07 at 6.10.49 AM.jpeg - 200 118987 image/jpeg 45.8322ms
+2026-08-24 14:05:43.324 -04:00 [INF] Sending file. Request path: '/uploads/biens/b86399b9-e845-45b2-85bc-9f41333ffa7d_1000018730.jpg'. Physical path: 'C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api\wwwroot\uploads\biens\b86399b9-e845-45b2-85bc-9f41333ffa7d_1000018730.jpg'
+2026-08-24 14:05:43.326 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/uploads/biens/b86399b9-e845-45b2-85bc-9f41333ffa7d_1000018730.jpg - 200 1970314 image/jpeg 127.4141ms
+2026-08-24 14:05:46.194 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Contrats - null null
+2026-08-24 14:05:46.194 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:46.194 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:46.198 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:46.204 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:46.208 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:46.209 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Contrats - 204 null null 15.263ms
+2026-08-24 14:05:46.211 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:46.220 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 14:05:46.214 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Contrats - null null
+2026-08-24 14:05:46.213 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:46.229 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:46.230 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:05:46.232 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ContratsController.GetContrats (MarionGI.Api)'
+2026-08-24 14:05:46.233 -04:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:46.239 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:46.241 -04:00 [INF] Route matched with {action = "GetContrats", controller = "Contrats"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetContrats(System.Nullable`1[MarionGI.Domain.Enums.StatutContrat]) on controller MarionGI.Api.Controllers.ContratsController (MarionGI.Api).
+2026-08-24 14:05:46.244 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:46.247 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:46.253 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 28.973ms
+2026-08-24 14:05:46.258 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 22.852ms
+2026-08-24 14:05:46.260 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:46.263 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:46.265 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 70.5451ms
+2026-08-24 14:05:46.267 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 72.0871ms
+2026-08-24 14:05:46.307 -04:00 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [c].[BienId], [c].[DateCreation], [c].[DateDebut], [c].[DateFin], [c].[DateSuppression], [c].[DelaiJoursTolerance], [c].[EstSupprime], [c].[FrequencePaiement], [c].[LocataireId], [c].[MontantCaution], [c].[MontantLoyer], [c].[Statut], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+WHERE [c].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:46.315 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Contrat, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:46.321 -04:00 [INF] Executed action MarionGI.Api.Controllers.ContratsController.GetContrats (MarionGI.Api) in 70.6357ms
+2026-08-24 14:05:46.323 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ContratsController.GetContrats (MarionGI.Api)'
+2026-08-24 14:05:46.325 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Contrats - 200 null application/json; charset=utf-8 111.2951ms
+2026-08-24 14:05:48.181 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/DemandesVisite - null null
+2026-08-24 14:05:48.181 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:48.183 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:48.187 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.192 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.196 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.202 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - 204 null null 19.2227ms
+2026-08-24 14:05:48.200 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 18.2773ms
+2026-08-24 14:05:48.201 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/DemandesVisite - null null
+2026-08-24 14:05:48.198 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/DemandesVisite - 204 null null 17.2341ms
+2026-08-24 14:05:48.203 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 14:05:48.208 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:48.218 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.225 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.228 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:48.229 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.DemandesVisiteController.GetDemandesVisite (MarionGI.Api)'
+2026-08-24 14:05:48.230 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:48.231 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:48.235 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 14:05:48.236 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:05:48.236 -04:00 [INF] Route matched with {action = "GetDemandesVisite", controller = "DemandesVisite"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.ActionResult`1[System.Collections.Generic.IEnumerable`1[MarionGI.Domain.Entities.DemandeVisite]]] GetDemandesVisite() on controller MarionGI.Api.Controllers.DemandesVisiteController (MarionGI.Api).
+2026-08-24 14:05:48.249 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:48.250 -04:00 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:48.253 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:48.261 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:48.265 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 20.6533ms
+2026-08-24 14:05:48.271 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:48.269 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 28.391ms
+2026-08-24 14:05:48.274 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 66.5169ms
+2026-08-24 14:05:48.277 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:05:48.284 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 81.0624ms
+2026-08-24 14:05:48.358 -04:00 [INF] Executed DbCommand (71ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [d].[Id], [d].[AgentId], [d].[BienId], [d].[DateCreation], [d].[DateSouhaitee], [d].[DateSuppression], [d].[EstSupprime], [d].[NomProspect], [d].[Statut], [d].[TelephoneProspect], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [DemandesVisite] AS [d]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [d].[BienId] = [b0].[Id]
+LEFT JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [d].[AgentId] = [u0].[Id]
+2026-08-24 14:05:48.380 -04:00 [INF] Executing ObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.DemandeVisite, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:48.401 -04:00 [INF] Executed action MarionGI.Api.Controllers.DemandesVisiteController.GetDemandesVisite (MarionGI.Api) in 153.1601ms
+2026-08-24 14:05:48.404 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.DemandesVisiteController.GetDemandesVisite (MarionGI.Api)'
+2026-08-24 14:05:48.407 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/DemandesVisite - 200 null application/json; charset=utf-8 205.3085ms
+2026-08-24 14:05:49.847 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Paiements/Paiements - null null
+2026-08-24 14:05:49.853 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:49.855 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Paiements/Paiements - 204 null null 8.0659ms
+2026-08-24 14:05:49.857 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Paiements/Paiements - null null
+2026-08-24 14:05:49.866 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:49.868 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.PaiementsController.GetPaiements (MarionGI.Api)'
+2026-08-24 14:05:49.875 -04:00 [INF] Route matched with {action = "GetPaiements", controller = "Paiements"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetPaiements() on controller MarionGI.Api.Controllers.PaiementsController (MarionGI.Api).
+2026-08-24 14:05:50.044 -04:00 [INF] Executed DbCommand (110ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [p].[Id], [p].[DatePaiement], [p].[Montant], [p].[ModePaiement], [p].[StatutTransaction], [p].[NumeroQuittance], CAST(1 AS bit), [u0].[Nom], [u0].[Prenom], [b0].[Reference]
+FROM [Paiements] AS [p]
+INNER JOIN (
+    SELECT [c].[Id], [c].[BienId], [c].[LocataireId]
+    FROM [Contrats] AS [c]
+    WHERE [c].[EstSupprime] = CAST(0 AS bit)
+) AS [c0] ON [p].[ContratId] = [c0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[Nom], [u].[Prenom]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c0].[LocataireId] = [u0].[Id]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Reference]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c0].[BienId] = [b0].[Id]
+WHERE [p].[EstSupprime] = CAST(0 AS bit)
+ORDER BY [p].[DatePaiement] DESC
+2026-08-24 14:05:50.051 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType9`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.ModePaiement, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[MarionGI.Domain.Enums.StatutTransaction, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:50.061 -04:00 [INF] Executed action MarionGI.Api.Controllers.PaiementsController.GetPaiements (MarionGI.Api) in 182.3483ms
+2026-08-24 14:05:50.064 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.PaiementsController.GetPaiements (MarionGI.Api)'
+2026-08-24 14:05:50.066 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Paiements/Paiements - 200 null application/json; charset=utf-8 208.2357ms
+2026-08-24 14:05:51.292 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:51.302 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:51.306 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:51.310 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:05:51.318 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:51.321 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:51.326 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 11.9008ms
+2026-08-24 14:05:51.328 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:51.329 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 37.2267ms
+2026-08-24 14:05:52.649 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:05:52.655 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:05:52.658 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:52.660 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:05:52.668 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:05:52.674 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:05:52.679 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 15.8191ms
+2026-08-24 14:05:52.682 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:05:52.684 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 34.5459ms
+2026-08-24 14:06:30.908 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:06:30.934 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:30.936 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Utilisateurs - 204 null null 27.3962ms
+2026-08-24 14:06:30.939 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Utilisateurs - null null
+2026-08-24 14:06:30.948 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:30.950 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:06:30.952 -04:00 [INF] Route matched with {action = "GetUtilisateurs", controller = "Utilisateurs"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUtilisateurs() on controller MarionGI.Api.Controllers.UtilisateursController (MarionGI.Api).
+2026-08-24 14:06:30.964 -04:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Nom], [u].[Prenom], [u].[Email], [u].[Telephone], [u].[Role], [u].[Statut], [u].[DerniereConnexion]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:06:30.968 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType23`8[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.RoleUtilisateur, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Nullable`1[[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:06:30.972 -04:00 [INF] Executed action MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api) in 16.3221ms
+2026-08-24 14:06:30.974 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UtilisateursController.GetUtilisateurs (MarionGI.Api)'
+2026-08-24 14:06:30.977 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Utilisateurs - 200 null application/json; charset=utf-8 38.2612ms
+2026-08-24 14:06:38.509 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Rapports/rapports/contrats - null null
+2026-08-24 14:06:38.514 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:38.515 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Rapports/rapports/contrats - 204 null null 5.7975ms
+2026-08-24 14:06:38.517 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Rapports/rapports/contrats - null null
+2026-08-24 14:06:38.525 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:38.527 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.RapportsController.GetRapportContrats (MarionGI.Api)'
+2026-08-24 14:06:38.534 -04:00 [INF] Route matched with {action = "GetRapportContrats", controller = "Rapports"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetRapportContrats(System.Nullable`1[MarionGI.Domain.Enums.StatutContrat]) on controller MarionGI.Api.Controllers.RapportsController (MarionGI.Api).
+2026-08-24 14:06:38.582 -04:00 [INF] Executed DbCommand (16ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [b0].[Reference] AS [BienReference], [u0].[Nom] AS [LocataireNom], [c].[DateDebut], [c].[DateFin], [c].[MontantLoyer], [c].[MontantCaution], CASE [c].[Statut]
+    WHEN 0 THEN N'EnAttente'
+    WHEN 1 THEN N'Actif'
+    WHEN 2 THEN N'Expire'
+    WHEN 3 THEN N'Resilie'
+    ELSE CAST([c].[Statut] AS nvarchar(max))
+END AS [StatutContrat], [c].[DelaiJoursTolerance]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Reference]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[Nom]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+WHERE [c].[EstSupprime] = CAST(0 AS bit)
+ORDER BY [c].[DateDebut] DESC
+2026-08-24 14:06:38.589 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType21`9[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.DateTime, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:06:38.596 -04:00 [INF] Executed action MarionGI.Api.Controllers.RapportsController.GetRapportContrats (MarionGI.Api) in 59.343ms
+2026-08-24 14:06:38.599 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.RapportsController.GetRapportContrats (MarionGI.Api)'
+2026-08-24 14:06:38.601 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Rapports/rapports/contrats - 200 null application/json; charset=utf-8 83.7877ms
+2026-08-24 14:06:43.773 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 14:06:43.776 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 14:06:43.797 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:43.805 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:43.807 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - 204 null null 33.4955ms
+2026-08-24 14:06:43.811 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 14:06:43.812 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 35.8731ms
+2026-08-24 14:06:43.816 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 14:06:43.822 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:43.832 -04:00 [INF] CORS policy execution successful.
+2026-08-24 14:06:43.834 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 14:06:43.836 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:06:43.838 -04:00 [INF] Route matched with {action = "GetKpis", controller = "Rapports"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetKpis() on controller MarionGI.Api.Controllers.RapportsController (MarionGI.Api).
+2026-08-24 14:06:43.840 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 14:06:43.864 -04:00 [INF] Executed DbCommand (15ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:06:43.875 -04:00 [INF] Executed DbCommand (12ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 14:06:43.880 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit) AND [b].[Statut] = 2
+2026-08-24 14:06:43.885 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:06:43.891 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 30.541ms
+2026-08-24 14:06:43.895 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 14:06:43.898 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 81.2082ms
+2026-08-24 14:06:44.010 -04:00 [INF] Executed DbCommand (121ms) [Parameters=[@__maintenant_Month_0='?' (DbType = Int32), @__maintenant_Year_1='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND DATEPART(month, [p].[DatePaiement]) = @__maintenant_Month_0 AND DATEPART(year, [p].[DatePaiement]) = @__maintenant_Year_1
+2026-08-24 14:06:44.018 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.028 -04:00 [INF] Executed DbCommand (5ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.038 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.048 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.056 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.066 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.073 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.082 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.091 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.101 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.106 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.116 -04:00 [INF] Executed DbCommand (4ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 14:06:44.133 -04:00 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [c].[BienId], [c].[DateCreation], [c].[DateDebut], [c].[DateFin], [c].[DateSuppression], [c].[DelaiJoursTolerance], [c].[EstSupprime], [c].[FrequencePaiement], [c].[LocataireId], [c].[MontantCaution], [c].[MontantLoyer], [c].[Statut], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA], [p0].[Id], [p0].[ContratId], [p0].[DateCreation], [p0].[DatePaiement], [p0].[DateSuppression], [p0].[EnregistreParUtilisateurId], [p0].[EstSupprime], [p0].[ModePaiement], [p0].[Montant], [p0].[NumeroQuittance], [p0].[ReferenceTransactionOperateur], [p0].[StatutTransaction]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+LEFT JOIN (
+    SELECT [p].[Id], [p].[ContratId], [p].[DateCreation], [p].[DatePaiement], [p].[DateSuppression], [p].[EnregistreParUtilisateurId], [p].[EstSupprime], [p].[ModePaiement], [p].[Montant], [p].[NumeroQuittance], [p].[ReferenceTransactionOperateur], [p].[StatutTransaction]
+    FROM [Paiements] AS [p]
+    WHERE [p].[EstSupprime] = CAST(0 AS bit)
+) AS [p0] ON [c].[Id] = [p0].[ContratId]
+WHERE [c].[EstSupprime] = CAST(0 AS bit) AND [c].[Statut] = 1
+ORDER BY [c].[Id], [b0].[Id], [u0].[Id]
+2026-08-24 14:06:44.144 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType14`6[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Double, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[<>f__AnonymousType15`2[[System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 14:06:44.149 -04:00 [INF] Executed action MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api) in 303.376ms
+2026-08-24 14:06:44.151 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 14:06:44.153 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - 200 null application/json; charset=utf-8 341.8127ms
+2026-08-24 16:22:54.952 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-08-24 16:22:55.351 -04:00 [INF] Now listening on: https://localhost:7232
+2026-08-24 16:22:55.352 -04:00 [INF] Now listening on: http://localhost:5190
+2026-08-24 16:22:55.448 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-08-24 16:22:55.450 -04:00 [INF] Hosting environment: Development
+2026-08-24 16:22:55.451 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-08-24 16:27:23.995 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - null null
+2026-08-24 16:27:24.074 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:27:24.083 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - 204 null null 93.464ms
+2026-08-24 16:27:24.088 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/connexion - application/json 58
+2026-08-24 16:27:24.119 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:27:24.169 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 16:27:24.213 -04:00 [INF] Route matched with {action = "Connexion", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Connexion(MarionGI.Application.Dtos.ConnexionRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 16:27:25.249 -04:00 [WRN] Entity 'Bien' has a global query filter defined and is the required end of a relationship with the entity 'DemandeVisite'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 16:27:25.251 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'Notification'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 16:27:25.253 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-08-24 16:27:25.279 -04:00 [WRN] The property 'Bien.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-08-24 16:27:25.333 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-08-24 16:27:27.893 -04:00 [INF] Executed DbCommand (121ms) [Parameters=[@__dto_Identifiant_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND ([u].[Email] = @__dto_Identifiant_0 OR [u].[Telephone] = @__dto_Identifiant_0)
+2026-08-24 16:27:29.400 -04:00 [INF] Executed DbCommand (511ms) [Parameters=[@p2='?' (DbType = Guid), @p0='?' (DbType = DateTime), @p1='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [Utilisateurs] SET [OtpExpiration] = @p0, [OtpSecret] = @p1
+OUTPUT 1
+WHERE [Id] = @p2;
+2026-08-24 16:27:29.619 -04:00 [INF] ==================================================
+2026-08-24 16:27:29.621 -04:00 [INF] [MOCK SMS PROVIDER CAMEROUN]
+2026-08-24 16:27:29.622 -04:00 [INF] Destinataire : +23799577123
+2026-08-24 16:27:29.624 -04:00 [INF] Message      : Votre code de confirmation MarionGI est : 559760
+2026-08-24 16:27:29.625 -04:00 [INF] ==================================================
+2026-08-24 16:27:29.633 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 16:27:29.662 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api) in 5441.9767ms
+2026-08-24 16:27:29.666 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 16:27:29.679 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/connexion - 200 null application/json; charset=utf-8 5591.768ms
+2026-08-24 16:28:51.783 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - null null
+2026-08-24 16:28:51.787 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:51.788 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - 204 null null 5.6035ms
+2026-08-24 16:28:51.791 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - application/json 47
+2026-08-24 16:28:51.796 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:51.799 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 16:28:51.805 -04:00 [INF] Route matched with {action = "ValiderOtp", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] ValiderOtp(MarionGI.Application.Dtos.ValiderOtpRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 16:28:51.891 -04:00 [INF] Executed DbCommand (8ms) [Parameters=[@__dto_Telephone_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Telephone] = @__dto_Telephone_0
+2026-08-24 16:28:52.203 -04:00 [INF] Executed DbCommand (13ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?' (DbType = DateTime), @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (DbType = Guid), @p11='?' (DbType = Guid), @p8='?' (DbType = DateTime), @p9='?' (DbType = DateTime), @p10='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [DateCreation], [DateExpiration], [DateSuppression], [EstRevoque], [EstSupprime], [Token], [UtilisateurId])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+UPDATE [Utilisateurs] SET [DerniereConnexion] = @p8, [OtpExpiration] = @p9, [OtpSecret] = @p10
+OUTPUT 1
+WHERE [Id] = @p11;
+2026-08-24 16:28:52.217 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 16:28:52.221 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api) in 413.5336ms
+2026-08-24 16:28:52.222 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 16:28:52.224 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - 200 null application/json; charset=utf-8 433.6693ms
+2026-08-24 16:28:52.507 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 16:28:52.507 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 16:28:52.511 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:52.515 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:52.516 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - 204 null null 9.0816ms
+2026-08-24 16:28:52.517 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 10.3558ms
+2026-08-24 16:28:52.519 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 16:28:52.520 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 16:28:52.537 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:52.537 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:28:52.628 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 16:28:52.628 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 16:28:52.636 -04:00 [INF] Route matched with {action = "GetKpis", controller = "Rapports"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetKpis() on controller MarionGI.Api.Controllers.RapportsController (MarionGI.Api).
+2026-08-24 16:28:52.637 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 16:28:52.749 -04:00 [INF] Executed DbCommand (13ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 16:28:52.770 -04:00 [INF] Executed DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit) AND [b].[Statut] = 2
+2026-08-24 16:28:52.790 -04:00 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 16:28:52.824 -04:00 [INF] Executed DbCommand (17ms) [Parameters=[@__maintenant_Month_0='?' (DbType = Int32), @__maintenant_Year_1='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND DATEPART(month, [p].[DatePaiement]) = @__maintenant_Month_0 AND DATEPART(year, [p].[DatePaiement]) = @__maintenant_Year_1
+2026-08-24 16:28:52.844 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.852 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 16:28:52.855 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.860 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.866 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.871 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.877 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.883 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.888 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.892 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.897 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.903 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.907 -04:00 [INF] Executed DbCommand (0ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:28:52.926 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 282.7973ms
+2026-08-24 16:28:52.928 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 16:28:52.930 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 409.6104ms
+2026-08-24 16:28:53.021 -04:00 [INF] Executed DbCommand (24ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [c].[BienId], [c].[DateCreation], [c].[DateDebut], [c].[DateFin], [c].[DateSuppression], [c].[DelaiJoursTolerance], [c].[EstSupprime], [c].[FrequencePaiement], [c].[LocataireId], [c].[MontantCaution], [c].[MontantLoyer], [c].[Statut], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA], [p0].[Id], [p0].[ContratId], [p0].[DateCreation], [p0].[DatePaiement], [p0].[DateSuppression], [p0].[EnregistreParUtilisateurId], [p0].[EstSupprime], [p0].[ModePaiement], [p0].[Montant], [p0].[NumeroQuittance], [p0].[ReferenceTransactionOperateur], [p0].[StatutTransaction]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+LEFT JOIN (
+    SELECT [p].[Id], [p].[ContratId], [p].[DateCreation], [p].[DatePaiement], [p].[DateSuppression], [p].[EnregistreParUtilisateurId], [p].[EstSupprime], [p].[ModePaiement], [p].[Montant], [p].[NumeroQuittance], [p].[ReferenceTransactionOperateur], [p].[StatutTransaction]
+    FROM [Paiements] AS [p]
+    WHERE [p].[EstSupprime] = CAST(0 AS bit)
+) AS [p0] ON [c].[Id] = [p0].[ContratId]
+WHERE [c].[EstSupprime] = CAST(0 AS bit) AND [c].[Statut] = 1
+ORDER BY [c].[Id], [b0].[Id], [u0].[Id]
+2026-08-24 16:28:53.101 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType14`6[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Double, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[<>f__AnonymousType15`2[[System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 16:28:53.116 -04:00 [INF] Executed action MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api) in 476.8018ms
+2026-08-24 16:28:53.118 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 16:28:53.119 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - 200 null application/json; charset=utf-8 599.7952ms
+2026-08-24 16:30:39.582 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - null null
+2026-08-24 16:30:39.591 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:39.593 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/connexion - 204 null null 11.0841ms
+2026-08-24 16:30:39.595 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/connexion - application/json 58
+2026-08-24 16:30:39.602 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:39.603 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 16:30:39.609 -04:00 [INF] Route matched with {action = "Connexion", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Connexion(MarionGI.Application.Dtos.ConnexionRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 16:30:39.772 -04:00 [INF] Executed DbCommand (151ms) [Parameters=[@__dto_Identifiant_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND ([u].[Email] = @__dto_Identifiant_0 OR [u].[Telephone] = @__dto_Identifiant_0)
+2026-08-24 16:30:40.333 -04:00 [INF] Executed DbCommand (157ms) [Parameters=[@p2='?' (DbType = Guid), @p0='?' (DbType = DateTime), @p1='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+UPDATE [Utilisateurs] SET [OtpExpiration] = @p0, [OtpSecret] = @p1
+OUTPUT 1
+WHERE [Id] = @p2;
+2026-08-24 16:30:40.553 -04:00 [INF] ==================================================
+2026-08-24 16:30:40.555 -04:00 [INF] [MOCK SMS PROVIDER CAMEROUN]
+2026-08-24 16:30:40.557 -04:00 [INF] Destinataire : +23799577123
+2026-08-24 16:30:40.559 -04:00 [INF] Message      : Votre code de confirmation MarionGI est : 990682
+2026-08-24 16:30:40.560 -04:00 [INF] ==================================================
+2026-08-24 16:30:40.561 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 16:30:40.563 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api) in 950.9684ms
+2026-08-24 16:30:40.566 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.Connexion (MarionGI.Api)'
+2026-08-24 16:30:40.568 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/connexion - 200 null application/json; charset=utf-8 972.3506ms
+2026-08-24 16:30:47.277 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - null null
+2026-08-24 16:30:47.280 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.281 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Auth/valider-otp - 204 null null 4.3916ms
+2026-08-24 16:30:47.284 -04:00 [INF] Request starting HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - application/json 47
+2026-08-24 16:30:47.292 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.294 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 16:30:47.295 -04:00 [INF] Route matched with {action = "ValiderOtp", controller = "Auth"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] ValiderOtp(MarionGI.Application.Dtos.ValiderOtpRequestDto) on controller MarionGI.Api.Controllers.AuthController (MarionGI.Api).
+2026-08-24 16:30:47.319 -04:00 [INF] Executed DbCommand (18ms) [Parameters=[@__dto_Telephone_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Telephone] = @__dto_Telephone_0
+2026-08-24 16:30:47.629 -04:00 [INF] Executed DbCommand (102ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (DbType = DateTime), @p2='?' (DbType = DateTime), @p3='?' (DbType = DateTime), @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (DbType = Guid), @p11='?' (DbType = Guid), @p8='?' (DbType = DateTime), @p9='?' (DbType = DateTime), @p10='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [RefreshTokens] ([Id], [DateCreation], [DateExpiration], [DateSuppression], [EstRevoque], [EstSupprime], [Token], [UtilisateurId])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+UPDATE [Utilisateurs] SET [DerniereConnexion] = @p8, [OtpExpiration] = @p9, [OtpSecret] = @p10
+OUTPUT 1
+WHERE [Id] = @p11;
+2026-08-24 16:30:47.636 -04:00 [INF] Executing OkObjectResult, writing value of type 'MarionGI.Application.Dtos.AuthResponseDto'.
+2026-08-24 16:30:47.642 -04:00 [INF] Executed action MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api) in 342.9568ms
+2026-08-24 16:30:47.644 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.AuthController.ValiderOtp (MarionGI.Api)'
+2026-08-24 16:30:47.646 -04:00 [INF] Request finished HTTP/2 POST https://localhost:7232/api/Auth/valider-otp - 200 null application/json; charset=utf-8 362.0489ms
+2026-08-24 16:30:47.677 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 16:30:47.684 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Biens - null null
+2026-08-24 16:30:47.690 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.694 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.695 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Rapports/dashboard-kpi - 204 null null 18.4668ms
+2026-08-24 16:30:47.697 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Biens - 204 null null 13.8372ms
+2026-08-24 16:30:47.700 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - null null
+2026-08-24 16:30:47.701 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Biens - null null
+2026-08-24 16:30:47.718 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.724 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:30:47.729 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 16:30:47.729 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 16:30:47.732 -04:00 [INF] Route matched with {action = "GetKpis", controller = "Rapports"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetKpis() on controller MarionGI.Api.Controllers.RapportsController (MarionGI.Api).
+2026-08-24 16:30:47.733 -04:00 [INF] Route matched with {action = "GetBiens", controller = "Biens"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Nullable`1[MarionGI.Domain.Enums.StatutBien], System.Nullable`1[MarionGI.Domain.Enums.TypeBien], System.String) on controller MarionGI.Api.Controllers.BiensController (MarionGI.Api).
+2026-08-24 16:30:47.758 -04:00 [INF] Executed DbCommand (8ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA]
+FROM [Biens] AS [b]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [b].[ProprietaireId] = [u0].[Id]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 16:30:47.767 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Domain.Entities.Bien, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 16:30:47.771 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 23.0843ms
+2026-08-24 16:30:47.777 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
+2026-08-24 16:30:47.779 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 78.3552ms
+2026-08-24 16:30:47.792 -04:00 [INF] Executed DbCommand (51ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit)
+2026-08-24 16:30:47.800 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT COUNT(*)
+FROM [Biens] AS [b]
+WHERE [b].[EstSupprime] = CAST(0 AS bit) AND [b].[Statut] = 2
+2026-08-24 16:30:47.887 -04:00 [INF] Executed DbCommand (83ms) [Parameters=[@__maintenant_Month_0='?' (DbType = Int32), @__maintenant_Year_1='?' (DbType = Int32)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND DATEPART(month, [p].[DatePaiement]) = @__maintenant_Month_0 AND DATEPART(year, [p].[DatePaiement]) = @__maintenant_Year_1
+2026-08-24 16:30:47.895 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.902 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.913 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.919 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.930 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.945 -04:00 [INF] Executed DbCommand (9ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.952 -04:00 [INF] Executed DbCommand (2ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.963 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.974 -04:00 [INF] Executed DbCommand (6ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.983 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:47.992 -04:00 [INF] Executed DbCommand (1ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:48.001 -04:00 [INF] Executed DbCommand (3ms) [Parameters=[@__debutMois_0='?' (DbType = DateTime), @__finMois_1='?' (DbType = DateTime)], CommandType='"Text"', CommandTimeout='30']
+SELECT COALESCE(SUM([p].[Montant]), 0.0)
+FROM [Paiements] AS [p]
+WHERE [p].[EstSupprime] = CAST(0 AS bit) AND [p].[StatutTransaction] = 2 AND [p].[DatePaiement] >= @__debutMois_0 AND [p].[DatePaiement] <= @__finMois_1
+2026-08-24 16:30:48.040 -04:00 [INF] Executed DbCommand (30ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [c].[Id], [c].[BienId], [c].[DateCreation], [c].[DateDebut], [c].[DateFin], [c].[DateSuppression], [c].[DelaiJoursTolerance], [c].[EstSupprime], [c].[FrequencePaiement], [c].[LocataireId], [c].[MontantCaution], [c].[MontantLoyer], [c].[Statut], [b0].[Id], [b0].[Adresse], [b0].[DateCreation], [b0].[DateSuppression], [b0].[EstSupprime], [b0].[Loyer], [b0].[Photos], [b0].[ProprietaireId], [b0].[Quartier], [b0].[Reference], [b0].[Statut], [b0].[Superficie], [b0].[Type], [b0].[Ville], [u0].[Id], [u0].[DateCreation], [u0].[DateSuppression], [u0].[DerniereConnexion], [u0].[Email], [u0].[EstSupprime], [u0].[MotDePasseHash], [u0].[Nom], [u0].[OtpExpiration], [u0].[OtpSecret], [u0].[Prenom], [u0].[Role], [u0].[Statut], [u0].[Telephone], [u0].[TelephoneVerifie], [u0].[TentativesConnexionEchouees], [u0].[VerrouilleJusquA], [p0].[Id], [p0].[ContratId], [p0].[DateCreation], [p0].[DatePaiement], [p0].[DateSuppression], [p0].[EnregistreParUtilisateurId], [p0].[EstSupprime], [p0].[ModePaiement], [p0].[Montant], [p0].[NumeroQuittance], [p0].[ReferenceTransactionOperateur], [p0].[StatutTransaction]
+FROM [Contrats] AS [c]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[DateCreation], [b].[DateSuppression], [b].[EstSupprime], [b].[Loyer], [b].[Photos], [b].[ProprietaireId], [b].[Quartier], [b].[Reference], [b].[Statut], [b].[Superficie], [b].[Type], [b].[Ville]
+    FROM [Biens] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [c].[BienId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+    FROM [Utilisateurs] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [c].[LocataireId] = [u0].[Id]
+LEFT JOIN (
+    SELECT [p].[Id], [p].[ContratId], [p].[DateCreation], [p].[DatePaiement], [p].[DateSuppression], [p].[EnregistreParUtilisateurId], [p].[EstSupprime], [p].[ModePaiement], [p].[Montant], [p].[NumeroQuittance], [p].[ReferenceTransactionOperateur], [p].[StatutTransaction]
+    FROM [Paiements] AS [p]
+    WHERE [p].[EstSupprime] = CAST(0 AS bit)
+) AS [p0] ON [c].[Id] = [p0].[ContratId]
+WHERE [c].[EstSupprime] = CAST(0 AS bit) AND [c].[Statut] = 1
+ORDER BY [c].[Id], [b0].[Id], [u0].[Id]
+2026-08-24 16:30:48.051 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType14`6[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Double, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Object, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[<>f__AnonymousType15`2[[System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Collections.Generic.List`1[[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-08-24 16:30:48.060 -04:00 [INF] Executed action MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api) in 321.3982ms
+2026-08-24 16:30:48.061 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.RapportsController.GetKpis (MarionGI.Api)'
+2026-08-24 16:30:48.063 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Rapports/dashboard-kpi - 200 null application/json; charset=utf-8 362.8084ms
+2026-08-24 16:38:13.022 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-08-24 16:38:13.203 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:38:13.248 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:38:13.449 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-08-24 16:38:13.884 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-08-24 16:38:14.124 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 584.3774ms
+2026-08-24 16:38:14.285 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:38:14.304 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 1286.363ms
+2026-08-24 16:38:26.379 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-08-24 16:38:27.776 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:38:28.555 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:38:28.967 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-08-24 16:38:29.002 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-08-24 16:38:29.006 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.492ms
+2026-08-24 16:38:29.011 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:38:29.015 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 2636.035ms
+2026-08-24 16:39:11.350 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-08-24 16:39:11.650 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:39:12.722 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:39:13.318 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-08-24 16:39:13.339 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-08-24 16:39:13.351 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 25.8377ms
+2026-08-24 16:39:13.356 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:39:13.359 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 2012.1201ms
+2026-08-24 16:56:22.583 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-08-24 16:56:22.627 -04:00 [INF] CORS policy execution successful.
+2026-08-24 16:56:22.645 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:56:22.660 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-08-24 16:56:22.688 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-08-24 16:56:22.696 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 30.8083ms
+2026-08-24 16:56:22.700 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-08-24 16:56:22.703 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 122.3758ms

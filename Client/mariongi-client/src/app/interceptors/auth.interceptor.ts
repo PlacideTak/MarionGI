@@ -5,9 +5,11 @@ import { catchError, throwError } from 'rxjs';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const token = sessionStorage.getItem('accessToken');
+  
+  // 1. Récupération du token (vérifie sessionStorage, puis localStorage)
+  const token = sessionStorage.getItem('accessToken') || localStorage.getItem('accessToken') || localStorage.getItem('token');
 
-  // Si un token existe, on clone la requête en ajoutant le header Bearer
+  // 2. Injection du header Authorization si le token existe
   let authReq = req;
   if (token) {
     authReq = req.clone({
@@ -19,8 +21,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        // Le token a expiré ou n'est plus valide sur le serveur
+      // 3. Traitement des erreurs 401 (exclut l'appel API de login pour éviter les boucles)
+      if (error.status === 401 && !req.url.includes('/login') && !req.url.includes('/auth')) {
         sessionStorage.clear();
         localStorage.clear();
         router.navigate(['/login']);

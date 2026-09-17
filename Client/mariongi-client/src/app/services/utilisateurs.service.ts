@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { UtilisateurDto } from '../models/gestimmo.models';
+import { Observable, map, catchError, of } from 'rxjs';
+import { UtilisateurDto, RoleUtilisateur } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
 @Injectable({
@@ -13,7 +13,27 @@ export class UtilisateursService {
 
   // GET: /api/Utilisateurs
   getUtilisateurs(): Observable<UtilisateurDto[]> {
-    return this.http.get<UtilisateurDto[]>(this.apiUrl);
+    return this.http.get<UtilisateurDto[]>(this.apiUrl).pipe(
+      map(data => Array.isArray(data) ? data : []),
+      catchError(err => {
+        console.error('Erreur lors du chargement des utilisateurs:', err);
+        return of([]);
+      })
+    );
+  }
+
+  // GET: /api/Utilisateurs (filtré pour les locataires)
+  getLocataires(): Observable<UtilisateurDto[]> {
+    return this.getUtilisateurs().pipe(
+      map(utilisateurs => {
+        const liste = utilisateurs ?? [];
+        return liste.filter(u => 
+          u.role === RoleUtilisateur.Locataire ||
+          String(u.role).toLowerCase() === 'locataire' ||
+          u.role === 3
+        );
+      })
+    );
   }
 
   // GET: /api/Utilisateurs/{id}
@@ -22,8 +42,6 @@ export class UtilisateursService {
   }
 
   // POST: /api/Utilisateurs?motDePasseInitial=...
-  // ⚠️ Le contrôleur attend motDePasseInitial en query string ([FromQuery]),
-  // pas dans le corps JSON — d'où le paramètre séparé ici.
   createUtilisateur(
     utilisateur: Omit<UtilisateurDto, 'id' | 'dateCreation'>,
     motDePasseInitial: string

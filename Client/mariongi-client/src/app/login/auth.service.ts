@@ -126,6 +126,37 @@ export class AuthService {
     }
   }
 
+ 
+  /**
+   * Vérifie si l'utilisateur connecté possède un rôle spécifique (insensible à la casse)
+   */
+  hasRole(allowedRoles: string | string[]): boolean {
+    const user = this.currentUser();
+    if (!user || !user.role) return false;
+
+    const userRole = String(user.role).toLowerCase().trim();
+    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+
+    return roles.map(r => r.toLowerCase().trim()).includes(userRole);
+  }
+
+  /**
+   * Vérifie si l'utilisateur a la permission d'effectuer une action (si votre JWT contient des permissions/claims spécifiques)
+   */
+  hasPermission(permission: string): boolean {
+    // Si vos permissions sont stockées dans le token sous forme de tableau de claims 'permission'
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) return false;
+
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const permissions = payload.permissions || payload['permission'] || [];
+      return Array.isArray(permissions) && permissions.includes(permission);
+    } catch {
+      return false;
+    }
+  }
+
 private normalizeError(err: HttpErrorResponse) {
   const apiError: ApiError = {
     status: err.status,

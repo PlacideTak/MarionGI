@@ -1,16 +1,41 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment.development';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ecouteinactivite {
   private timeoutId: any;
-  private readonly IDLE_TIMEOUT = 1 * 60 * 1000; // 1 minute (en millisecondes)
+  // valeur en millisecondes
+  private IDLE_TIMEOUT = 15 * 60 * 1000; 
 
-  constructor(private router: Router, private ngZone: NgZone) {}
+  constructor(
+    private router: Router, 
+    private ngZone: NgZone,
+    private http: HttpClient
+  ) {}
 
   public startWatching() {
+    // 1. On récupère la configuration de timeout depuis le backend .NET
+    this.http.get<{ timeoutMinutes: number }>(`${environment.apiUrl}/configuration/session-timeout`)
+      .subscribe({
+        next: (res) => {
+          if (res && res.timeoutMinutes) {
+            // Conversion des minutes en millisecondes
+            this.IDLE_TIMEOUT = res.timeoutMinutes * 60 * 1000;
+          }
+          this.initListeners();
+        },
+        error: () => {
+          // En cas d'erreur de l'API, on utilise la valeur par défaut
+          this.initListeners();
+        }
+      });
+  }
+
+  private initListeners() {
     this.resetTimer();
     
     // Écoute des événements utilisateurs sur la fenêtre
@@ -36,17 +61,15 @@ export class ecouteinactivite {
     });
   }
 
-private logoutUser() {
-  console.log("Inactivité détectée : déconnexion automatique en cours..."); // 👈 Ajoutez ceci
-  localStorage.clear();
-  sessionStorage.clear();
-  this.router.navigate(['/login']);
-}
+  private logoutUser() {
+    localStorage.clear();
+    sessionStorage.clear();
+    this.router.navigate(['/login']);
+  }
 
   public stopWatching() {
     if (this.timeoutId) {
       clearTimeout(this.timeoutId);
     }
-    // Nettoyer les écouteurs si nécessaire
   }
 }

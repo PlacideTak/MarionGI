@@ -68,9 +68,22 @@
       </div>
     </header>
 
-    <!-- 🔑 C'est ici que le contenu va changer dynamiquement selon la route active -->
-    <div class="p-4">
-      <router-outlet></router-outlet>
+    <div class="dashboard-content">
+      @if (canViewDashboardHome()) {
+        <!-- Le router-outlet normal pour Admin / Gestionnaire -->
+        <router-outlet></router-outlet>
+      } @else {
+        <!-- Zone de substitution qui couvre toute la surface pour les autres rôles -->
+        <div class="welcome-background-container">
+          <img src="assets/images/votre-image.jpg" alt="Bienvenue sur Gestimmo" class="cover-image" />
+          
+          <!-- Optionnel : Un petit texte ou titre par-dessus l'image si besoin -->
+          <div class="welcome-overlay-content">
+            <h1>Bienvenue sur Gestimmo</h1>
+            <p>Sélectionnez un menu dans la barre latérale pour commencer.</p>
+          </div>
+        </div>
+      }
     </div>
 
   </div>

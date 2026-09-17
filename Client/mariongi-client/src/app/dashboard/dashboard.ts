@@ -80,4 +80,10 @@ export class Dashboard {
     this.authService.logout();
     this.router.navigate(['/login'], { replaceUrl: true });
   }
+
+  // Dans dashboard.ts
+  readonly canViewDashboardHome = computed(() => {
+    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+  });
+
 }

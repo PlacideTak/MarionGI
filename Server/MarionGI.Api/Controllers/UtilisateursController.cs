@@ -1,7 +1,6 @@
 ﻿using MarionGI.Domain.Entities;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

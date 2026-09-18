@@ -126,7 +126,6 @@ export class AuthService {
     }
   }
 
- 
   /**
    * Vérifie si l'utilisateur connecté possède un rôle spécifique (insensible à la casse)
    */
@@ -141,11 +140,10 @@ export class AuthService {
   }
 
   /**
-   * Vérifie si l'utilisateur a la permission d'effectuer une action (si votre JWT contient des permissions/claims spécifiques)
+   * Vérifie si l'utilisateur a la permission d'effectuer une action
    */
   hasPermission(permission: string): boolean {
-    // Si vos permissions sont stockées dans le token sous forme de tableau de claims 'permission'
-    const token = sessionStorage.getItem('accessToken');
+    const token = sessionStorage.getItem(TOKEN_KEY);
     if (!token) return false;
 
     try {
@@ -157,25 +155,32 @@ export class AuthService {
     }
   }
 
-private normalizeError(err: HttpErrorResponse) {
-  const apiError: ApiError = {
-    status: err.status,
-    code: err.error?.code,
-    message:
-      err.error?.message ??
-      (err.status === 429
-        ? 'Trop de tentatives. Réessaie plus tard.'
-        : err.status === 423
-          ? 'Compte temporairement verrouillé. Réessaie plus tard.'
-          : err.status === 403
-            ? 'Ce compte est désactivé. Contacte un administrateur.'
-            : err.status === 401
-              ? 'Identifiant ou code OTP incorrect.'
-              : err.status === 0
-                ? 'Impossible de contacter le serveur. Vérifie ta connexion ou le certificat HTTPS local.'
-                : 'Une erreur est survenue. Réessaie.'),
-    retryAfterSeconds: err.error?.retryAfterSeconds,
-  };
-  return throwError(() => apiError);
-}
+  /**
+   * Getter propre s'appuyant sur le signal JWT pour identifier un locataire
+   */
+  get isLocataire(): boolean {
+    return this.hasRole('Locataire');
+  }
+
+  private normalizeError(err: HttpErrorResponse) {
+    const apiError: ApiError = {
+      status: err.status,
+      code: err.error?.code,
+      message:
+        err.error?.message ??
+        (err.status === 429
+          ? 'Trop de tentatives. Réessaie plus tard.'
+          : err.status === 423
+            ? 'Compte temporairement verrouillé. Réessaie plus tard.'
+            : err.status === 403
+              ? 'Ce compte est désactivé. Contacte un administrateur.'
+              : err.status === 401
+                ? 'Identifiant ou code OTP incorrect.'
+                : err.status === 0
+                  ? 'Impossible de contacter le serveur. Vérifie ta connexion ou le certificat HTTPS local.'
+                  : 'Une erreur est survenue. Réessaie.'),
+      retryAfterSeconds: err.error?.retryAfterSeconds,
+    };
+    return throwError(() => apiError);
+  }
 }

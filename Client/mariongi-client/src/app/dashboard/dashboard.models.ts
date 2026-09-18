@@ -24,9 +24,10 @@ export interface PropertyRow {
 }
 
 export interface NavItem {
-  label: string;
+label: string;
   icon: string;
   route: string;
+  roles?: string[];
 }
 
 export interface EncaissementsGraphDto {

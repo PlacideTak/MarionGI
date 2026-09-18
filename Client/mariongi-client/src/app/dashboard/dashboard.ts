@@ -34,8 +34,15 @@ export class Dashboard {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
 
-  // Navigation centralisée
-  readonly navItems = signal(APP_NAV_ITEMS);
+  // Navigation filtrée dynamiquement : les éléments avec des rôles requis 
+readonly navItems = computed(() => {
+  return APP_NAV_ITEMS.filter(item => {
+    if (!item.roles || item.roles.length === 0) {
+      return true; // Laisse passer "Contrats"
+    }
+    return this.authService.hasRole(item.roles);
+  });
+});
 
   // Utilisateur connecté réactif
   readonly currentUser = computed(() => {
@@ -55,16 +62,33 @@ export class Dashboard {
       : name.charAt(0).toUpperCase();
   });
 
-  readonly userMenuItems: MenuItem[] = [
-    { label: 'Mon profil', icon: 'pi pi-user',command: () => this.router.navigate(['/profil']) },
-    { label: 'Paramètres', icon: 'pi pi-cog' ,command: () => this.router.navigate(['/parametres']) },
-    { separator: true },
-    {
-      label: 'Déconnexion',
-      icon: 'pi pi-sign-out',
-      command: () => this.logout(),
-    },
-  ];
+  // Vérifie si l'utilisateur est un admin
+  readonly isAdmin = computed(() => {
+    return this.authService.hasRole(['Administrateur', 'Admin']);
+  });
+
+  // Menu utilisateur dynamique réactif aux rôles
+  readonly userMenuItems = computed<MenuItem[]>(() => {
+    const items: MenuItem[] = [
+      { label: 'Mon profil', icon: 'pi pi-user', command: () => this.router.navigate(['/profil']) }
+    ];
+
+    // Ajout conditionnel de l'élément Paramètres
+    if (this.isAdmin()) {
+      items.push({ label: 'Paramètres', icon: 'pi pi-cog', command: () => this.router.navigate(['/parametres']) });
+    }
+
+    items.push(
+      { separator: true },
+      {
+        label: 'Déconnexion',
+        icon: 'pi pi-sign-out',
+        command: () => this.logout(),
+      }
+    );
+
+    return items;
+  });
 
   readonly mobileSidebarVisible = signal(false);
 
@@ -81,7 +105,6 @@ export class Dashboard {
     this.router.navigate(['/login'], { replaceUrl: true });
   }
 
-  // Dans dashboard.ts
   readonly canViewDashboardHome = computed(() => {
     return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
   });

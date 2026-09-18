@@ -15,6 +15,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { BiensService } from '../services/biens.service';
 import { UtilisateursService } from '../services/utilisateurs.service';
+import { AuthService } from '../login/auth.service';
 import { BienDto, TypeBien, StatutBien } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
@@ -39,21 +40,33 @@ import { environment } from '../../environments/environment.development';
   styleUrls: ['./biens.scss']
 })
 export class Biens implements OnInit, OnDestroy {
-  private readonly biensService = inject(BiensService);
+  readonly bienService = inject(BiensService);
   private readonly utilisateurService = inject(UtilisateursService);
+  private readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  
   readonly apiUrl = environment.apiUrl.replace('/api', '');
   private routerSub!: Subscription;
-  readonly bienService = inject(BiensService);
 
   biens: BienDto[] = [];
   proprietaires: any[] = [];
   chargement = false;
   
+  userRole: string = ''; // 👈 AJOUTEZ CETTE LIGNE ICI
+
+  get canManageBiens(): boolean {
+    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+  }
+
+  get estAgentCommercial(): boolean {
+    return this.authService.hasRole(['Agent']);
+  }
+
+  // Le reste de votre code...
   // Gestion de la modale
   displayModal = false;
   isEditMode = false;
@@ -63,15 +76,17 @@ export class Biens implements OnInit, OnDestroy {
   // Gestion des fichiers et aperçus photos
   fichiersSelectionnes: File[] = [];
   apercusImages: string[] = [];
-  photosExistantes: string[] = []; // Pour garder trace des photos déjà enregistrées en mode édition
+  photosExistantes: string[] = []; 
   statutsBien: any[] = [];
   typesBien: any[] = [];
 
   ngOnInit(): void {
+    // Récupération directe du rôle via le signal currentUser de l'AuthService
+    this.userRole = this.authService.currentUser()?.role || '';
+    
     this.initForm();
     this.chargerDonnees();
 
-    // Recharge automatiquement les données lors de la navigation sur le composant via le menu
     this.routerSub = this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
@@ -101,12 +116,14 @@ export class Biens implements OnInit, OnDestroy {
 
   chargerDonnees(): void {
     this.chargerBiens();
-    this.chargerProprietaires();
+    if (this.canManageBiens) {
+      this.chargerProprietaires();
+    }
   }
 
   chargerBiens(): void {
     this.chargement = true;
-    this.biensService.getBiens().subscribe({
+    this.bienService.getBiens().subscribe({
       next: (data) => {
         this.biens = data || [];
         this.chargement = false;
@@ -124,7 +141,6 @@ export class Biens implements OnInit, OnDestroy {
     this.utilisateurService.getUtilisateurs().subscribe({
       next: (data: any) => {
         const liste = Array.isArray(data) ? data : (data.items || []);
-        
         this.proprietaires = liste.map((u: any) => ({
           label: `${u.prenom} ${u.nom} (${u.email})`,
           value: u.id
@@ -137,8 +153,8 @@ export class Biens implements OnInit, OnDestroy {
     });
   }
 
-  // Gestion de la sélection des fichiers locaux
   surSelectionFichiers(event: any): void {
+    if (!this.canManageBiens) return;
     const files: FileList = event.target.files;
     if (files) {
       for (let i = 0; i < files.length; i++) {
@@ -153,7 +169,6 @@ export class Biens implements OnInit, OnDestroy {
         reader.readAsDataURL(file);
       }
     }
-    // Réinitialiser l'input file pour permettre de re-sélectionner le même fichier si besoin
     event.target.value = '';
   }
 
@@ -167,6 +182,7 @@ export class Biens implements OnInit, OnDestroy {
   }
 
   ouvrirModalAjout(): void {
+    if (!this.canManageBiens) return;
     this.isEditMode = false;
     this.selectedBienId = null;
     this.fichiersSelectionnes = [];
@@ -182,6 +198,7 @@ export class Biens implements OnInit, OnDestroy {
   }
 
   ouvrirModalModification(bien: BienDto): void {
+    if (!this.canManageBiens) return;
     this.isEditMode = true;
     this.selectedBienId = bien.id;
     this.fichiersSelectionnes = [];
@@ -202,7 +219,8 @@ export class Biens implements OnInit, OnDestroy {
     this.displayModal = true;
   }
 
- sauvegarder(): void {
+  sauvegarder(): void {
+    if (!this.canManageBiens) return;
     if (this.bienForm.invalid) {
       this.bienForm.markAllAsTouched();
       return;
@@ -211,62 +229,47 @@ export class Biens implements OnInit, OnDestroy {
     const formData = new FormData();
     const valeurs = this.bienForm.value;
 
-    // Ajout des champs du formulaire dans le FormData
     Object.keys(valeurs).forEach(cle => {
       if (valeurs[cle] !== null && valeurs[cle] !== undefined) {
         formData.append(cle, valeurs[cle]);
       }
     });
 
-    // Ajout des photos existantes (en mode modification si on souhaite les conserver)
     this.photosExistantes.forEach(photo => {
       formData.append('photosExistantes', photo);
     });
 
-    // Ajout des nouveaux fichiers physiques sélectionnés
     this.fichiersSelectionnes.forEach(file => {
       formData.append('fichiers', file, file.name);
     });
 
     if (this.isEditMode && this.selectedBienId) {
-      this.biensService.updateBien(this.selectedBienId, formData).subscribe({
+      this.bienService.updateBien(this.selectedBienId, formData).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Bien modifié avec succès.' });
           this.displayModal = false;
           this.chargerDonnees();
         },
         error: (err) => {
-          // Vérification si l'erreur concerne un doublon de référence (ex: statut 400 ou 409, ou message spécifique)
           const errorMessage = err.error?.message || '';
-          
           if (err.status === 409 || errorMessage.toLowerCase().includes('reference') || errorMessage.toLowerCase().includes('existe déjà')) {
-            this.messageService.add({ 
-              severity: 'error', 
-              summary: 'Référence existante', 
-              detail: 'Un bien possède déjà cette référence. Veuillez en choisir une autre.' 
-            });
+            this.messageService.add({ severity: 'error', summary: 'Référence existante', detail: 'Un bien possède déjà cette référence. Veuillez en choisir une autre.' });
           } else {
             this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage || 'Erreur lors de la modification.' });
           }
         }
       });
     } else {
-      this.biensService.createBien(formData).subscribe({
+      this.bienService.createBien(formData).subscribe({
         next: () => {
           this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Bien créé avec succès.' });
           this.displayModal = false;
           this.chargerDonnees();
         },
         error: (err) => {
-          // Vérification si l'erreur concerne un doublon de référence
           const errorMessage = err.error?.message || '';
-
           if (err.status === 409 || errorMessage.toLowerCase().includes('reference') || errorMessage.toLowerCase().includes('existe déjà')) {
-            this.messageService.add({ 
-              severity: 'error', 
-              summary: 'Référence existante', 
-              detail: 'Un bien possède déjà cette référence. Veuillez en choisir une autre.' 
-            });
+            this.messageService.add({ severity: 'error', summary: 'Référence existante', detail: 'Un bien possède déjà cette référence. Veuillez en choisir une autre.' });
           } else {
             this.messageService.add({ severity: 'error', summary: 'Erreur', detail: errorMessage || 'Erreur lors de la création.' });
           }
@@ -276,6 +279,7 @@ export class Biens implements OnInit, OnDestroy {
   }
 
   supprimerBien(bien: BienDto): void {
+    if (!this.canManageBiens) return;
     this.confirmationService.confirm({
       message: `Voulez-vous vraiment archiver le bien ${bien.reference} ?`,
       header: 'Confirmation de suppression',
@@ -283,7 +287,7 @@ export class Biens implements OnInit, OnDestroy {
       acceptLabel: 'Oui',
       rejectLabel: 'Non',
       accept: () => {
-        this.biensService.deleteBien(bien.id).subscribe({
+        this.bienService.deleteBien(bien.id).subscribe({
           next: () => {
             this.messageService.add({ severity: 'success', summary: 'Succès', detail: 'Bien archivé avec succès.' });
             this.chargerDonnees();
@@ -295,5 +299,4 @@ export class Biens implements OnInit, OnDestroy {
       }
     });
   }
-
 }

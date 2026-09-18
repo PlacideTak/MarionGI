@@ -27,7 +27,7 @@ export enum RoleUtilisateur {
     Administrateur = 1,
     Gestionnaire = 2,
     Proprietaire = 3,
-    AgentCommercial = 4,
+    Agent = 4,
     Locataire = 5
 }
 

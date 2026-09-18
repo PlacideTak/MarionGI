@@ -14,6 +14,7 @@ import { PaiementsService } from '../services/paiements.service';
 import { ModePaiement } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 import { MessageService } from 'primeng/api';
+import { AuthService } from '../login/auth.service';
 
 @Component({
   selector: 'app-bien-details',
@@ -37,6 +38,9 @@ export class BienDetails implements OnInit, OnDestroy {
   public readonly bienService = inject(BiensService);
   private readonly paiementsService = inject(PaiementsService);
   private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
+  private readonly authService = inject(AuthService);
+  isLocataire = false;
   paiementEspecesEnCours = false;
   bien: any = null;
   bienId: string | null = null;
@@ -44,7 +48,6 @@ export class BienDetails implements OnInit, OnDestroy {
   photoActiveIndex = 0;
   apiUrl = environment.apiUrl;
   serverUrl = environment.apiUrl.replace('/api', '');
-  private readonly messageService = inject(MessageService);
 
   // ===== États des modales de Paiement =====
   displayChoixModePaiement = false;
@@ -73,6 +76,7 @@ export class BienDetails implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.isLocataire = this.authService.hasRole(['Locataire']);
     this.route.paramMap.pipe(
       switchMap(params => {
         const id = params.get('id');
@@ -100,7 +104,7 @@ export class BienDetails implements OnInit, OnDestroy {
     this.pollingSub?.unsubscribe();
   }
 
-private rafraichirBien(): void {
+  private rafraichirBien(): void {
     if (!this.bienId) return;
     this.bienService.getBienById(this.bienId).subscribe({
       next: (data) => { this.bien = data; },
@@ -112,32 +116,36 @@ private rafraichirBien(): void {
     this.router.navigate(['/biens']);
   }
 
-  renouvelerContrat(): void {}
-  resilierBail(): void {}
+  // Sécurisation des actions de gestion (bloquées si locataire)
+  renouvelerContrat(): void {
+    if (this.isLocataire) return;
+    // Logique de renouvellement...
+  } 
+
+  resilierBail(): void {
+    if (this.isLocataire) return;
+    // Logique de résiliation...
+  }
 
   genererLesQuittancesContrat(): void {
-  const contratId = this.bien?.locataireActuel?.contratId;
-  if (!contratId) return;
+    const contratId = this.bien?.locataireActuel?.contratId;
+    if (!contratId) return;
 
-  this.paiementsService.telechargerToutesLesQuittances(contratId).subscribe({
-    next: (blob) => {
-      // 1. Forcer le type MIME zip
-      const zipBlob = new Blob([blob], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(zipBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      
-      // 2. S'assurer que l'extension est bien .zip
-      a.download = `Quittances_Contrat_${contratId}.zip`;
-      
-      a.click();
-      window.URL.revokeObjectURL(url);
-    },
-    error: (err) => {
-      console.error("Erreur lors du téléchargement des quittances :", err);
-    }
-  });
-}
+    this.paiementsService.telechargerToutesLesQuittances(contratId).subscribe({
+      next: (blob) => {
+        const zipBlob = new Blob([blob], { type: 'application/zip' });
+        const url = window.URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Quittances_Contrat_${contratId}.zip`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error("Erreur lors du téléchargement des quittances :", err);
+      }
+    });
+  }
 
   // ===== Paiement : déclenchement du choix =====
   enregistrerPaiement(): void {
@@ -151,7 +159,6 @@ private rafraichirBien(): void {
   choisirMobileMoney(): void {
     this.displayChoixModePaiement = false;
     this.paiementForm.reset();
-    // Pré-remplir le montant avec le loyer du bien si disponible par défaut
     if (this.bien?.loyer) {
       this.paiementForm.patchValue({ montant: this.bien.loyer });
     }
@@ -193,7 +200,7 @@ private rafraichirBien(): void {
 
   private demarrerPolling(paiementId: string): void {
     let tentatives = 0;
-    const maxTentatives = 20; // 20 x 3s = 60s max
+    const maxTentatives = 20; 
 
     this.pollingSub = interval(3000).pipe(
       switchMap(() => this.paiementsService.getStatut(paiementId)),
@@ -216,45 +223,42 @@ private rafraichirBien(): void {
     });
   }
 
-// ===== Paiement : Espèces (validation immédiate) =====
-soumettrePaiementEspeces(): void {
-  if (this.paiementEspecesForm.invalid || !this.bien?.locataireActuel?.contratId || this.paiementEspecesEnCours) return;
+  // ===== Paiement : Espèces (validation immédiate) =====
+  soumettrePaiementEspeces(): void {
+    if (this.paiementEspecesForm.invalid || !this.bien?.locataireActuel?.contratId || this.paiementEspecesEnCours) return;
 
-  this.paiementEspecesEnCours = true; // <-- Bloque les clics multiples
+    this.paiementEspecesEnCours = true;
 
-  this.paiementsService.enregistrerPaiementEspeces({
-    contratId: this.bien.locataireActuel.contratId,
-    montant: this.paiementEspecesForm.value.montant,
-  }).subscribe({
-    next: () => {
-      this.paiementEspecesEnCours = false;
-      this.displayPaiementEspecesModal = false;
-      
-      // Message de succès
-      this.messageService.add({ 
-        severity: 'success', 
-        summary: 'Succès', 
-        detail: 'Le paiement en espèces a été enregistré avec succès.' 
-      });
+    this.paiementsService.enregistrerPaiementEspeces({
+      contratId: this.bien.locataireActuel.contratId,
+      montant: this.paiementEspecesForm.value.montant,
+    }).subscribe({
+      next: () => {
+        this.paiementEspecesEnCours = false;
+        this.displayPaiementEspecesModal = false;
+        
+        this.messageService.add({ 
+          severity: 'success', 
+          summary: 'Succès', 
+          detail: 'Le paiement en espèces a été enregistré avec succès.' 
+        });
 
-      this.rafraichirBien();
-    },
-    error: (err) => {
-      console.error('Erreur paiement espèces:', err);
-      this.paiementEspecesEnCours = false; // <-- Ne pas oublier de débloquer en cas d'erreur
-      
-      // Message d'erreur optionnel pour informer l'utilisateur
-      this.messageService.add({ 
-        severity: 'error', 
-        summary: 'Erreur', 
-        detail: err.error?.message || 'Erreur lors de l\'enregistrement du paiement.' 
-      });
-    }
-  });
-}
+        this.rafraichirBien();
+      },
+      error: (err) => {
+        console.error('Erreur paiement espèces:', err);
+        this.paiementEspecesEnCours = false;
+        
+        this.messageService.add({ 
+          severity: 'error', 
+          summary: 'Erreur', 
+          detail: err.error?.message || 'Erreur lors de l\'enregistrement du paiement.' 
+        });
+      }
+    });
+  }
 
-telechargerQuittance(paiementId: string): void {
-  this.paiementsService.telechargerQuittanceBlob(paiementId);
-}
-
+  telechargerQuittance(paiementId: string): void {
+    this.paiementsService.telechargerQuittanceBlob(paiementId);
+  }
 }

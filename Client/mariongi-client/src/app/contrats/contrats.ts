@@ -298,10 +298,9 @@ export class Contrats implements OnInit {
     });
   }
 
-private verifierPermissions(): void {
-  // L'administrateur et le bailleur ont la permission, pas l'agent ni le locataire
-  this.canCreateContrat = this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
-}
+  private verifierPermissions(): void {
+    this.canCreateContrat = this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+  }
 
   private traiterErreurHttp(err: any, action: 'création' | 'modification' | 'suppression'): void {
     console.error(`Erreur lors de la ${action}:`, err);

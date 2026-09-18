@@ -92,10 +92,10 @@ builder.Services.AddAuthorization(options =>
 
     // 🎯 Lecture
     options.AddPolicy("Contrats.Read", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Bailleur", "Locataire"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent", "Locataire"));
 
     // 🎯 Création
-    options.AddPolicy("Contrats.Write", policy =>
+    options.AddPolicy("Contrats.Create", policy =>
         policy.RequireRole("Administrateur", "Gestionnaire"));
 
     // 🎯 Modification (résout le crash HTTP 500)
@@ -105,6 +105,32 @@ builder.Services.AddAuthorization(options =>
     // 🎯 Suppression
     options.AddPolicy("Contrats.Delete", policy =>
         policy.RequireRole("Administrateur"));
+
+    // 🎯 Politiques pour les Biens Immobiliers
+    options.AddPolicy("Biens.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent", "Locataire"));
+
+    options.AddPolicy("Biens.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Biens.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Biens.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // 🎯 Politiques pour les Demandes de Visite
+    options.AddPolicy("DemandesVisite.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+
+    options.AddPolicy("DemandesVisite.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+
+    options.AddPolicy("DemandesVisite.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+
+    options.AddPolicy("DemandesVisite.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 });
 
 // 7. Contrôleurs & CORS

@@ -92,11 +92,19 @@
       </select>
     </div>
 
-    <div class="field">
-      <label for="agent" class="font-bold mb-1 block">Agent Assigné (Optionnel)</label>
-      <select id="agent" class="p-inputtext p-component w-full" [(ngModel)]="nouvelleDemande.agentId">
-        <option [ngValue]="null">-- Aucun agent assigné --</option>
-        <option *ngFor="let agent of agentsDisponibles" [value]="agent.id">
+<div class="field">
+      <label for="agent" class="font-bold mb-1 block">Agent Assigné *</label>
+      <select 
+        id="agent" 
+        class="p-inputtext p-component w-full" 
+        [(ngModel)]="nouvelleDemande.agentId"
+        [disabled]="currentUserRole?.toLowerCase() === 'agent'">
+        
+        <!-- Option par défaut visible uniquement pour Admin/Gestionnaire -->
+        <option [ngValue]="null" *ngIf="currentUserRole?.toLowerCase() !== 'agent'">-- Aucun agent assigné --</option>
+        
+        <!-- Utilisation de agentsAffiches à la place de agentsDisponibles -->
+        <option *ngFor="let agent of agentsAffiches" [value]="agent.id">
           {{ agent.prenom }} {{ agent.nom }} ({{ agent.email }})
         </option>
       </select>

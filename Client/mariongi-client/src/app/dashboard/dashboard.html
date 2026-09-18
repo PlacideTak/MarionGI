@@ -64,26 +64,13 @@
           styleClass="user-avatar"
           (click)="userMenu.toggle($event)"
         ></p-avatar>
-        <p-menu #userMenu [model]="userMenuItems" [popup]="true"></p-menu>
+       <p-menu #userMenu [model]="userMenuItems()" [popup]="true"></p-menu>
       </div>
     </header>
 
     <div class="dashboard-content">
-      @if (canViewDashboardHome()) {
-        <!-- Le router-outlet normal pour Admin / Gestionnaire -->
-        <router-outlet></router-outlet>
-      } @else {
-        <!-- Zone de substitution qui couvre toute la surface pour les autres rôles -->
-        <div class="welcome-background-container">
-          <img src="assets/images/votre-image.jpg" alt="Bienvenue sur Gestimmo" class="cover-image" />
-          
-          <!-- Optionnel : Un petit texte ou titre par-dessus l'image si besoin -->
-          <div class="welcome-overlay-content">
-            <h1>Bienvenue sur Gestimmo</h1>
-            <p>Sélectionnez un menu dans la barre latérale pour commencer.</p>
-          </div>
-        </div>
-      }
+      <!-- Le router-outlet doit toujours être présent pour afficher les pages enfants (contrats, biens, etc.) -->
+      <router-outlet></router-outlet>
     </div>
 
   </div>

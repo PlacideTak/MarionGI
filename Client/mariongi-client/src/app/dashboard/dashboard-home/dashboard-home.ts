@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 
 import { BiensService } from '../../services/biens.service';
 import { RapportsService } from '../../services/rapports.service';
+import { AuthService } from '../../login/auth.service'; // <-- Import du service d'auth
 import { AlertItem, KpiCard, PropertyRow } from '../dashboard.models';
 import { BienDto } from '../../models/gestimmo.models';
 
@@ -20,10 +21,16 @@ import { BienDto } from '../../models/gestimmo.models';
 })
 export class DashboardHome implements OnInit {
   readonly biensService = inject(BiensService);
-  private readonly rapportsService = inject(RapportsService);
+  readonly rapportsService = inject(RapportsService);
+  private readonly authService = inject(AuthService); // <-- Injection
 
   readonly isLoading = signal<boolean>(true);
   readonly errorMessage = signal<string | null>(null);
+
+  // Vérifie si l'utilisateur a le droit de voir les statistiques globales
+  readonly canViewStats = computed(() => {
+    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+  });
 
   // Données dynamiques
   readonly kpis = signal<KpiCard[]>([]);
@@ -89,10 +96,16 @@ export class DashboardHome implements OnInit {
   };
 
   ngOnInit(): void {
-    this.chargerDonneesDashboard();
+    // Si l'utilisateur est un admin/gestionnaire, on charge les stats. 
+    // Sinon, on stoppe le chargement pour afficher directement la vue locataire.
+    if (this.canViewStats()) {
+      this.chargerDonneesDashboard();
+    } else {
+      this.isLoading.set(false);
+    }
   }
 
-chargerDonneesDashboard(): void {
+  chargerDonneesDashboard(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
@@ -103,7 +116,6 @@ chargerDonneesDashboard(): void {
         const encaissementsMois = kpiDto.encaissementsMois ?? kpiDto.EncaissementsMois ?? 0;
         const tauxOccupation = kpiDto.tauxOccupation ?? kpiDto.TauxOccupation ?? 0;
 
-        // Mapping et normalisation sécurisée des alertes en premier
         const alertesList = kpiDto.alertes ?? kpiDto.Alertes;
         let mappedAlerts: AlertItem[] = [];
         
@@ -119,7 +131,6 @@ chargerDonneesDashboard(): void {
           this.alerts.set([]);
         }
 
-        // Calcul dynamique du nombre d'impayés basé sur les alertes de retard de paiement
         const impayesEnCours = mappedAlerts.filter(a => 
           (a.titre || '').toLowerCase().includes('retard') || 
           (a.message || '').toLowerCase().includes('retard')

@@ -6,7 +6,8 @@
     <div>
       <h2>Gestion des Biens Immobiliers</h2>
     </div>
-    <button pButton label="Nouveau Bien" icon="pi pi-plus" class="p-button-success" (click)="ouvrirModalAjout()"></button>
+    <!-- 🔒 Masqué pour les non-gestionnaires -->
+    <button *ngIf="canManageBiens" pButton label="Nouveau Bien" icon="pi pi-plus" class="p-button-success" (click)="ouvrirModalAjout()"></button>
   </div>
 
   <p-table 
@@ -41,13 +42,14 @@
         <th pSortableColumn="loyer">Loyer <p-sortIcon field="loyer"></p-sortIcon></th>
         <th>Propriétaire</th>
         <th>Statut</th>
+        <!-- 🔒 La colonne des actions s'adapte ou s'affiche uniquement si l'utilisateur peut gérer, ou garde juste la fiche détaillée pour les autres -->
         <th style="text-align: center;">Actions</th>
       </tr>
     </ng-template>
     
     <ng-template pTemplate="body" let-bien>
       <tr>
-    <td>
+        <td>
           <div class="flex align-items-center gap-1">
             <img 
               *ngIf="bien.photos && bien.photos.length > 0; else noPhoto" 
@@ -77,9 +79,19 @@
           <p-tag [value]="bienService.getStatutLibelle(bien.statut)" [severity]="bienService.getStatutSeverity(bien.statut)"></p-tag>
         </td>
         <td style="text-align: center;">
-          <button pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning mr-2" (click)="ouvrirModalModification(bien)" pTooltip="Modifier"></button>
-          <a pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info" pTooltip="Voir la fiche détaillée" tooltipPosition="top" [attr.href]="'/biens/fiche/' + bien.id"></a>
-          <button pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="supprimerBien(bien)" pTooltip="Supprimer"></button>
+          <!-- 🔒 Bouton Modifier visible uniquement pour les gestionnaires/admins -->
+          <button *ngIf="canManageBiens" pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning mr-2" (click)="ouvrirModalModification(bien)" pTooltip="Modifier"></button>
+          
+          <!-- 👁️ Bouton Fiche détaillée accessible à tous (agents, locataires, admins) -->
+           @if(estAgentCommercial || canManageBiens){
+            <span>N/A</span>
+           } @else{
+              <a pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info" pTooltip="Voir la fiche détaillée" tooltipPosition="top" [attr.href]="'/biens/fiche/' + bien.id"></a>
+           }
+          
+          
+          <!-- 🔒 Bouton Supprimer visible uniquement pour les gestionnaires/admins -->
+          <button *ngIf="canManageBiens" pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="supprimerBien(bien)" pTooltip="Supprimer"></button>
         </td>
       </tr>
     </ng-template>
@@ -92,8 +104,9 @@
   </p-table>
 </div>
 
-<!-- MODALE AJOUT / MODIFICATION -->
+<!-- MODALE AJOUT / MODIFICATION (Sécurisée : ne s'affichera de toute façon pas si l'utilisateur n'a pas les droits) -->
 <p-dialog 
+  *ngIf="canManageBiens"
   [(visible)]="displayModal" 
   [header]="isEditMode ? 'Modifier le bien' : 'Ajouter un nouveau bien'" 
   [modal]="true" 
@@ -148,55 +161,54 @@
       <input id="loyer" type="number" pInputText formControlName="loyer" />
     </div>
 
-    <!-- Section Upload et Aperçus (Correctif Strict) -->
-<div class="field col-12" style="width: 100%; box-sizing: border-box;">
-  <label for="photosInput" class="block font-bold mb-2">Photos du bien (Sélection multiple)</label>
-  
-  <input 
-    id="photosInput" 
-    type="file" 
-    class="w-full mb-3" 
-    accept="image/*" 
-    multiple 
-    (change)="surSelectionFichiers($event)" />
-  
-  <small class="text-secondary block mb-3">Vous pouvez sélectionner plusieurs images simultanément.</small>
+    <!-- Section Upload et Aperçus -->
+    <div class="field col-12" style="width: 100%; box-sizing: border-box;">
+      <label for="photosInput" class="block font-bold mb-2">Photos du bien (Sélection multiple)</label>
+      
+      <input 
+        id="photosInput" 
+        type="file" 
+        class="w-full mb-3" 
+        accept="image/*" 
+        multiple 
+        (change)="surSelectionFichiers($event)" />
+      
+      <small class="text-secondary block mb-3">Vous pouvez sélectionner plusieurs images simultanément.</small>
 
-  <!-- Conteneur flex strict avec limitation de largeur -->
-  <div style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 100%;">
-    
-    <!-- Photos existantes (mode édition) -->
-    <div *ngFor="let photo of photosExistantes; let i = index" 
-         style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-      
-      <img [src]="apiUrl + photo" alt="Photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-      
-      <button 
-        type="button" 
-        pButton 
-        icon="pi pi-times" 
-        (click)="supprimerPhotoExistante(i)" 
-        style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-      </button>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 100%;">
+        
+        <!-- Photos existantes -->
+        <div *ngFor="let photo of photosExistantes; let i = index" 
+             style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          
+          <img [src]="apiUrl + photo" alt="Photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          
+          <button 
+            type="button" 
+            pButton 
+            icon="pi pi-times" 
+            (click)="supprimerPhotoExistante(i)" 
+            style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+          </button>
+        </div>
+
+        <!-- Nouvelles photos prévisualisées -->
+        <div *ngFor="let img of apercusImages; let i = index" 
+             style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          
+          <img [src]="img" alt="Aperçu" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          
+          <button 
+            type="button" 
+            pButton 
+            icon="pi pi-times" 
+            (click)="supprimerImagePrevisualisee(i)" 
+            style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
+          </button>
+        </div>
+
+      </div>
     </div>
-
-    <!-- Nouvelles photos prévisualisées -->
-    <div *ngFor="let img of apercusImages; let i = index" 
-         style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-      
-      <img [src]="img" alt="Aperçu" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-      
-      <button 
-        type="button" 
-        pButton 
-        icon="pi pi-times" 
-        (click)="supprimerImagePrevisualisee(i)" 
-        style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-      </button>
-    </div>
-
-  </div>
-</div>
 
     <!-- Boutons d'action -->
     <div class="flex justify-content-end gap-2 mt-5 pt-3 border-top-1 surface-border">

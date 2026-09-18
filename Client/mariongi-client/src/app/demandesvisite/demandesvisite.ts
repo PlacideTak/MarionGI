@@ -12,6 +12,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { HttpClient } from '@angular/common/http';
 
 import { DemandesVisiteService } from '../services/demandes-visite.service';
+import { AuthService } from '../login/auth.service';
 import { DemandeVisiteDto, BienDto, UtilisateurDto, StatutDemandeVisite } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
@@ -37,6 +38,7 @@ export class DemandesVisite implements OnInit {
   private readonly demandesService = inject(DemandesVisiteService);
   private readonly messageService = inject(MessageService);
   private readonly confirmationService = inject(ConfirmationService);
+  private readonly authService = inject(AuthService);
   private readonly http = inject(HttpClient);
 
   demandes: DemandeVisiteDto[] = [];
@@ -54,6 +56,23 @@ export class DemandesVisite implements OnInit {
     telephoneProspect: '',
     dateSouhaitee: new Date()
   };
+
+  // Getters dynamiques basés sur le signal currentUser du AuthService
+  get currentUserId(): string | null {
+    return this.authService.currentUser()?.id || null;
+  }
+
+  get currentUserRole(): string | null {
+    return this.authService.currentUser()?.role || null;
+  }
+
+  // Filtrage intelligent de la liste des agents selon le rôle
+  get agentsAffiches(): UtilisateurDto[] {
+    if (this.currentUserRole?.toLowerCase() === 'agent' && this.currentUserId) {
+      return this.agentsDisponibles.filter(a => a.id === this.currentUserId);
+    }
+    return this.agentsDisponibles;
+  }
 
   ngOnInit(): void {
     this.chargerDemandes();
@@ -93,16 +112,40 @@ export class DemandesVisite implements OnInit {
     });
   }
 
-  chargerAgents(): void {
-    this.http.get<UtilisateurDto[]>(`${environment.apiUrl}/Utilisateurs`).subscribe({
-      next: (data) => {
-        this.agentsDisponibles = data;
-      },
-      error: (err) => {
-        console.error('Erreur chargement des agents :', err);
+chargerAgents(): void {
+  this.http.get<UtilisateurDto[]>(`${environment.apiUrl}/Utilisateurs`).subscribe({
+    next: (data) => {
+      this.agentsDisponibles = (data || []).map((u: any) => ({
+        id: u.id || u.Id,
+        nom: u.nom || u.Nom,
+        prenom: u.prenom || u.Prenom,
+        email: u.email || u.Email,
+        role: u.role || u.Role,
+        telephone: u.telephone || u.Telephone || '',
+        statut: u.statut ?? u.Statut ?? 1
+      }));
+    },
+    error: (err) => {
+      console.warn('Impossible de charger tous les utilisateurs (probablement restreint au rôle Agent) :', err);
+      
+      const currentUser = this.authService.currentUser();
+      if (currentUser && this.currentUserRole?.toLowerCase() === 'agent') {
+        // Solution : On complète avec les propriétés requises par UtilisateurDto ou on force le type
+        this.agentsDisponibles = [{
+          id: currentUser.id,
+          nom: currentUser.nom,
+          prenom: currentUser.prenom,
+          email: currentUser.email,
+          role: currentUser.role,
+          telephone: '', 
+          statut: 1
+        } as unknown as UtilisateurDto];
+      } else {
+        this.agentsDisponibles = [];
       }
-    });
-  }
+    }
+  });
+}
 
   ouvrirModalCreation(): void {
     this.isEditMode = false;
@@ -114,6 +157,12 @@ export class DemandesVisite implements OnInit {
       dateSouhaitee: new Date(),
       statut: StatutDemandeVisite.EnAttente
     };
+
+    // Pré-sélection automatique de l'agent connecté
+    if (this.currentUserRole?.toLowerCase() === 'agent' && this.currentUserId) {
+      this.nouvelleDemande.agentId = this.currentUserId;
+    }
+
     this.displayModal = true;
   }
 
@@ -221,11 +270,11 @@ export class DemandesVisite implements OnInit {
   }
 
   statutsDisponibles = [
-  { label: 'En attente', value: StatutDemandeVisite.EnAttente },
-  { label: 'Confirmée', value: StatutDemandeVisite.Confirmee },
-  { label: 'Annulée', value: StatutDemandeVisite.Annulee },
-  { label: 'Effectuée', value: StatutDemandeVisite.Effectuee }
-];
+    { label: 'En attente', value: StatutDemandeVisite.EnAttente },
+    { label: 'Confirmée', value: StatutDemandeVisite.Confirmee },
+    { label: 'Annulée', value: StatutDemandeVisite.Annulee },
+    { label: 'Effectuée', value: StatutDemandeVisite.Effectuee }
+  ];
 
   getStatutLibelle(statut?: number): string {
     switch (statut) {

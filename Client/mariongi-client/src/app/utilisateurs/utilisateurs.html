@@ -75,10 +75,9 @@
     <p-table [value]="matrixData" responsiveLayout="scroll">
       <ng-template pTemplate="header">
         <tr>
-          <th>Module / Action</th>
+          <th>Module</th>
           <th>Admin</th>
           <th>Gestionnaire</th>
-          <th>Propriétaire</th>
           <th>Agent</th>
           <th>Locataire</th>
         </tr>
@@ -88,7 +87,6 @@
           <td class="font-bold">{{ row.module }}</td>
           <td><i class="pi" [ngClass]="row.admin ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
           <td><i class="pi" [ngClass]="row.gestionnaire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
-          <td><i class="pi" [ngClass]="row.proprietaire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
           <td><i class="pi" [ngClass]="row.agent ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
           <td><i class="pi" [ngClass]="row.locataire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
         </tr>

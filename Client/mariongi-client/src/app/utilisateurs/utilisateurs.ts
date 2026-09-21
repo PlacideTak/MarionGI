@@ -37,18 +37,18 @@ export class Utilisateurs implements OnInit {
   readonly rolesList = [
     { label: 'Administrateur', value: 1 },
     { label: 'Gestionnaire', value: 2 },
-    { label: 'Propriétaire', value: 3 },
-    { label: 'Agent commercial', value: 4 },
-    { label: 'Locataire', value: 5 }
+    { label: 'Agent commercial', value: 3 },
+    { label: 'Locataire', value: 4 }
   ];
 
   // Données de la matrice des permissions (statique pour affichage)
   readonly matrixData = [
-    { module: 'Gestion des biens', admin: true, gestionnaire: true, proprietaire: false, agent: false, locataire: false },
-    { module: 'Gestion des contrats', admin: true, gestionnaire: true, proprietaire: false, agent: true, locataire: false },
-    { module: 'Paiements & finances', admin: true, gestionnaire: true, proprietaire: true, agent: false, locataire: false },
-    { module: 'Gestion des utilisateurs', admin: true, gestionnaire: false, proprietaire: false, agent: false, locataire: false },
-    { module: 'Rapports', admin: true, gestionnaire: false, proprietaire: false, agent: false, locataire: false }
+    { module: 'Gestion des biens', admin: true, gestionnaire: true,  agent: true, locataire: true },
+    { module: 'Gestion des contrats', admin: true, gestionnaire: true, agent: false, locataire: true },
+    { module: 'Paiements & finances', admin: true, gestionnaire: true,  agent: false, locataire: true },
+    { module: 'Gestion des demandes de visite', admin: true, gestionnaire: true,  agent: true, locataire: false },
+    { module: 'Rapports', admin: true, gestionnaire: true,  agent: false, locataire: false },
+    { module: 'Gestion des utilisateurs', admin: true, gestionnaire: false,  agent: false, locataire: false }
   ];
 
   userForm = this.fb.group({

@@ -16,7 +16,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { BiensService } from '../services/biens.service';
 import { UtilisateursService } from '../services/utilisateurs.service';
 import { AuthService } from '../login/auth.service';
-import { BienDto, TypeBien, StatutBien } from '../models/gestimmo.models';
+import { BienDto, TypeBien, StatutBien, ROLES } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
 @Component({
@@ -59,11 +59,11 @@ export class Biens implements OnInit, OnDestroy {
   userRole: string = ''; // 👈 AJOUTEZ CETTE LIGNE ICI
 
   get canManageBiens(): boolean {
-    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+    return this.authService.hasRole([ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire]);
   }
 
   get estAgentCommercial(): boolean {
-    return this.authService.hasRole(['Agent']);
+    return this.authService.hasRole([ROLES.Agent]);
   }
 
   // Le reste de votre code...
@@ -137,14 +137,25 @@ export class Biens implements OnInit, OnDestroy {
     });
   }
 
-  chargerProprietaires(): void {
+chargerProprietaires(): void {
     this.utilisateurService.getUtilisateurs().subscribe({
       next: (data: any) => {
-        const liste = Array.isArray(data) ? data : (data.items || []);
-        this.proprietaires = liste.map((u: any) => ({
-          label: `${u.prenom} ${u.nom} (${u.email})`,
-          value: u.id
-        }));
+        // Gère le cas où l'API renvoie un tableau direct ou un objet paginé (ex: { items: [...] })
+        const liste = Array.isArray(data) ? data : (data?.items || data?.result || []);
+        
+        this.proprietaires = liste.map((u: any) => {
+          // Normalisation des propriétés (gère le camelCase et le PascalCase du C#)
+          const prenom = u.prenom || u.Prenom || '';
+          const nom = u.nom || u.Nom || '';
+          const email = u.email || u.Email || '';
+          const id = u.id || u.Id;
+
+          return {
+            label: `${prenom} ${nom} (${email})`.trim(),
+            value: id
+          };
+        });
+        
         this.cdr.detectChanges();
       },
       error: (err) => {

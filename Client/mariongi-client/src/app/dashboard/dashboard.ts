@@ -11,6 +11,7 @@ import type { MenuItem } from 'primeng/api';
 
 import { AuthService } from '../login/auth.service';
 import { APP_NAV_ITEMS } from '../config/navigation.config';
+import { ROLES } from '../models/gestimmo.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -64,7 +65,7 @@ readonly navItems = computed(() => {
 
   // Vérifie si l'utilisateur est un admin
   readonly isAdmin = computed(() => {
-    return this.authService.hasRole(['Administrateur', 'Admin']);
+    return this.authService.hasRole([ROLES.Administrateur, ROLES.Admin]);
   });
 
   // Menu utilisateur dynamique réactif aux rôles
@@ -106,7 +107,7 @@ readonly navItems = computed(() => {
   }
 
   readonly canViewDashboardHome = computed(() => {
-    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+    return this.authService.hasRole([ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire]);
   });
 
 }

@@ -24,12 +24,20 @@ export enum StatutBien {
 }
 
 export enum RoleUtilisateur {
-    Administrateur = 1,
-    Gestionnaire = 2,
-    Proprietaire = 3,
-    Agent = 4,
-    Locataire = 5
+  Administrateur = 1,
+  Gestionnaire = 2,
+  Agent = 3,
+  Locataire = 4
 }
+
+// Constantes textuelles pour les rôles normalisés
+export const ROLES = {
+  Administrateur: 'administrateur',
+  Admin: 'admin',
+  Gestionnaire: 'gestionnaire',
+  Agent: 'agent',
+  Locataire: 'locataire'
+} as const;
 
 export enum StatutContrat {
   EnAttente = 0,

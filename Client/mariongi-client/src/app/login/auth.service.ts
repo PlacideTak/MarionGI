@@ -3,7 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, catchError, tap, throwError } from 'rxjs';
 
 import { ApiError, AuthResponse, LoginPayload, VerifyOtpPayload } from './auth.models';
-import { UserPayload } from '../models/gestimmo.models';
+import { UserPayload, RoleUtilisateur, ROLES } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
 const API_BASE = `${environment.apiUrl}/Auth`;
@@ -126,17 +126,30 @@ export class AuthService {
     }
   }
 
-  /**
-   * Vérifie si l'utilisateur connecté possède un rôle spécifique (insensible à la casse)
-   */
-  hasRole(allowedRoles: string | string[]): boolean {
+  hasRole(allowedRoles: RoleUtilisateur | RoleUtilisateur[] | string | string[]): boolean {
     const user = this.currentUser();
     if (!user || !user.role) return false;
 
     const userRole = String(user.role).toLowerCase().trim();
     const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-    return roles.map(r => r.toLowerCase().trim()).includes(userRole);
+    const normalizedRoles = roles.flatMap(r => {
+      const roleStr = String(r).toLowerCase().trim();
+      
+      // Si on passe l'énumération Administrateur ou le mot-clé administrateur/admin, 
+      // on autorise les deux variantes via les constantes
+      if (
+        roleStr === ROLES.Administrateur || 
+        roleStr === ROLES.Admin || 
+        r === RoleUtilisateur.Administrateur
+      ) {
+        return [ROLES.Administrateur, ROLES.Admin];
+      }
+      
+      return [roleStr];
+    });
+
+    return normalizedRoles.includes(userRole);
   }
 
   /**
@@ -155,12 +168,42 @@ export class AuthService {
     }
   }
 
-  /**
-   * Getter propre s'appuyant sur le signal JWT pour identifier un locataire
-   */
-  get isLocataire(): boolean {
-    return this.hasRole('Locataire');
+  /** Getters pratiques basés sur l'énumération centralisée */
+  get isAdmin(): boolean {
+    return this.hasRole(RoleUtilisateur.Administrateur);
   }
+
+  get isGestionnaire(): boolean {
+    return this.hasRole(RoleUtilisateur.Gestionnaire);
+  }
+
+  get isAgent(): boolean {
+    return this.hasRole(RoleUtilisateur.Agent);
+  }
+
+  get isLocataire(): boolean {
+    return this.hasRole(RoleUtilisateur.Locataire);
+  }
+
+  // Dans votre auth.service.ts
+
+/**
+ * Demande l'envoi d'un code ou d'un lien de récupération (par téléphone ou email)
+ */
+demanderRecuperation(identifiant: string): Observable<any> {
+  return this.http.post(`${API_BASE}/mot-de-passe-oublie`, { identifiant }).pipe(
+    catchError((err) => this.normalizeError(err))
+  );
+}
+
+/**
+ * Valide le code de récupération et définit un nouveau mot de passe
+ */
+reinitialiserMotDePasse(payload: any): Observable<any> {
+  return this.http.post(`${API_BASE}/reinitialiser-mot-de-passe`, payload).pipe(
+    catchError((err) => this.normalizeError(err))
+  );
+}
 
   private normalizeError(err: HttpErrorResponse) {
     const apiError: ApiError = {

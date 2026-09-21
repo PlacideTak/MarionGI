@@ -83,7 +83,7 @@
           <button *ngIf="canManageBiens" pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning mr-2" (click)="ouvrirModalModification(bien)" pTooltip="Modifier"></button>
           
           <!-- 👁️ Bouton Fiche détaillée accessible à tous (agents, locataires, admins) -->
-           @if(estAgentCommercial || canManageBiens){
+           @if(estAgentCommercial){
             <span>N/A</span>
            } @else{
               <a pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info" pTooltip="Voir la fiche détaillée" tooltipPosition="top" [attr.href]="'/biens/fiche/' + bien.id"></a>

@@ -10241,3 +10241,243 @@ ORDER BY [b].[Id], [u0].[Id], [s].[Id]
 2026-09-18 15:53:42.790 -04:00 [INF] Executed action MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api) in 21.7591ms
 2026-09-18 15:53:42.792 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BiensController.GetBiens (MarionGI.Api)'
 2026-09-18 15:53:42.794 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Biens - 200 null application/json; charset=utf-8 37.6787ms
+2026-09-18 16:09:37.696 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:09:37.727 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:09:37.739 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:09:37.748 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:09:37.773 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:09:37.780 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 27.6349ms
+2026-09-18 16:09:37.782 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:09:37.784 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 89.6721ms
+2026-09-18 16:10:37.126 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:10:37.130 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:10:37.131 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:10:37.133 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:10:37.138 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:10:37.140 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.4047ms
+2026-09-18 16:10:37.142 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:10:37.143 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 17.2175ms
+2026-09-18 16:11:11.748 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:11:11.751 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:11:11.753 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:11.754 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:11:11.757 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:11:11.759 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.5472ms
+2026-09-18 16:11:11.761 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:11.763 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 14.7344ms
+2026-09-18 16:11:26.742 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:11:26.745 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:11:26.746 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:26.748 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:11:26.751 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:11:26.753 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.162ms
+2026-09-18 16:11:26.755 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:26.756 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 13.5552ms
+2026-09-18 16:11:37.134 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:11:37.137 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:11:37.138 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:37.139 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:11:37.142 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:11:37.146 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.7481ms
+2026-09-18 16:11:37.148 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:11:37.149 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 15.4385ms
+2026-09-18 16:12:01.780 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:12:01.785 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:12:01.786 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:01.787 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:12:01.793 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:12:01.795 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.019ms
+2026-09-18 16:12:01.798 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:01.799 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 18.8469ms
+2026-09-18 16:12:11.854 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:12:11.862 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:12:11.865 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:11.868 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:12:11.882 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:12:11.886 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.6463ms
+2026-09-18 16:12:11.888 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:11.891 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 36.2464ms
+2026-09-18 16:12:37.161 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:12:37.165 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:12:37.166 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:37.167 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:12:37.172 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:12:37.175 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.4045ms
+2026-09-18 16:12:37.178 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:12:37.180 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 18.5104ms
+2026-09-18 16:13:37.157 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:13:37.162 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:13:37.164 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:13:37.165 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:13:37.170 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:13:37.172 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.1626ms
+2026-09-18 16:13:37.174 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:13:37.175 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 17.9336ms
+2026-09-18 16:14:37.165 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:14:37.168 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:14:37.169 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:14:37.170 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:14:37.174 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:14:37.176 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.5633ms
+2026-09-18 16:14:37.178 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:14:37.179 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 14.6293ms
+2026-09-18 16:15:37.199 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:15:37.202 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:15:37.203 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:15:37.204 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:15:37.208 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:15:37.212 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.7993ms
+2026-09-18 16:15:37.216 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:15:37.218 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 18.67ms
+2026-09-18 16:15:59.745 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:15:59.748 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:15:59.749 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:15:59.751 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:15:59.755 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:15:59.756 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.2554ms
+2026-09-18 16:15:59.759 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:15:59.761 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 15.5338ms
+2026-09-18 16:19:37.452 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:19:37.458 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:19:37.467 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:19:37.474 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:19:37.485 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:19:37.488 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 8.4906ms
+2026-09-18 16:19:37.491 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:19:37.493 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 41.4648ms
+2026-09-18 16:20:37.236 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:20:37.239 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:20:37.266 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:20:37.270 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:20:37.278 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:20:37.283 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 8.6895ms
+2026-09-18 16:20:37.286 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:20:37.288 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 52.3532ms
+2026-09-18 16:21:37.153 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:21:37.156 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:21:37.157 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:21:37.159 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:21:37.162 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:21:37.164 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.2118ms
+2026-09-18 16:21:37.167 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:21:37.169 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 15.8908ms
+2026-09-18 16:22:00.406 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:22:00.411 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:22:00.412 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:22:00.416 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:22:00.421 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:22:00.424 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.5492ms
+2026-09-18 16:22:00.427 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:22:00.429 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 22.9639ms
+2026-09-18 16:22:37.120 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:22:37.125 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:22:37.126 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:22:37.128 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:22:37.132 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:22:37.137 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.6844ms
+2026-09-18 16:22:37.139 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:22:37.141 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 20.6336ms
+2026-09-18 16:23:37.171 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:23:37.184 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:23:37.187 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:23:37.191 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:23:37.197 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:23:37.200 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.0176ms
+2026-09-18 16:23:37.203 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:23:37.205 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 33.735ms
+2026-09-18 16:24:37.178 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:24:37.182 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:24:37.184 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:24:37.185 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:24:37.189 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:24:37.191 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.3506ms
+2026-09-18 16:24:37.193 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:24:37.195 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 17.0187ms
+2026-09-18 16:24:51.145 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:24:51.150 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:24:51.151 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:24:51.154 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:24:51.158 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:24:51.160 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.6166ms
+2026-09-18 16:24:51.164 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:24:51.166 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 20.9706ms
+2026-09-18 16:25:37.192 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:25:37.201 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:25:37.217 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:25:37.221 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:25:37.225 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:25:37.229 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 4.2216ms
+2026-09-18 16:25:37.232 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:25:37.236 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 43.9349ms
+2026-09-18 16:26:17.905 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:26:17.909 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:26:17.911 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:26:17.920 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:26:17.928 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:26:17.931 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 6.012ms
+2026-09-18 16:26:17.936 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:26:17.941 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 35.6987ms
+2026-09-18 16:26:37.371 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:26:37.378 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:26:37.381 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:26:37.383 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:26:37.398 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:26:37.408 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 18.5022ms
+2026-09-18 16:26:37.411 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:26:37.413 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 41.6425ms
+2026-09-18 16:27:37.254 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:27:37.262 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:27:37.267 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:27:37.269 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:27:37.280 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:27:37.282 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 9.5306ms
+2026-09-18 16:27:37.286 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:27:37.289 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 35.0693ms
+2026-09-18 16:28:37.242 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:28:37.248 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:28:37.249 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:28:37.251 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:28:37.255 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:28:37.262 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 7.3866ms
+2026-09-18 16:28:37.266 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:28:37.269 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 26.0845ms
+2026-09-18 16:29:37.263 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:29:37.268 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:29:37.284 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:29:37.286 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:29:37.305 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:29:37.314 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 26.0043ms
+2026-09-18 16:29:37.319 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:29:37.321 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 58.2126ms
+2026-09-18 16:30:37.272 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:30:37.277 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:30:37.280 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:30:37.289 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:30:37.301 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:30:37.307 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 14.1671ms
+2026-09-18 16:30:37.310 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:30:37.312 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 39.3087ms
+2026-09-18 16:31:18.338 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:31:18.342 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:31:18.344 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:18.345 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:31:18.350 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:31:18.353 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 5.1719ms
+2026-09-18 16:31:18.358 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:18.359 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 21.089ms
+2026-09-18 16:31:37.167 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:31:37.171 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:31:37.172 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:37.174 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:31:37.177 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:31:37.181 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 3.8142ms
+2026-09-18 16:31:37.184 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:37.186 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 19.4921ms
+2026-09-18 16:31:48.350 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-09-18 16:31:48.355 -04:00 [INF] CORS policy execution successful.
+2026-09-18 16:31:48.356 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:48.359 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-09-18 16:31:48.363 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType6`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-09-18 16:31:48.365 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 2.4771ms
+2026-09-18 16:31:48.368 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-09-18 16:31:48.370 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 19.5209ms

@@ -61,7 +61,12 @@
             }
           </div>
 
-          <a class="forgot-link" routerLink="/mot-de-passe-oublie">Mot de passe oublié ?</a>
+          <!-- Lien "Mot de passe oublié ?" avec curseur forcé en CSS inline -->
+          <div class="text-right mb-3">
+            <a (click)="modalRecuperation.ouvrirModal()" style="cursor: pointer;" class="font-medium text-primary text-sm underline">
+              Mot de passe oublié ?
+            </a>
+          </div>
 
           <p-button
             type="submit"
@@ -143,3 +148,6 @@
 
   </div>
 </div>
+
+<!-- Inclusion de la modale/composant de récupération à la fin du template -->
+<app-mot-de-passe-oublie #modalRecuperation></app-mot-de-passe-oublie>

@@ -10,7 +10,7 @@ import { BiensService } from '../../services/biens.service';
 import { RapportsService } from '../../services/rapports.service';
 import { AuthService } from '../../login/auth.service'; // <-- Import du service d'auth
 import { AlertItem, KpiCard, PropertyRow } from '../dashboard.models';
-import { BienDto } from '../../models/gestimmo.models';
+import { BienDto, ROLES } from '../../models/gestimmo.models';
 
 @Component({
   selector: 'app-dashboard-home',
@@ -29,7 +29,7 @@ export class DashboardHome implements OnInit {
 
   // Vérifie si l'utilisateur a le droit de voir les statistiques globales
   readonly canViewStats = computed(() => {
-    return this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+    return this.authService.hasRole([ROLES.Administrateur, ROLES.Administrateur, ROLES.Gestionnaire]);
   });
 
   // Données dynamiques

@@ -11,7 +11,7 @@ import { of, interval, Subscription } from 'rxjs';
 
 import { BiensService } from '../services/biens.service';
 import { PaiementsService } from '../services/paiements.service';
-import { ModePaiement } from '../models/gestimmo.models';
+import { ModePaiement, ROLES } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 import { MessageService } from 'primeng/api';
 import { AuthService } from '../login/auth.service';
@@ -76,7 +76,7 @@ export class BienDetails implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.isLocataire = this.authService.hasRole(['Locataire']);
+    this.isLocataire = this.authService.hasRole([ROLES.Locataire]);
     this.route.paramMap.pipe(
       switchMap(params => {
         const id = params.get('id');

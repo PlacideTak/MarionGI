@@ -1,0 +1,37 @@
+<p-dialog [(visible)]="displayModal" header="Récupération du mot de passe" [modal]="true" [style]="{width: '400px'}">
+  
+  <!-- Affichage des messages d'erreur globaux -->
+  @if (errorMessage) {
+    <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+      {{ errorMessage }}
+    </div>
+  }
+
+  <!-- Étape 1 : Demande d'envoi du code -->
+  @if (etape === 1) {
+    <div>
+      <div style="margin-bottom: 1.25rem;">
+        <label for="identifiant" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">E-mail ou Téléphone</label>
+        <input id="identifiant" type="text" pInputText [(ngModel)]="identifiant" placeholder="Entrez votre identifiant" style="width: 100%; box-sizing: border-box;" />
+      </div>
+      <button pButton label="Envoyer le code" [loading]="chargement" (click)="envoyerDemande()" style="width: 100%;"></button>
+    </div>
+  }
+
+  <!-- Étape 2 : Saisie de l'OTP et du nouveau mot de passe -->
+  @if (etape === 2) {
+    <div>
+      <div style="margin-bottom: 1.25rem;">
+        <label for="otp" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Code de confirmation (OTP)</label>
+        <input id="otp" type="text" pInputText [(ngModel)]="codeOtp" placeholder="Code à 6 chiffres" style="width: 100%; box-sizing: border-box;" />
+      </div>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <label for="nouveauMdp" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nouveau mot de passe</label>
+        <p-password id="nouveauMdp" [(ngModel)]="nouveauMotDePasse" [toggleMask]="true" placeholder="Nouveau mot de passe" [style]="{width: '100%'}" [inputStyle]="{width: '100%'}"></p-password>
+      </div>
+      
+      <button pButton label="Réinitialiser le mot de passe" [loading]="chargement" (click)="validerReinitialisation()" style="width: 100%;"></button>
+    </div>
+  }
+</p-dialog>

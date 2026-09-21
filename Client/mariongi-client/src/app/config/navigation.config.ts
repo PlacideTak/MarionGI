@@ -1,16 +1,17 @@
 import { NavItem } from '../dashboard/dashboard.models';
+import { ROLES } from '../models/gestimmo.models';
 
 export const APP_NAV_ITEMS: NavItem[] = [
   { label: 'Tableau de bord', icon: 'pi pi-home', route: 'home' },
   { label: 'Biens immobiliers', icon: 'pi pi-building', route: 'biens' },
-  { label: 'Contrats', icon: 'pi pi-file', route: 'contrats', roles: ['Administrateur', 'Admin', 'Gestionnaire','Locataire'] },
-  { label: 'Demandes de visite', icon: 'pi pi-building-columns', route: 'demandesvisite', roles: ['Administrateur', 'Admin', 'Gestionnaire','Agent'] },
-  { label: 'Paiements', icon: 'pi pi-dollar', route: 'paiements',roles: ['Administrateur', 'Admin', 'Gestionnaire'] },
-  { label: 'Rapports', icon: 'pi pi-chart-bar', route: 'rapports', roles: ['Administrateur', 'Admin', 'Gestionnaire'] },
+  { label: 'Contrats', icon: 'pi pi-file', route: 'contrats', roles: [ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire, ROLES.Locataire] },
+  { label: 'Demandes de visite', icon: 'pi pi-building-columns', route: 'demandesvisite', roles: [ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire, ROLES.Agent] },
+  { label: 'Paiements', icon: 'pi pi-dollar', route: 'paiements', roles: [ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire] },
+  { label: 'Rapports', icon: 'pi pi-chart-bar', route: 'rapports', roles: [ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire] },
   { 
     label: 'Utilisateurs & rôles', 
     icon: 'pi pi-users', 
     route: 'utilisateurs',
-    roles: ['Administrateur', 'Admin'] 
+    roles: [ROLES.Administrateur, ROLES.Admin] 
   },
 ];

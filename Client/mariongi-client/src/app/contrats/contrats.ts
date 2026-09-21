@@ -18,7 +18,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 import { ContratsService } from '../services/contrats.service';
 import { BiensService } from '../services/biens.service';
 import { UtilisateursService } from '../services/utilisateurs.service';
-import { ContratDto, StatutContrat } from '../models/gestimmo.models';
+import { ContratDto, ROLES, StatutContrat } from '../models/gestimmo.models';
 import { AuthService } from '../login/auth.service';
 
 interface DropdownItem {
@@ -126,7 +126,7 @@ export class Contrats implements OnInit {
       next: (locataires) => {
         if (Array.isArray(locataires)) {
           this.locatairesOptions = locataires.map(l => ({
-            label: `${l.nom || ''} ${l.prenom || ''}`.trim() || 'Locataire',
+            label: `${l.nom || ''} ${l.prenom || ''}`.trim() || ROLES.Locataire,
             value: l.id
           }));
         }
@@ -299,7 +299,7 @@ export class Contrats implements OnInit {
   }
 
   private verifierPermissions(): void {
-    this.canCreateContrat = this.authService.hasRole(['Administrateur', 'Admin', 'Gestionnaire']);
+    this.canCreateContrat = this.authService.hasRole([ROLES.Administrateur, ROLES.Admin, ROLES.Gestionnaire]);
   }
 
   private traiterErreurHttp(err: any, action: 'création' | 'modification' | 'suppression'): void {

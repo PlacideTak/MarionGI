@@ -10,6 +10,7 @@ import { MessageModule } from 'primeng/message';
 
 import { AuthService } from './auth.service';
 import { ApiError, AuthResponse, LoginStep } from './auth.models';
+import { MotDePasseOublie } from '../motdepasseoublie/motdepasseoublie';
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_SECONDS = 60;
@@ -40,12 +41,12 @@ function maskPhone(phone: string): string {
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink,
     ButtonModule,
     InputTextModule,
     PasswordModule,
     MessageModule,
-  ],
+    MotDePasseOublie
+],
   templateUrl: './login.html',
   styleUrl: './login.scss',
 })

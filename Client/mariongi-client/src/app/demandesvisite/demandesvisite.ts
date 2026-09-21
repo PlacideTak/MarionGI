@@ -13,7 +13,7 @@ import { HttpClient } from '@angular/common/http';
 
 import { DemandesVisiteService } from '../services/demandes-visite.service';
 import { AuthService } from '../login/auth.service';
-import { DemandeVisiteDto, BienDto, UtilisateurDto, StatutDemandeVisite } from '../models/gestimmo.models';
+import { DemandeVisiteDto, BienDto, UtilisateurDto, StatutDemandeVisite, ROLES } from '../models/gestimmo.models';
 import { environment } from '../../environments/environment.development';
 
 @Component({
@@ -68,7 +68,7 @@ export class DemandesVisite implements OnInit {
 
   // Filtrage intelligent de la liste des agents selon le rôle
   get agentsAffiches(): UtilisateurDto[] {
-    if (this.currentUserRole?.toLowerCase() === 'agent' && this.currentUserId) {
+    if (this.currentUserRole?.toLowerCase() === ROLES.Agent.toLocaleLowerCase() && this.currentUserId) {
       return this.agentsDisponibles.filter(a => a.id === this.currentUserId);
     }
     return this.agentsDisponibles;
@@ -129,7 +129,7 @@ chargerAgents(): void {
       console.warn('Impossible de charger tous les utilisateurs (probablement restreint au rôle Agent) :', err);
       
       const currentUser = this.authService.currentUser();
-      if (currentUser && this.currentUserRole?.toLowerCase() === 'agent') {
+      if (currentUser && this.currentUserRole?.toLowerCase() === ROLES.Agent.toLowerCase()) {
         // Solution : On complète avec les propriétés requises par UtilisateurDto ou on force le type
         this.agentsDisponibles = [{
           id: currentUser.id,
@@ -159,7 +159,7 @@ chargerAgents(): void {
     };
 
     // Pré-sélection automatique de l'agent connecté
-    if (this.currentUserRole?.toLowerCase() === 'agent' && this.currentUserId) {
+    if (this.currentUserRole?.toLowerCase() === ROLES.Agent.toLowerCase() && this.currentUserId) {
       this.nouvelleDemande.agentId = this.currentUserId;
     }
 

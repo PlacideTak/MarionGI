@@ -243,4 +243,68 @@ public class AuthService : IAuthService
 
         return principal;
     }
+
+    public async Task DemanderRecuperationAsync(MotDePasseOublieRequestDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Identifiant))
+        {
+            throw new Exception("L'identifiant ne peut pas être vide.");
+        }
+
+        // Recherche de l'utilisateur par e-mail ou téléphone
+        var user = await _context.Utilisateurs
+            .FirstOrDefaultAsync(u => u.Email == dto.Identifiant || u.Telephone == dto.Identifiant);
+
+        if (user == null)
+        {
+            throw new Exception("Aucun compte ne correspond à cet identifiant.");
+        }
+
+        // Génération du code OTP de réinitialisation (6 chiffres)
+        var otpCode = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+        user.OtpSecret = BCrypt.Net.BCrypt.HashPassword(otpCode);
+        user.OtpExpiration = DateTime.UtcNow.AddMinutes(10);
+        await _context.SaveChangesAsync();
+
+        // Envoi du SMS
+        try
+        {
+            await _smsService.EnvoyerSmsAsync(user.Telephone, $"Votre code de réinitialisation MarionGI est : {otpCode}");
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"Échec de l'envoi du SMS : {ex.Message}");
+        }
+    }
+
+    public async Task ReinitialiserMotDePasseAsync(ReinitialiserMotDePasseRequestDto dto)
+    {
+        var user = await _context.Utilisateurs
+            .FirstOrDefaultAsync(u => u.Email == dto.Identifiant || u.Telephone == dto.Identifiant);
+
+        if (user == null)
+            throw new Exception("Utilisateur introuvable.");
+
+        if (user.OtpExpiration == null || user.OtpExpiration < DateTime.UtcNow)
+            throw new Exception("Le code de réinitialisation a expiré.");
+
+        if (string.IsNullOrEmpty(user.OtpSecret))
+            throw new Exception("Aucune demande de réinitialisation active.");
+
+        // Vérification de l'OTP avec BCrypt
+        bool isOtpValid = BCrypt.Net.BCrypt.Verify(dto.CodeOtp, user.OtpSecret);
+        if (!isOtpValid)
+            throw new Exception("Code de réinitialisation invalide.");
+
+        // Mise à jour du mot de passe (hashage avec BCrypt)
+        user.MotDePasseHash = BCrypt.Net.BCrypt.HashPassword(dto.NouveauMotDePasse);
+
+        // Nettoyage de l'OTP et réinitialisation des verrous éventuels
+        user.OtpSecret = null;
+        user.OtpExpiration = null;
+        user.TentativesConnexionEchouees = 0;
+        user.VerrouilleJusquA = null;
+
+        await _context.SaveChangesAsync();
+    }
 }

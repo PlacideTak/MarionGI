@@ -91,11 +91,7 @@ public class AuthService : IAuthService
     public async Task<AuthResponseDto> ValiderOtpAsync(ValiderOtpRequestDto dto)
     {
         // Normalisation ou recherche sécurisée
-        var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Telephone == dto.Telephone);
-
-        if (user == null)
-            throw new Exception("Utilisateur introuvable.");
-
+        var user = await _context.Utilisateurs.FirstOrDefaultAsync(u => u.Telephone == dto.Telephone) ?? throw new Exception("Utilisateur introuvable.");
         if (user.OtpExpiration < DateTime.UtcNow)
             throw new Exception("Le code OTP a expiré.");
 
@@ -216,7 +212,7 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    private string GenererRefreshToken()
+    private static string GenererRefreshToken()
     {
         var randomBytes = new byte[64];
         using var rng = RandomNumberGenerator.Create();

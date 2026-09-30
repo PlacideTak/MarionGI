@@ -1,6 +1,6 @@
 @if (canViewStats()) {
   <!-- ===== VUE ADMIN / GESTIONNAIRE : Le Dashboard complet ===== -->
-  <div class="flex flex-column gap-4">
+  <div class="dashboard-sections">
 
     <!-- Section 1 : Indicateurs clés (KPIs) -->
     <section class="kpi-grid">
@@ -20,11 +20,13 @@
 
     <!-- Section 2 : Statistiques + Alertes -->
     <section class="stats-grid">
+
       <!-- Graphique évolution -->
       <p-card styleClass="chart-card">
         <ng-template pTemplate="title">
-          Évolution des encaissements (Orange Money / MTN Money / Espèces)
+          <span class="card-title-text">Évolution des encaissements (Orange Money / MTN Money / Espèces)</span>
         </ng-template>
+
         <div class="chart-wrapper">
           <p-chart type="line" [data]="chartData()" [options]="chartOptions"></p-chart>
         </div>
@@ -33,41 +35,49 @@
       <!-- Panneau des alertes -->
       <p-card styleClass="alerts-card">
         <ng-template pTemplate="title">
-          <div class="flex align-items-center justify-content-between">
-              <span>Alertes &amp; échéances</span>
-              @if (alerts().length > 0) {
-                  <p-tag [value]="alerts().length + ''" severity="danger" [rounded]="true"></p-tag>
-              }
+          <div class="flex align-items-center justify-content-between flex-wrap gap-2">
+            <span class="card-title-text">Alertes &amp; échéances</span>
+            @if (alerts().length > 0) {
+              <p-tag [value]="alerts().length + ''" severity="danger" [rounded]="true"></p-tag>
+            }
           </div>
         </ng-template>
-        
+
         <ul class="alerts-list">
           @for (alert of alerts(); track alert.id || $index) {
             <li class="alerts-list__item" [class]="'alerts-list__item--' + alert.severite">
-              <i [class]="getAlertIcon(alert.severite)" class="alerts-list__icon mr-2 text-xl"></i>
-              <div class="alerts-list__content flex-grow-1">
-                  @if (alert.titre) {
-                      <span class="block font-bold text-sm mb-1 text-900">{{ alert.titre }}</span>
-                  }
-                  <span class="block text-sm text-700">{{ alert.message }}</span>
+              <i [class]="getAlertIcon(alert.severite)" class="alerts-list__icon"></i>
+              <div class="alerts-list__content">
+                @if (alert.titre) {
+                  <span class="alerts-list__title">{{ alert.titre }}</span>
+                }
+                <span class="alerts-list__message">{{ alert.message }}</span>
               </div>
             </li>
           } @empty {
-            <li class="p-3 text-center text-500 text-sm">
-              <i class="pi pi-check-circle mr-2 text-green-500"></i>
+            <li class="alerts-list__empty">
+              <i class="pi pi-check-circle"></i>
               Aucune alerte en attente.
             </li>
           }
         </ul>
       </p-card>
+
     </section>
 
-    <!-- Section 3 : Derniers biens ajoutés -->
+    <!-- Section 3 : Derniers biens ajoutés
+         Sur mobile, le tableau devient une liste de cartes (géré par le SCSS) -->
     <section class="properties-section">
       <p-card styleClass="properties-card">
-        <ng-template pTemplate="title">Derniers biens ajoutés</ng-template>
+        <ng-template pTemplate="title">
+          <span class="card-title-text">Derniers biens ajoutés</span>
+        </ng-template>
 
-        <p-table [value]="properties()" [loading]="isLoading()" responsiveLayout="scroll">
+        <p-table
+          styleClass="table-responsive-stack"
+          [value]="properties()"
+          [loading]="isLoading()">
+
           <ng-template pTemplate="header">
             <tr>
               <th>Référence</th>
@@ -77,18 +87,22 @@
               <th>Loyer</th>
             </tr>
           </ng-template>
+
           <ng-template pTemplate="body" let-property>
             <tr>
-              <td>{{ property.reference }}</td>
-              <td>{{ property.type }}</td>
-              <td>{{ property.location }}</td>
-              <td>
-                <!-- Note : suppression du 'this.' pour respecter la syntaxe Angular template -->
-                <p-tag [value]="property.status" [severity]="biensService.getStatutLibelleSeverity(property.status)"></p-tag>
+              <td data-label="Référence">{{ property.reference }}</td>
+              <td data-label="Type de bien">{{ property.type }}</td>
+              <td data-label="Ville / Quartier">{{ property.location }}</td>
+              <td data-label="Statut">
+                <p-tag
+                  [value]="property.status"
+                  [severity]="biensService.getStatutLibelleSeverity(property.status)">
+                </p-tag>
               </td>
-              <td>{{ property.rent | currency:'XAF':'symbol':'1.0-0' }}</td>
+              <td data-label="Loyer" class="nowrap">{{ property.rent | currency:'XAF':'symbol':'1.0-0' }}</td>
             </tr>
           </ng-template>
+
           <ng-template pTemplate="emptymessage">
             <tr>
               <td colspan="5" class="text-center p-4 text-500">
@@ -103,11 +117,13 @@
   </div>
 
 } @else {
-  <!-- ===== VUE LOCATAIRE : Affichage de l'image de bienvenue ===== -->
+  <!-- ===== VUE LOCATAIRE : Affichage de l'image de bienvenue responsive ===== -->
   <div class="welcome-background-container">
     <div class="welcome-overlay-content">
       <h1>Bienvenue sur MarionGI</h1>
     </div>
-    <img src="/immeublemarion.jpeg" alt="Bienvenue sur MarionGI" class="cover-image" />
+    <div class="cover-wrapper">
+      <img src="/immeublemarion.jpeg" alt="Bienvenue sur MarionGI" class="cover-image" />
+    </div>
   </div>
 }

@@ -1,34 +1,62 @@
 <div class="login-page">
-  <div class="login-shell">
 
-    <!-- Bandeau marque -->
-    <div>
-      <img src="logo-horizontal.svg" alt="MarionGI" style="height: 70px; " />
+  <!-- ===== Panneau de marque =====
+       Desktop : colonne de gauche pleine hauteur
+       Mobile  : bandeau image en haut, la carte de connexion le chevauche -->
+  <aside class="brand-panel">
+    <img class="brand-panel__bg" src="/immeublemarion.jpeg" alt="" aria-hidden="true" />
+    <div class="brand-panel__overlay"></div>
+
+    <div class="brand-panel__content">
+      <h2 class="brand-panel__title">Gérez vos biens en toute simplicité</h2>
+      <p class="brand-panel__text">
+        Contrats, paiements, quittances et rapports : tout votre patrimoine immobilier au même endroit.
+      </p>
+
+      <ul class="brand-panel__features">
+        <li><i class="pi pi-building"></i><span>Suivi des biens et des contrats</span></li>
+        <li><i class="pi pi-wallet"></i><span>Paiements et quittances</span></li>
+        <li><i class="pi pi-chart-line"></i><span>Rapports et statistiques</span></li>
+      </ul>
     </div>
+  </aside>
 
-    <!-- Carte de connexion -->
+  <!-- ===== Zone de connexion ===== -->
+  <main class="login-side">
+
     <div class="login-card">
+
+      <img class="card-logo" src="logo-horizontal.svg" alt="MarionGI" />
+
+      <!-- Indicateur d'étape (décoratif) -->
+      <div class="steps" aria-hidden="true">
+        <span class="step-dot step-dot--active"></span>
+        <span class="step-dot" [class.step-dot--active]="step() === 'otp'"></span>
+      </div>
 
       @if (step() === 'credentials') {
         <h1 class="card-title">Connexion</h1>
+        <p class="card-subtitle">Accédez à votre espace MarionGI.</p>
 
-        @if (errorMessage()) {
-          <p-message severity="error" [text]="errorMessage()!" styleClass="w-full mb-3"></p-message>
-        }
+        <div class="form-messages" aria-live="polite">
+          @if (errorMessage()) {
+            <p-message severity="error" [text]="errorMessage()!" styleClass="w-full"></p-message>
+          }
 
-        @if (isLockedOut()) {
-          <p-message
-            severity="warn"
-            [text]="'Trop de tentatives. Réessaie dans ' + lockoutRemaining() + 's.'"
-            styleClass="w-full mb-3"
-          ></p-message>
-        }
+          @if (isLockedOut()) {
+            <p-message
+              severity="warn"
+              [text]="'Trop de tentatives. Réessaie dans ' + lockoutRemaining() + 's.'"
+              styleClass="w-full"
+            ></p-message>
+          }
+        </div>
 
         <form [formGroup]="credentialsForm" (ngSubmit)="submitCredentials()" novalidate>
 
-          <!-- ① Identifiant -->
+          <!-- Identifiant -->
           <div class="field-group">
-            <label for="identifiant">Téléphone ou adresse e-mail</label>
+            <label for="identifiant">Téléphone ou adresse e-mail *</label>
             <input
               id="identifiant"
               type="text"
@@ -43,17 +71,15 @@
             }
           </div>
 
-          <!-- ② Mot de passe -->
+          <!-- Mot de passe -->
           <div class="field-group">
-            <label for="motDePasse">Mot de passe</label>
+            <label for="motDePasse">Mot de passe *</label>
             <p-password
               inputId="motDePasse"
               formControlName="motDePasse"
               [toggleMask]="true"
               [feedback]="false"
               autocomplete="current-password"
-              styleClass="w-full"
-              inputStyleClass="w-full"
               placeholder="••••••••"
             ></p-password>
             @if (credentialsForm.get('motDePasse')?.invalid && credentialsForm.get('motDePasse')?.touched) {
@@ -61,16 +87,18 @@
             }
           </div>
 
-          <!-- Lien "Mot de passe oublié ?" avec curseur forcé en CSS inline -->
-          <div class="text-right mb-3">
-            <a (click)="modalRecuperation.ouvrirModal()" style="cursor: pointer;" class="font-medium text-primary text-sm underline">
+          <!-- Lien "Mot de passe oublié ?" : un vrai bouton (clavier + lecteurs d'écran),
+               plus besoin du style inline cursor:pointer -->
+          <div class="forgot-row">
+            <button type="button" class="link-btn" (click)="modalRecuperation.ouvrirModal()">
               Mot de passe oublié ?
-            </a>
+            </button>
           </div>
 
           <p-button
             type="submit"
             label="Se connecter"
+            icon="pi pi-sign-in"
             styleClass="submit-btn"
             [disabled]="!canSubmitCredentials()"
             [loading]="isSubmitting()"
@@ -80,7 +108,7 @@
 
       @if (step() === 'otp') {
         <h1 class="card-title">Vérification</h1>
-        <p class="otp-hint">
+        <p class="card-subtitle">
           Un code a été envoyé par SMS au
           <strong>{{ maskedPhone() }}</strong>.
         </p>
@@ -91,23 +119,26 @@
           </div>
         }
 
-        @if (errorMessage()) {
-          <p-message severity="error" [text]="errorMessage()!" styleClass="w-full mb-3"></p-message>
-        }
+        <div class="form-messages" aria-live="polite">
+          @if (errorMessage()) {
+            <p-message severity="error" [text]="errorMessage()!" styleClass="w-full"></p-message>
+          }
+        </div>
 
         <form [formGroup]="otpForm" (ngSubmit)="submitOtp()" novalidate>
 
-          <!-- ③ Code OTP -->
+          <!-- Code OTP -->
           <div class="field-group">
             <label for="otp">Code de vérification envoyé par SMS</label>
             <input
               id="otp"
               type="text"
               pInputText
+              class="otp-input"
               inputmode="numeric"
               formControlName="codeOtp"
               autocomplete="one-time-code"
-              placeholder="6 chiffres"
+              placeholder="······"
               maxlength="6"
               [class.ng-invalid]="otpForm.get('codeOtp')?.invalid && otpForm.get('codeOtp')?.touched"
             />
@@ -137,6 +168,7 @@
           <p-button
             type="submit"
             label="Valider le code"
+            icon="pi pi-check"
             styleClass="submit-btn"
             [disabled]="!canSubmitOtp()"
             [loading]="isSubmitting()"
@@ -146,7 +178,9 @@
 
     </div>
 
-  </div>
+    <p class="login-footer">MarionGI · Gestion immobilière</p>
+
+  </main>
 </div>
 
 <!-- Inclusion de la modale/composant de récupération à la fin du template -->

@@ -1,53 +1,89 @@
-<div class="p-4">
+<div class="p-2 md:p-4">
   <!-- En-tête -->
-  <div class="flex justify-content-between align-items-center mb-4">
+  <div class="page-header mb-4">
     <h2 class="m-0">Gestion des Paiements</h2>
   </div>
 
   <!-- Filtres rapides -->
-  <div class="card p-3 mb-4 flex flex-wrap gap-3 align-items-center">
-    <span class="p-input-icon-left">
-      <i class="pi pi-search"></i>
-      <input pInputText type="text" [(ngModel)]="filtreTexte" (input)="appliquerFiltres()" placeholder="Rechercher..." />
-    </span>
+  <div class="card filters-bar mb-4">
+    <i class="pi pi-search"></i>
+      <input
+        pInputText
+        type="text"
+        class="w-full"
+        [(ngModel)]="filtreTexte"
+        (input)="appliquerFiltres()"
+        placeholder="Rechercher..." />
+    
 
-    <p-select [options]="statutsOptions" [(ngModel)]="filtreStatut" (onChange)="appliquerFiltres()" placeholder="Filtrer par statut" [showClear]="true"></p-select>
-    <p-select [options]="modesOptions" [(ngModel)]="filtreMode" (onChange)="appliquerFiltres()" placeholder="Filtrer par mode" [showClear]="true"></p-select>
+    <p-select
+      class="filter-select"
+      styleClass="w-full"
+      [options]="statutsOptions"
+      [(ngModel)]="filtreStatut"
+      (onChange)="appliquerFiltres()"
+      placeholder="Filtrer par statut"
+      [showClear]="true" />
+
+    <p-select
+      class="filter-select"
+      styleClass="w-full"
+      [options]="modesOptions"
+      [(ngModel)]="filtreMode"
+      (onChange)="appliquerFiltres()"
+      placeholder="Filtrer par mode"
+      [showClear]="true" />
   </div>
 
   <!-- Tableau PrimeNG -->
   <div class="card">
-    <p-table [value]="paiementsFiltres" [loading]="chargementEnCours" [paginator]="true" [rows]="10" [rowHover]="true"
-             currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} paiements"
-             [showCurrentPageReport]="true">
-      
+    <p-table
+      styleClass="table-responsive-stack"
+      dataKey="id"
+      [value]="paiementsFiltres"
+      [loading]="chargementEnCours"
+      [paginator]="true"
+      [rows]="10"
+      [rowHover]="true"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} paiements">
+
       <ng-template pTemplate="header">
         <tr>
           <th>N° Quittance</th>
           <th>Bien / Contrat</th>
           <th>Montant</th>
-          <th>Mode</th>
+          <th class="hide-tablet">Mode</th>
           <th>Statut</th>
-          <th>Date</th>
-          <th class="text-center">Actions</th>
+          <th class="hide-tablet">Date</th>
+          <th class="col-actions">Actions</th>
         </tr>
       </ng-template>
 
       <ng-template pTemplate="body" let-paiement>
         <tr>
-          <td class="font-bold">{{ paiement.numeroQuittance }}</td>
-          <td>{{ paiement.bienReference || 'N/A' }}</td>
-          <td>{{ paiement.montant | number }} FCFA</td>
-          <td>{{ getLibelleMode(paiement.mode) }}</td>
-          <td>
-            <p-tag [value]="getLibelleStatut(paiement.statut)" [severity]="getSeverity(paiement.statut)"></p-tag>
+          <td data-label="N° Quittance" class="font-bold">{{ paiement.numeroQuittance }}</td>
+          <td data-label="Bien / Contrat">{{ paiement.bienReference || 'N/A' }}</td>
+          <td data-label="Montant">{{ paiement.montant | number }} FCFA</td>
+          <td data-label="Mode" class="hide-tablet">{{ getLibelleMode(paiement.mode) }}</td>
+          <td data-label="Statut">
+            <p-tag
+              [value]="getLibelleStatut(paiement.statut)"
+              [severity]="getSeverity(paiement.statut)" />
           </td>
-          <td>{{ paiement.datePaiement | date:'dd/MM/yyyy HH:mm' }}</td>
-          <td class="text-center">
-            <button pButton icon="pi pi-download" class="p-button-text p-button-sm"
-                    *ngIf="paiement.statut === StatutTransaction.Confirme"
-                    pTooltip="Télécharger la quittance"
-                    (click)="telechargerQuittance(paiement.id)">
+          <td data-label="Date" class="hide-tablet">{{ paiement.datePaiement | date:'dd/MM/yyyy HH:mm' }}</td>
+
+          <!-- Pas de data-label ici ; la classe no-action masque la cellule vide sur mobile -->
+          <td class="col-actions" [class.no-action]="paiement.statut !== StatutTransaction.Confirme">
+            <button
+              *ngIf="paiement.statut === StatutTransaction.Confirme"
+              pButton
+              type="button"
+              icon="pi pi-download"
+              class="p-button-text p-button-sm"
+              aria-label="Télécharger la quittance"
+              pTooltip="Télécharger la quittance"
+              (click)="telechargerQuittance(paiement.id)">
             </button>
           </td>
         </tr>

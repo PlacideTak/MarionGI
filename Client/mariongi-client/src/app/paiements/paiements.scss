@@ -1,0 +1,459 @@
+/* =========================================================
+   PRÉREQUIS HTML (voir la fin du fichier pour le détail)
+   - <p-table styleClass="table-responsive-stack">
+   - chaque <td> a un attribut data-label="Nom de la colonne"
+   - colonnes secondaires : class="hide-tablet" (th ET td)
+   - colonne d'actions : class="col-actions" (th ET td)
+   ========================================================= */
+
+/* ---------- Variables ---------- */
+$border: #e2e8f0;
+$text: #334155;
+$bg-soft: #f8fafc;
+$success: #2e7d5b;
+$success-hover: #246348;
+
+/* ---------- Carte ---------- */
+.card {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin: 1.5rem;
+  min-width: 0;
+  // Pas d'overflow-x: hidden ici : ça couperait le tableau.
+  // Le défilement horizontal est géré par le conteneur de la table.
+}
+
+/* ---------- En-tête de page (titre + bouton) ---------- */
+.page-header,
+.card > .flex.justify-content-between.align-items-center {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+/* ---------- Tableau ---------- */
+::ng-deep .p-datatable {
+  // Défilement horizontal de secours (tablette / écrans intermédiaires)
+  .p-datatable-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .p-datatable-header {
+    .p-input-icon-left,
+    .p-iconfield {
+      width: 100%;
+      max-width: 320px;
+    }
+  }
+
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr > td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+  }
+
+  .col-actions {
+    white-space: nowrap;
+    text-align: center;
+    width: 1%; // colle la colonne à son contenu
+  }
+
+  // Les images (photos) ne débordent jamais
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* ---------- Formulaire ---------- */
+.bien-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-top: 0.5rem;
+
+  .field {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+
+    label {
+      font-weight: 600;
+      color: $text;
+      font-size: 0.9rem;
+      text-align: right;
+    }
+
+    input,
+    ::ng-deep p-select,
+    ::ng-deep .p-select {
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    input {
+      max-width: 100%;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border;
+
+    button.p-button-success {
+      background-color: $success !important;
+      border-color: $success !important;
+
+      &:hover {
+        background-color: $success-hover !important;
+      }
+    }
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* =========================================================
+   TABLETTE (≤ 768px)
+   ========================================================= */
+@media (max-width: 768px) {
+  .card {
+    margin: 1rem;
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+
+  // On masque les colonnes secondaires
+  ::ng-deep .p-datatable .hide-tablet {
+    display: none;
+  }
+
+  ::ng-deep .p-datatable {
+    font-size: 0.9rem;
+
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.6rem 0.75rem;
+    }
+  }
+
+  .bien-form {
+    gap: 1rem;
+
+    .field {
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 0.75rem;
+
+      label {
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+/* =========================================================
+   MOBILE (≤ 600px) : le tableau devient une liste de cartes
+   ========================================================= */
+@media (max-width: 600px) {
+  .card {
+    margin: 0.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  /* En-tête de page */
+  .page-header,
+  .card > .flex.justify-content-between.align-items-center {
+    flex-direction: column;
+    align-items: stretch !important;
+
+    h2 {
+      font-size: 1.35rem;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  /* Barre de recherche */
+  ::ng-deep .p-datatable-header {
+    .flex,
+    .p-input-icon-left,
+    .p-iconfield,
+    .p-inputtext {
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+
+  /* --- Tableau -> cartes --- */
+  ::ng-deep .table-responsive-stack {
+    .p-datatable-table-container {
+      overflow-x: visible;
+    }
+
+    .p-datatable-table,
+    .p-datatable-tbody {
+      display: block;
+      width: 100%;
+    }
+
+    // On cache l'en-tête : les libellés viennent de data-label
+    .p-datatable-thead {
+      display: none;
+    }
+
+    // On réaffiche les colonnes masquées en tablette
+    .hide-tablet {
+      display: flex;
+    }
+
+    .p-datatable-tbody > tr {
+      display: block;
+      border: 1px solid $border;
+      border-radius: 10px;
+      margin-bottom: 0.75rem;
+      padding: 0.25rem 0;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .p-datatable-tbody > tr > td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100% !important;
+      box-sizing: border-box;
+      padding: 0.5rem 1rem;
+      border: 0 !important;
+      text-align: right;
+      overflow-wrap: anywhere;
+
+      &::before {
+        content: attr(data-label);
+        flex: 0 0 40%;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: $text;
+        text-align: left;
+      }
+
+      // Pas de libellé pour les cellules sans data-label (ex: actions)
+      &:not([data-label])::before,
+      &[data-label=''] ::before {
+        content: none;
+      }
+    }
+
+    // Les actions prennent toute la largeur, séparées du reste
+    .p-datatable-tbody > tr > td.col-actions {
+      justify-content: flex-end;
+      margin-top: 0.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid $border !important;
+      background: $bg-soft;
+      border-radius: 0 0 10px 10px;
+    }
+
+    // Message "aucun résultat"
+    .p-datatable-emptymessage > td {
+      display: block;
+      text-align: center;
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+
+  /* Formulaire : libellé au-dessus du champ */
+  .bien-form {
+    .field {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.4rem;
+      width: 100%;
+
+      label {
+        text-align: left;
+        font-size: 0.9rem;
+      }
+
+      input,
+      ::ng-deep p-select,
+      ::ng-deep .p-select {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      &.col-12 {
+        width: 100%;
+      }
+    }
+
+    .form-actions,
+    > .flex.justify-content-end {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 0.75rem;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  /* Modale plein écran (presque) */
+  ::ng-deep .p-dialog {
+    width: calc(100vw - 1rem) !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100dvh - 1rem);
+    margin: 0.5rem;
+  }
+
+  ::ng-deep .p-dialog-content {
+    padding: 1rem !important;
+    overflow-x: hidden;
+  }
+
+  ::ng-deep .p-dialog-header {
+    padding: 1rem !important;
+  }
+}
+
+/* =========================================================
+   TRÈS PETITS TÉLÉPHONES (≤ 400px)
+   ========================================================= */
+@media (max-width: 400px) {
+  .card {
+    margin: 0.25rem;
+    padding: 0.75rem;
+  }
+
+  .page-header h2,
+  .card > .flex.justify-content-between.align-items-center h2 {
+    font-size: 1.2rem;
+  }
+
+  .bien-form {
+    gap: 0.85rem;
+  }
+
+  ::ng-deep .table-responsive-stack .p-datatable-tbody > tr > td {
+    padding: 0.4rem 0.75rem;
+
+    &::before {
+      flex-basis: 35%;
+    }
+  }
+
+  ::ng-deep .p-dialog {
+    width: calc(100vw - 0.5rem) !important;
+    max-width: calc(100vw - 0.5rem) !important;
+    margin: 0.25rem;
+  }
+}
+
+/* =========================================================
+   EXEMPLE HTML CORRESPONDANT
+   =========================================================
+
+<p-table [value]="biens" styleClass="table-responsive-stack">
+  <ng-template pTemplate="header">
+    <tr>
+      <th>Adresse</th>
+      <th>Type</th>
+      <th class="hide-tablet">Ville</th>
+      <th class="hide-tablet">Prix</th>
+      <th class="col-actions">Actions</th>
+    </tr>
+  </ng-template>
+
+  <ng-template pTemplate="body" let-bien>
+    <tr>
+      <td data-label="Adresse">{{ bien.adresse }}</td>
+      <td data-label="Type">{{ bien.type }}</td>
+      <td data-label="Ville" class="hide-tablet">{{ bien.ville }}</td>
+      <td data-label="Prix" class="hide-tablet">{{ bien.prix | currency }}</td>
+      <td class="col-actions">
+        <p-button icon="pi pi-pencil" [text]="true" />
+        <p-button icon="pi pi-trash" severity="danger" [text]="true" />
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+   ========================================================= */
+
+/* =========================================================
+   AJOUTS POUR LA PAGE PAIEMENTS (paiements.component.html)
+   ========================================================= */
+
+/* Barre de filtres */
+.filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+
+  .filter-search {
+    flex: 1 1 260px;
+    min-width: 0;
+  }
+
+  .filter-select {
+    flex: 0 1 220px;
+    min-width: 0;
+  }
+}
+
+/* Cellule d'actions vide : masquée sur mobile pour éviter une barre vide */
+@media (max-width: 600px) {
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+
+    .filter-search,
+    .filter-select {
+      flex: 1 1 auto;
+      width: 100%;
+    }
+  }
+
+  ::ng-deep .table-responsive-stack .p-datatable-tbody > tr > td.col-actions.no-action {
+    display: none;
+  }
+
+  // Pagination et texte "Affichage de X à Y" : on empile proprement
+  ::ng-deep .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+}

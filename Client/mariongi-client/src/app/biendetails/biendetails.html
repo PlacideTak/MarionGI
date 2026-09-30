@@ -1,241 +1,266 @@
 <div class="fiche-page">
 
-  <!-- Bouton Retour -->
+  <!-- Retour -->
   <div class="mb-4">
-    <button pButton label="Retour à la liste" icon="pi pi-arrow-left"
-            class="p-button-text p-button-secondary font-bold"
-            (click)="allerVersListe()">
+    <button
+      pButton
+      label="Retour à la liste"
+      icon="pi pi-arrow-left"
+      class="p-button-text p-button-secondary font-bold"
+      (click)="allerVersListe()">
     </button>
   </div>
 
-  <!-- Message de chargement -->
+  <!-- Chargement -->
   <div *ngIf="chargementEnCours || !bien" class="loading-box">
     <p>Chargement des informations du bien...</p>
   </div>
 
-  <!-- Contenu complet de la fiche -->
-  <div class="fiche-card" *ngIf="!chargementEnCours && bien">
+  <!-- Fiche -->
+  <div
+    class="fiche-card"
+    *ngIf="!chargementEnCours && bien">
 
-    <div class="card">
-      <div class="fiche-body">
-        
-        <div class="flex justify-content-between align-items-center mb-4">
-          <h2 class="m-0">Fiche du bien</h2>
+    <div class="fiche-header">
+      <h2>Fiche du bien</h2>
+    </div>
+
+    <div class="fiche-body">
+
+      <!-- LIGNE 1 -->
+      <div class="fiche-row fiche-row-top">
+
+        <!-- Photo -->
+        <div class="fiche-col fiche-col-photo">
+          <div class="fiche-block photo-block">
+
+            <div class="fiche-photo-main">
+              <img
+                *ngIf="bien.photos && bien.photos.length > 0"
+                [src]="serverUrl + bien.photos[photoActiveIndex]"
+                alt="Photo du bien" />
+
+              <span
+                *ngIf="!bien.photos || bien.photos.length === 0"
+                class="no-photo">
+                [ Photo du bien ]
+              </span>
+            </div>
+
+            <div
+              class="fiche-thumbs"
+              *ngIf="bien.photos && bien.photos.length > 1">
+
+              <img
+                *ngFor="let photo of bien.photos; let i = index"
+                [src]="serverUrl + photo"
+                [class.active]="i === photoActiveIndex"
+                (click)="photoActiveIndex = i"
+                alt="Miniature" />
+
+            </div>
+
+          </div>
         </div>
 
-        <!-- LIGNE 1 : Visuel du bien et Caractéristiques -->
-        <div class="fiche-row fiche-row-top">
-          
-          <!-- 1. Visuel du bien -->
-          <div class="fiche-col fiche-col-photo">
-            <div class="fiche-block photo-block">
-              <div class="fiche-photo-main">
-                <img *ngIf="bien.photos && bien.photos.length > 0"
-                     [src]="serverUrl + bien.photos[photoActiveIndex]"
-                     alt="Photo du bien" />
-                <span *ngIf="!bien.photos || bien.photos.length === 0" class="no-photo">
-                  [ Photo du bien ]
+        <!-- Caractéristiques -->
+        <div class="fiche-col fiche-col-info">
+
+          <div class="fiche-block">
+
+            <h3>
+              {{ bien.reference }} — {{ bien.ville }}, {{ bien.quartier }}
+            </h3>
+
+            <ul class="fiche-list">
+              <li>
+                <strong>Superficie :</strong>
+                {{ bien.superficie }} m²
+              </li>
+
+              <li>
+                <strong>Type :</strong>
+                {{ bienService.getTypeLibelle(bien.type) }}
+              </li>
+
+              <li>
+                <strong>Loyer mensuel :</strong>
+                {{ bien.loyer | number }} FCFA
+              </li>
+
+              <li *ngIf="bien.caution">
+                <strong>Caution :</strong>
+                {{ bien.caution | number }} FCFA
+              </li>
+
+              <li>
+                <strong>Statut :</strong>
+                <span class="font-bold">
+                  {{ bienService.getStatutLibelle(bien.statut) }}
                 </span>
-              </div>
+              </li>
 
-              <div class="fiche-thumbs" *ngIf="bien.photos && bien.photos.length > 1">
-                <img *ngFor="let photo of bien.photos; let i = index"
-                     [src]="serverUrl + photo"
-                     [class.active]="i === photoActiveIndex"
-                     (click)="photoActiveIndex = i"
-                     alt="Miniature" />
-              </div>
-            </div>
-          </div>
+              <li>
+                <strong>Propriétaire :</strong>
+                {{ bien.proprietaireNom || 'N/A' }}
+              </li>
+            </ul>
 
-          <!-- 2. Caractéristiques -->
-          <div class="fiche-col fiche-col-info">
-            <div class="fiche-block">
-              <h3>{{ bien.reference }} — {{ bien.ville }}, {{ bien.quartier }}</h3>
-              <ul class="fiche-list">
-                <li><strong>Superficie :</strong> {{ bien.superficie }} m²</li>
-                <li><strong>Type :</strong> {{ bienService.getTypeLibelle(bien.type) }}</li>
-                <li><strong>Loyer mensuel :</strong> {{ bien.loyer | number }} FCFA</li>
-                <li *ngIf="bien.caution"><strong>Caution :</strong> {{ bien.caution | number }} FCFA</li>
-                <li><strong>Statut : </strong> <span class="font-bold">{{ bienService.getStatutLibelle(bien.statut) }}</span></li>
-                <li><strong>Propriétaire :</strong> {{ bien.proprietaireNom || 'N/A' }}</li>
-              </ul>
-            </div>
           </div>
 
         </div>
 
-        <!-- LIGNE 2 : Locataire et Historique des paiements -->
-        <div class="fiche-row fiche-row-half">
+      </div>
 
-          <!-- 3. Informations locataire -->
-          <div class="fiche-col fiche-col-half">
-            <div class="fiche-block">
-              <h4>Locataire</h4>
-              <div *ngIf="bien.locataireActuel; else aucunLocataire">
-                <ul class="fiche-list">
-                  <li><strong>Nom :</strong> {{ bien.locataireActuel.nom }}</li>
-                  <li><strong>Téléphone :</strong> {{ bien.locataireActuel.telephone }}</li>
-                  <li><strong>Début du bail :</strong> {{ bien.locataireActuel.debutBail | date:'dd/MM/yyyy' }}</li>
-                  <li><strong>Fin du bail :</strong> {{ bien.locataireActuel.finBail | date:'dd/MM/yyyy' }}</li>
-                </ul>
-              </div>
-              <ng-template #aucunLocataire>
-                <p class="empty-text">Aucun locataire actif pour le moment.</p>
-              </ng-template>
-            </div>
-          </div>
+      <!-- LIGNE 2 -->
+      <div class="fiche-row fiche-row-half">
 
-          <!-- 4. Historique des paiements -->
-          <div class="fiche-col fiche-col-half">
-            <div class="fiche-block">
-              <h4>Historique des paiements</h4>
-              <ul class="fiche-list" *ngIf="bien.historiquePaiements && bien.historiquePaiements.length > 0; else aucunPaiement">
-                <li *ngFor="let paiement of bien.historiquePaiements" class="payment-line flex justify-content-between align-items-center">
-                  <div>
-                    <span>{{ paiement.date | date:'dd/MM/yyyy' }} — {{ paiement.montant | number }} FCFA</span>
-                    <span class="payment-mode">({{ paiement.mode }})</span>
-                  </div>
-                  <!-- Bouton de téléchargement de quittance par paiement -->
-                  <button pButton icon="pi pi-download" 
-                          class="p-button-text p-button-sm p-button-secondary" 
-                          pTooltip="Télécharger la quittance"
-                          (click)="telechargerQuittance(paiement.id)">
-                  </button>
+        <!-- Locataire -->
+        <div class="fiche-col">
+
+          <div class="fiche-block">
+
+            <h4>Locataire</h4>
+
+            <div *ngIf="bien.locataireActuel; else aucunLocataire">
+
+              <ul class="fiche-list">
+                <li>
+                  <strong>Nom :</strong>
+                  {{ bien.locataireActuel.nom }}
+                </li>
+
+                <li>
+                  <strong>Téléphone :</strong>
+                  {{ bien.locataireActuel.telephone }}
+                </li>
+
+                <li>
+                  <strong>Début du bail :</strong>
+                  {{ bien.locataireActuel.debutBail | date:'dd/MM/yyyy' }}
+                </li>
+
+                <li>
+                  <strong>Fin du bail :</strong>
+                  {{ bien.locataireActuel.finBail | date:'dd/MM/yyyy' }}
                 </li>
               </ul>
-              <ng-template #aucunPaiement>
-                <p class="empty-text">Aucun paiement enregistré récemment.</p>
-              </ng-template>
+
             </div>
+
+            <ng-template #aucunLocataire>
+              <p class="empty-text">
+                Aucun locataire actif pour le moment.
+              </p>
+            </ng-template>
+
           </div>
+
         </div>
 
-        <!-- LIGNE 3 : Actions contractuelles (Sécurisées selon le rôle) -->
-        <div class="fiche-block">
-          <div class="actions-row">
-            <button *ngIf="!isLocataire" pButton label="Renouveler le contrat" icon="pi pi-refresh" class="p-button-outlined p-button-success" (click)="renouvelerContrat()"></button>
-            <button *ngIf="!isLocataire" pButton label="Générer les quittances" icon="pi pi-file-pdf" class="p-button-outlined p-button-secondary" [disabled]="!bien?.locataireActuel?.contratId" (click)="genererLesQuittancesContrat()"></button>        
-            <button pButton label="Enregistrer un paiement" icon="pi pi-wallet" class="p-button-outlined p-button-info" [disabled]="!bien?.locataireActuel?.contratId" (click)="enregistrerPaiement()"></button>      
-            <button *ngIf="!isLocataire" pButton label="Résilier le bail" icon="pi pi-ban" class="p-button-outlined p-button-danger" [disabled]="!bien?.locataireActuel?.contratId" (click)="resilierBail()"></button>
-            <button pButton label="Retour à la liste" icon="pi pi-arrow-left" class="p-button-outlined p-button-secondary" (click)="allerVersListe()"></button>
+        <!-- Paiements -->
+        <div class="fiche-col">
+
+          <div class="fiche-block">
+
+            <h4>Historique des paiements</h4>
+
+            <ul
+              class="fiche-list"
+              *ngIf="
+                bien.historiquePaiements &&
+                bien.historiquePaiements.length > 0;
+                else aucunPaiement
+              ">
+
+              <li
+                *ngFor="let paiement of bien.historiquePaiements"
+                class="payment-line">
+
+                <div>
+                  <span>
+                    {{ paiement.date | date:'dd/MM/yyyy' }}
+                    —
+                    {{ paiement.montant | number }} FCFA
+                  </span>
+
+                  <span class="payment-mode">
+                    ({{ paiement.mode }})
+                  </span>
+                </div>
+
+                <button
+                  pButton
+                  icon="pi pi-download"
+                  class="p-button-text p-button-sm p-button-secondary"
+                  pTooltip="Télécharger la quittance"
+                  (click)="telechargerQuittance(paiement.id)">
+                </button>
+
+              </li>
+
+            </ul>
+
+            <ng-template #aucunPaiement>
+              <p class="empty-text">
+                Aucun paiement enregistré récemment.
+              </p>
+            </ng-template>
+
           </div>
+
         </div>
 
       </div>
+
+      <!-- ACTIONS -->
+      <div class="fiche-block">
+
+        <div class="actions-row">
+
+          <button
+            *ngIf="!isLocataire"
+            pButton
+            label="Renouveler le contrat"
+            icon="pi pi-refresh"
+            class="p-button-outlined p-button-success"
+            (click)="renouvelerContrat()">
+          </button>
+
+          <button
+            *ngIf="!isLocataire"
+            pButton
+            label="Générer les quittances"
+            icon="pi pi-file-pdf"
+            class="p-button-outlined p-button-secondary"
+            [disabled]="!bien?.locataireActuel?.contratId"
+            (click)="genererLesQuittancesContrat()">
+          </button>
+
+          <button
+            pButton
+            label="Enregistrer un paiement"
+            icon="pi pi-wallet"
+            class="p-button-outlined p-button-info"
+            [disabled]="!bien?.locataireActuel?.contratId"
+            (click)="enregistrerPaiement()">
+          </button>
+
+          <button
+            *ngIf="!isLocataire"
+            pButton
+            label="Résilier le bail"
+            icon="pi pi-ban"
+            class="p-button-outlined p-button-danger"
+            [disabled]="!bien?.locataireActuel?.contratId"
+            (click)="resilierBail()">
+          </button>
+
+        </div>
+
+      </div>
+
     </div>
   </div>
-
-  <!-- ========================================== -->
-  <!-- MODALES DE PAIEMENT                        -->
-  <!-- ========================================== -->
-
-  <!-- 1. Modal : Choix du mode de paiement -->
-  <p-dialog header="Choisir le mode de paiement" [(visible)]="displayChoixModePaiement" [modal]="true" [style]="{width: '350px'}" [dismissableMask]="true">
-    <div class="flex flex-column gap-3 py-2">
-      <button pButton label="Mobile Money" icon="pi pi-mobile" class="p-button-outlined p-button-info w-full" (click)="choisirMobileMoney()"></button>
-      <!-- Option espèces restreinte aux non-locataires si nécessaire -->
-      <button  pButton label="Espèces" icon="pi pi-money-bill" class="p-button-outlined p-button-success w-full" (click)="choisirEspeces()"></button>
-    </div>
-  </p-dialog>
-
-  <!-- 2. Modal : Mobile Money -->
-  <p-dialog 
-    header="Paiement Mobile Money" 
-    [(visible)]="displayPaiementModal" 
-    [modal]="true" 
-    [style]="{ width: '450px' }" 
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    styleClass="paiement-param-dialog">
-
-    <form [formGroup]="paiementForm" (ngSubmit)="soumettrePaiement()" class="paiement-form-container">
-      
-      <div class="form-group">
-        <label for="montant">Montant (FCFA)</label>
-        <input id="montant" type="number" pInputText formControlName="montant" class="w-full p-inputtext" placeholder="Ex: 150000" />
-      </div>
-
-      <div class="form-group">
-        <label for="modePaiement">Opérateur</label>
-        <p-select 
-          id="modePaiement" 
-          [options]="modesPaiement" 
-          formControlName="modePaiement" 
-          optionLabel="label" 
-          optionValue="value" 
-          placeholder="Sélectionnez l'opérateur" 
-          styleClass="w-full">
-        </p-select>
-      </div>
-
-      <div class="form-group">
-        <label for="telephone">Numéro de téléphone</label>
-        <input id="telephone" type="text" pInputText formControlName="telephone" class="w-full p-inputtext" placeholder="Ex: +225..." />
-      </div>
-
-    </form>
-
-    <ng-template pTemplate="footer">
-      <div class="flex justify-content-end gap-2">
-        <p-button 
-          label="Annuler" 
-          icon="pi pi-times" 
-          styleClass="p-button-text p-button-secondary" 
-          (click)="displayPaiementModal = false">
-        </p-button>
-        <p-button 
-          type="submit" 
-          label="Valider et payer" 
-          icon="pi pi-check" 
-          styleClass="p-button-success"
-          [disabled]="paiementForm.invalid || paiementEnCours" 
-          [loading]="paiementEnCours" 
-          (click)="soumettrePaiement()">
-        </p-button>
-      </div>
-    </ng-template>
-  </p-dialog>
-
-  <!-- 3. Modal : Espèces -->
-  <p-dialog 
-    header="Enregistrer un paiement en espèces" 
-    [(visible)]="displayPaiementEspecesModal" 
-    [modal]="true" 
-    [style]="{ width: '420px' }" 
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    styleClass="especes-param-dialog">
-
-    <form [formGroup]="paiementEspecesForm" (ngSubmit)="soumettrePaiementEspeces()" class="especes-form-container">
-      
-      <div class="form-group">
-        <label for="montantEspeces">Montant perçu (FCFA)</label>
-        <input id="montantEspeces" type="number" pInputText formControlName="montant" class="w-full p-inputtext" placeholder="Ex: 150000" />
-      </div>
-
-    </form>
-
-    <ng-template pTemplate="footer">
-      <div class="flex justify-content-end gap-2">
-        <p-button 
-          label="Annuler" 
-          icon="pi pi-times" 
-          styleClass="p-button-text p-button-secondary" 
-          (click)="displayPaiementEspecesModal = false">
-        </p-button>
-        <p-button 
-          type="submit" 
-          label="Confirmer l'encaissement" 
-          icon="pi pi-check" 
-          styleClass="p-button-success"
-          [disabled]="paiementEspecesForm.invalid"
-          (click)="soumettrePaiementEspeces()">
-        </p-button>
-      </div>
-    </ng-template>
-  </p-dialog>
 
 </div>

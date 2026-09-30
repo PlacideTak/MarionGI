@@ -114,7 +114,7 @@ export class Contrats implements OnInit {
       next: (biens) => {
         if (Array.isArray(biens)) {
           this.biensOptions = biens.map(b => ({
-            label: b.adresse || b.reference || `Bien ${b.id?.substring(0, 6)}`,
+            label: `${b.reference} (${b.adresse || ''})`.trim() || `Bien ${b.id?.substring(0, 6)}`,
             value: b.id
           }));
         }
@@ -126,7 +126,7 @@ export class Contrats implements OnInit {
       next: (locataires) => {
         if (Array.isArray(locataires)) {
           this.locatairesOptions = locataires.map(l => ({
-            label: `${l.nom || ''} ${l.prenom || ''}`.trim() || ROLES.Locataire,
+            label: `${l.prenom || ''} ${l.nom || ''}`.trim() || ROLES.Locataire,
             value: l.id
           }));
         }

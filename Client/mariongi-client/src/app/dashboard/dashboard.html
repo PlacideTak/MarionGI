@@ -2,7 +2,7 @@
 
   <!-- ===== TEMPLATE REUTILISABLE MENU ===== -->
   <ng-template #navigationList>
-    <nav class="nav-list">
+    <nav class="nav-list" aria-label="Navigation principale">
       @for (item of navItems(); track item.route) {
         <a
           class="nav-item"
@@ -17,38 +17,40 @@
     </nav>
   </ng-template>
 
-  <!-- ===== SIDEBAR (desktop) ===== -->
+  <!-- ===== SIDEBAR (desktop) : masquée sous 900px, fixe au défilement ===== -->
   <aside class="gestimmo-sidebar">
     <div class="brand">
       <a routerLink="/home" class="brand-link">
-        <img src="logo-horizontal.svg" alt="MarionGI" style="height: 70px;" />
+        <img src="logo-horizontal.svg" alt="MarionGI" class="brand-logo" />
       </a>
     </div>
     <ng-container *ngTemplateOutlet="navigationList"></ng-container>
   </aside>
 
-  <!-- ===== SIDEBAR (mobile drawer) ===== -->
-  <p-drawer 
-    [visible]="mobileSidebarVisible()" 
+  <!-- ===== SIDEBAR (mobile drawer) : largeur plafonnée à 85% de l'écran ===== -->
+  <p-drawer
+    [visible]="mobileSidebarVisible()"
     (onHide)="mobileSidebarVisible.set(false)"
-    position="left" 
+    position="left"
+    [style]="{ width: 'min(20rem, 85vw)' }"
     styleClass="gestimmo-mobile-sidebar">
     <div class="brand">
-      <img src="logo-horizontal.svg" alt="MarionGI" style="height: 40px;" />
+      <img src="logo-horizontal.svg" alt="MarionGI" class="brand-logo brand-logo--drawer" />
     </div>
     <ng-container *ngTemplateOutlet="navigationList"></ng-container>
   </p-drawer>
 
-<!-- ===== CONTENU PRINCIPAL ===== -->
+  <!-- ===== CONTENU PRINCIPAL ===== -->
   <div class="gestimmo-main">
 
-    <!-- Header (Reste fixe et commun à toutes les pages) -->
+    <!-- Header (reste visible au défilement et commun à toutes les pages) -->
     <header class="gestimmo-header">
       <button
         pButton
         type="button"
         icon="pi pi-bars"
         class="p-button-text p-button-plain burger-btn"
+        aria-label="Ouvrir le menu"
         (click)="toggleMobileSidebar()"
       ></button>
 
@@ -58,13 +60,24 @@
         <span class="user-name">
           {{ currentUser().name }} ({{ currentUser().role }})
         </span>
-        <p-avatar
-          [label]="userInitials()"
-          shape="circle"
-          styleClass="user-avatar"
+
+        <!-- Le bouton rend l'avatar utilisable au clavier et au toucher -->
+        <button
+          type="button"
+          class="avatar-btn"
+          aria-label="Menu utilisateur"
+          aria-haspopup="menu"
           (click)="userMenu.toggle($event)"
-        ></p-avatar>
-       <p-menu #userMenu [model]="userMenuItems()" [popup]="true"></p-menu>
+        >
+          <p-avatar
+            [label]="userInitials()"
+            shape="circle"
+            styleClass="user-avatar"
+          ></p-avatar>
+        </button>
+
+        <!-- appendTo="body" : le menu n'est pas coupé par le header -->
+        <p-menu #userMenu [model]="userMenuItems()" [popup]="true" appendTo="body"></p-menu>
       </div>
     </header>
 

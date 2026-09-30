@@ -1,5 +1,7 @@
+<p-toast [breakpoints]="{ '600px': { width: '100%', right: '0', left: '0' } }"></p-toast>
+
 <div class="rapports-container">
-<p-toast></p-toast>
+
   <h2>Centre des Rapports Immobiliers</h2>
   <p class="subtitle">Sélectionnez un rapport ci-dessous pour l'analyser et l'exporter.</p>
 
@@ -13,24 +15,25 @@
 
   <!-- Zone d'affichage dynamique du rapport sélectionné -->
   <div class="rapport-result-section" *ngIf="rapportActifTitre">
+
     <div class="rapport-header-action noprint">
       <h3>{{ rapportActifTitre }}</h3>
-      <button pButton type="button" label="Exporter en PDF" icon="pi pi-file-pdf" class="p-button-danger" (click)="telechargerPdf()"></button>
+      <button pButton type="button" label="Exporter en PDF" icon="pi pi-file-pdf" class="p-button-danger btn-export" (click)="telechargerPdf()"></button>
     </div>
 
     <div class="printable-area">
       <div class="print-only-header">
         <h2>MarionGI - Rapport Officiel</h2>
         <h1>{{ rapportActifTitre }}</h1>
-        <hr/>
+        <hr />
       </div>
 
       <!-- CAS 1 : Encaissements regroupés par mode -->
       <div *ngIf="typeRapportActif === 'encaissements'">
-        <div *ngFor="let groupe of donneesBrutesGlobales" class="groupe-card mb-4">
-          <h4 class="font-bold mb-2">Mode de paiement : {{ groupe.modePaiement }} (Total : {{ groupe.totalRecette | currency }})</h4>
-          
-          <p-table [value]="groupe.details" [tableStyle]="{'min-width': '100%'}">
+        <div *ngFor="let groupe of donneesBrutesGlobales" class="groupe-card">
+          <h4>Mode de paiement : {{ groupe.modePaiement }} (Total : {{ groupe.totalRecette | currency }})</h4>
+
+          <p-table [value]="groupe.details" styleClass="table-responsive-stack">
             <ng-template pTemplate="header">
               <tr>
                 <th>Date</th>
@@ -41,10 +44,10 @@
             </ng-template>
             <ng-template pTemplate="body" let-p>
               <tr>
-                <td>{{ p.datePaiement | date:'dd/MM/yyyy' }}</td>
-                <td>{{ p.bienReference }}</td>
-                <td>{{ p.locataireNom }}</td>
-                <td>{{ p.montant | currency }}</td>
+                <td data-label="Date">{{ p.datePaiement | date:'dd/MM/yyyy' }}</td>
+                <td data-label="Bien">{{ p.bienReference }}</td>
+                <td data-label="Locataire">{{ p.locataireNom }}</td>
+                <td data-label="Montant" class="nowrap">{{ p.montant | currency }}</td>
               </tr>
             </ng-template>
           </p-table>
@@ -53,7 +56,12 @@
 
       <!-- CAS 2, 3 & 4 : Tableaux classiques (Contrats, Impayés, Historique Locataire) -->
       <div *ngIf="typeRapportActif !== 'encaissements'">
-        <p-table [value]="donneesRapport" [paginator]="true" [rows]="10" [tableStyle]="{'min-width': '100%'}">
+        <p-table
+          styleClass="table-responsive-stack"
+          [value]="donneesRapport"
+          [paginator]="true"
+          [rows]="10">
+
           <ng-template pTemplate="header">
             <tr *ngIf="typeRapportActif === 'contrats'">
               <th>Référence Bien</th>
@@ -78,37 +86,40 @@
               <th>Statut</th>
             </tr>
           </ng-template>
+
           <ng-template pTemplate="body" let-row>
             <tr *ngIf="typeRapportActif === 'contrats'">
-              <td>{{ row.bienReference }}</td>
-              <td>{{ row.locataireNom }}</td>
-              <td>{{ row.dateDebut | date:'dd/MM/yyyy' }}</td>
-              <td>{{ row.dateFin | date:'dd/MM/yyyy' }}</td>
-              <td>{{ row.montantLoyer | currency }}</td>
-              <td>{{ row.statutContrat }}</td>
+              <td data-label="Référence bien">{{ row.bienReference }}</td>
+              <td data-label="Locataire">{{ row.locataireNom }}</td>
+              <td data-label="Début" class="nowrap">{{ row.dateDebut | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Fin" class="nowrap">{{ row.dateFin | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Loyer" class="nowrap">{{ row.montantLoyer | currency }}</td>
+              <td data-label="Statut">{{ row.statutContrat }}</td>
             </tr>
             <tr *ngIf="typeRapportActif === 'impayes'">
-              <td>{{ row.bienReference }}</td>
-              <td>{{ row.locataireNom }}</td>
-              <td>{{ row.locataireTelephone }}</td>
-              <td>{{ row.montantLoyer | currency }}</td>
-              <td><span class="badge-retard">{{ row.joursDeRetard }} jours</span></td>
+              <td data-label="Référence bien">{{ row.bienReference }}</td>
+              <td data-label="Locataire">{{ row.locataireNom }}</td>
+              <td data-label="Téléphone" class="nowrap">{{ row.locataireTelephone }}</td>
+              <td data-label="Loyer attendu" class="nowrap">{{ row.montantLoyer | currency }}</td>
+              <td data-label="Jours de retard"><span class="badge-retard">{{ row.joursDeRetard }} jours</span></td>
             </tr>
             <tr *ngIf="typeRapportActif === 'historique-locataire'">
-              <td>{{ row.datePaiement | date:'dd/MM/yyyy' }}</td>
-              <td>{{ row.bienReference }}</td>
-              <td>{{ row.modePaiement }}</td>
-              <td>{{ row.montant | currency }}</td>
-              <td>{{ row.statut }}</td>
+              <td data-label="Date" class="nowrap">{{ row.datePaiement | date:'dd/MM/yyyy' }}</td>
+              <td data-label="Bien">{{ row.bienReference }}</td>
+              <td data-label="Mode">{{ row.modePaiement }}</td>
+              <td data-label="Montant" class="nowrap">{{ row.montant | currency }}</td>
+              <td data-label="Statut">{{ row.statut }}</td>
             </tr>
           </ng-template>
+
         </p-table>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MODALE DE PARAMÈTRES -->
+<!-- MODALE DE PARAMÈTRES
+     [breakpoints] pour la largeur sur petits écrans -->
 <p-dialog
   [(visible)]="displayModalParametres"
   [header]="titreModalParametres"
@@ -117,66 +128,65 @@
   [resizable]="false"
   [closable]="true"
   [style]="{ width: '480px' }"
+  [breakpoints]="{ '768px': '85vw', '480px': '95vw' }"
   styleClass="rapport-param-dialog">
-  
-<!-- FORMULAIRE ENCAISSEMENTS -->
-<div class="param-form flex flex-column gap-3" *ngIf="rapportCibleParametres === 'encaissements'">
-  <div class="field flex flex-column gap-2">
-    <label class="font-medium text-700">Date de début *</label>
-    <input 
-      type="date" 
-      pInputText 
-      [(ngModel)]="paramDateDebut" 
-      required 
-      class="unified-input-select w-full" />
-  </div>
-  <div class="field flex flex-column gap-2">
-    <label class="font-medium text-700">Date de fin *</label>
-    <input 
-      type="date" 
-      pInputText 
-      [(ngModel)]="paramDateFin" 
-      [min]="paramDateDebut" 
-      required 
-      class="unified-input-select w-full" />
-  </div>
-</div>
 
-
-<!-- FORMULAIRE HISTORIQUE LOCATAIRE -->
-<div class="param-form flex flex-column gap-3" *ngIf="rapportCibleParametres === 'historique-locataire'">
-  <div class="field flex flex-column gap-2">
-    <label class="font-medium text-700" for="locataireId">Locataire</label>
-    
-    <!-- Input de recherche avec la même classe visuelle unifiée -->
-    <div class="relative w-full">
-      <input 
-        type="text" 
-        pInputText 
-        [(ngModel)]="filtreLocataire" 
-        placeholder="Rechercher par nom, prénom..." 
-        class="unified-input-select w-full" 
-        style="padding-left: 2.5rem !important;" />
+  <!-- FORMULAIRE ENCAISSEMENTS -->
+  <div class="param-form" *ngIf="rapportCibleParametres === 'encaissements'">
+    <div class="field">
+      <label for="dateDebut">Date de début *</label>
+      <input
+        id="dateDebut"
+        type="date"
+        pInputText
+        [(ngModel)]="paramDateDebut"
+        required
+        class="unified-input-select" />
     </div>
 
-    <!-- Espace vertical -->
-    <div style="height: 0.5rem;"></div>
-
-    <!-- Liste déroulante -->
-    <select 
-      id="locataireId"
-      [(ngModel)]="LocataireId" 
-      class="unified-input-select w-full">
-      <option [ngValue]="null" disabled>Sélectionner un locataire dans la liste</option>
-      <option *ngFor="let loc of locatairesFiltres" [value]="loc.value">
-        {{ loc.label }}
-      </option>
-    </select>
+    <div class="field">
+      <label for="dateFin">Date de fin *</label>
+      <input
+        id="dateFin"
+        type="date"
+        pInputText
+        [(ngModel)]="paramDateFin"
+        [min]="paramDateDebut"
+        required
+        class="unified-input-select" />
+    </div>
   </div>
-</div>
+
+
+  <!-- FORMULAIRE HISTORIQUE LOCATAIRE -->
+  <div class="param-form" *ngIf="rapportCibleParametres === 'historique-locataire'">
+    <div class="field">
+      <label for="filtreLocataire">Locataire</label>
+
+      <!-- Le padding-left inline (2.5rem) réservait la place d'une icône absente : supprimé -->
+      <input
+        id="filtreLocataire"
+        type="text"
+        pInputText
+        [(ngModel)]="filtreLocataire"
+        placeholder="Rechercher par nom, prénom..."
+        class="unified-input-select" />
+
+      <select
+        id="locataireId"
+        aria-label="Locataire"
+        [(ngModel)]="LocataireId"
+        class="unified-input-select">
+        <option [ngValue]="null" disabled>Sélectionner un locataire dans la liste</option>
+        <option *ngFor="let loc of locatairesFiltres" [value]="loc.value">
+          {{ loc.label }}
+        </option>
+      </select>
+    </div>
+  </div>
 
   <ng-template pTemplate="footer">
-    <div class="flex justify-content-end gap-2">
+    <div class="dialog-actions">
       <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayModalParametres = false"></button>
       <button pButton label="Générer" icon="pi pi-check" class="p-button-success" (click)="validerParametresModal()"></button>
     </div>

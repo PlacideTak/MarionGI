@@ -88,10 +88,10 @@ export interface BienDto extends BaseEntity {
   quartier: string;
   superficie: number;
   loyer: number;
-  caution?: number; // Ajouté
+  caution?: number;
   statut: StatutBien;
   proprietaireId: string;
-  proprietaireNom?: string; // Ajouté
+  proprietaireNom?: string;
   photos: string[];
 
   locataireActuel?: {

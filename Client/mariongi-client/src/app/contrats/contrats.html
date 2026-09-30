@@ -1,184 +1,330 @@
-<div class="card p-4">
-  <!-- En-tête de la section -->
-  <div class="flex justify-content-between align-items-center mb-4">
+<div class="card p-3 md:p-4">
+
+  <!-- ================================
+       EN-TÊTE
+       ================================ -->
+  <div class="page-header mb-4">
     <h2 class="m-0">Gestion des Contrats</h2>
-    <p-button 
-      label="Nouveau Contrat" 
-      icon="pi pi-plus" 
-      (onClick)="openNew()"
-      *ngIf="canCreateContrat">
+
+    <p-button
+      *ngIf="canCreateContrat"
+      class="btn-new"
+      label="Nouveau Contrat"
+      icon="pi pi-plus"
+      (onClick)="openNew()">
     </p-button>
   </div>
 
-  <!-- Tableau des Contrats -->
-  <p-table 
-    [value]="contrats" 
-    [paginator]="true" 
-    [rows]="10" 
-    responsiveLayout="scroll"
-    styleClass="p-datatable-striped">
-    
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Réf.</th>
-        <th>Bien</th>
-        <th>Locataire</th>
-        <th>Période</th>
-        <th>Loyer</th>
-        <th>Caution</th>
-        <th>Statut</th>
-        <th *ngIf="canCreateContrat" class="text-center">Actions</th>
-      </tr>
-    </ng-template>
 
-    <ng-template pTemplate="body" let-contrat>
-      <tr>
-        <td>
-          <span class="font-bold">{{ getShortId(contrat.id) }}</span>
-        </td>
-        <td>
-          {{ contrat.bien?.adresse || 'Non assigné' }}
-        </td>
-        <td>
-          {{ contrat.locataire?.nomComplet || (contrat.locataire?.nom + ' ' + contrat.locataire?.prenom) || 'N/A' }}
-        </td>
-        <td>
-          {{ contrat.dateDebut | date:'dd/MM/yyyy' }} - {{ contrat.dateFin | date:'dd/MM/yyyy' }}
-        </td>
-        <td>
-          {{ contrat.montantLoyer | number:'1.0-0' }} FCFA
-        </td>
-        <td>
-          {{ contrat.montantCaution | number:'1.0-0' }} FCFA
-        </td>
-        <td>
-          <p-tag 
-            [value]="getStatutLabel(contrat.statut)" 
-            [severity]="getSeverity(contrat.statut)">
-          </p-tag>
-        </td>
-        <td class="text-center"  *ngIf="canCreateContrat">
-          <p-button 
-            icon="pi pi-pencil" 
-            [rounded]="true" 
-            [outlined]="true" 
-            severity="info"
-            class="mr-2" 
-            (onClick)="editContrat(contrat)">
-          </p-button>
-          <p-button 
-            icon="pi pi-trash" 
-            [rounded]="true" 
-            [outlined]="true" 
-            severity="danger" 
-            (onClick)="deleteContrat(contrat)">
-          </p-button>
-        </td>
-      </tr>
-    </ng-template>
+  <!-- ================================
+       TABLEAU DES CONTRATS
+       (responsiveLayout="scroll" n'existe plus dans PrimeNG 18+ :
+        le comportement est géré par le SCSS)
+       ================================ -->
+  <div class="table-responsive">
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="8" class="text-center p-4">
-          Aucun contrat disponible.
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+    <p-table
+      [value]="contrats"
+      [paginator]="true"
+      [rows]="10"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
+      styleClass="p-datatable-striped table-responsive-stack">
+
+      <!-- En-tête du tableau -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="hide-tablet">Réf.</th>
+          <th>Bien</th>
+          <th>Locataire</th>
+          <th>Période</th>
+          <th>Loyer</th>
+          <th class="hide-tablet">Caution</th>
+          <th>Statut</th>
+          <th *ngIf="canCreateContrat" class="col-actions">Actions</th>
+        </tr>
+      </ng-template>
+
+
+      <!-- Corps du tableau -->
+      <ng-template pTemplate="body" let-contrat>
+        <tr>
+
+          <td data-label="Réf." class="hide-tablet">
+            <span class="font-bold">{{ getShortId(contrat.id) }}</span>
+          </td>
+
+          <td data-label="Bien">
+            {{ contrat.bien?.adresse || 'Non assigné' }}
+          </td>
+
+          <td data-label="Locataire">
+            {{
+              contrat.locataire?.nomComplet
+                || (
+                  contrat.locataire?.nom && contrat.locataire?.prenom
+                    ? contrat.locataire.nom + ' ' + contrat.locataire.prenom
+                    : 'N/A'
+                )
+            }}
+          </td>
+
+          <td data-label="Période" class="nowrap">
+            {{ contrat.dateDebut | date:'dd/MM/yyyy' }} -
+            {{ contrat.dateFin | date:'dd/MM/yyyy' }}
+          </td>
+
+          <td data-label="Loyer" class="nowrap">
+            {{ contrat.montantLoyer | number:'1.0-0' }} FCFA
+          </td>
+
+          <td data-label="Caution" class="nowrap hide-tablet">
+            {{ contrat.montantCaution | number:'1.0-0' }} FCFA
+          </td>
+
+          <td data-label="Statut">
+            <p-tag
+              [value]="getStatutLabel(contrat.statut)"
+              [severity]="getSeverity(contrat.statut)">
+            </p-tag>
+          </td>
+
+          <td *ngIf="canCreateContrat" class="col-actions">
+            <div class="actions-group">
+              <p-button
+                icon="pi pi-pencil"
+                [rounded]="true"
+                [outlined]="true"
+                severity="info"
+                ariaLabel="Modifier le contrat"
+                pTooltip="Modifier le contrat"
+                tooltipPosition="top"
+                (onClick)="editContrat(contrat)">
+              </p-button>
+
+              <p-button
+                icon="pi pi-trash"
+                [rounded]="true"
+                [outlined]="true"
+                severity="danger"
+                ariaLabel="Supprimer le contrat"
+                pTooltip="Supprimer le contrat"
+                tooltipPosition="top"
+                (onClick)="deleteContrat(contrat)">
+              </p-button>
+            </div>
+          </td>
+
+        </tr>
+      </ng-template>
+
+
+      <!-- Aucun contrat -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="canCreateContrat ? 8 : 7" class="text-center p-4">
+            Aucun contrat disponible.
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+
+  </div>
+
 </div>
 
-<!-- Modal / Dialog Formulaire Contrat -->
-<p-dialog 
-  [(visible)]="contratDialog" 
-  [style]="{ width: '500px' }" 
-  [header]="isEditMode ? 'Modifier le Contrat' : 'Nouveau Contrat'" 
-  [modal]="true" 
-  class="p-fluid">
+
+
+<!-- ==========================================
+     MODAL / DIALOG : CONTRAT
+     [breakpoints] remplace le width: 95vw !important du SCSS
+     ========================================== -->
+
+<p-dialog
+  [(visible)]="contratDialog"
+  [style]="{ width: '500px' }"
+  [breakpoints]="{ '960px': '75vw', '600px': '95vw' }"
+  [header]="isEditMode ? 'Modifier le Contrat' : 'Nouveau Contrat'"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="contrat-dialog">
 
   <ng-template pTemplate="content">
-    <form [formGroup]="contratForm" class="flex flex-column gap-3 mt-2">
-      
-      <!-- Bien -->
+
+    <form [formGroup]="contratForm" class="contrat-form">
+
+      <!-- BIEN -->
       <div class="field">
-        <label for="bienId" class="font-bold">Bien immobilier</label>
-        <p-select 
-          id="bienId" 
-          formControlName="bienId" 
-          [options]="biensOptions" 
-          optionLabel="label" 
-          optionValue="value" 
+        <label for="bienId">Bien immobilier</label>
+
+        <p-select
+          inputId="bienId"
+          formControlName="bienId"
+          [options]="biensOptions"
+          optionLabel="label"
+          optionValue="value"
           placeholder="Sélectionner un bien"
-          styleClass="w-full">
+          styleClass="w-full"
+          appendTo="body">
         </p-select>
-        <small class="p-error" *ngIf="contratForm.get('bienId')?.touched && contratForm.get('bienId')?.invalid">
+
+        <small class="p-error"
+               *ngIf="contratForm.get('bienId')?.touched && contratForm.get('bienId')?.invalid">
           Le bien est requis.
         </small>
       </div>
 
-      <!-- Locataire -->
+
+      <!-- LOCATAIRE -->
       <div class="field">
-        <label for="locataireId" class="font-bold">Locataire</label>
-        <p-select 
-          id="locataireId" 
-          formControlName="locataireId" 
-          [options]="locatairesOptions" 
-          optionLabel="label" 
-          optionValue="value" 
+        <label for="locataireId">Locataire</label>
+
+        <p-select
+          inputId="locataireId"
+          formControlName="locataireId"
+          [options]="locatairesOptions"
+          optionLabel="label"
+          optionValue="value"
           placeholder="Sélectionner un locataire"
-          styleClass="w-full">
+          styleClass="w-full"
+          appendTo="body">
         </p-select>
-        <small class="p-error" *ngIf="contratForm.get('locataireId')?.touched && contratForm.get('locataireId')?.invalid">
+
+        <small class="p-error"
+               *ngIf="contratForm.get('locataireId')?.touched && contratForm.get('locataireId')?.invalid">
           Le locataire est requis.
         </small>
       </div>
 
-      <!-- Dates -->
-      <div class="formgrid grid">
-        <div class="field col">
-          <label for="dateDebut" class="font-bold">Date de début</label>
+
+      <!-- DATES -->
+      <div class="form-row">
+
+        <div class="field">
+          <label for="dateDebut">Date de début</label>
           <input id="dateDebut" type="date" pInputText formControlName="dateDebut" class="w-full" />
+
+          <small class="p-error"
+                 *ngIf="contratForm.get('dateDebut')?.touched && contratForm.get('dateDebut')?.invalid">
+            La date de début est requise.
+          </small>
         </div>
-        <div class="field col">
-          <label for="dateFin" class="font-bold">Date de fin</label>
+
+        <div class="field">
+          <label for="dateFin">Date de fin</label>
           <input id="dateFin" type="date" pInputText formControlName="dateFin" class="w-full" />
+
+          <small class="p-error"
+                 *ngIf="contratForm.get('dateFin')?.touched && contratForm.get('dateFin')?.invalid">
+            La date de fin est requise.
+          </small>
         </div>
+
       </div>
 
-      <!-- Montants -->
-      <div class="formgrid grid">
-        <div class="field col">
-          <label for="montantLoyer" class="font-bold">Loyer (FCFA)</label>
-          <p-inputNumber id="montantLoyer" formControlName="montantLoyer" styleClass="w-full"></p-inputNumber>
+
+      <!-- MONTANTS -->
+      <div class="form-row">
+
+        <div class="field">
+          <label for="montantLoyer">Loyer (FCFA)</label>
+
+          <p-inputNumber
+            inputId="montantLoyer"
+            formControlName="montantLoyer"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small class="p-error"
+                 *ngIf="contratForm.get('montantLoyer')?.touched && contratForm.get('montantLoyer')?.invalid">
+            Le montant du loyer est requis.
+          </small>
         </div>
-        <div class="field col">
-          <label for="montantCaution" class="font-bold">Caution (FCFA)</label>
-          <p-inputNumber id="montantCaution" formControlName="montantCaution" styleClass="w-full"></p-inputNumber>
+
+        <div class="field">
+          <label for="montantCaution">Caution (FCFA)</label>
+
+          <p-inputNumber
+            inputId="montantCaution"
+            formControlName="montantCaution"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small class="p-error"
+                 *ngIf="contratForm.get('montantCaution')?.touched && contratForm.get('montantCaution')?.invalid">
+            Le montant de la caution est requis.
+          </small>
         </div>
+
       </div>
 
-      <!-- Statut -->
+
+      <!-- STATUT -->
       <div class="field">
-        <label for="statut" class="font-bold">Statut du contrat</label>
-        <p-select 
-          id="statut" 
-          formControlName="statut" 
-          [options]="statutOptions" 
-          optionLabel="label" 
-          optionValue="value" 
+        <label for="statut">Statut du contrat</label>
+
+        <p-select
+          inputId="statut"
+          formControlName="statut"
+          [options]="statutOptions"
+          optionLabel="label"
+          optionValue="value"
           placeholder="Sélectionner un statut"
-          styleClass="w-full">
+          styleClass="w-full"
+          appendTo="body">
         </p-select>
+
+        <small class="p-error"
+               *ngIf="contratForm.get('statut')?.touched && contratForm.get('statut')?.invalid">
+          Le statut est requis.
+        </small>
       </div>
 
     </form>
+
   </ng-template>
 
+
+  <!-- FOOTER -->
   <ng-template pTemplate="footer">
-    <p-button label="Annuler" icon="pi pi-times" [text]="true" (onClick)="contratDialog = false"></p-button>
-    <p-button label="Enregistrer" icon="pi pi-check" (onClick)="saveContrat()"></p-button>
+    <div class="dialog-actions">
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        [text]="true"
+        severity="secondary"
+        (onClick)="contratDialog = false">
+      </p-button>
+
+      <p-button
+        label="Enregistrer"
+        icon="pi pi-check"
+        severity="primary"
+        [disabled]="contratForm.invalid"
+        (onClick)="saveContrat()">
+      </p-button>
+    </div>
   </ng-template>
+
 </p-dialog>
 
-<!-- Popups Globales Notification & Confirmation -->
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+
+<!-- ==========================================
+     NOTIFICATIONS
+     ========================================== -->
+
+<p-toast [breakpoints]="{ '600px': { width: '100%', right: '0', left: '0' } }"></p-toast>
+
+<p-confirmDialog
+  [style]="{ width: '30rem' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>

@@ -1,9 +1,120 @@
+$border: #e2e8f0;
+$text: #334155;
+$bg-soft: #f8fafc;
+$success: #2e7d5b;
+$success-hover: #246348;
+
+/* =========================================================
+   CARTE
+   ========================================================= */
+
 .card {
   background: #ffffff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 1.5rem;
+  min-width: 0;
+  // Pas d'overflow-x: hidden : il coupait le tableau.
+  // Le défilement horizontal est géré par le conteneur de la table.
+}
+
+/* =========================================================
+   EN-TÊTE (bouton sous le titre)
+   ========================================================= */
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+/* =========================================================
+   TABLEAU
+   ========================================================= */
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.col-photo {
+  width: 5rem;
+}
+
+.col-actions {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.actions-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.photo-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  flex: 0 0 40px;
+}
+
+.thumb-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.search-field {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+}
+
+:host ::ng-deep {
+  .p-datatable {
+    .p-datatable-table-container {
+      overflow-x: auto; // défilement de secours
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+    }
+  }
+
+  .p-paginator {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+}
+
+/* =========================================================
+   MODALE + FORMULAIRE
+   ========================================================= */
+
+:host ::ng-deep .bien-dialog {
+  max-height: calc(100dvh - 1rem);
+
+  .p-dialog-content {
+    overflow-x: hidden;
+  }
 }
 
 .bien-form {
@@ -14,20 +125,80 @@
 
   .field {
     display: grid;
-    grid-template-columns: 150px 1fr;
+    grid-template-columns: 150px minmax(0, 1fr);
     align-items: center;
     gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
 
     label {
       font-weight: 600;
-      color: #334155;
+      color: $text;
       font-size: 0.9rem;
       text-align: right;
     }
 
-    input, ::ng-deep .p-dropdown {
+    input:not([type='file']),
+    ::ng-deep p-select,
+    ::ng-deep .p-select {
       width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
+  }
+
+  // Champ photos : pleine largeur, libellé au-dessus
+  .field.field-full {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+
+    label {
+      text-align: left;
+    }
+  }
+
+  .photo-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .photo-item {
+    position: relative;
+    flex: 0 0 70px;
+    width: 70px;
+    height: 70px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ced4da;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  .photo-remove {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
   }
 
   .form-actions {
@@ -36,15 +207,230 @@
     gap: 1rem;
     margin-top: 1.5rem;
     padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid $border;
 
     button.p-button-success {
-      background-color: #2e7d5b !important;
-      border-color: #2e7d5b !important;
-      
+      background-color: $success !important;
+      border-color: $success !important;
+
       &:hover {
-        background-color: #246348 !important;
+        background-color: $success-hover !important;
       }
+    }
+  }
+}
+
+/* =========================================================
+   TABLETTE (≤ 768px)
+   ========================================================= */
+
+@media (max-width: 768px) {
+  .card {
+    margin: 1rem;
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+
+  :host ::ng-deep .p-datatable {
+    font-size: 0.9rem;
+
+    // Colonnes secondaires masquées : Type, Superficie, Propriétaire
+    .hide-tablet {
+      display: none;
+    }
+
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.6rem 0.75rem;
+    }
+  }
+
+  .bien-form {
+    gap: 1rem;
+
+    .field {
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 0.75rem;
+
+      label {
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
+
+/* =========================================================
+   MOBILE (≤ 600px) : tableau -> cartes
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .card {
+    margin: 0.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  /* En-tête : bouton pleine largeur sous le titre */
+  .page-header {
+    align-items: stretch;
+
+    h2 {
+      font-size: 1.35rem;
+    }
+
+    .btn-new {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* Recherche */
+  .search-field {
+    max-width: 100%;
+  }
+
+  /* --- Tableau -> cartes --- */
+  :host ::ng-deep .table-responsive-stack {
+    font-size: 1rem;
+
+    .p-datatable-table-container {
+      overflow-x: visible;
+    }
+
+    .p-datatable-table,
+    .p-datatable-tbody {
+      display: block;
+      width: 100%;
+    }
+
+    // En-tête masqué : les libellés viennent de data-label
+    // (le tri par colonne n'est donc pas disponible sur mobile)
+    .p-datatable-thead {
+      display: none;
+    }
+
+    // Colonnes masquées en tablette : visibles dans les cartes
+    .hide-tablet {
+      display: flex;
+    }
+
+    .p-datatable-tbody > tr,
+    .p-datatable-tbody > tr:nth-child(even) {
+      display: block;
+      background: #fff;
+      border: 1px solid $border;
+      border-radius: 10px;
+      margin-bottom: 0.75rem;
+      padding: 0.25rem 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .p-datatable-tbody > tr > td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100% !important;
+      box-sizing: border-box;
+      padding: 0.5rem 1rem;
+      border: 0 !important;
+      text-align: right;
+      white-space: normal;
+      overflow-wrap: anywhere;
+
+      &::before {
+        content: attr(data-label);
+        flex: 0 0 35%;
+        font-weight: 600;
+        font-size: 0.8rem;
+        color: $text;
+        text-align: left;
+      }
+
+      &:not([data-label])::before {
+        content: none;
+      }
+    }
+
+    // Actions en pied de carte
+    .p-datatable-tbody > tr > td.col-actions {
+      justify-content: flex-end;
+      margin-top: 0.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid $border !important;
+      background: $bg-soft;
+      border-radius: 0 0 10px 10px;
+    }
+
+    // Message "aucun bien"
+    .p-datatable-emptymessage > td {
+      display: block;
+      text-align: center;
+
+      &::before {
+        content: none;
+      }
+    }
+  }
+
+  /* Formulaire : libellé au-dessus du champ */
+  .bien-form {
+    .field {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.4rem;
+
+      label {
+        text-align: left;
+        font-size: 0.9rem;
+      }
+    }
+
+    .form-actions {
+      flex-direction: column-reverse;
+      align-items: stretch;
+      gap: 0.75rem;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  /* Modale : la largeur vient de [breakpoints] côté HTML */
+  :host ::ng-deep .bien-dialog {
+    .p-dialog-header,
+    .p-dialog-content {
+      padding: 1rem;
+    }
+  }
+}
+
+/* =========================================================
+   TRÈS PETITS TÉLÉPHONES (≤ 400px)
+   ========================================================= */
+
+@media (max-width: 400px) {
+  .card {
+    margin: 0.25rem;
+    padding: 0.75rem;
+  }
+
+  .page-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .bien-form {
+    gap: 0.85rem;
+  }
+
+  :host ::ng-deep .table-responsive-stack .p-datatable-tbody > tr > td {
+    padding: 0.4rem 0.75rem;
+
+    &::before {
+      flex-basis: 30%;
     }
   }
 }

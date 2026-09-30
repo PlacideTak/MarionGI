@@ -1,68 +1,80 @@
-<p-toast></p-toast>
+<p-toast [breakpoints]="{ '600px': { width: '100%', right: '0', left: '0' } }"></p-toast>
 
-<div class="p-4 profil-page-container">
+<div class="profil-page-container">
   <div class="card profil-container">
-      <div class="flex justify-content-between align-items-center mb-3">
-        <h2 class="m-0">Mon Profil</h2>
-      </div>
+
+    <h2>Mon Profil</h2>
 
     <p class="sous-titre">Modifiez vos informations personnelles ou changez votre mot de passe.</p>
 
     <form [formGroup]="profilForm" (ngSubmit)="onSubmit()" class="profil-form">
-      
-      <!-- Informations de base -->
-      <div class="field">
-        <label for="nom">Nom</label>
-        <input id="nom" type="text" pInputText formControlName="nom" placeholder="Votre nom" />
-      </div>
 
-      <div class="field">
-        <label for="prenom">Prénom</label>
-        <input id="prenom" type="text" pInputText formControlName="prenom" placeholder="Votre prénom" />
+      <!-- Informations de base : côte à côte si la place le permet -->
+      <div class="field-row">
+        <div class="field">
+          <label for="nom">Nom</label>
+          <input id="nom" type="text" pInputText formControlName="nom" placeholder="Votre nom" autocomplete="family-name" />
+        </div>
+
+        <div class="field">
+          <label for="prenom">Prénom</label>
+          <input id="prenom" type="text" pInputText formControlName="prenom" placeholder="Votre prénom" autocomplete="given-name" />
+        </div>
       </div>
 
       <hr class="section-divider" />
       <h4 class="section-title">Changement de mot de passe</h4>
 
+      <!-- p-password : inputId (et non id) pour que le <label for> cible le vrai champ ;
+           styleClass / inputStyleClass pour la pleine largeur -->
       <div class="field">
         <label for="ancienMotDePasse">Ancien mot de passe</label>
-        <p-password 
-          id="ancienMotDePasse" 
-          formControlName="ancienMotDePasse" 
-          [feedback]="false" 
-          [toggleMask]="true" 
+        <p-password
+          inputId="ancienMotDePasse"
+          formControlName="ancienMotDePasse"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="current-password"
+          [feedback]="false"
+          [toggleMask]="true"
           placeholder="••••••••">
         </p-password>
       </div>
 
       <div class="field">
         <label for="nouveauMotDePasse">Nouveau mot de passe</label>
-        <p-password 
-          id="nouveauMotDePasse" 
-          formControlName="nouveauMotDePasse" 
-          [toggleMask]="true" 
+        <p-password
+          inputId="nouveauMotDePasse"
+          formControlName="nouveauMotDePasse"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="new-password"
+          [toggleMask]="true"
           placeholder="Nouveau mot de passe">
         </p-password>
       </div>
 
       <div class="field">
         <label for="confirmationMotDePasse">Confirmer</label>
-        <p-password 
-          id="confirmationMotDePasse" 
-          formControlName="confirmationMotDePasse" 
-          [feedback]="false" 
-          [toggleMask]="true" 
+        <p-password
+          inputId="confirmationMotDePasse"
+          formControlName="confirmationMotDePasse"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+          autocomplete="new-password"
+          [feedback]="false"
+          [toggleMask]="true"
           placeholder="Confirmer le mot de passe">
         </p-password>
       </div>
 
       <div class="form-actions">
-        <button 
-          pButton 
-          type="submit" 
-          label="Enregistrer les modifications" 
-          icon="pi pi-check" 
-          class="p-button-success" 
+        <button
+          pButton
+          type="submit"
+          label="Enregistrer les modifications"
+          icon="pi pi-check"
+          class="p-button-success"
           [loading]="chargement">
         </button>
       </div>

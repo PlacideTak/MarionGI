@@ -1,121 +1,182 @@
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
+<p-toast [breakpoints]="{ '600px': { width: '100%', right: '0', left: '0' } }"></p-toast>
+<p-confirmDialog [style]="{ width: '30rem' }" [breakpoints]="{ '600px': '95vw' }"></p-confirmDialog>
 
 <div class="card">
-  <div class="flex justify-content-between align-items-center mb-4">
-    <div>
-      <h2>Gestion des Biens Immobiliers</h2>
-    </div>
+
+  <!-- ================================
+       EN-TÊTE (bouton sous le titre)
+       ================================ -->
+  <div class="page-header mb-4">
+    <h2>Gestion des Biens Immobiliers</h2>
+
     <!-- 🔒 Masqué pour les non-gestionnaires -->
-    <button *ngIf="canManageBiens" pButton label="Nouveau Bien" icon="pi pi-plus" class="p-button-success" (click)="ouvrirModalAjout()"></button>
+    <button
+      *ngIf="canManageBiens"
+      pButton
+      type="button"
+      label="Nouveau Bien"
+      icon="pi pi-plus"
+      class="p-button-success btn-new"
+      (click)="ouvrirModalAjout()">
+    </button>
   </div>
 
-  <p-table 
-    #dt 
-    [value]="biens" 
-    [loading]="chargement" 
-    [paginator]="true" 
-    [rows]="10" 
-    [globalFilterFields]="['reference', 'ville', 'quartier', 'proprietaire.nom', 'proprietaire.prenom']"
-    responsiveLayout="scroll">
-    
+  <!-- ================================
+       TABLEAU
+       (responsiveLayout="scroll" n'existe plus dans PrimeNG 18+ : géré par le SCSS)
+       ================================ -->
+  <p-table
+    #dt
+    styleClass="table-responsive-stack"
+    dataKey="id"
+    [value]="biens"
+    [loading]="chargement"
+    [paginator]="true"
+    [rows]="10"
+    [globalFilterFields]="['reference', 'ville', 'quartier', 'proprietaire.nom', 'proprietaire.prenom']">
+
     <ng-template pTemplate="caption">
-      <div class="flex justify-content-between align-items-center">
-        <span class="p-input-icon-left">
-          <i class="pi pi-search"></i>
-          <input 
-            pInputText 
-            type="text" 
-            (input)="dt.filterGlobal($any($event.target).value, 'contains')" 
-            placeholder="Rechercher un bien..." />
-        </span>
-      </div>
+       <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          class="w-full"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+          placeholder="Rechercher un bien..." />
     </ng-template>
 
     <ng-template pTemplate="header">
       <tr>
-        <th style="width: 5rem;">Photos</th>
+        <th class="col-photo">Photos</th>
         <th pSortableColumn="reference">Référence <p-sortIcon field="reference"></p-sortIcon></th>
-        <th>Type</th>
+        <th class="hide-tablet">Type</th>
         <th pSortableColumn="ville">Ville / Quartier <p-sortIcon field="ville"></p-sortIcon></th>
-        <th>Superficie</th>
+        <th class="hide-tablet">Superficie</th>
         <th pSortableColumn="loyer">Loyer <p-sortIcon field="loyer"></p-sortIcon></th>
-        <th>Propriétaire</th>
+        <th class="hide-tablet">Propriétaire</th>
         <th>Statut</th>
-        <!-- 🔒 La colonne des actions s'adapte ou s'affiche uniquement si l'utilisateur peut gérer, ou garde juste la fiche détaillée pour les autres -->
-        <th style="text-align: center;">Actions</th>
+        <th class="col-actions">Actions</th>
       </tr>
     </ng-template>
-    
+
     <ng-template pTemplate="body" let-bien>
       <tr>
-        <td>
-          <div class="flex align-items-center gap-1">
-            <img 
-              *ngIf="bien.photos && bien.photos.length > 0; else noPhoto" 
-              [src]="apiUrl + bien.photos[0]" 
-              alt="Bien" 
-              class="shadow-2 border-round" 
-              style="width: 40px; height: 40px; object-fit: cover;" />
+
+        <td data-label="Photos" class="col-photo">
+          <div class="photo-cell">
+            <img
+              *ngIf="bien.photos && bien.photos.length > 0; else noPhoto"
+              [src]="apiUrl + bien.photos[0]"
+              alt="Photo du bien"
+              class="thumb shadow-2 border-round" />
+
             <ng-template #noPhoto>
-              <div class="flex align-items-center justify-content-center bg-gray-200 border-round text-gray-500" style="width: 40px; height: 40px;">
+              <div class="thumb thumb-placeholder border-round">
                 <i class="pi pi-image"></i>
               </div>
             </ng-template>
+
             <span *ngIf="bien.photos && bien.photos.length > 1" class="text-xs font-bold text-primary">
               +{{ bien.photos.length - 1 }}
             </span>
           </div>
         </td>
-        <td><strong>{{ bien.reference || 'Générée auto' }}</strong></td>
-        <td>{{ bienService.getTypeLibelle(bien.type) }}</td>
-        <td>{{ bien.ville }} - {{ bien.quartier }}</td>
-        <td>{{ bien.superficie }} m²</td>
-        <td>{{ bien.loyer | number }} XAF</td>
-        <td>
+
+        <td data-label="Référence"><strong>{{ bien.reference || 'Générée auto' }}</strong></td>
+
+        <td data-label="Type" class="hide-tablet">{{ bienService.getTypeLibelle(bien.type) }}</td>
+
+        <td data-label="Ville / Quartier">{{ bien.ville }} - {{ bien.quartier }}</td>
+
+        <td data-label="Superficie" class="nowrap hide-tablet">{{ bien.superficie }} m²</td>
+
+        <td data-label="Loyer" class="nowrap">{{ bien.loyer | number }} XAF</td>
+
+        <td data-label="Propriétaire" class="hide-tablet">
           {{ bien.proprietaire ? (bien.proprietaire.prenom + ' ' + bien.proprietaire.nom) : (bien.nomProprietaire || 'Inconnu') }}
         </td>
-        <td>
-          <p-tag [value]="bienService.getStatutLibelle(bien.statut)" [severity]="bienService.getStatutSeverity(bien.statut)"></p-tag>
+
+        <td data-label="Statut">
+          <p-tag
+            [value]="bienService.getStatutLibelle(bien.statut)"
+            [severity]="bienService.getStatutSeverity(bien.statut)">
+          </p-tag>
         </td>
-        <td style="text-align: center;">
-          <!-- 🔒 Bouton Modifier visible uniquement pour les gestionnaires/admins -->
-          <button *ngIf="canManageBiens" pButton icon="pi pi-pencil" class="p-button-rounded p-button-text p-button-warning mr-2" (click)="ouvrirModalModification(bien)" pTooltip="Modifier"></button>
-          
-          <!-- 👁️ Bouton Fiche détaillée accessible à tous (agents, locataires, admins) -->
-           @if(estAgentCommercial){
-            <span>N/A</span>
-           } @else{
-              <a pButton icon="pi pi-eye" class="p-button-rounded p-button-text p-button-info" pTooltip="Voir la fiche détaillée" tooltipPosition="top" [attr.href]="'/biens/fiche/' + bien.id"></a>
-           }
-          
-          
-          <!-- 🔒 Bouton Supprimer visible uniquement pour les gestionnaires/admins -->
-          <button *ngIf="canManageBiens" pButton icon="pi pi-trash" class="p-button-rounded p-button-text p-button-danger" (click)="supprimerBien(bien)" pTooltip="Supprimer"></button>
+
+        <td class="col-actions">
+          <div class="actions-group">
+
+            <!-- 🔒 Modifier : gestionnaires / admins -->
+            <button
+              *ngIf="canManageBiens"
+              pButton
+              type="button"
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-warning"
+              aria-label="Modifier"
+              pTooltip="Modifier"
+              (click)="ouvrirModalModification(bien)">
+            </button>
+
+            <!-- 👁️ Fiche détaillée : accessible à tous sauf agents commerciaux -->
+            @if (estAgentCommercial) {
+              <span>N/A</span>
+            } @else {
+              <a
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info"
+                aria-label="Voir la fiche détaillée"
+                pTooltip="Voir la fiche détaillée"
+                tooltipPosition="top"
+                [attr.href]="'/biens/fiche/' + bien.id">
+              </a>
+            }
+
+            <!-- 🔒 Supprimer : gestionnaires / admins -->
+            <button
+              *ngIf="canManageBiens"
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              aria-label="Supprimer"
+              pTooltip="Supprimer"
+              (click)="supprimerBien(bien)">
+            </button>
+
+          </div>
         </td>
+
       </tr>
     </ng-template>
-    
+
     <ng-template pTemplate="emptymessage">
       <tr>
         <td colspan="9" class="text-center p-4">Aucun bien immobilier trouvé.</td>
       </tr>
     </ng-template>
+
   </p-table>
 </div>
 
-<!-- MODALE AJOUT / MODIFICATION (Sécurisée : ne s'affichera de toute façon pas si l'utilisateur n'a pas les droits) -->
-<p-dialog 
+
+<!-- ==========================================
+     MODALE AJOUT / MODIFICATION
+     ========================================== -->
+<p-dialog
   *ngIf="canManageBiens"
-  [(visible)]="displayModal" 
-  [header]="isEditMode ? 'Modifier le bien' : 'Ajouter un nouveau bien'" 
-  [modal]="true" 
-  [style]="{width: '650px'}" 
-  [draggable]="false" 
-  [resizable]="false">
+  [(visible)]="displayModal"
+  [header]="isEditMode ? 'Modifier le bien' : 'Ajouter un nouveau bien'"
+  [modal]="true"
+  [style]="{ width: '650px' }"
+  [breakpoints]="{ '960px': '85vw', '600px': '95vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="bien-dialog">
 
   <form [formGroup]="bienForm" (ngSubmit)="sauvegarder()" class="bien-form">
-    
+
     <div class="field">
       <label for="reference">Référence</label>
       <input id="reference" type="text" pInputText formControlName="reference" placeholder="Ex: MGI-DLA-001" />
@@ -123,17 +184,21 @@
 
     <div class="field" *ngIf="isEditMode">
       <label for="statut">Statut</label>
-      <p-select id="statut" [options]="bienService.statutsBien" formControlName="statut" [style]="{width:'100%'}"></p-select>
+      <p-select inputId="statut" [options]="bienService.statutsBien" formControlName="statut"
+                styleClass="w-full" appendTo="body"></p-select>
     </div>
 
     <div class="field">
       <label for="type">Type de bien</label>
-      <p-select id="type" [options]="bienService.typesBien" formControlName="type" placeholder="Sélectionner un type" [style]="{width:'100%'}"></p-select>
+      <p-select inputId="type" [options]="bienService.typesBien" formControlName="type"
+                placeholder="Sélectionner un type" styleClass="w-full" appendTo="body"></p-select>
     </div>
 
     <div class="field">
       <label for="proprietaireId">Propriétaire</label>
-      <p-select id="proprietaireId" [options]="proprietaires" formControlName="proprietaireId" placeholder="Sélectionner un propriétaire" [filter]="true" [style]="{width:'100%'}"></p-select>
+      <p-select inputId="proprietaireId" [options]="proprietaires" formControlName="proprietaireId"
+                placeholder="Sélectionner un propriétaire" [filter]="true"
+                styleClass="w-full" appendTo="body"></p-select>
     </div>
 
     <div class="field">
@@ -162,58 +227,46 @@
     </div>
 
     <!-- Section Upload et Aperçus -->
-    <div class="field col-12" style="width: 100%; box-sizing: border-box;">
-      <label for="photosInput" class="block font-bold mb-2">Photos du bien (Sélection multiple)</label>
-      
-      <input 
-        id="photosInput" 
-        type="file" 
-        class="w-full mb-3" 
-        accept="image/*" 
-        multiple 
-        (change)="surSelectionFichiers($event)" />
-      
-      <small class="text-secondary block mb-3">Vous pouvez sélectionner plusieurs images simultanément.</small>
+    <div class="field field-full">
+      <label for="photosInput">Photos du bien (Sélection multiple)</label>
 
-      <div style="display: flex; flex-wrap: wrap; gap: 10px; width: 100%; max-width: 100%;">
-        
+      <input
+        id="photosInput"
+        type="file"
+        class="w-full"
+        accept="image/*"
+        multiple
+        (change)="surSelectionFichiers($event)" />
+
+      <small class="text-secondary">Vous pouvez sélectionner plusieurs images simultanément.</small>
+
+      <div class="photo-grid">
+
         <!-- Photos existantes -->
-        <div *ngFor="let photo of photosExistantes; let i = index" 
-             style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          
-          <img [src]="apiUrl + photo" alt="Photo" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-          
-          <button 
-            type="button" 
-            pButton 
-            icon="pi pi-times" 
-            (click)="supprimerPhotoExistante(i)" 
-            style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-          </button>
+        <div *ngFor="let photo of photosExistantes; let i = index" class="photo-item">
+          <img [src]="apiUrl + photo" alt="Photo" />
+          <button type="button" pButton icon="pi pi-times" class="photo-remove"
+                  aria-label="Supprimer la photo"
+                  (click)="supprimerPhotoExistante(i)"></button>
         </div>
 
         <!-- Nouvelles photos prévisualisées -->
-        <div *ngFor="let img of apercusImages; let i = index" 
-             style="position: relative; width: 70px; height: 70px; min-width: 70px; max-width: 70px; min-height: 70px; max-height: 70px; flex: 0 0 70px; border-radius: 6px; overflow: hidden; border: 1px solid #ced4da; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          
-          <img [src]="img" alt="Aperçu" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
-          
-          <button 
-            type="button" 
-            pButton 
-            icon="pi pi-times" 
-            (click)="supprimerImagePrevisualisee(i)" 
-            style="position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;">
-          </button>
+        <div *ngFor="let img of apercusImages; let i = index" class="photo-item">
+          <img [src]="img" alt="Aperçu" />
+          <button type="button" pButton icon="pi pi-times" class="photo-remove"
+                  aria-label="Retirer l'aperçu"
+                  (click)="supprimerImagePrevisualisee(i)"></button>
         </div>
 
       </div>
     </div>
 
     <!-- Boutons d'action -->
-    <div class="flex justify-content-end gap-2 mt-5 pt-3 border-top-1 surface-border">
-      <button pButton type="button" label="Annuler" class="p-button-text p-button-secondary" (click)="displayModal=false"></button>
-      <button pButton type="submit" [label]="isEditMode ? 'Modifier' : 'Créer'" icon="pi pi-check" class="p-button-success"></button>
+    <div class="form-actions">
+      <button pButton type="button" label="Annuler" class="p-button-text p-button-secondary"
+              (click)="displayModal = false"></button>
+      <button pButton type="submit" [label]="isEditMode ? 'Modifier' : 'Créer'" icon="pi pi-check"
+              class="p-button-success"></button>
     </div>
 
   </form>

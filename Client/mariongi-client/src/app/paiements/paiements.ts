@@ -1,19 +1,62 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { TableModule } from 'primeng/table';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { TagModule } from 'primeng/tag';
-import { TooltipModule } from 'primeng/tooltip';
+import {
+  Component,
+  OnInit,
+  inject
+} from '@angular/core';
 
-import { PaiementDto, ModePaiement, StatutTransaction } from '../models/gestimmo.models';
-import { PaiementsService } from '../services/paiements.service';
+import {
+  CommonModule,
+  DatePipe
+} from '@angular/common';
+
+import {
+  FormsModule
+} from '@angular/forms';
+
+import {
+  ActivatedRoute
+} from '@angular/router';
+
+import {
+  TableModule
+} from 'primeng/table';
+
+import {
+  ButtonModule
+} from 'primeng/button';
+
+import {
+  InputTextModule
+} from 'primeng/inputtext';
+
+import {
+  SelectModule
+} from 'primeng/select';
+
+import {
+  TagModule
+} from 'primeng/tag';
+
+import {
+  TooltipModule
+} from 'primeng/tooltip';
+
+import {
+  PaiementDto,
+  ModePaiement,
+  StatutTransaction
+} from '../models/gestimmo.models';
+
+import {
+  PaiementsService
+} from '../services/paiements.service';
+
 
 @Component({
   selector: 'app-paiements-list',
+
   standalone: true,
+
   imports: [
     CommonModule,
     DatePipe,
@@ -25,95 +68,403 @@ import { PaiementsService } from '../services/paiements.service';
     TagModule,
     TooltipModule
   ],
+
   templateUrl: './paiements.html',
+
   styleUrls: ['./paiements.scss']
 })
 export class Paiements implements OnInit {
-  private readonly paiementsService = inject(PaiementsService);
+
+
+  // =========================================================
+  // SERVICES
+  // =========================================================
+
+  private readonly paiementsService =
+    inject(PaiementsService);
+
+  private readonly route =
+    inject(ActivatedRoute);
+
+
+  // =========================================================
+  // DONNÉES
+  // =========================================================
 
   paiements: PaiementDto[] = [];
-  paiementsFiltres: PaiementDto[] = [];
-  chargementEnCours: boolean = true;
 
-  // Filtres
-  filtreTexte: string = '';
+  paiementsFiltres: PaiementDto[] = [];
+
+  chargementEnCours = true;
+
+
+  // =========================================================
+  // CONTRAT SÉLECTIONNÉ
+  // =========================================================
+
+  /**
+   * Contrat transmis depuis la liste des unités.
+   *
+   * Exemple :
+   * /paiements?contratId=xxxxxxxx
+   */
+  contratId: string | null = null;
+
+
+  /**
+   * Indique si la page a été ouverte
+   * pour un contrat précis.
+   */
+  modeContrat = false;
+
+
+  // =========================================================
+  // FILTRES
+  // =========================================================
+
+  filtreTexte = '';
+
   filtreStatut?: StatutTransaction;
+
   filtreMode?: ModePaiement;
 
-  // Enums exposés pour le template
-  readonly StatutTransaction = StatutTransaction;
-  readonly ModePaiement = ModePaiement;
+
+  // =========================================================
+  // ENUMS EXPOSÉS AU TEMPLATE
+  // =========================================================
+
+  readonly StatutTransaction =
+    StatutTransaction;
+
+  readonly ModePaiement =
+    ModePaiement;
+
+
+  // =========================================================
+  // OPTIONS STATUT
+  // =========================================================
 
   readonly statutsOptions = [
-    { label: 'En attente', value: StatutTransaction.EnAttente },
-    { label: 'Confirmé', value: StatutTransaction.Confirme },
-    { label: 'Échoué', value: StatutTransaction.Echoue }
+
+    {
+      label: 'En attente',
+      value: StatutTransaction.EnAttente
+    },
+
+    {
+      label: 'Confirmé',
+      value: StatutTransaction.Confirme
+    },
+
+    {
+      label: 'Échoué',
+      value: StatutTransaction.Echoue
+    }
   ];
+
+
+  // =========================================================
+  // OPTIONS MODE DE PAIEMENT
+  // =========================================================
 
   readonly modesOptions = [
-    { label: 'Orange Money', value: ModePaiement.OrangeMoney },
-    { label: 'MTN Money', value: ModePaiement.MtnMoney },
-    { label: 'Espèces', value: ModePaiement.Especes },
-    { label: 'M2U', value: ModePaiement.M2u },
-    { label: 'SARAH Money', value: ModePaiement.SaraMoney }
+
+    {
+      label: 'Orange Money',
+      value: ModePaiement.OrangeMoney
+    },
+
+    {
+      label: 'MTN Money',
+      value: ModePaiement.MtnMoney
+    },
+
+    {
+      label: 'Espèces',
+      value: ModePaiement.Especes
+    },
+
+    {
+      label: 'M2U',
+      value: ModePaiement.M2u
+    },
+
+    {
+      label: 'SARAH Money',
+      value: ModePaiement.SaraMoney
+    }
   ];
 
+
+  // =========================================================
+  // INITIALISATION
+  // =========================================================
+
   ngOnInit(): void {
-    this.chargerPaiements();
+
+    /**
+     * Récupère le contrat transmis par
+     * UnitesLocatives.
+     */
+    this.route.queryParamMap.subscribe(params => {
+
+      this.contratId =
+        params.get('contratId');
+
+      this.modeContrat =
+        !!this.contratId;
+
+      this.chargerPaiements();
+    });
   }
+
+
+  // =========================================================
+  // CHARGER LES PAIEMENTS
+  // =========================================================
 
   chargerPaiements(): void {
+
     this.chargementEnCours = true;
-    this.paiementsService.getPaiements().subscribe({
-      next: (data) => {
-        this.paiements = data;
-        this.paiementsFiltres = [...this.paiements]; // Initialisation de la liste filtrée
-        this.chargementEnCours = false;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des paiements :', err);
-        this.chargementEnCours = false;
-      }
-    });
+
+    this.paiementsService
+      .getPaiements()
+      .subscribe({
+
+        next: (data: PaiementDto[]) => {
+
+          this.paiements =
+            data ?? [];
+
+
+          // ---------------------------------------------------
+          // Si un contrat est sélectionné
+          // ---------------------------------------------------
+
+          if (this.contratId) {
+
+            this.paiements =
+              this.paiements.filter(
+                p =>
+                  p.contratId === this.contratId
+              );
+          }
+
+
+          this.paiementsFiltres =
+            [...this.paiements];
+
+
+          this.chargementEnCours =
+            false;
+        },
+
+        error: (err: unknown) => {
+
+          console.error(
+            'Erreur lors du chargement des paiements :',
+            err
+          );
+
+          this.paiements = [];
+
+          this.paiementsFiltres = [];
+
+          this.chargementEnCours =
+            false;
+        }
+      });
   }
+
+
+  // =========================================================
+  // FILTRER LES PAIEMENTS
+  // =========================================================
 
   appliquerFiltres(): void {
-    this.paiementsFiltres = this.paiements.filter(p => {
-      const matchTexte = !this.filtreTexte || 
-        (p.numeroQuittance && p.numeroQuittance.toLowerCase().includes(this.filtreTexte.toLowerCase())) ||
-        ((p as any).bienReference && (p as any).bienReference.toLowerCase().includes(this.filtreTexte.toLowerCase()));
-        
-      const matchStatut = this.filtreStatut === undefined || this.filtreStatut === null || p.statut === this.filtreStatut;
-      const matchMode = this.filtreMode === undefined || this.filtreMode === null || p.mode === this.filtreMode;
 
-      return matchTexte && matchStatut && matchMode;
-    });
+    const texte =
+      this.filtreTexte
+        .trim()
+        .toLowerCase();
+
+
+    this.paiementsFiltres =
+      this.paiements.filter(p => {
+
+
+        // -----------------------------------------------------
+        // RECHERCHE TEXTE
+        // -----------------------------------------------------
+
+        const matchTexte =
+
+          !texte ||
+
+          (
+            p.numeroQuittance
+              ?.toLowerCase()
+              .includes(texte)
+            ?? false
+          ) ||
+
+          (
+            p.bienReference
+              ?.toLowerCase()
+              .includes(texte)
+            ?? false
+          ) ||
+
+          (
+            p.bienNom
+              ?.toLowerCase()
+              .includes(texte)
+            ?? false
+          ) ||
+
+          (
+            p.referenceTransactionOperateur
+              ?.toLowerCase()
+              .includes(texte)
+            ?? false
+          );
+
+
+        // -----------------------------------------------------
+        // FILTRE STATUT
+        // -----------------------------------------------------
+
+        const matchStatut =
+
+          this.filtreStatut == null ||
+
+          p.statut ===
+            this.filtreStatut;
+
+
+        // -----------------------------------------------------
+        // FILTRE MODE
+        // -----------------------------------------------------
+
+        const matchMode =
+
+          this.filtreMode == null ||
+
+          p.mode ===
+            this.filtreMode;
+
+
+        return (
+          matchTexte &&
+          matchStatut &&
+          matchMode
+        );
+      });
   }
 
-  telechargerQuittance(paiementId: string): void {
-    this.paiementsService.telechargerQuittanceBlob(paiementId);
+
+  // =========================================================
+  // RÉINITIALISER LES FILTRES
+  // =========================================================
+
+  reinitialiserFiltres(): void {
+
+    this.filtreTexte = '';
+
+    this.filtreStatut =
+      undefined;
+
+    this.filtreMode =
+      undefined;
+
+
+    this.paiementsFiltres =
+      [...this.paiements];
   }
 
-  getSeverity(statut: StatutTransaction): 'success' | 'warn' | 'danger' | 'info' {
+
+  // =========================================================
+  // TÉLÉCHARGER LA QUITTANCE
+  // =========================================================
+
+  telechargerQuittance(
+    paiementId: string
+  ): void {
+
+    this.paiementsService
+      .telechargerQuittanceBlob(
+        paiementId
+      );
+  }
+
+
+  // =========================================================
+  // COULEUR DU STATUT
+  // =========================================================
+
+  getSeverity(
+    statut: StatutTransaction
+  ):
+    'success'
+    | 'warn'
+    | 'danger'
+    | 'info' {
+
     switch (statut) {
-      case StatutTransaction.Confirme: return 'success';
-      case StatutTransaction.EnAttente: return 'warn';
-      case StatutTransaction.Echoue: return 'danger';
-      default: return 'info';
+
+      case StatutTransaction.Confirme:
+        return 'success';
+
+      case StatutTransaction.EnAttente:
+        return 'warn';
+
+      case StatutTransaction.Echoue:
+        return 'danger';
+
+      default:
+        return 'info';
     }
   }
 
-  getLibelleStatut(statut: StatutTransaction): string {
+
+  // =========================================================
+  // LIBELLÉ DU STATUT
+  // =========================================================
+
+  getLibelleStatut(
+    statut: StatutTransaction
+  ): string {
+
     switch (statut) {
-      case StatutTransaction.Confirme: return 'Confirmé';
-      case StatutTransaction.EnAttente: return 'En attente';
-      case StatutTransaction.Echoue: return 'Échoué';
-      default: return 'Inconnu';
+
+      case StatutTransaction.Confirme:
+        return 'Confirmé';
+
+      case StatutTransaction.EnAttente:
+        return 'En attente';
+
+      case StatutTransaction.Echoue:
+        return 'Échoué';
+
+      default:
+        return 'Inconnu';
     }
   }
 
-  getLibelleMode(mode: ModePaiement): string {
-    const found = this.modesOptions.find(m => m.value === mode);
-    return found ? found.label : 'Autre';
+
+  // =========================================================
+  // LIBELLÉ DU MODE DE PAIEMENT
+  // =========================================================
+
+  getLibelleMode(
+    mode: ModePaiement
+  ): string {
+
+    const found =
+      this.modesOptions.find(
+        m => m.value === mode
+      );
+
+    return found?.label ?? 'Autre';
   }
 }

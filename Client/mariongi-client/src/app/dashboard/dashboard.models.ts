@@ -9,7 +9,13 @@ export interface AlertItem {
   id?: string;
   titre: string;
   message: string;
-  severite: 'danger' | 'warn' | 'info' | 'success';
+  severite:
+  | 'danger'
+  | 'warn'
+  | 'info'
+  | 'success'
+  | 'secondary'
+  | 'contrast';
   icone?: string;
   lienRoute?: string;
 }
@@ -19,7 +25,7 @@ export interface PropertyRow {
   reference: string;
   type: string;
   location: string;
-  status: string;
+  nom: string;
   rent: number;
 }
 

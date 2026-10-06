@@ -13,5 +13,4 @@ public class Paiement : BaseEntity
     public string? ReferenceTransactionOperateur { get; set; }
     public string NumeroQuittance { get; set; } = string.Empty; // Format: Q-YYYYMMDD-XXXX
     public Guid? EnregistreParUtilisateurId { get; set; }
-
 }

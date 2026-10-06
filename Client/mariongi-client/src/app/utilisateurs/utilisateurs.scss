@@ -9,8 +9,6 @@ $text-label: #334155;
 
 // ==========================================
 // LAYOUT
-// (plus de p-4 dans le HTML : PrimeFlex le force avec !important
-//  et empêchait de faire varier le padding)
 // ==========================================
 
 .gestimmo-layout {
@@ -27,7 +25,10 @@ $text-label: #334155;
   }
 }
 
-// En-tête : le bouton est sous le titre
+// ==========================================
+// EN-TÊTE
+// ==========================================
+
 .page-header {
   display: flex;
   flex-direction: column;
@@ -40,7 +41,19 @@ $text-label: #334155;
   white-space: nowrap;
 }
 
-// Colonne actions : compacte, alignée à droite
+// ==========================================
+// SOCIÉTÉ
+// ==========================================
+
+.societe-name {
+  font-weight: 600;
+  color: $primary-color;
+}
+
+// ==========================================
+// COLONNE ACTIONS
+// ==========================================
+
 .col-actions {
   width: 1%;
   white-space: nowrap;
@@ -60,12 +73,16 @@ $text-label: #334155;
 
 .gestimmo-layout ::ng-deep {
 
-  // ---------- Cartes ----------
+  // ========================================
+  // CARTES
+  // ========================================
 
   .p-card {
     border-radius: 12px;
     border: 1px solid rgba($border-color, 0.8);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
     margin-bottom: 2rem;
 
     .p-card-body {
@@ -82,13 +99,15 @@ $text-label: #334155;
     }
   }
 
-  // ---------- Tableaux ----------
+  // ========================================
+  // TABLEAUX
+  // ========================================
 
   .p-datatable {
-    // .p-datatable-wrapper = PrimeNG ≤ 17 ; .p-datatable-table-container = PrimeNG 18+
+
     .p-datatable-wrapper,
     .p-datatable-table-container {
-      overflow-x: auto; // défilement de secours
+      overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -116,6 +135,7 @@ $text-label: #334155;
         color: $text-main;
         border-bottom: 1px solid $border-color;
         font-size: 0.925rem;
+        vertical-align: middle;
       }
 
       &:hover {
@@ -124,7 +144,9 @@ $text-label: #334155;
     }
   }
 
-  // ---------- Boutons PrimeNG ----------
+  // ========================================
+  // BOUTONS PRIMENG
+  // ========================================
 
   .p-button.p-button-text {
     background: transparent !important;
@@ -163,7 +185,9 @@ $text-label: #334155;
     background-color: $primary-color !important;
     border-color: $primary-color !important;
     font-weight: 600;
-    transition: background-color 0.2s;
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
 
     &:hover {
       background-color: $primary-hover !important;
@@ -171,7 +195,9 @@ $text-label: #334155;
     }
   }
 
-  // ---------- Champs ----------
+  // ========================================
+  // CHAMPS
+  // ========================================
 
   .p-inputtext,
   .p-select {
@@ -189,7 +215,21 @@ $text-label: #334155;
     padding: 0.75rem;
   }
 
-  // ---------- Dialog (largeur gérée par [breakpoints]) ----------
+  // ========================================
+  // SELECT PRIME NG
+  // ========================================
+
+  .p-select {
+    min-height: 44px;
+
+    .p-select-label {
+      padding: 0.75rem;
+    }
+  }
+
+  // ========================================
+  // DIALOG
+  // ========================================
 
   .user-dialog {
     max-height: calc(100dvh - 1rem);
@@ -201,8 +241,7 @@ $text-label: #334155;
 }
 
 // ==========================================
-// FORMULAIRE (éléments de notre template : pas de ::ng-deep)
-// Libellé à gauche, champ à droite
+// FORMULAIRE
 // ==========================================
 
 .user-form {
@@ -231,7 +270,7 @@ $text-label: #334155;
     }
   }
 
-  // Case à cocher alignée avec les champs
+  // Case à cocher
   .field-checkbox {
     display: flex;
     align-items: center;
@@ -246,6 +285,7 @@ $text-label: #334155;
     }
   }
 
+  // Boutons du formulaire
   .form-actions {
     display: flex;
     justify-content: flex-end;
@@ -269,7 +309,9 @@ $text-label: #334155;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
 
   i {
     font-size: 1rem;
@@ -302,11 +344,11 @@ $text-label: #334155;
 }
 
 // ==========================================
-// TABLETTE (≤ 768px)
-// Colonne masquée : Dernière connexion
+// TABLETTE ≤ 768px
 // ==========================================
 
 @media (max-width: 768px) {
+
   .gestimmo-layout {
     padding: 1rem;
 
@@ -316,6 +358,7 @@ $text-label: #334155;
   }
 
   .gestimmo-layout ::ng-deep {
+
     .p-card {
       margin-bottom: 1.5rem;
 
@@ -325,6 +368,7 @@ $text-label: #334155;
     }
 
     .p-datatable {
+
       .hide-tablet {
         display: none;
       }
@@ -337,6 +381,7 @@ $text-label: #334155;
   }
 
   .user-form {
+
     .field {
       grid-template-columns: 110px minmax(0, 1fr);
       gap: 0.75rem;
@@ -353,15 +398,19 @@ $text-label: #334155;
 }
 
 // ==========================================
-// MOBILE (≤ 600px)
+// MOBILE ≤ 600px
 // ==========================================
 
 @media (max-width: 600px) {
+
   .gestimmo-layout {
     padding: 0.5rem;
   }
 
-  // Bouton pleine largeur sous le titre
+  // ========================================
+  // EN-TÊTE
+  // ========================================
+
   .page-header {
     align-items: stretch;
 
@@ -377,6 +426,10 @@ $text-label: #334155;
 
   .gestimmo-layout ::ng-deep {
 
+    // ======================================
+    // CARTES
+    // ======================================
+
     .p-card {
       margin-bottom: 1rem;
       border-radius: 10px;
@@ -390,9 +443,13 @@ $text-label: #334155;
       }
     }
 
-    // ----- Tableau utilisateurs -> cartes -----
+    // ======================================
+    // TABLEAU UTILISATEURS
+    // Transformation en cartes
+    // ======================================
 
     .table-responsive-stack {
+
       .p-datatable-table-container,
       .p-datatable-wrapper {
         overflow-x: visible;
@@ -408,7 +465,7 @@ $text-label: #334155;
         display: none;
       }
 
-      // Colonne masquée en tablette : visible dans la carte
+      // La dernière connexion redevient visible
       .hide-tablet {
         display: flex;
       }
@@ -416,6 +473,8 @@ $text-label: #334155;
       .p-datatable-tbody > tr,
       .p-datatable-tbody > tr:hover {
         display: block;
+        width: 100%;
+        box-sizing: border-box;
         background: #fff !important;
         border: 1px solid $border-color;
         border-radius: 10px;
@@ -451,7 +510,14 @@ $text-label: #334155;
         }
       }
 
-      // Actions en pied de carte, zones tactiles agrandies
+      // Société
+      .p-datatable-tbody > tr > td[data-label='Société'] {
+        .societe-name {
+          text-align: right;
+        }
+      }
+
+      // Actions en pied de carte
       .p-datatable-tbody > tr > td.col-actions {
         justify-content: flex-end;
         margin-top: 0.25rem;
@@ -459,8 +525,13 @@ $text-label: #334155;
         border-top: 1px solid $border-color;
         background: $bg-light;
         border-radius: 0 0 10px 10px;
+
+        &::before {
+          content: none;
+        }
       }
 
+      // Message aucun utilisateur
       .p-datatable-emptymessage > td {
         display: block;
         text-align: center;
@@ -471,14 +542,21 @@ $text-label: #334155;
       }
     }
 
+    // ======================================
+    // BOUTONS ACTIONS
+    // ======================================
+
     .action-btn {
       width: 2.5rem;
       height: 2.5rem;
     }
 
-    // ----- Matrice des permissions : tableau compact -----
+    // ======================================
+    // MATRICE DES PERMISSIONS
+    // ======================================
 
     .matrix-table {
+
       .p-datatable-thead > tr > th {
         padding: 0.6rem 0.35rem;
         font-size: 0.7rem;
@@ -497,7 +575,9 @@ $text-label: #334155;
       }
     }
 
-    // ----- Champs à 16px : évite le zoom automatique d'iOS -----
+    // ======================================
+    // CHAMPS
+    // ======================================
 
     .p-inputtext,
     .p-select .p-select-label {
@@ -505,9 +585,12 @@ $text-label: #334155;
     }
   }
 
-  // ----- Formulaire : libellé au-dessus du champ -----
+  // ========================================
+  // FORMULAIRE MOBILE
+  // ========================================
 
   .user-form {
+
     .field {
       display: flex;
       flex-direction: column;
@@ -535,4 +618,9 @@ $text-label: #334155;
       }
     }
   }
+}
+
+.societe-name {
+  font-weight: 600;
+  color: $primary-color;
 }

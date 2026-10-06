@@ -1,8 +1,12 @@
 <div class="gestimmo-layout">
 
-  <!-- En-tête de la page : titre puis bouton -->
+  <!-- ============================================================
+       EN-TÊTE
+       ============================================================ -->
+
   <div class="page-header">
-    <h2>Gestion des utilisateurs et des rôles (Admin)</h2>
+
+    <h2>Gestion des utilisateurs et des rôles</h2>
 
     <button
       pButton
@@ -11,59 +15,138 @@
       class="p-button-success btn-new"
       (click)="ouvrirModalAjout()">
     </button>
+
   </div>
 
-  <!-- SECTION 1 & 2 : Liste des utilisateurs
-       (responsiveLayout="scroll" n'existe plus dans PrimeNG 18+ : géré par le SCSS) -->
+
+  <!-- ============================================================
+       LISTE DES UTILISATEURS
+       ============================================================ -->
+
   <p-card>
-    <ng-template pTemplate="title">Utilisateurs</ng-template>
+
+    <ng-template pTemplate="title">
+      Utilisateurs
+    </ng-template>
 
     <p-table
       styleClass="table-responsive-stack"
       [value]="utilisateurs()"
       [loading]="isLoading()">
 
+      <!-- EN-TÊTE -->
+
       <ng-template pTemplate="header">
+
         <tr>
+
           <th>Nom & Prénom</th>
+
+          <th>Société</th>
+
           <th>Rôle</th>
+
           <th>Statut</th>
-          <th class="hide-tablet">Dernière connexion</th>
-          <th class="col-actions">Actions</th>
+
+          <th class="hide-tablet">
+            Dernière connexion
+          </th>
+
+          <th class="col-actions">
+            Actions
+          </th>
+
         </tr>
+
       </ng-template>
 
-      <ng-template pTemplate="body" let-user>
-        <tr>
-          <td data-label="Nom">{{ user.nom }} {{ user.prenom }}</td>
 
-          <td data-label="Rôle">{{ getRoleLabel(user.role) }}</td>
+      <!-- CORPS -->
+
+      <ng-template pTemplate="body" let-user>
+
+        <tr>
+
+          <!-- Nom -->
+
+          <td data-label="Nom">
+
+            {{ user.nom }} {{ user.prenom }}
+
+          </td>
+
+
+          <!-- Société -->
+
+          <td data-label="Société">
+
+            <span class="societe-name">
+
+              {{ user.societeNom || 'Non attribuée' }}
+
+            </span>
+
+          </td>
+
+
+          <!-- Rôle -->
+
+          <td data-label="Rôle">
+
+            {{ getRoleLabel(user.role) }}
+
+          </td>
+
+
+          <!-- Statut -->
 
           <td data-label="Statut">
+
             <p-tag
               [value]="user.statut ? 'Actif' : 'Inactif'"
               [severity]="user.statut ? 'success' : 'danger'">
             </p-tag>
+
           </td>
 
-          <td data-label="Dernière connexion" class="nowrap hide-tablet">
-            {{ user.derniereConnexion ? (user.derniereConnexion | date:'dd/MM/yyyy HH:mm') : 'Jamais' }}
+
+          <!-- Dernière connexion -->
+
+          <td
+            data-label="Dernière connexion"
+            class="nowrap hide-tablet">
+
+            {{
+              user.derniereConnexion
+                ? (user.derniereConnexion | date:'dd/MM/yyyy HH:mm')
+                : 'Jamais'
+            }}
+
           </td>
+
+
+          <!-- Actions -->
 
           <td class="col-actions">
+
             <div class="actions-group">
 
-              <!-- Bouton Modifier -->
+              <!-- Modifier -->
+
               <button
                 type="button"
                 class="action-btn edit-btn"
                 (click)="ouvrirModalModification(user)"
                 title="Modifier"
                 aria-label="Modifier">
+
                 <i class="pi pi-pencil"></i>
+
               </button>
 
-              <!-- Bouton Suspendre / Activer -->
+
+              <!-- Suspendre / Activer -->
+
               <button
                 type="button"
                 class="action-btn"
@@ -72,100 +155,333 @@
                 (click)="basculerStatut(user)"
                 [title]="user.statut ? 'Suspendre' : 'Activer'"
                 [attr.aria-label]="user.statut ? 'Suspendre' : 'Activer'">
-                <i [class]="user.statut ? 'pi pi-lock' : 'pi pi-lock-open'"></i>
+
+                <i
+                  [class]="
+                    user.statut
+                      ? 'pi pi-lock'
+                      : 'pi pi-lock-open'
+                  ">
+                </i>
+
               </button>
 
             </div>
+
           </td>
+
         </tr>
+
       </ng-template>
+
+
+      <!-- AUCUN UTILISATEUR -->
 
       <ng-template pTemplate="emptymessage">
+
         <tr>
-          <td colspan="5" class="text-center p-4 text-500">Aucun utilisateur trouvé.</td>
+
+          <td
+            colspan="6"
+            class="text-center p-4 text-500">
+
+            Aucun utilisateur trouvé.
+
+          </td>
+
         </tr>
+
       </ng-template>
+
     </p-table>
+
   </p-card>
 
-  <!-- SECTION 3 : Matrice des permissions par rôle
-       Reste un vrai tableau sur mobile (simples icônes), en version compacte -->
-  <p-card>
-    <ng-template pTemplate="title">Matrice des permissions par rôle</ng-template>
 
-    <p-table styleClass="matrix-table" [value]="matrixData">
+  <!-- ============================================================
+       MATRICE DES PERMISSIONS
+       ============================================================ -->
+
+  <p-card>
+
+    <ng-template pTemplate="title">
+
+      Matrice des permissions par rôle
+
+    </ng-template>
+
+
+    <p-table
+      styleClass="matrix-table"
+      [value]="matrixData">
+
       <ng-template pTemplate="header">
+
         <tr>
-          <th>Module</th>
-          <th class="text-center">Admin</th>
-          <th class="text-center">Gestionnaire</th>
-          <th class="text-center">Agent</th>
-          <th class="text-center">Locataire</th>
+
+          <th>
+            Module
+          </th>
+
+          <th class="text-center">
+            Admin
+          </th>
+
+          <th class="text-center">
+            Gestionnaire
+          </th>
+
+          <th class="text-center">
+            Agent
+          </th>
+
+          <th class="text-center">
+            Locataire
+          </th>
+
         </tr>
+
       </ng-template>
+
 
       <ng-template pTemplate="body" let-row>
+
         <tr>
-          <td class="font-bold">{{ row.module }}</td>
-          <td class="text-center"><i class="pi" [ngClass]="row.admin ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
-          <td class="text-center"><i class="pi" [ngClass]="row.gestionnaire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
-          <td class="text-center"><i class="pi" [ngClass]="row.agent ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
-          <td class="text-center"><i class="pi" [ngClass]="row.locataire ? 'pi-check text-green-600' : 'pi-minus text-400'"></i></td>
+
+          <td class="font-bold">
+            {{ row.module }}
+          </td>
+
+          <td class="text-center">
+
+            <i
+              class="pi"
+              [ngClass]="
+                row.admin
+                  ? 'pi-check text-green-600'
+                  : 'pi-minus text-400'
+              ">
+            </i>
+
+          </td>
+
+          <td class="text-center">
+
+            <i
+              class="pi"
+              [ngClass]="
+                row.gestionnaire
+                  ? 'pi-check text-green-600'
+                  : 'pi-minus text-400'
+              ">
+            </i>
+
+          </td>
+
+          <td class="text-center">
+
+            <i
+              class="pi"
+              [ngClass]="
+                row.agent
+                  ? 'pi-check text-green-600'
+                  : 'pi-minus text-400'
+              ">
+            </i>
+
+          </td>
+
+          <td class="text-center">
+
+            <i
+              class="pi"
+              [ngClass]="
+                row.locataire
+                  ? 'pi-check text-green-600'
+                  : 'pi-minus text-400'
+              ">
+            </i>
+
+          </td>
+
         </tr>
+
       </ng-template>
+
     </p-table>
+
   </p-card>
 
-  <!-- MODAL AJOUT / MODIFICATION
-       [breakpoints] remplace le width: 550px !important du SCSS -->
+
+  <!-- ============================================================
+       MODAL AJOUT / MODIFICATION
+       ============================================================ -->
+
   <p-dialog
-    [header]="isEditMode() ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"
+    [header]="
+      isEditMode()
+        ? 'Modifier l\'utilisateur'
+        : 'Ajouter un utilisateur'
+    "
     [(visible)]="displayModal"
     [modal]="true"
     [style]="{ width: '550px' }"
-    [breakpoints]="{ '768px': '90vw', '480px': '95vw' }"
+    [breakpoints]="{
+      '768px': '90vw',
+      '480px': '95vw'
+    }"
     [draggable]="false"
     [resizable]="false"
     styleClass="user-dialog">
 
-    <form [formGroup]="userForm" (ngSubmit)="enregistrerUtilisateur()" class="user-form">
+
+    <form
+      [formGroup]="userForm"
+      (ngSubmit)="enregistrerUtilisateur()"
+      class="user-form">
+
+
+      <!-- ========================================================
+           NOM
+           ======================================================== -->
 
       <div class="field">
-        <label for="nom">Nom</label>
-        <input id="nom" pInputText formControlName="nom" placeholder="Ex: Mbarga" />
+
+        <label for="nom">
+          Nom
+        </label>
+
+        <input
+          id="nom"
+          pInputText
+          formControlName="nom"
+          placeholder="Ex: Mbarga" />
+
       </div>
 
-      <div class="field">
-        <label for="prenom">Prénom</label>
-        <input id="prenom" pInputText formControlName="prenom" placeholder="Ex: Jean" />
-      </div>
+
+      <!-- ========================================================
+           PRÉNOM
+           ======================================================== -->
 
       <div class="field">
-        <label for="email">Email</label>
-        <input id="email" pInputText formControlName="email" type="email" placeholder="jean.mbarga@gestimmo.com" />
+
+        <label for="prenom">
+          Prénom
+        </label>
+
+        <input
+          id="prenom"
+          pInputText
+          formControlName="prenom"
+          placeholder="Ex: Jean" />
+
       </div>
 
-      <div class="field">
-        <label for="telephone">Téléphone</label>
-        <input id="telephone" pInputText formControlName="telephone" type="tel" placeholder="+237..." />
-      </div>
+
+      <!-- ========================================================
+           EMAIL
+           ======================================================== -->
 
       <div class="field">
-        <label for="role">Rôle</label>
+
+        <label for="email">
+          Email
+        </label>
+
+        <input
+          id="email"
+          pInputText
+          formControlName="email"
+          type="email"
+          placeholder="jean.mbarga@gestimmo.com" />
+
+      </div>
+
+
+      <!-- ========================================================
+           TÉLÉPHONE
+           ======================================================== -->
+
+      <div class="field">
+
+        <label for="telephone">
+          Téléphone
+        </label>
+
+        <input
+          id="telephone"
+          pInputText
+          formControlName="telephone"
+          type="tel"
+          placeholder="+237..." />
+
+      </div>
+
+
+      <!-- ========================================================
+           SOCIÉTÉ
+           ======================================================== -->
+
+      <div class="field">
+
+        <label for="societeId">
+          Société
+        </label>
+
+        <p-select
+          inputId="societeId"
+          [options]="societes()"
+          formControlName="societeId"
+          optionLabel="nom"
+          optionValue="id"
+          placeholder="Sélectionner une société"
+          [loading]="isLoadingSocietes()"
+          styleClass="w-full"
+          appendTo="body">
+
+        </p-select>
+
+      </div>
+
+
+      <!-- ========================================================
+           RÔLE
+           ======================================================== -->
+
+      <div class="field">
+
+        <label for="role">
+          Rôle
+        </label>
+
         <p-select
           inputId="role"
           [options]="rolesList"
           formControlName="role"
           optionLabel="label"
           optionValue="value"
+          placeholder="Sélectionner un rôle"
           styleClass="w-full"
           appendTo="body">
+
         </p-select>
+
       </div>
 
+
+      <!-- ========================================================
+           MOT DE PASSE
+           ======================================================== -->
+
       @if (!isEditMode()) {
+
         <div class="field">
-          <label for="motDePasse">Mot de passe provisoire</label>
+
+          <label for="motDePasse">
+            Mot de passe provisoire
+          </label>
+
           <input
             id="motDePasse"
             pInputText
@@ -173,20 +489,87 @@
             type="password"
             autocomplete="new-password"
             placeholder="Mot de passe temporaire" />
+
         </div>
+
       }
 
+
+      <!-- ========================================================
+           NOUVEAU MOT DE PASSE EN MODIFICATION
+           ======================================================== -->
+
+      @if (isEditMode()) {
+
+        <div class="field">
+
+          <label for="motDePasseModification">
+            Nouveau mot de passe
+          </label>
+
+          <input
+            id="motDePasseModification"
+            pInputText
+            formControlName="motDePasseProvisoire"
+            type="password"
+            autocomplete="new-password"
+            placeholder="Laisser vide pour conserver le mot de passe actuel" />
+
+        </div>
+
+      }
+
+
+      <!-- ========================================================
+           STATUT
+           ======================================================== -->
+
       <div class="field-checkbox">
-        <p-checkbox formControlName="statut" [binary]="true" inputId="statutCheck"></p-checkbox>
-        <label for="statutCheck">Compte Actif</label>
+
+        <p-checkbox
+          formControlName="statut"
+          [binary]="true"
+          inputId="statutCheck">
+        </p-checkbox>
+
+        <label for="statutCheck">
+          Compte Actif
+        </label>
+
       </div>
 
+
+      <!-- ========================================================
+           ACTIONS
+           ======================================================== -->
+
       <div class="form-actions">
-        <button pButton label="Annuler" type="button" class="p-button-text" (click)="displayModal.set(false)"></button>
-        <button pButton [label]="isEditMode() ? 'Modifier' : 'Créer'" type="submit" [disabled]="userForm.invalid" class="p-button-success"></button>
+
+        <button
+          pButton
+          label="Annuler"
+          type="button"
+          class="p-button-text"
+          (click)="displayModal.set(false)">
+        </button>
+
+
+        <button
+          pButton
+          [label]="
+            isEditMode()
+              ? 'Modifier'
+              : 'Créer'
+          "
+          type="submit"
+          [disabled]="userForm.invalid"
+          class="p-button-success">
+        </button>
+
       </div>
 
     </form>
+
   </p-dialog>
 
 </div>

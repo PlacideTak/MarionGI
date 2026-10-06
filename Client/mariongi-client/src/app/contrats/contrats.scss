@@ -308,3 +308,14 @@ $bg-soft: #f8fafc;
     }
   }
 }
+
+.property-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.bien-reference {
+  font-size: 0.8rem;
+  color: #64748b;
+}

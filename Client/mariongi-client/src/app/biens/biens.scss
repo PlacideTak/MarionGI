@@ -1,11 +1,12 @@
 $border: #e2e8f0;
 $text: #334155;
+$text-soft: #64748b;
 $bg-soft: #f8fafc;
 $success: #2e7d5b;
 $success-hover: #246348;
 
 /* =========================================================
-   CARTE
+   CARTE PRINCIPALE
    ========================================================= */
 
 .card {
@@ -15,24 +16,59 @@ $success-hover: #246348;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   margin: 1.5rem;
   min-width: 0;
-  // Pas d'overflow-x: hidden : il coupait le tableau.
-  // Le défilement horizontal est géré par le conteneur de la table.
 }
 
+
 /* =========================================================
-   EN-TÊTE (bouton sous le titre)
+   EN-TÊTE
    ========================================================= */
 
 .page-header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.5rem;
 
   h2 {
     margin: 0;
+    color: $text;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: $text-soft;
+    font-size: 0.9rem;
+  }
+
+  .btn-new {
+    margin-top: 0.5rem;
   }
 }
+
+
+/* =========================================================
+   RECHERCHE
+   ========================================================= */
+
+.table-search {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+
+  i {
+    color: $text-soft;
+    font-size: 1rem;
+  }
+
+  input {
+    width: 100%;
+    max-width: 360px;
+  }
+}
+
 
 /* =========================================================
    TABLEAU
@@ -44,50 +80,104 @@ $success-hover: #246348;
 
 .col-photo {
   width: 5rem;
+  min-width: 5rem;
 }
 
 .col-actions {
   text-align: center;
   white-space: nowrap;
+  width: 8rem;
 }
 
 .actions-group {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  gap: 0.15rem;
 }
+
+
+/* =========================================================
+   CELLULE PHOTO
+   ========================================================= */
 
 .photo-cell {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
 .thumb {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   object-fit: cover;
-  flex: 0 0 40px;
+  flex: 0 0 42px;
+  border-radius: 6px;
+  border: 1px solid $border;
+  background: $bg-soft;
 }
 
 .thumb-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 42px;
+  height: 42px;
   background: #e5e7eb;
-  color: #6b7280;
+  color: #64748b;
+  font-size: 1.1rem;
+  border-radius: 6px;
 }
 
-.search-field {
-  display: block;
-  width: 100%;
-  max-width: 320px;
+
+/* =========================================================
+   LOCALISATION
+   ========================================================= */
+
+.location-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  strong {
+    font-weight: 600;
+    color: $text;
+  }
+
+  small {
+    color: $text-soft;
+    font-size: 0.8rem;
+  }
 }
+
+
+/* =========================================================
+   NOMBRE D'UNITÉS
+   ========================================================= */
+
+.unit-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: $text;
+
+  i {
+    color: $success;
+  }
+}
+
+
+/* =========================================================
+   TABLE PRIME NG
+   ========================================================= */
 
 :host ::ng-deep {
+
   .p-datatable {
+
     .p-datatable-table-container {
-      overflow-x: auto; // défilement de secours
+      overflow-x: auto;
       -webkit-overflow-scrolling: touch;
     }
 
@@ -95,6 +185,16 @@ $success-hover: #246348;
     .p-datatable-tbody > tr > td {
       padding: 0.75rem 1rem;
       vertical-align: middle;
+    }
+
+    .p-datatable-thead > tr > th {
+      color: $text;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .p-datatable-tbody > tr > td {
+      color: $text;
     }
   }
 
@@ -105,17 +205,51 @@ $success-hover: #246348;
   }
 }
 
+
 /* =========================================================
-   MODALE + FORMULAIRE
+   ÉTAT VIDE
    ========================================================= */
 
-:host ::ng-deep .bien-dialog {
-  max-height: calc(100dvh - 1rem);
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: $text-soft;
 
-  .p-dialog-content {
-    overflow-x: hidden;
+  i {
+    font-size: 2rem;
+    color: #94a3b8;
+  }
+
+  p {
+    margin: 0;
   }
 }
+
+
+/* =========================================================
+   MODALE
+   ========================================================= */
+
+:host ::ng-deep {
+
+  .bien-dialog {
+    width: min(900px, 95vw);
+    max-height: calc(100dvh - 1rem);
+
+    .p-dialog-content {
+      overflow-x: hidden;
+    }
+  }
+}
+
+
+/* =========================================================
+   FORMULAIRE
+   ========================================================= */
 
 .bien-form {
   display: flex;
@@ -138,17 +272,28 @@ $success-hover: #246348;
       text-align: right;
     }
 
-    input:not([type='file']),
-    ::ng-deep p-select,
-    ::ng-deep .p-select {
+    input,
+    textarea {
       width: 100%;
       min-width: 0;
       box-sizing: border-box;
     }
+
+    ::ng-deep {
+
+      .p-select {
+        width: 100%;
+        min-width: 0;
+      }
+    }
   }
 
-  // Champ photos : pleine largeur, libellé au-dessus
-  .field.field-full {
+
+  /* =======================================================
+     CHAMPS PLEINE LARGEUR
+     ======================================================= */
+
+  .field-full {
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -159,54 +304,157 @@ $success-hover: #246348;
     }
   }
 
-  .photo-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
+
+  /* =======================================================
+     SECTION PHOTOS
+     ======================================================= */
+
+  .photos-section {
     width: 100%;
   }
 
-  .photo-item {
-    position: relative;
-    flex: 0 0 70px;
-    width: 70px;
-    height: 70px;
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid #ced4da;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 
-    img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+  /* =======================================================
+     GRILLE DES PHOTOS
+     ======================================================= */
+
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+    margin-top: 0.5rem;
   }
 
-  .photo-remove {
+
+  /* =======================================================
+     APERÇU D'UNE PHOTO
+     ======================================================= */
+
+  .photo-preview-item {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border: 1px solid $border;
+    border-radius: 10px;
+    background: $bg-soft;
+  }
+
+
+  .photo-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+
+  /* =======================================================
+     BOUTON SUPPRESSION PHOTO
+     ======================================================= */
+
+  .photo-remove-button {
     position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
-    color: #fff;
+    top: 0.4rem;
+    right: 0.4rem;
+
+    width: 2rem;
+    height: 2rem;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+
+    background: rgba(220, 38, 38, 0.9);
+    color: #ffffff;
+
     cursor: pointer;
+
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
+
+    i {
+      font-size: 0.85rem;
+    }
+
+    &:hover {
+      background: rgba(185, 28, 28, 0.95);
+      transform: scale(1.05);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
   }
+
+
+  /* =======================================================
+     INPUT FICHIER
+     ======================================================= */
+
+  .photo-file-input {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 0.75rem;
+
+    border: 1px dashed #94a3b8;
+    border-radius: 8px;
+
+    background: $bg-soft;
+    color: $text;
+
+    cursor: pointer;
+
+    font-size: 0.9rem;
+
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover {
+      border-color: $success;
+      background: #f1f8f5;
+    }
+
+    &:focus {
+      outline: 2px solid rgba(46, 125, 91, 0.2);
+      outline-offset: 2px;
+      border-color: $success;
+    }
+  }
+
+
+  /* =======================================================
+     COMPTEUR PHOTOS
+     ======================================================= */
+
+  .photo-counter {
+    margin: 0.25rem 0 0;
+    color: $text-soft;
+    font-size: 0.8rem;
+  }
+
+
+  /* =======================================================
+     ACTIONS DU FORMULAIRE
+     ======================================================= */
 
   .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    margin-top: 1.5rem;
+
+    margin-top: 1rem;
     padding-top: 1rem;
+
     border-top: 1px solid $border;
 
     button.p-button-success {
@@ -215,37 +463,46 @@ $success-hover: #246348;
 
       &:hover {
         background-color: $success-hover !important;
+        border-color: $success-hover !important;
       }
     }
   }
 }
 
+
 /* =========================================================
-   TABLETTE (≤ 768px)
+   TABLETTE
+   ≤ 768px
    ========================================================= */
 
 @media (max-width: 768px) {
+
   .card {
     margin: 1rem;
     padding: 1.25rem;
     border-radius: 10px;
   }
 
-  :host ::ng-deep .p-datatable {
-    font-size: 0.9rem;
 
-    // Colonnes secondaires masquées : Type, Superficie, Propriétaire
-    .hide-tablet {
-      display: none;
-    }
+  :host ::ng-deep {
 
-    .p-datatable-thead > tr > th,
-    .p-datatable-tbody > tr > td {
-      padding: 0.6rem 0.75rem;
+    .p-datatable {
+      font-size: 0.9rem;
+
+      .hide-tablet {
+        display: none;
+      }
+
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+        padding: 0.6rem 0.75rem;
+      }
     }
   }
 
+
   .bien-form {
+
     gap: 1rem;
 
     .field {
@@ -256,26 +513,44 @@ $success-hover: #246348;
         font-size: 0.85rem;
       }
     }
+
+
+    .photos-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
   }
 }
 
+
 /* =========================================================
-   MOBILE (≤ 600px) : tableau -> cartes
+   MOBILE
+   ≤ 600px
    ========================================================= */
 
 @media (max-width: 600px) {
+
   .card {
     margin: 0.5rem;
     padding: 1rem;
     border-radius: 8px;
   }
 
-  /* En-tête : bouton pleine largeur sous le titre */
+
+  /* =======================================================
+     EN-TÊTE
+     ======================================================= */
+
   .page-header {
+
     align-items: stretch;
 
     h2 {
       font-size: 1.35rem;
+    }
+
+    p {
+      line-height: 1.4;
     }
 
     .btn-new {
@@ -284,101 +559,194 @@ $success-hover: #246348;
     }
   }
 
-  /* Recherche */
-  .search-field {
-    max-width: 100%;
-  }
 
-  /* --- Tableau -> cartes --- */
-  :host ::ng-deep .table-responsive-stack {
-    font-size: 1rem;
+  /* =======================================================
+     RECHERCHE
+     ======================================================= */
 
-    .p-datatable-table-container {
-      overflow-x: visible;
-    }
+  .table-search {
 
-    .p-datatable-table,
-    .p-datatable-tbody {
-      display: block;
-      width: 100%;
-    }
-
-    // En-tête masqué : les libellés viennent de data-label
-    // (le tri par colonne n'est donc pas disponible sur mobile)
-    .p-datatable-thead {
-      display: none;
-    }
-
-    // Colonnes masquées en tablette : visibles dans les cartes
-    .hide-tablet {
-      display: flex;
-    }
-
-    .p-datatable-tbody > tr,
-    .p-datatable-tbody > tr:nth-child(even) {
-      display: block;
-      background: #fff;
-      border: 1px solid $border;
-      border-radius: 10px;
-      margin-bottom: 0.75rem;
-      padding: 0.25rem 0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .p-datatable-tbody > tr > td {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      width: 100% !important;
-      box-sizing: border-box;
-      padding: 0.5rem 1rem;
-      border: 0 !important;
-      text-align: right;
-      white-space: normal;
-      overflow-wrap: anywhere;
-
-      &::before {
-        content: attr(data-label);
-        flex: 0 0 35%;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: $text;
-        text-align: left;
-      }
-
-      &:not([data-label])::before {
-        content: none;
-      }
-    }
-
-    // Actions en pied de carte
-    .p-datatable-tbody > tr > td.col-actions {
-      justify-content: flex-end;
-      margin-top: 0.25rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid $border !important;
-      background: $bg-soft;
-      border-radius: 0 0 10px 10px;
-    }
-
-    // Message "aucun bien"
-    .p-datatable-emptymessage > td {
-      display: block;
-      text-align: center;
-
-      &::before {
-        content: none;
-      }
+    input {
+      max-width: none;
     }
   }
 
-  /* Formulaire : libellé au-dessus du champ */
+
+  /* =======================================================
+     TABLEAU → CARTES
+     ======================================================= */
+
+  :host ::ng-deep {
+
+    .table-responsive-stack {
+
+      font-size: 0.95rem;
+
+
+      .p-datatable-table-container {
+        overflow-x: visible;
+      }
+
+
+      .p-datatable-table,
+      .p-datatable-tbody {
+        display: block;
+        width: 100%;
+      }
+
+
+      .p-datatable-thead {
+        display: none;
+      }
+
+
+      .hide-tablet {
+        display: flex;
+      }
+
+
+      /* ---------------------------------------------
+         Carte
+         --------------------------------------------- */
+
+      .p-datatable-tbody > tr,
+      .p-datatable-tbody > tr:nth-child(even) {
+
+        display: block;
+
+        background: #ffffff;
+
+        border: 1px solid $border;
+
+        border-radius: 10px;
+
+        margin-bottom: 0.75rem;
+
+        padding: 0.25rem 0;
+
+        box-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+
+      /* ---------------------------------------------
+         Cellules
+         --------------------------------------------- */
+
+      .p-datatable-tbody > tr > td {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 1rem;
+
+        width: 100% !important;
+
+        box-sizing: border-box;
+
+        padding: 0.55rem 1rem;
+
+        border: 0 !important;
+
+        text-align: right;
+
+        white-space: normal;
+
+        overflow-wrap: anywhere;
+
+
+        &::before {
+
+          content: attr(data-label);
+
+          flex: 0 0 35%;
+
+          font-weight: 600;
+
+          font-size: 0.8rem;
+
+          color: $text;
+
+          text-align: left;
+        }
+
+
+        &:not([data-label])::before {
+          content: none;
+        }
+      }
+
+
+      /* ---------------------------------------------
+         Photo
+         --------------------------------------------- */
+
+      .p-datatable-tbody > tr > td.col-photo {
+        justify-content: space-between;
+      }
+
+
+      /* ---------------------------------------------
+         Actions
+         --------------------------------------------- */
+
+      .p-datatable-tbody > tr > td.col-actions {
+
+        justify-content: flex-end;
+
+        margin-top: 0.25rem;
+
+        padding-top: 0.75rem;
+
+        border-top:
+          1px solid $border !important;
+
+        background: $bg-soft;
+
+        border-radius:
+          0 0 10px 10px;
+      }
+
+
+      /* ---------------------------------------------
+         Message vide
+         --------------------------------------------- */
+
+      .p-datatable-emptymessage > td {
+
+        display: block;
+
+        text-align: center;
+
+        padding: 1.5rem !important;
+
+        &::before {
+          content: none;
+        }
+      }
+    }
+  }
+
+
+  /* =======================================================
+     FORMULAIRE MOBILE
+     ======================================================= */
+
   .bien-form {
+
+    gap: 1rem;
+
     .field {
+
       display: flex;
+
       flex-direction: column;
+
       align-items: stretch;
+
       gap: 0.4rem;
 
       label {
@@ -387,9 +755,45 @@ $success-hover: #246348;
       }
     }
 
+
+    /* ---------------------------------------------
+       Photos
+       --------------------------------------------- */
+
+    .photos-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+    }
+
+
+    .photo-preview-item {
+      border-radius: 8px;
+    }
+
+
+    .photo-remove-button {
+      width: 1.8rem;
+      height: 1.8rem;
+
+      top: 0.3rem;
+      right: 0.3rem;
+
+      i {
+        font-size: 0.75rem;
+      }
+    }
+
+
+    /* ---------------------------------------------
+       Actions
+       --------------------------------------------- */
+
     .form-actions {
+
       flex-direction: column-reverse;
+
       align-items: stretch;
+
       gap: 0.75rem;
 
       button {
@@ -399,38 +803,75 @@ $success-hover: #246348;
     }
   }
 
-  /* Modale : la largeur vient de [breakpoints] côté HTML */
-  :host ::ng-deep .bien-dialog {
-    .p-dialog-header,
-    .p-dialog-content {
-      padding: 1rem;
+
+  /* =======================================================
+     DIALOG MOBILE
+     ======================================================= */
+
+  :host ::ng-deep {
+
+    .bien-dialog {
+
+      width: calc(100vw - 1rem);
+      max-width: none;
+
+      .p-dialog-header,
+      .p-dialog-content {
+        padding: 1rem;
+      }
     }
   }
 }
 
+
 /* =========================================================
-   TRÈS PETITS TÉLÉPHONES (≤ 400px)
+   TRÈS PETITS TÉLÉPHONES
+   ≤ 400px
    ========================================================= */
 
 @media (max-width: 400px) {
+
   .card {
     margin: 0.25rem;
     padding: 0.75rem;
   }
 
-  .page-header h2 {
-    font-size: 1.2rem;
+
+  .page-header {
+
+    h2 {
+      font-size: 1.2rem;
+    }
   }
+
 
   .bien-form {
+
     gap: 0.85rem;
+
+
+    .photos-grid {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+
+    .photo-preview-item {
+      aspect-ratio: 16 / 10;
+    }
   }
 
-  :host ::ng-deep .table-responsive-stack .p-datatable-tbody > tr > td {
-    padding: 0.4rem 0.75rem;
 
-    &::before {
-      flex-basis: 30%;
+  :host ::ng-deep {
+
+    .table-responsive-stack
+    .p-datatable-tbody > tr > td {
+
+      padding: 0.4rem 0.75rem;
+
+      &::before {
+        flex-basis: 30%;
+      }
     }
   }
 }

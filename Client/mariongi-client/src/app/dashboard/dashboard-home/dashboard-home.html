@@ -1,129 +1,331 @@
 @if (canViewStats()) {
-  <!-- ===== VUE ADMIN / GESTIONNAIRE : Le Dashboard complet ===== -->
+  <!-- ===== VUE ADMIN / GESTIONNAIRE : Dashboard complet ===== -->
   <div class="dashboard-sections">
 
-    <!-- Section 1 : Indicateurs clés (KPIs) -->
+    <!-- ====================================================== -->
+    <!-- SECTION 1 : INDICATEURS CLÉS -->
+    <!-- ====================================================== -->
+
     <section class="kpi-grid">
+
       @for (kpi of kpis(); track kpi.label) {
+
         <p-card styleClass="kpi-card">
-          <div class="kpi-label">{{ kpi.label }}</div>
-          <div class="kpi-value">
-            @if (kpi.isCurrency) {
-              {{ kpi.value | currency:'XAF':'symbol':'1.0-0' }}
-            } @else {
-              {{ kpi.value }} {{ kpi.unit ?? '' }}
-            }
+
+          <div class="kpi-label">
+            {{ kpi.label }}
           </div>
+
+          <div class="kpi-value">
+
+            @if (kpi.isCurrency) {
+
+              {{ kpi.value | currency:'XAF':'symbol':'1.0-0' }}
+
+            } @else {
+
+              {{ kpi.value }} {{ kpi.unit ?? '' }}
+
+            }
+
+          </div>
+
         </p-card>
+
       }
+
     </section>
 
-    <!-- Section 2 : Statistiques + Alertes -->
+
+    <!-- ====================================================== -->
+    <!-- SECTION 2 : STATISTIQUES + ALERTES -->
+    <!-- ====================================================== -->
+
     <section class="stats-grid">
 
-      <!-- Graphique évolution -->
+      <!-- ================= GRAPHIQUE ================= -->
+
       <p-card styleClass="chart-card">
+
         <ng-template pTemplate="title">
-          <span class="card-title-text">Évolution des encaissements (Orange Money / MTN Money / Espèces)</span>
+
+          <span class="card-title-text">
+            Évolution des encaissements
+          </span>
+
         </ng-template>
 
         <div class="chart-wrapper">
-          <p-chart type="line" [data]="chartData()" [options]="chartOptions"></p-chart>
+
+          <p-chart
+            type="line"
+            [data]="chartData()"
+            [options]="chartOptions">
+          </p-chart>
+
         </div>
+
       </p-card>
 
-      <!-- Panneau des alertes -->
+
+      <!-- ================= ALERTES ================= -->
+
       <p-card styleClass="alerts-card">
+
         <ng-template pTemplate="title">
-          <div class="flex align-items-center justify-content-between flex-wrap gap-2">
-            <span class="card-title-text">Alertes &amp; échéances</span>
+
+          <div
+            class="flex align-items-center justify-content-between flex-wrap gap-2">
+
+            <span class="card-title-text">
+              Alertes &amp; échéances
+            </span>
+
             @if (alerts().length > 0) {
-              <p-tag [value]="alerts().length + ''" severity="danger" [rounded]="true"></p-tag>
+
+              <p-tag
+                [value]="alerts().length + ''"
+                severity="danger"
+                [rounded]="true">
+              </p-tag>
+
             }
+
           </div>
+
         </ng-template>
 
+
         <ul class="alerts-list">
-          @for (alert of alerts(); track alert.id || $index) {
-            <li class="alerts-list__item" [class]="'alerts-list__item--' + alert.severite">
-              <i [class]="getAlertIcon(alert.severite)" class="alerts-list__icon"></i>
+
+          @for (
+            alert of alerts();
+            track alert.id || $index
+          ) {
+
+            <li
+              class="alerts-list__item"
+              [class]="'alerts-list__item--' + alert.severite">
+
+              <i
+                [class]="getAlertIcon(alert.severite)"
+                class="alerts-list__icon">
+              </i>
+
               <div class="alerts-list__content">
+
                 @if (alert.titre) {
-                  <span class="alerts-list__title">{{ alert.titre }}</span>
+
+                  <span class="alerts-list__title">
+                    {{ alert.titre }}
+                  </span>
+
                 }
-                <span class="alerts-list__message">{{ alert.message }}</span>
+
+                <span class="alerts-list__message">
+                  {{ alert.message }}
+                </span>
+
               </div>
+
             </li>
+
           } @empty {
+
             <li class="alerts-list__empty">
+
               <i class="pi pi-check-circle"></i>
+
               Aucune alerte en attente.
+
             </li>
+
           }
+
         </ul>
+
       </p-card>
 
     </section>
 
-    <!-- Section 3 : Derniers biens ajoutés
-         Sur mobile, le tableau devient une liste de cartes (géré par le SCSS) -->
+
+    <!-- ====================================================== -->
+    <!-- SECTION 3 : DERNIÈRES UNITÉS LOCATIVES -->
+    <!-- ====================================================== -->
+
     <section class="properties-section">
+
       <p-card styleClass="properties-card">
+
         <ng-template pTemplate="title">
-          <span class="card-title-text">Derniers biens ajoutés</span>
+
+          <span class="card-title-text">
+            Dernières unités locatives
+          </span>
+
         </ng-template>
+
 
         <p-table
           styleClass="table-responsive-stack"
           [value]="properties()"
           [loading]="isLoading()">
 
+
+          <!-- ================= EN-TÊTE ================= -->
+
           <ng-template pTemplate="header">
+
             <tr>
+
               <th>Référence</th>
-              <th>Type de bien</th>
-              <th>Ville / Quartier</th>
-              <th>Statut</th>
+
+              <th>Bien immobilier</th>
+
+              <th>Type</th>
+
               <th>Loyer</th>
+
+              <th>Statut</th>
+
             </tr>
+
           </ng-template>
 
-          <ng-template pTemplate="body" let-property>
+
+          <!-- ================= DONNÉES ================= -->
+
+          <ng-template
+            pTemplate="body"
+            let-unite>
+
             <tr>
-              <td data-label="Référence">{{ property.reference }}</td>
-              <td data-label="Type de bien">{{ property.type }}</td>
-              <td data-label="Ville / Quartier">{{ property.location }}</td>
-              <td data-label="Statut">
-                <p-tag
-                  [value]="property.status"
-                  [severity]="biensService.getStatutLibelleSeverity(property.status)">
-                </p-tag>
+
+              <!-- Référence unité -->
+
+              <td data-label="Référence">
+
+                {{ unite.reference }}
+
               </td>
-              <td data-label="Loyer" class="nowrap">{{ property.rent | currency:'XAF':'symbol':'1.0-0' }}</td>
+
+
+              <!-- Bien immobilier -->
+
+              <td data-label="Bien immobilier">
+
+                <div class="property-cell">
+
+                  <strong>
+                    {{ unite.bienNom }}
+                  </strong>
+
+                  @if (unite.bienReference !== 'N/A') {
+                    <small class="bien-reference">
+                      ({{ unite.bienReference }})
+                    </small>
+                  }
+
+                </div>
+
+              </td>
+
+
+              <!-- Type unité -->
+
+              <td data-label="Type">
+
+                {{ unite.type }}
+
+              </td>
+
+
+              <!-- Loyer -->
+
+              <td
+                data-label="Loyer"
+                class="nowrap">
+
+                {{ unite.loyer | currency:'XAF':'symbol':'1.0-0' }}
+
+              </td>
+
+
+              <!-- Statut -->
+
+              <td data-label="Statut">
+
+                <p-tag
+                  [value]="unite.statut"
+                  [severity]="
+                    unite.statut === 'Disponible'
+                      ? 'success'
+                      : unite.statut === 'Loué'
+                        ? 'info'
+                        : unite.statut === 'Réservé'
+                          ? 'warn'
+                          : 'danger'
+                  ">
+                </p-tag>
+
+              </td>
+
             </tr>
+
           </ng-template>
+
+
+          <!-- ================= AUCUNE UNITÉ ================= -->
 
           <ng-template pTemplate="emptymessage">
+
             <tr>
-              <td colspan="5" class="text-center p-4 text-500">
-                Aucun bien immobilier enregistré pour le moment.
+
+              <td
+                colspan="5"
+                class="text-center p-4 text-500">
+
+                Aucune unité locative enregistrée
+                pour le moment.
+
               </td>
+
             </tr>
+
           </ng-template>
+
         </p-table>
+
       </p-card>
+
     </section>
 
   </div>
 
 } @else {
-  <!-- ===== VUE LOCATAIRE : Affichage de l'image de bienvenue responsive ===== -->
+
+  <!-- ===== VUE LOCATAIRE ===== -->
+
   <div class="welcome-background-container">
+
     <div class="welcome-overlay-content">
-      <h1>Bienvenue sur MarionGI</h1>
+
+      <h1>
+        Bienvenue sur MarionGI
+      </h1>
+
     </div>
+
+
     <div class="cover-wrapper">
-      <img src="/immeublemarion.jpeg" alt="Bienvenue sur MarionGI" class="cover-image" />
+
+      <img
+        src="/immeublemarion.jpeg"
+        alt="Bienvenue sur MarionGI"
+        class="cover-image" />
+
     </div>
+
   </div>
+
 }

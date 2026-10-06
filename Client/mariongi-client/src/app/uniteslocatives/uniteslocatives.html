@@ -1,0 +1,1515 @@
+<p-toast
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
+
+
+<p-confirmDialog
+  [style]="{ width: '30rem' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
+
+
+<div class="card">
+
+  <!-- ==========================================================
+       EN-TÊTE
+       ========================================================== -->
+
+  <div class="page-header mb-4">
+
+    <div>
+
+      <h2>
+        Gestion des Unités Locatives
+      </h2>
+
+      <p class="text-secondary">
+        Gestion des unités locatives de vos biens immobiliers
+      </p>
+
+    </div>
+
+    <button
+      *ngIf="canManageUnites"
+      pButton
+      type="button"
+      label="Nouvelle Unité"
+      icon="pi pi-plus"
+      class="p-button-success btn-new"
+      (click)="ouvrirModalAjout()">
+    </button>
+
+  </div>
+
+
+  <!-- ==========================================================
+       TABLEAU
+       ========================================================== -->
+
+  <p-table
+    #dt
+    styleClass="table-responsive-stack"
+    dataKey="id"
+    [value]="unites"
+    [loading]="chargement"
+    [paginator]="true"
+    [rows]="10"
+    [globalFilterFields]="[
+      'reference',
+      'bienReference',
+      'bienVille',
+      'bienAdresse'
+    ]">
+
+    <!-- RECHERCHE -->
+    <ng-template pTemplate="caption">
+
+      <div class="table-search">
+
+        <i class="pi pi-search"></i>
+
+        <input
+          pInputText
+          type="text"
+          class="w-full"
+          (input)="
+            dt.filterGlobal(
+              $any($event.target).value,
+              'contains'
+            )
+          "
+          placeholder="Rechercher une unité..." />
+
+      </div>
+
+    </ng-template>
+
+
+    <!-- EN-TÊTE -->
+    <ng-template pTemplate="header">
+
+      <tr>
+
+        <th pSortableColumn="reference">
+          Référence
+
+          <p-sortIcon field="reference">
+          </p-sortIcon>
+        </th>
+
+        <th class="hide-tablet">
+          Type
+        </th>
+
+        <th pSortableColumn="bienReference">
+          Bien immobilier
+
+          <p-sortIcon field="bienReference">
+          </p-sortIcon>
+        </th>
+
+        <th
+          pSortableColumn="superficie"
+          class="hide-tablet">
+
+          Superficie
+
+          <p-sortIcon field="superficie">
+          </p-sortIcon>
+
+        </th>
+
+        <th pSortableColumn="loyer">
+
+          Loyer
+
+          <p-sortIcon field="loyer">
+          </p-sortIcon>
+
+        </th>
+
+        <th>
+          Statut
+        </th>
+
+        <th class="hide-tablet">
+          Contrats
+        </th>
+
+        <th class="col-payment">
+          Paiement
+        </th>
+
+        <th class="col-actions">
+          Actions
+        </th>
+
+      </tr>
+
+    </ng-template>
+
+
+    <!-- CORPS -->
+    <ng-template
+      pTemplate="body"
+      let-unite>
+
+      <tr>
+
+        <!-- RÉFÉRENCE -->
+        <td data-label="Référence">
+
+          <strong>
+            {{ unite.reference || 'N/A' }}
+          </strong>
+
+        </td>
+
+
+        <!-- TYPE -->
+        <td
+          data-label="Type"
+          class="hide-tablet">
+
+          {{
+            uniteService.getTypeLibelle(
+              unite.type
+            )
+          }}
+
+        </td>
+
+
+        <!-- BIEN -->
+        <td data-label="Bien immobilier">
+
+          <div class="location-cell">
+
+            <strong>
+              {{ unite.bienReference || 'N/A' }}
+            </strong>
+
+            <small *ngIf="unite.bienVille">
+              {{ unite.bienVille }}
+            </small>
+
+          </div>
+
+        </td>
+
+
+        <!-- SUPERFICIE -->
+        <td
+          data-label="Superficie"
+          class="nowrap hide-tablet">
+
+          {{ unite.superficie | number:'1.0-2' }}
+          m²
+
+        </td>
+
+
+        <!-- LOYER -->
+        <td data-label="Loyer">
+
+          <strong>
+            {{ unite.loyer | number:'1.0-0' }}
+          </strong>
+
+          <span class="text-secondary">
+            FCFA
+          </span>
+
+        </td>
+
+
+        <!-- STATUT -->
+        <td data-label="Statut">
+
+          <p-tag
+            [value]="
+              uniteService.getStatutLibelle(
+                unite.statut
+              )
+            "
+            [severity]="
+              uniteService.getStatutSeverity(
+                unite.statut
+              )
+            ">
+          </p-tag>
+
+        </td>
+
+
+        <!-- CONTRATS -->
+        <td
+          data-label="Contrats"
+          class="hide-tablet">
+
+          <span class="unit-count">
+
+            <i class="pi pi-file"></i>
+
+            {{ unite.nombreContrats ?? 0 }}
+
+          </span>
+
+        </td>
+
+
+        <!-- PAIEMENT -->
+        <td
+          data-label="Paiement"
+          class="col-payment">
+
+          <button
+            *ngIf="
+              unite.aContratActif &&
+              canAccessPaiement
+            "
+            pButton
+            type="button"
+            label="Payer"
+            icon="pi pi-credit-card"
+            class="p-button-sm p-button-success"
+            pTooltip="Effectuer un paiement"
+            tooltipPosition="top"
+            (click)="ouvrirPaiement(unite)">
+          </button>
+
+          <span
+            *ngIf="
+              !unite.aContratActif ||
+              !canAccessPaiement
+            "
+            class="text-secondary">
+
+            —
+
+          </span>
+
+        </td>
+
+
+        <!-- ACTIONS -->
+        <td
+          data-label="Actions"
+          class="col-actions">
+
+          <div class="actions-group">
+
+            <button
+              *ngIf="canManageUnites"
+              pButton
+              type="button"
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text p-button-warning"
+              aria-label="Modifier"
+              pTooltip="Modifier"
+              tooltipPosition="top"
+              (click)="ouvrirModalModification(unite)">
+            </button>
+
+
+            <button
+              pButton
+              type="button"
+              icon="pi pi-eye"
+              class="p-button-rounded p-button-text p-button-info"
+              aria-label="Voir le détail"
+              pTooltip="Voir le détail"
+              tooltipPosition="top"
+              (click)="ouvrirDetail(unite)">
+            </button>
+
+
+            <button
+              *ngIf="canManageUnites"
+              pButton
+              type="button"
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              aria-label="Archiver"
+              pTooltip="Archiver"
+              tooltipPosition="top"
+              (click)="supprimerUnite(unite)">
+            </button>
+
+          </div>
+
+        </td>
+
+      </tr>
+
+    </ng-template>
+
+
+    <!-- AUCUN RÉSULTAT -->
+    <ng-template pTemplate="emptymessage">
+
+      <tr>
+
+        <td
+          colspan="9"
+          class="text-center p-4">
+
+          <div class="empty-state">
+
+            <i class="pi pi-home"></i>
+
+            <p>
+              Aucune unité locative trouvée.
+            </p>
+
+          </div>
+
+        </td>
+
+      </tr>
+
+    </ng-template>
+
+  </p-table>
+
+</div>
+
+
+<!-- ==========================================================
+     MODALE AJOUT / MODIFICATION
+     ========================================================== -->
+
+<p-dialog
+  *ngIf="canManageUnites"
+  [(visible)]="displayModal"
+  [header]="
+    isEditMode
+      ? 'Modifier l’unité locative'
+      : 'Ajouter une nouvelle unité locative'
+  "
+  [modal]="true"
+  [style]="{ width: '700px' }"
+  [breakpoints]="{
+    '960px': '85vw',
+    '600px': '95vw'
+  }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="unite-dialog">
+
+  <form
+    [formGroup]="uniteForm"
+    (ngSubmit)="sauvegarder()"
+    class="unite-form">
+
+
+    <!-- ========================================================
+         RÉFÉRENCE + TYPE + BIEN
+         ======================================================== -->
+
+    <div class="form-grid">
+
+      <!-- RÉFÉRENCE -->
+      <div class="field">
+
+        <label for="reference">
+          Référence
+        </label>
+
+        <input
+          id="reference"
+          type="text"
+          pInputText
+          formControlName="reference"
+          placeholder="Ex : APP-DLA-001"
+          class="w-full" />
+
+        <small
+          *ngIf="
+            uniteForm.get('reference')?.invalid &&
+            uniteForm.get('reference')?.touched
+          "
+          class="p-error">
+
+          La référence est obligatoire.
+
+        </small>
+
+      </div>
+
+
+      <!-- TYPE -->
+      <div class="field">
+
+        <label for="type">
+          Type d'unité
+        </label>
+
+        <p-select
+          inputId="type"
+          [options]="uniteService.typesUniteLocative"
+          formControlName="type"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un type"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+
+      </div>
+
+
+      <!-- BIEN IMMOBILIER -->
+      <div class="field field-full">
+
+        <label for="bienImmobilierId">
+          Bien immobilier
+        </label>
+
+        <p-select
+          inputId="bienImmobilierId"
+          [options]="biens"
+          formControlName="bienImmobilierId"
+          optionLabel="reference"
+          optionValue="id"
+          [loading]="chargementBiens"
+          placeholder="Sélectionner un bien immobilier"
+          styleClass="w-full"
+          appendTo="body">
+
+          <ng-template
+            pTemplate="item"
+            let-bien>
+
+            <div class="bien-option">
+
+              <strong>
+                {{ bien.reference }}
+              </strong>
+
+              <small *ngIf="bien.ville">
+
+                {{ bien.ville }}
+
+                <span *ngIf="bien.quartier">
+                  — {{ bien.quartier }}
+                </span>
+
+              </small>
+
+            </div>
+
+          </ng-template>
+
+
+          <ng-template
+            pTemplate="selectedItem"
+            let-bien>
+
+            <div *ngIf="bien">
+
+              <strong>
+                {{ bien.reference }}
+              </strong>
+
+              <span *ngIf="bien.ville">
+                — {{ bien.ville }}
+              </span>
+
+            </div>
+
+          </ng-template>
+
+        </p-select>
+
+        <small
+          *ngIf="
+            uniteForm.get('bienImmobilierId')?.invalid &&
+            uniteForm.get('bienImmobilierId')?.touched
+          "
+          class="p-error">
+
+          Le bien immobilier est obligatoire.
+
+        </small>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         SUPERFICIE + LOYER + STATUT
+         ======================================================== -->
+
+    <div class="form-grid-three">
+
+      <!-- SUPERFICIE -->
+      <div class="field">
+
+        <label for="superficie">
+          Superficie (m²)
+        </label>
+
+        <p-inputNumber
+          inputId="superficie"
+          formControlName="superficie"
+          [min]="1"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          suffix=" m²"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+
+        <small
+          *ngIf="
+            uniteForm.get('superficie')?.invalid &&
+            uniteForm.get('superficie')?.touched
+          "
+          class="p-error">
+
+          La superficie doit être supérieure à 0.
+
+        </small>
+
+      </div>
+
+
+      <!-- LOYER -->
+      <div class="field">
+
+        <label for="loyer">
+          Loyer mensuel
+        </label>
+
+        <p-inputNumber
+          inputId="loyer"
+          formControlName="loyer"
+          [min]="0"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="0"
+          suffix=" FCFA"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
+
+        <small
+          *ngIf="
+            uniteForm.get('loyer')?.invalid &&
+            uniteForm.get('loyer')?.touched
+          "
+          class="p-error">
+
+          Le loyer doit être supérieur ou égal à 0.
+
+        </small>
+
+      </div>
+
+
+      <!-- STATUT -->
+      <div class="field">
+
+        <label for="statut">
+          Statut
+        </label>
+
+        <p-select
+          inputId="statut"
+          [options]="uniteService.statutsUnite"
+          formControlName="statut"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un statut"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         BIEN SÉLECTIONNÉ
+         ======================================================== -->
+
+    <div
+      *ngIf="getBienSelectionne() as bien"
+      class="selected-property-info">
+
+      <i class="pi pi-building"></i>
+
+      <div>
+
+        <strong>
+          {{ bien.reference }}
+        </strong>
+
+        <small>
+
+          {{ bien.adresse }}
+
+          <span *ngIf="bien.ville">
+            — {{ bien.ville }}
+          </span>
+
+        </small>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         PHOTOS EXISTANTES
+         ======================================================== -->
+
+    <div
+      *ngIf="
+        isEditMode &&
+        photosExistantes.length > 0
+      "
+      class="photo-section">
+
+      <label>
+        Photos actuelles
+      </label>
+
+      <div class="photos-grid">
+
+        <div
+          *ngFor="
+            let photo of photosExistantes;
+            let i = index
+          "
+          class="photo-preview-item">
+
+          <img
+            [src]="uniteService.getPhotoUrl(photo)"
+            [alt]="'Photo actuelle ' + (i + 1)"
+            class="photo-preview" />
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            class="p-button-rounded p-button-danger p-button-sm photo-remove-button"
+            aria-label="Supprimer cette photo"
+            pTooltip="Supprimer"
+            tooltipPosition="top"
+            (click)="supprimerPhotoExistante(i)">
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         AJOUT DE PHOTOS
+         ======================================================== -->
+
+    <div class="photo-section">
+
+      <label for="fichiers">
+        Photos de l'unité
+      </label>
+
+      <input
+        id="fichiers"
+        type="file"
+        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+        multiple
+        class="photo-file-input"
+        (change)="onFichiersSelectionnes($event)" />
+
+      <small class="text-secondary">
+
+        Formats acceptés : JPG, JPEG, PNG et WEBP.
+        Taille maximale : 10 Mo par photo.
+        Maximum : 20 photos par unité.
+
+      </small>
+
+    </div>
+
+
+    <!-- ========================================================
+         NOUVELLES PHOTOS
+         ======================================================== -->
+
+    <div
+      *ngIf="previsualisations.length > 0"
+      class="photo-section">
+
+      <label>
+        Nouvelles photos
+      </label>
+
+      <div class="photos-grid">
+
+        <div
+          *ngFor="
+            let apercu of previsualisations;
+            let i = index
+          "
+          class="photo-preview-item">
+
+          <img
+            [src]="apercu"
+            [alt]="'Nouvelle photo ' + (i + 1)"
+            class="photo-preview" />
+
+          <button
+            pButton
+            type="button"
+            icon="pi pi-times"
+            class="p-button-rounded p-button-danger p-button-sm photo-remove-button"
+            aria-label="Supprimer cette nouvelle photo"
+            pTooltip="Supprimer"
+            tooltipPosition="top"
+            (click)="supprimerNouvellePhoto(i)">
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         COMPTEUR
+         ======================================================== -->
+
+    <div class="photo-counter">
+
+      <i class="pi pi-images"></i>
+
+      <span>
+
+        {{
+          photosExistantes.length +
+          fichiersSelectionnes.length
+        }}
+
+        / 20 photos
+
+      </span>
+
+    </div>
+
+
+    <!-- ========================================================
+         ACTIONS
+         ======================================================== -->
+
+    <div class="form-actions">
+
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        class="p-button-text p-button-secondary"
+        (click)="fermerModal()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Modifier' : 'Créer'"
+        icon="pi pi-check"
+        class="p-button-success"
+        [disabled]="uniteForm.invalid">
+      </button>
+
+    </div>
+
+  </form>
+
+</p-dialog>
+
+
+<!-- ==========================================================
+     MODALE DÉTAIL
+     ========================================================== -->
+
+<p-dialog
+  [(visible)]="displayDetailModal"
+  header="Détail de l’unité locative"
+  [modal]="true"
+  [style]="{ width: '700px' }"
+  [breakpoints]="{
+    '960px': '85vw',
+    '600px': '95vw'
+  }"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="unite-detail-dialog">
+
+  <div
+    *ngIf="selectedUnite"
+    class="unite-detail">
+
+
+    <!-- EN-TÊTE -->
+    <div class="detail-header">
+
+      <div class="detail-title">
+
+        <span class="detail-reference">
+          {{ selectedUnite.reference }}
+        </span>
+
+        <h3>
+
+          {{
+            uniteService.getTypeLibelle(
+              selectedUnite.type
+            )
+          }}
+
+        </h3>
+
+      </div>
+
+      <p-tag
+        [value]="
+          uniteService.getStatutLibelle(
+            selectedUnite.statut
+          )
+        "
+        [severity]="
+          uniteService.getStatutSeverity(
+            selectedUnite.statut
+          )
+        ">
+      </p-tag>
+
+    </div>
+
+
+    <!-- CARACTÉRISTIQUES -->
+    <div class="detail-grid">
+
+      <div class="detail-item">
+
+        <span class="detail-label">
+
+          <i class="pi pi-expand"></i>
+
+          Superficie
+
+        </span>
+
+        <strong>
+
+          {{ selectedUnite.superficie | number:'1.0-2' }}
+          m²
+
+        </strong>
+
+      </div>
+
+
+      <div class="detail-item">
+
+        <span class="detail-label">
+
+          <i class="pi pi-money-bill"></i>
+
+          Loyer
+
+        </span>
+
+        <strong>
+
+          {{ selectedUnite.loyer | number:'1.0-0' }}
+          FCFA
+
+        </strong>
+
+      </div>
+
+
+      <div class="detail-item">
+
+        <span class="detail-label">
+
+          <i class="pi pi-file"></i>
+
+          Contrats
+
+        </span>
+
+        <strong>
+
+          {{ selectedUnite.contrats?.length ?? 0 }}
+
+        </strong>
+
+      </div>
+
+
+      <div class="detail-item">
+
+        <span class="detail-label">
+
+          <i class="pi pi-calendar"></i>
+
+          Demandes de visite
+
+        </span>
+
+        <strong>
+
+          {{ selectedUnite.nombreDemandesVisite ?? 0 }}
+
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <!-- BIEN IMMOBILIER -->
+    <div
+      *ngIf="selectedUnite.bien"
+      class="detail-section">
+
+      <h4>
+
+        <i class="pi pi-building"></i>
+
+        Bien immobilier
+
+      </h4>
+
+      <div class="property-detail">
+
+        <strong>
+          {{ selectedUnite.bien.reference }}
+        </strong>
+
+        <span>
+          {{ selectedUnite.bien.adresse }}
+        </span>
+
+        <span>
+
+          {{ selectedUnite.bien.ville }}
+
+          <ng-container
+            *ngIf="selectedUnite.bien.quartier">
+
+            — {{ selectedUnite.bien.quartier }}
+
+          </ng-container>
+
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- PHOTOS -->
+    <div
+      *ngIf="
+        selectedUnite.photos &&
+        selectedUnite.photos.length > 0
+      "
+      class="detail-section">
+
+      <h4>
+
+        <i class="pi pi-images"></i>
+
+        Photos
+
+      </h4>
+
+      <div class="photos-grid">
+
+        <div
+          *ngFor="
+            let photo of selectedUnite.photos;
+            let i = index
+          "
+          class="photo-preview-item">
+
+          <img
+            [src]="uniteService.getPhotoUrl(photo)"
+            [alt]="'Photo de l’unité ' + (i + 1)"
+            class="photo-preview" />
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- CONTRATS -->
+    <div
+      *ngIf="
+        selectedUnite.contrats &&
+        selectedUnite.contrats.length > 0
+      "
+      class="detail-section">
+
+      <h4>
+
+        <i class="pi pi-file"></i>
+
+        Contrats
+
+      </h4>
+
+      <div class="contracts-list">
+
+        <div
+          *ngFor="
+            let contrat of selectedUnite.contrats
+          "
+          class="contract-item">
+
+          <div>
+
+            <strong>
+
+              {{ contrat.dateDebut | date:'dd/MM/yyyy' }}
+
+            </strong>
+
+            <span>
+
+              au
+
+              <ng-container
+                *ngIf="
+                  contrat.dateFin;
+                  else contratEnCours
+                ">
+
+                {{ contrat.dateFin | date:'dd/MM/yyyy' }}
+
+              </ng-container>
+
+              <ng-template #contratEnCours>
+                en cours
+              </ng-template>
+
+            </span>
+
+          </div>
+
+          <strong>
+
+            {{ contrat.montantLoyer | number:'1.0-0' }}
+
+            FCFA
+
+          </strong>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- AUCUN CONTRAT -->
+    <div
+      *ngIf="
+        !selectedUnite.contrats ||
+        selectedUnite.contrats.length === 0
+      "
+      class="empty-detail">
+
+      <i class="pi pi-file"></i>
+
+      <span>
+        Aucun contrat associé à cette unité.
+      </span>
+
+    </div>
+
+  </div>
+
+</p-dialog>
+
+
+<!-- ==========================================================
+     MODALE PAIEMENT
+     ========================================================== -->
+
+<p-dialog
+  [(visible)]="displayPaiementModal"
+  header="Effectuer un paiement"
+  [modal]="true"
+  [style]="{ width: '520px' }"
+  [breakpoints]="{
+    '600px': '95vw'
+  }"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!paiementEnCours"
+  [dismissableMask]="!paiementEnCours"
+  styleClass="paiement-dialog"
+  (onHide)="fermerPaiementModal()">
+
+  <div
+    *ngIf="
+      unitePaiement &&
+      contratPaiement
+    "
+    class="paiement-form">
+
+
+    <!-- ========================================================
+         RÉSUMÉ DU PAIEMENT
+         ======================================================== -->
+
+    <div class="paiement-summary">
+
+
+      <!-- BIEN -->
+      <div class="paiement-summary-row">
+
+        <span class="paiement-label">
+
+          <i class="pi pi-building"></i>
+
+          Bien immobilier
+
+        </span>
+
+        <strong>
+
+          {{
+            unitePaiement.bien?.nom ||
+            unitePaiement.bien?.reference ||
+            unitePaiement.bienReference ||
+            'N/A'
+          }}
+
+        </strong>
+
+      </div>
+
+
+      <!-- UNITÉ -->
+      <div class="paiement-summary-row">
+
+        <span class="paiement-label">
+
+          <i class="pi pi-home"></i>
+
+          Unité
+
+        </span>
+
+        <strong>
+
+          {{ unitePaiement.reference }}
+
+        </strong>
+
+      </div>
+
+
+      <!-- LOYER -->
+      <div class="paiement-summary-row">
+
+        <span class="paiement-label">
+
+          <i class="pi pi-money-bill"></i>
+
+          Loyer contractuel
+
+        </span>
+
+        <strong>
+
+          {{
+            contratPaiement.montantLoyer
+            | number:'1.0-0'
+          }}
+
+          FCFA
+
+        </strong>
+
+      </div>
+
+
+      <!-- CONTRAT -->
+      <div class="paiement-summary-row">
+
+        <span class="paiement-label">
+
+          <i class="pi pi-file"></i>
+
+          Contrat
+
+        </span>
+
+        <div class="paiement-contract-info">
+
+          <strong>
+
+            {{ contratPaiement.reference || 'N/A' }}
+
+          </strong>
+
+          <small>
+
+            Du
+            {{ contratPaiement.dateDebut | date:'dd/MM/yyyy' }}
+
+            <ng-container
+              *ngIf="
+                contratPaiement.dateFin;
+                else contratPaiementSansFin
+              ">
+
+              au
+              {{ contratPaiement.dateFin | date:'dd/MM/yyyy' }}
+
+            </ng-container>
+
+            <ng-template #contratPaiementSansFin>
+
+              en cours
+
+            </ng-template>
+
+          </small>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ========================================================
+         MONTANT
+         ======================================================== -->
+
+    <div class="paiement-field">
+
+      <label for="montantPaiement">
+
+        Montant à payer
+
+      </label>
+
+      <p-inputNumber
+        inputId="montantPaiement"
+        [(ngModel)]="montantPaiement"
+        mode="decimal"
+        [min]="1"
+        [minFractionDigits]="0"
+        [maxFractionDigits]="0"
+        suffix=" FCFA"
+        [disabled]="paiementEnCours"
+        styleClass="w-full"
+        inputStyleClass="w-full">
+      </p-inputNumber>
+
+      <small>
+
+        Le montant est prérempli avec le loyer du contrat.
+
+      </small>
+
+    </div>
+
+
+    <!-- ========================================================
+         MODE DE PAIEMENT
+         ======================================================== -->
+
+    <div class="paiement-field">
+
+      <label for="modePaiement">
+
+        Mode de paiement
+
+      </label>
+
+      <p-select
+        inputId="modePaiement"
+        [options]="modesPaiement"
+        [(ngModel)]="modePaiementSelectionne"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un mode de paiement"
+        [disabled]="paiementEnCours"
+        styleClass="w-full"
+        appendTo="body">
+
+        <ng-template
+          pTemplate="item"
+          let-mode>
+
+          <div class="paiement-mode-option">
+
+            <i
+              class="pi"
+              [ngClass]="{
+                'pi-mobile':
+                  mode.value !== ModePaiement.Especes,
+                'pi-wallet':
+                  mode.value === ModePaiement.Especes
+              }">
+            </i>
+
+            <span>
+              {{ mode.label }}
+            </span>
+
+          </div>
+
+        </ng-template>
+
+
+        <ng-template
+          pTemplate="selectedItem"
+          let-mode>
+
+          <span *ngIf="mode">
+
+            {{ mode.label }}
+
+          </span>
+
+        </ng-template>
+
+      </p-select>
+
+    </div>
+
+
+    <!-- ========================================================
+         TÉLÉPHONE
+         ======================================================== -->
+
+    <div
+      *ngIf="
+        modePaiementSelectionne !== null &&
+        modePaiementSelectionne !== ModePaiement.Especes
+      "
+      class="paiement-field">
+
+      <label for="telephonePaiement">
+
+        Numéro de téléphone
+
+      </label>
+
+      <input
+        id="telephonePaiement"
+        pInputText
+        type="tel"
+        [(ngModel)]="telephonePaiement"
+        placeholder="Ex. 690000000"
+        autocomplete="tel"
+        [disabled]="paiementEnCours"
+        class="w-full" />
+
+      <small>
+
+        Numéro utilisé pour le paiement mobile.
+
+      </small>
+
+    </div>
+
+
+    <!-- ========================================================
+         INFORMATION ESPÈCES
+         ======================================================== -->
+
+    <div
+      *ngIf="
+        modePaiementSelectionne === ModePaiement.Especes
+      "
+      class="paiement-info">
+
+      <i class="pi pi-info-circle"></i>
+
+      <span>
+
+        Le paiement en espèces sera enregistré
+        immédiatement comme confirmé.
+
+      </span>
+
+    </div>
+
+
+    <!-- ========================================================
+         INFORMATION PAIEMENT ÉLECTRONIQUE
+         ======================================================== -->
+
+    <div
+      *ngIf="
+        modePaiementSelectionne !== null &&
+        modePaiementSelectionne !== ModePaiement.Especes
+      "
+      class="paiement-info">
+
+      <i class="pi pi-info-circle"></i>
+
+      <span>
+
+        Après confirmation, vous serez invité à
+        poursuivre le paiement avec le service
+        de paiement sélectionné.
+
+      </span>
+
+    </div>
+
+
+    <!-- ========================================================
+         ACTIONS
+         ======================================================== -->
+
+    <div class="paiement-actions">
+
+      <p-button
+        label="Annuler"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="paiementEnCours"
+        (onClick)="fermerPaiementModal()">
+      </p-button>
+
+      <p-button
+        label="Confirmer le paiement"
+        icon="pi pi-check"
+        severity="success"
+        [loading]="paiementEnCours"
+        [disabled]="paiementEnCours"
+        (onClick)="confirmerPaiement()">
+      </p-button>
+
+    </div>
+
+  </div>
+
+</p-dialog>

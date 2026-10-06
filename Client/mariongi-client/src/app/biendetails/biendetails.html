@@ -1,6 +1,8 @@
 <div class="fiche-page">
 
-  <!-- Retour -->
+  <!-- =========================================================
+       RETOUR
+       ========================================================= -->
   <div class="mb-4">
     <button
       pButton
@@ -11,49 +13,91 @@
     </button>
   </div>
 
-  <!-- Chargement -->
-  <div *ngIf="chargementEnCours || !bien" class="loading-box">
+
+  <!-- =========================================================
+       CHARGEMENT
+       ========================================================= -->
+  <div
+    *ngIf="chargementEnCours || !bien"
+    class="loading-box">
+
     <p>Chargement des informations du bien...</p>
+
   </div>
 
-  <!-- Fiche -->
-  <div
-    class="fiche-card"
-    *ngIf="!chargementEnCours && bien">
 
+  <!-- =========================================================
+       FICHE DU BIEN
+       ========================================================= -->
+  <div
+    *ngIf="!chargementEnCours && bien"
+    class="fiche-card">
+
+    <!-- =======================================================
+         EN-TÊTE
+         ======================================================= -->
     <div class="fiche-header">
-      <h2>Fiche du bien</h2>
+
+      <div>
+        <h2>{{ bien.nom }}</h2>
+
+        <p class="text-secondary">
+          {{ bien.reference }}
+        </p>
+      </div>
+
     </div>
+
 
     <div class="fiche-body">
 
-      <!-- LIGNE 1 -->
+      <!-- =====================================================
+           LIGNE 1 : PHOTO + INFORMATIONS
+           ===================================================== -->
       <div class="fiche-row fiche-row-top">
 
-        <!-- Photo -->
+        <!-- ===================================================
+             PHOTO
+             =================================================== -->
         <div class="fiche-col fiche-col-photo">
+
           <div class="fiche-block photo-block">
 
             <div class="fiche-photo-main">
+
+              <!-- Photo principale -->
               <img
                 *ngIf="bien.photos && bien.photos.length > 0"
-                [src]="serverUrl + bien.photos[photoActiveIndex]"
-                alt="Photo du bien" />
+                [src]="bienService.getPhotoUrl(
+                  bien.photos[photoActiveIndex]
+                )"
+                [alt]="'Photo de ' + bien.nom" />
 
+              <!-- Aucune photo -->
               <span
                 *ngIf="!bien.photos || bien.photos.length === 0"
                 class="no-photo">
-                [ Photo du bien ]
+
+                [ Aucune photo ]
+
               </span>
+
             </div>
 
+
+            <!-- =================================================
+                 MINIATURES
+                 ================================================= -->
             <div
-              class="fiche-thumbs"
-              *ngIf="bien.photos && bien.photos.length > 1">
+              *ngIf="bien.photos && bien.photos.length > 1"
+              class="fiche-thumbs">
 
               <img
-                *ngFor="let photo of bien.photos; let i = index"
-                [src]="serverUrl + photo"
+                *ngFor="
+                  let photo of bien.photos;
+                  let i = index
+                "
+                [src]="bienService.getPhotoUrl(photo)"
                 [class.active]="i === photoActiveIndex"
                 (click)="photoActiveIndex = i"
                 alt="Miniature" />
@@ -61,21 +105,31 @@
             </div>
 
           </div>
+
         </div>
 
-        <!-- Caractéristiques -->
+
+        <!-- ===================================================
+             INFORMATIONS DU BIEN
+             =================================================== -->
         <div class="fiche-col fiche-col-info">
 
           <div class="fiche-block">
 
             <h3>
-              {{ bien.reference }} — {{ bien.ville }}, {{ bien.quartier }}
+              Informations du bien
             </h3>
 
             <ul class="fiche-list">
+
               <li>
-                <strong>Superficie :</strong>
-                {{ bien.superficie }} m²
+                <strong>Nom :</strong>
+                {{ bien.nom }}
+              </li>
+
+              <li>
+                <strong>Référence :</strong>
+                {{ bien.reference }}
               </li>
 
               <li>
@@ -84,26 +138,36 @@
               </li>
 
               <li>
-                <strong>Loyer mensuel :</strong>
-                {{ bien.loyer | number }} FCFA
-              </li>
-
-              <li *ngIf="bien.caution">
-                <strong>Caution :</strong>
-                {{ bien.caution | number }} FCFA
+                <strong>Adresse :</strong>
+                {{ bien.adresse }}
               </li>
 
               <li>
-                <strong>Statut :</strong>
-                <span class="font-bold">
-                  {{ bienService.getStatutLibelle(bien.statut) }}
-                </span>
+                <strong>Ville :</strong>
+                {{ bien.ville }}
+              </li>
+
+              <li *ngIf="bien.quartier">
+                <strong>Quartier :</strong>
+                {{ bien.quartier }}
               </li>
 
               <li>
-                <strong>Propriétaire :</strong>
-                {{ bien.proprietaireNom || 'N/A' }}
+                <strong>Superficie :</strong>
+                {{ bien.superficie | number:'1.0-2' }} m²
               </li>
+
+              <!-- Nombre réel d'unités chargées -->
+              <li>
+                <strong>Nombre d'unités :</strong>
+                {{ bien.unitesLocatives.length }}
+              </li>
+
+              <li>
+                <strong>Société :</strong>
+                {{ bien.societeNom || 'N/A' }}
+              </li>
+
             </ul>
 
           </div>
@@ -112,100 +176,84 @@
 
       </div>
 
-      <!-- LIGNE 2 -->
-      <div class="fiche-row fiche-row-half">
 
-        <!-- Locataire -->
-        <div class="fiche-col">
+      <!-- =====================================================
+           LIGNE 2 : UNITÉS LOCATIVES
+           ===================================================== -->
+      <div class="fiche-block">
 
-          <div class="fiche-block">
+        <!-- En-tête -->
+        <div
+          class="flex justify-content-between align-items-center mb-3">
 
-            <h4>Locataire</h4>
+          <h3 class="m-0">
+            Unités locatives
+          </h3>
 
-            <div *ngIf="bien.locataireActuel; else aucunLocataire">
+          <span class="text-secondary">
+            {{ bien.unitesLocatives.length }} unité(s)
+          </span>
 
-              <ul class="fiche-list">
-                <li>
-                  <strong>Nom :</strong>
-                  {{ bien.locataireActuel.nom }}
-                </li>
+        </div>
 
-                <li>
-                  <strong>Téléphone :</strong>
-                  {{ bien.locataireActuel.telephone }}
-                </li>
 
-                <li>
-                  <strong>Début du bail :</strong>
-                  {{ bien.locataireActuel.debutBail | date:'dd/MM/yyyy' }}
-                </li>
+        <!-- ===================================================
+             AUCUNE UNITÉ
+             =================================================== -->
+        <div
+          *ngIf="bien.unitesLocatives.length === 0"
+          class="empty-text">
 
-                <li>
-                  <strong>Fin du bail :</strong>
-                  {{ bien.locataireActuel.finBail | date:'dd/MM/yyyy' }}
-                </li>
-              </ul>
+          <p>
+            Aucune unité locative n'est associée à ce bien.
+          </p>
+
+        </div>
+
+
+        <!-- ===================================================
+             LISTE DES UNITÉS
+             =================================================== -->
+        <div
+          *ngIf="bien.unitesLocatives.length > 0"
+          class="unites-grid">
+
+          <div
+            *ngFor="let unite of bien.unitesLocatives"
+            class="unite-card">
+
+            <!-- Référence -->
+            <div class="unite-header">
+
+              <strong>
+                {{ unite.reference }}
+              </strong>
 
             </div>
 
-            <ng-template #aucunLocataire>
-              <p class="empty-text">
-                Aucun locataire actif pour le moment.
-              </p>
-            </ng-template>
 
+            <!-- Informations -->
+            <div class="unite-body">
+
+              <div>
+                <span class="label">
+                  Loyer :
+                </span>
+
+                <strong>
+                  {{ unite.loyer | number }} FCFA
+                </strong>
+              </div>
+
+
+          <div>
+            <span class="label">Statut :</span>
+            <span class="font-bold">
+              {{ bienService.getStatutUniteLibelle(unite.statut) }}
+            </span>
           </div>
 
-        </div>
-
-        <!-- Paiements -->
-        <div class="fiche-col">
-
-          <div class="fiche-block">
-
-            <h4>Historique des paiements</h4>
-
-            <ul
-              class="fiche-list"
-              *ngIf="
-                bien.historiquePaiements &&
-                bien.historiquePaiements.length > 0;
-                else aucunPaiement
-              ">
-
-              <li
-                *ngFor="let paiement of bien.historiquePaiements"
-                class="payment-line">
-
-                <div>
-                  <span>
-                    {{ paiement.date | date:'dd/MM/yyyy' }}
-                    —
-                    {{ paiement.montant | number }} FCFA
-                  </span>
-
-                  <span class="payment-mode">
-                    ({{ paiement.mode }})
-                  </span>
-                </div>
-
-                <button
-                  pButton
-                  icon="pi pi-download"
-                  class="p-button-text p-button-sm p-button-secondary"
-                  pTooltip="Télécharger la quittance"
-                  (click)="telechargerQuittance(paiement.id)">
-                </button>
-
-              </li>
-
-            </ul>
-
-            <ng-template #aucunPaiement>
-              <p class="empty-text">
-                Aucun paiement enregistré récemment.
-              </p>
-            </ng-template>
+            </div>
 
           </div>
 
@@ -213,47 +261,33 @@
 
       </div>
 
-      <!-- ACTIONS -->
+
+      <!-- =====================================================
+           ACTIONS
+           ===================================================== -->
       <div class="fiche-block">
 
         <div class="actions-row">
 
+          <!-- Modifier -->
           <button
             *ngIf="!isLocataire"
             pButton
-            label="Renouveler le contrat"
-            icon="pi pi-refresh"
+            label="Modifier le bien"
+            icon="pi pi-pencil"
             class="p-button-outlined p-button-success"
-            (click)="renouvelerContrat()">
+            (click)="modifierBien()">
           </button>
 
+
+          <!-- Gérer les unités -->
           <button
             *ngIf="!isLocataire"
             pButton
-            label="Générer les quittances"
-            icon="pi pi-file-pdf"
+            label="Gérer les unités"
+            icon="pi pi-building"
             class="p-button-outlined p-button-secondary"
-            [disabled]="!bien?.locataireActuel?.contratId"
-            (click)="genererLesQuittancesContrat()">
-          </button>
-
-          <button
-            pButton
-            label="Enregistrer un paiement"
-            icon="pi pi-wallet"
-            class="p-button-outlined p-button-info"
-            [disabled]="!bien?.locataireActuel?.contratId"
-            (click)="enregistrerPaiement()">
-          </button>
-
-          <button
-            *ngIf="!isLocataire"
-            pButton
-            label="Résilier le bail"
-            icon="pi pi-ban"
-            class="p-button-outlined p-button-danger"
-            [disabled]="!bien?.locataireActuel?.contratId"
-            (click)="resilierBail()">
+            (click)="gererUnites()">
           </button>
 
         </div>
@@ -261,6 +295,7 @@
       </div>
 
     </div>
+
   </div>
 
 </div>

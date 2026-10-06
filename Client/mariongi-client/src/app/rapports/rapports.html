@@ -1,140 +1,1195 @@
-<p-toast [breakpoints]="{ '600px': { width: '100%', right: '0', left: '0' } }"></p-toast>
+<!-- ============================================================
+     TOAST
+     ============================================================ -->
+
+<p-toast
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
+
+
+<!-- ============================================================
+     CONTENEUR PRINCIPAL
+     ============================================================ -->
 
 <div class="rapports-container">
 
-  <h2>Centre des Rapports Immobiliers</h2>
-  <p class="subtitle">Sélectionnez un rapport ci-dessous pour l'analyser et l'exporter.</p>
+  <!-- ==========================================================
+       EN-TÊTE
+       ========================================================== -->
 
-  <!-- Grille des boutons de sélection des rapports -->
+  <h2>Centre des Rapports Immobiliers</h2>
+
+  <p class="subtitle">
+    Sélectionnez un rapport ci-dessous pour l'analyser et l'exporter.
+  </p>
+
+
+  <!-- ==========================================================
+       BOUTONS DE RAPPORTS
+       ========================================================== -->
+
   <div class="grid-rapports-actions">
-    <button pButton type="button" label="Encaissements par Mode" icon="pi pi-wallet" class="p-button-raised" (click)="executerRapport('encaissements')"></button>
-    <button pButton type="button" label="Historique Locataire" icon="pi pi-user" class="p-button-raised p-button-secondary" (click)="executerRapport('historique-locataire')"></button>
-    <button pButton type="button" label="Tableau des Contrats" icon="pi pi-file" class="p-button-raised p-button-success" (click)="executerRapport('contrats')"></button>
-    <button pButton type="button" label="Biens en Impayés" icon="pi pi-exclamation-triangle" class="p-button-raised p-button-danger" (click)="executerRapport('impayes')"></button>
+
+    <!-- Encaissements -->
+    <button
+      pButton
+      type="button"
+      label="Encaissements par Mode"
+      icon="pi pi-wallet"
+      class="p-button-raised"
+      (click)="executerRapport('encaissements')">
+    </button>
+
+
+    <!-- Historique locataire -->
+    <button
+      pButton
+      type="button"
+      label="Historique Locataire"
+      icon="pi pi-user"
+      class="p-button-raised p-button-secondary"
+      (click)="executerRapport('historique-locataire')">
+    </button>
+
+
+    <!-- Contrats -->
+    <button
+      pButton
+      type="button"
+      label="Tableau des Contrats"
+      icon="pi pi-file"
+      class="p-button-raised p-button-success"
+      (click)="executerRapport('contrats')">
+    </button>
+
+
+    <!-- Impayés -->
+    <button
+      pButton
+      type="button"
+      label="Biens en Impayés"
+      icon="pi pi-exclamation-triangle"
+      class="p-button-raised p-button-danger"
+      (click)="executerRapport('impayes')">
+    </button>
+
   </div>
 
-  <!-- Zone d'affichage dynamique du rapport sélectionné -->
-  <div class="rapport-result-section" *ngIf="rapportActifTitre">
+
+  <!-- ==========================================================
+       ZONE DU RAPPORT
+       ========================================================== -->
+
+  <div
+    class="rapport-result-section"
+    *ngIf="rapportActifTitre">
+
+
+    <!-- ========================================================
+         EN-TÊTE DU RAPPORT
+         ======================================================== -->
 
     <div class="rapport-header-action noprint">
-      <h3>{{ rapportActifTitre }}</h3>
-      <button pButton type="button" label="Exporter en PDF" icon="pi pi-file-pdf" class="p-button-danger btn-export" (click)="telechargerPdf()"></button>
+
+      <h3>
+        {{ rapportActifTitre }}
+      </h3>
+
+
+      <button
+        pButton
+        type="button"
+        label="Exporter en PDF"
+        icon="pi pi-file-pdf"
+        class="p-button-danger btn-export"
+        [disabled]="isLoading()"
+        (click)="telechargerPdf()">
+      </button>
+
     </div>
 
+
+    <!-- ========================================================
+         ZONE IMPRIMABLE
+         ======================================================== -->
+
     <div class="printable-area">
+
+
+      <!-- ======================================================
+           EN-TÊTE PDF / IMPRESSION
+           ====================================================== -->
+
       <div class="print-only-header">
-        <h2>MarionGI - Rapport Officiel</h2>
-        <h1>{{ rapportActifTitre }}</h1>
+
+        <h2>
+          MarionGI - Rapport Officiel
+        </h2>
+
+        <h1>
+          {{ rapportActifTitre }}
+        </h1>
+
         <hr />
+
       </div>
 
-      <!-- CAS 1 : Encaissements regroupés par mode -->
-      <div *ngIf="typeRapportActif === 'encaissements'">
-        <div *ngFor="let groupe of donneesBrutesGlobales" class="groupe-card">
-          <h4>Mode de paiement : {{ groupe.modePaiement }} (Total : {{ groupe.totalRecette | currency }})</h4>
 
-          <p-table [value]="groupe.details" styleClass="table-responsive-stack">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Date</th>
-                <th>Bien</th>
-                <th>Locataire</th>
-                <th>Montant</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-p>
-              <tr>
-                <td data-label="Date">{{ p.datePaiement | date:'dd/MM/yyyy' }}</td>
-                <td data-label="Bien">{{ p.bienReference }}</td>
-                <td data-label="Locataire">{{ p.locataireNom }}</td>
-                <td data-label="Montant" class="nowrap">{{ p.montant | currency }}</td>
-              </tr>
-            </ng-template>
-          </p-table>
+      <!-- ======================================================
+           CAS 1 : ENCAISSEMENTS PAR MODE
+           ====================================================== -->
+
+      <div
+        *ngIf="typeRapportActif === 'encaissements'">
+
+
+        <!-- ----------------------------------------------------
+             RÉSUMÉ GLOBAL
+             ---------------------------------------------------- -->
+
+        <div
+          class="rapport-summary"
+          *ngIf="donneesBrutesGlobales">
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Total encaissé
+            </span>
+
+            <strong class="summary-value">
+              {{
+                donneesBrutesGlobales.total
+                  | currency
+              }}
+            </strong>
+
+          </div>
+
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Nombre de transactions
+            </span>
+
+            <strong class="summary-value">
+              {{
+                donneesBrutesGlobales.nombreTransactions
+              }}
+            </strong>
+
+          </div>
+
+
+          <div
+            class="summary-item"
+            *ngIf="
+              donneesBrutesGlobales.dateDebut ||
+              donneesBrutesGlobales.dateFin
+            ">
+
+            <span class="summary-label">
+              Période
+            </span>
+
+            <strong class="summary-value">
+
+              {{
+                donneesBrutesGlobales.dateDebut
+                  | date:'dd/MM/yyyy'
+              }}
+
+              -
+
+              {{
+                donneesBrutesGlobales.dateFin
+                  | date:'dd/MM/yyyy'
+              }}
+
+            </strong>
+
+          </div>
+
         </div>
+
+
+        <!-- ----------------------------------------------------
+             GROUPES PAR MODE
+             ---------------------------------------------------- -->
+
+        <div
+          *ngFor="
+            let groupe
+            of (donneesBrutesGlobales?.parMode || [])
+          "
+          class="groupe-card">
+
+
+          <!-- --------------------------------------------------
+               EN-TÊTE DU GROUPE
+               -------------------------------------------------- -->
+
+          <div class="groupe-header">
+
+            <h4>
+              Mode de paiement :
+              {{ groupe.modePaiement }}
+            </h4>
+
+            <strong>
+              {{ groupe.totalRecette | currency }}
+            </strong>
+
+          </div>
+
+
+          <!-- --------------------------------------------------
+               TABLEAU DES DÉTAILS
+               -------------------------------------------------- -->
+
+          <p-table
+            [value]="groupe.details || []"
+            styleClass="table-responsive-stack">
+
+
+            <ng-template pTemplate="header">
+
+              <tr>
+
+                <th>
+                  Date
+                </th>
+
+                <th>
+                  Bien / Unité locative
+                </th>
+
+                <th>
+                  Locataire
+                </th>
+
+                <th>
+                  Montant
+                </th>
+
+              </tr>
+
+            </ng-template>
+
+
+            <ng-template
+              pTemplate="body"
+              let-p>
+
+              <tr>
+
+                <!-- Date -->
+                <td data-label="Date">
+
+                  {{
+                    p.datePaiement
+                      | date:'dd/MM/yyyy'
+                  }}
+
+                </td>
+
+
+                <!-- Bien + unité -->
+                <td data-label="Bien / Unité locative">
+
+                  <div class="flex flex-column">
+
+                    <span class="font-medium">
+
+                      {{
+                        p.bienNom ||
+                        p.bienReference ||
+                        'N/A'
+                      }}
+
+                    </span>
+
+
+                    <small
+                      *ngIf="p.uniteReference"
+                      class="text-color-secondary">
+
+                      Unité :
+                      {{ p.uniteReference }}
+
+                    </small>
+
+                  </div>
+
+                </td>
+
+
+                <!-- Locataire -->
+                <td data-label="Locataire">
+
+                  {{
+                    p.locataireNom ||
+                    'N/A'
+                  }}
+
+                </td>
+
+
+                <!-- Montant -->
+                <td
+                  data-label="Montant"
+                  class="nowrap">
+
+                  {{
+                    p.montant
+                      | currency
+                  }}
+
+                </td>
+
+              </tr>
+
+            </ng-template>
+
+
+            <!-- Aucun résultat -->
+            <ng-template pTemplate="emptymessage">
+
+              <tr>
+
+                <td
+                  colspan="4"
+                  class="text-center">
+
+                  Aucun encaissement pour ce mode de paiement.
+
+                </td>
+
+              </tr>
+
+            </ng-template>
+
+          </p-table>
+
+        </div>
+
+
+        <!-- Aucun groupe -->
+        <div
+          *ngIf="
+            donneesBrutesGlobales &&
+            (!donneesBrutesGlobales.parMode ||
+             donneesBrutesGlobales.parMode.length === 0)
+          "
+          class="empty-report">
+
+          Aucun encaissement trouvé pour la période sélectionnée.
+
+        </div>
+
       </div>
 
-      <!-- CAS 2, 3 & 4 : Tableaux classiques (Contrats, Impayés, Historique Locataire) -->
-      <div *ngIf="typeRapportActif !== 'encaissements'">
+
+      <!-- ======================================================
+           CAS 2 : CONTRATS
+           ====================================================== -->
+
+      <div
+        *ngIf="typeRapportActif === 'contrats'">
+
+
         <p-table
           styleClass="table-responsive-stack"
           [value]="donneesRapport"
           [paginator]="true"
-          [rows]="10">
+          [rows]="10"
+          [loading]="isLoading()">
+
+
+          <!-- --------------------------------------------------
+               EN-TÊTE
+               -------------------------------------------------- -->
 
           <ng-template pTemplate="header">
-            <tr *ngIf="typeRapportActif === 'contrats'">
-              <th>Référence Bien</th>
-              <th>Locataire</th>
-              <th>Début</th>
-              <th>Fin</th>
-              <th>Loyer</th>
-              <th>Statut</th>
+
+            <tr>
+
+              <th>
+                Bien
+              </th>
+
+              <th>
+                Unité
+              </th>
+
+              <th>
+                Locataire
+              </th>
+
+              <th>
+                Début
+              </th>
+
+              <th>
+                Fin
+              </th>
+
+              <th>
+                Loyer
+              </th>
+
+              <th>
+                Statut
+              </th>
+
             </tr>
-            <tr *ngIf="typeRapportActif === 'impayes'">
-              <th>Référence Bien</th>
-              <th>Locataire</th>
-              <th>Téléphone</th>
-              <th>Loyer Attendu</th>
-              <th>Jours de Retard</th>
-            </tr>
-            <tr *ngIf="typeRapportActif === 'historique-locataire'">
-              <th>Date</th>
-              <th>Bien</th>
-              <th>Mode</th>
-              <th>Montant</th>
-              <th>Statut</th>
-            </tr>
+
           </ng-template>
 
-          <ng-template pTemplate="body" let-row>
-            <tr *ngIf="typeRapportActif === 'contrats'">
-              <td data-label="Référence bien">{{ row.bienReference }}</td>
-              <td data-label="Locataire">{{ row.locataireNom }}</td>
-              <td data-label="Début" class="nowrap">{{ row.dateDebut | date:'dd/MM/yyyy' }}</td>
-              <td data-label="Fin" class="nowrap">{{ row.dateFin | date:'dd/MM/yyyy' }}</td>
-              <td data-label="Loyer" class="nowrap">{{ row.montantLoyer | currency }}</td>
-              <td data-label="Statut">{{ row.statutContrat }}</td>
+
+          <!-- --------------------------------------------------
+               CORPS
+               -------------------------------------------------- -->
+
+          <ng-template
+            pTemplate="body"
+            let-row>
+
+            <tr>
+
+              <!-- Bien -->
+              <td data-label="Bien">
+
+                <div class="flex flex-column">
+
+                  <span class="font-medium">
+
+                    {{
+                      row.bienNom ||
+                      row.bienReference ||
+                      'N/A'
+                    }}
+
+                  </span>
+
+
+                  <small
+                    *ngIf="row.bienReference"
+                    class="text-color-secondary">
+
+                    Réf. :
+                    {{ row.bienReference }}
+
+                  </small>
+
+                </div>
+
+              </td>
+
+
+              <!-- Unité -->
+              <td data-label="Unité">
+
+                {{
+                  row.uniteReference ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Locataire -->
+              <td data-label="Locataire">
+
+                {{
+                  row.locataireNom ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Date début -->
+              <td
+                data-label="Début"
+                class="nowrap">
+
+                {{
+                  row.dateDebut
+                    | date:'dd/MM/yyyy'
+                }}
+
+              </td>
+
+
+              <!-- Date fin -->
+              <td
+                data-label="Fin"
+                class="nowrap">
+
+                {{
+                  row.dateFin
+                    | date:'dd/MM/yyyy'
+                }}
+
+              </td>
+
+
+              <!-- Loyer -->
+              <td
+                data-label="Loyer"
+                class="nowrap">
+
+                {{
+                  row.montantLoyer
+                    | currency
+                }}
+
+              </td>
+
+
+              <!-- Statut -->
+              <td data-label="Statut">
+
+                <span
+                  [class]="'statut-' + row.statutContrat">
+
+                  {{
+                    row.statutContrat
+                  }}
+
+                </span>
+
+              </td>
+
             </tr>
-            <tr *ngIf="typeRapportActif === 'impayes'">
-              <td data-label="Référence bien">{{ row.bienReference }}</td>
-              <td data-label="Locataire">{{ row.locataireNom }}</td>
-              <td data-label="Téléphone" class="nowrap">{{ row.locataireTelephone }}</td>
-              <td data-label="Loyer attendu" class="nowrap">{{ row.montantLoyer | currency }}</td>
-              <td data-label="Jours de retard"><span class="badge-retard">{{ row.joursDeRetard }} jours</span></td>
+
+          </ng-template>
+
+
+          <!-- --------------------------------------------------
+               AUCUN RÉSULTAT
+               -------------------------------------------------- -->
+
+          <ng-template pTemplate="emptymessage">
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="text-center">
+
+                Aucun contrat trouvé.
+
+              </td>
+
             </tr>
-            <tr *ngIf="typeRapportActif === 'historique-locataire'">
-              <td data-label="Date" class="nowrap">{{ row.datePaiement | date:'dd/MM/yyyy' }}</td>
-              <td data-label="Bien">{{ row.bienReference }}</td>
-              <td data-label="Mode">{{ row.modePaiement }}</td>
-              <td data-label="Montant" class="nowrap">{{ row.montant | currency }}</td>
-              <td data-label="Statut">{{ row.statut }}</td>
-            </tr>
+
           </ng-template>
 
         </p-table>
+
       </div>
+
+
+      <!-- ======================================================
+           CAS 3 : IMPAYÉS
+           ====================================================== -->
+
+      <div
+        *ngIf="typeRapportActif === 'impayes'">
+
+
+        <!-- ----------------------------------------------------
+             RÉSUMÉ DES IMPAYÉS
+             ---------------------------------------------------- -->
+
+        <div
+          class="rapport-summary"
+          *ngIf="donneesBrutesGlobales">
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Nombre d'impayés
+            </span>
+
+            <strong class="summary-value">
+
+              {{
+                donneesBrutesGlobales.nombreImpayes ??
+                donneesRapport.length
+              }}
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Montant total impayé
+            </span>
+
+            <strong class="summary-value">
+
+              {{
+                donneesBrutesGlobales.montantTotalImpayes
+                  | currency
+              }}
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- ----------------------------------------------------
+             TABLEAU
+             ---------------------------------------------------- -->
+
+        <p-table
+          styleClass="table-responsive-stack"
+          [value]="donneesRapport"
+          [paginator]="true"
+          [rows]="10"
+          [loading]="isLoading()">
+
+
+          <!-- --------------------------------------------------
+               EN-TÊTE
+               -------------------------------------------------- -->
+
+          <ng-template pTemplate="header">
+
+            <tr>
+
+              <th>
+                Bien
+              </th>
+
+              <th>
+                Unité
+              </th>
+
+              <th>
+                Locataire
+              </th>
+
+              <th>
+                Téléphone
+              </th>
+
+              <th>
+                Loyer
+              </th>
+
+              <th>
+                Payé
+              </th>
+
+              <th>
+                Solde
+              </th>
+
+              <th>
+                Retard
+              </th>
+
+            </tr>
+
+          </ng-template>
+
+
+          <!-- --------------------------------------------------
+               CORPS
+               -------------------------------------------------- -->
+
+          <ng-template
+            pTemplate="body"
+            let-row>
+
+            <tr>
+
+              <!-- Bien -->
+              <td data-label="Bien">
+
+                <div class="flex flex-column">
+
+                  <span class="font-medium">
+
+                    {{
+                      row.bienNom ||
+                      row.bienReference ||
+                      'N/A'
+                    }}
+
+                  </span>
+
+
+                  <small
+                    *ngIf="row.bienReference"
+                    class="text-color-secondary">
+
+                    Réf. :
+                    {{ row.bienReference }}
+
+                  </small>
+
+                </div>
+
+              </td>
+
+
+              <!-- Unité -->
+              <td data-label="Unité">
+
+                {{
+                  row.uniteReference ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Locataire -->
+              <td data-label="Locataire">
+
+                {{
+                  row.locataireNom ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Téléphone -->
+              <td
+                data-label="Téléphone"
+                class="nowrap">
+
+                {{
+                  row.locataireTelephone ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Loyer -->
+              <td
+                data-label="Loyer"
+                class="nowrap">
+
+                {{
+                  row.montantLoyer
+                    | currency
+                }}
+
+              </td>
+
+
+              <!-- Montant payé -->
+              <td
+                data-label="Payé"
+                class="nowrap">
+
+                {{
+                  row.montantPaye
+                    | currency
+                }}
+
+              </td>
+
+
+              <!-- Solde -->
+              <td
+                data-label="Solde"
+                class="nowrap">
+
+                <strong class="text-danger">
+
+                  {{
+                    row.solde
+                      | currency
+                  }}
+
+                </strong>
+
+              </td>
+
+
+              <!-- Retard -->
+              <td data-label="Retard">
+
+                <span class="badge-retard">
+
+                  {{
+                    row.joursDeRetard
+                  }}
+                  jours
+
+                </span>
+
+              </td>
+
+            </tr>
+
+          </ng-template>
+
+
+          <!-- --------------------------------------------------
+               AUCUN RÉSULTAT
+               -------------------------------------------------- -->
+
+          <ng-template pTemplate="emptymessage">
+
+            <tr>
+
+              <td
+                colspan="8"
+                class="text-center">
+
+                Aucun impayé trouvé.
+
+              </td>
+
+            </tr>
+
+          </ng-template>
+
+        </p-table>
+
+      </div>
+
+
+      <!-- ======================================================
+           CAS 4 : HISTORIQUE LOCATAIRE
+           ====================================================== -->
+
+      <div
+        *ngIf="typeRapportActif === 'historique-locataire'">
+
+
+        <!-- ----------------------------------------------------
+             RÉSUMÉ
+             ---------------------------------------------------- -->
+
+        <div
+          class="rapport-summary"
+          *ngIf="donneesBrutesGlobales">
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Locataire
+            </span>
+
+          <strong class="summary-value">
+            {{
+              [
+                donneesBrutesGlobales?.locataire?.prenom,
+                donneesBrutesGlobales?.locataire?.nom
+              ]
+                .filter(v => !!v)
+                .join(' ') || 'N/A'
+            }}
+          </strong>
+
+          </div>
+
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Nombre de paiements
+            </span>
+
+            <strong class="summary-value">
+
+              {{
+                donneesBrutesGlobales.nombrePaiements ??
+                donneesRapport.length
+              }}
+
+            </strong>
+
+          </div>
+
+
+          <div class="summary-item">
+
+            <span class="summary-label">
+              Total versé
+            </span>
+
+            <strong class="summary-value">
+
+              {{
+                donneesBrutesGlobales.totalVersements
+                  | currency
+              }}
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- ----------------------------------------------------
+             TABLEAU
+             ---------------------------------------------------- -->
+
+        <p-table
+          styleClass="table-responsive-stack"
+          [value]="donneesRapport"
+          [paginator]="true"
+          [rows]="10"
+          [loading]="isLoading()">
+
+
+          <!-- --------------------------------------------------
+               EN-TÊTE
+               -------------------------------------------------- -->
+
+          <ng-template pTemplate="header">
+
+            <tr>
+
+              <th>
+                Date
+              </th>
+
+              <th>
+                Bien
+              </th>
+
+              <th>
+                Unité
+              </th>
+
+              <th>
+                Mode
+              </th>
+
+              <th>
+                Montant
+              </th>
+
+              <th>
+                Quittance
+              </th>
+
+              <th>
+                Statut
+              </th>
+
+            </tr>
+
+          </ng-template>
+
+
+          <!-- --------------------------------------------------
+               CORPS
+               -------------------------------------------------- -->
+
+          <ng-template
+            pTemplate="body"
+            let-row>
+
+            <tr>
+
+              <!-- Date -->
+              <td
+                data-label="Date"
+                class="nowrap">
+
+                {{
+                  row.datePaiement
+                    | date:'dd/MM/yyyy'
+                }}
+
+              </td>
+
+
+              <!-- Bien -->
+              <td data-label="Bien">
+
+                <div class="flex flex-column">
+
+                  <span class="font-medium">
+
+                    {{
+                      row.bienNom ||
+                      row.bienReference ||
+                      'N/A'
+                    }}
+
+                  </span>
+
+
+                  <small
+                    *ngIf="row.bienReference"
+                    class="text-color-secondary">
+
+                    Réf. :
+                    {{ row.bienReference }}
+
+                  </small>
+
+                </div>
+
+              </td>
+
+
+              <!-- Unité -->
+              <td data-label="Unité">
+
+                {{
+                  row.uniteReference ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Mode -->
+              <td data-label="Mode">
+
+                {{
+                  row.modePaiement ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Montant -->
+              <td
+                data-label="Montant"
+                class="nowrap">
+
+                {{
+                  row.montant
+                    | currency
+                }}
+
+              </td>
+
+
+              <!-- Quittance -->
+              <td data-label="Quittance">
+
+                {{
+                  row.numeroQuittance ||
+                  'N/A'
+                }}
+
+              </td>
+
+
+              <!-- Statut -->
+              <td data-label="Statut">
+
+                {{
+                  row.statut ||
+                  'N/A'
+                }}
+
+              </td>
+
+            </tr>
+
+          </ng-template>
+
+
+          <!-- --------------------------------------------------
+               AUCUN RÉSULTAT
+               -------------------------------------------------- -->
+
+          <ng-template pTemplate="emptymessage">
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="text-center">
+
+                Aucun paiement trouvé pour ce locataire.
+
+              </td>
+
+            </tr>
+
+          </ng-template>
+
+        </p-table>
+
+      </div>
+
     </div>
   </div>
 </div>
 
-<!-- MODALE DE PARAMÈTRES
-     [breakpoints] pour la largeur sur petits écrans -->
+
+<!-- ============================================================
+     MODALE DE PARAMÈTRES
+     ============================================================ -->
+
 <p-dialog
   [(visible)]="displayModalParametres"
+
   [header]="titreModalParametres"
+
   [modal]="true"
+
   [draggable]="false"
+
   [resizable]="false"
+
   [closable]="true"
-  [style]="{ width: '480px' }"
-  [breakpoints]="{ '768px': '85vw', '480px': '95vw' }"
+
+  [style]="{
+    width: '480px'
+  }"
+
+  [breakpoints]="{
+    '768px': '85vw',
+    '480px': '95vw'
+  }"
+
   styleClass="rapport-param-dialog">
 
-  <!-- FORMULAIRE ENCAISSEMENTS -->
-  <div class="param-form" *ngIf="rapportCibleParametres === 'encaissements'">
+
+  <!-- ==========================================================
+       FORMULAIRE ENCAISSEMENTS
+       ========================================================== -->
+
+  <div
+    class="param-form"
+    *ngIf="
+      rapportCibleParametres ===
+      'encaissements'
+    ">
+
+
+    <!-- Date début -->
     <div class="field">
-      <label for="dateDebut">Date de début *</label>
+
+      <label for="dateDebut">
+        Date de début *
+      </label>
+
       <input
         id="dateDebut"
         type="date"
@@ -142,10 +1197,17 @@
         [(ngModel)]="paramDateDebut"
         required
         class="unified-input-select" />
+
     </div>
 
+
+    <!-- Date fin -->
     <div class="field">
-      <label for="dateFin">Date de fin *</label>
+
+      <label for="dateFin">
+        Date de fin *
+      </label>
+
       <input
         id="dateFin"
         type="date"
@@ -154,16 +1216,35 @@
         [min]="paramDateDebut"
         required
         class="unified-input-select" />
+
     </div>
+
   </div>
 
 
-  <!-- FORMULAIRE HISTORIQUE LOCATAIRE -->
-  <div class="param-form" *ngIf="rapportCibleParametres === 'historique-locataire'">
-    <div class="field">
-      <label for="filtreLocataire">Locataire</label>
+  <!-- ==========================================================
+       FORMULAIRE HISTORIQUE LOCATAIRE
+       ========================================================== -->
 
-      <!-- Le padding-left inline (2.5rem) réservait la place d'une icône absente : supprimé -->
+  <div
+    class="param-form"
+    *ngIf="
+      rapportCibleParametres ===
+      'historique-locataire'
+    ">
+
+
+    <div class="field">
+
+      <label for="filtreLocataire">
+        Locataire
+      </label>
+
+
+      <!-- ------------------------------------------------------
+           RECHERCHE
+           ------------------------------------------------------ -->
+
       <input
         id="filtreLocataire"
         type="text"
@@ -172,24 +1253,74 @@
         placeholder="Rechercher par nom, prénom..."
         class="unified-input-select" />
 
+
+      <!-- ------------------------------------------------------
+           SÉLECTION
+           ------------------------------------------------------ -->
+
       <select
         id="locataireId"
         aria-label="Locataire"
         [(ngModel)]="LocataireId"
         class="unified-input-select">
-        <option [ngValue]="null" disabled>Sélectionner un locataire dans la liste</option>
-        <option *ngFor="let loc of locatairesFiltres" [value]="loc.value">
-          {{ loc.label }}
+
+        <option
+          [ngValue]="null"
+          disabled>
+
+          Sélectionner un locataire dans la liste
+
         </option>
+
+
+        <option
+          *ngFor="
+            let loc
+            of locatairesFiltres
+          "
+          [value]="loc.value">
+
+          {{ loc.label }}
+
+        </option>
+
       </select>
+
     </div>
+
   </div>
 
+
+  <!-- ==========================================================
+       FOOTER DE LA MODALE
+       ========================================================== -->
+
   <ng-template pTemplate="footer">
+
     <div class="dialog-actions">
-      <button pButton label="Annuler" icon="pi pi-times" class="p-button-text p-button-secondary" (click)="displayModalParametres = false"></button>
-      <button pButton label="Générer" icon="pi pi-check" class="p-button-success" (click)="validerParametresModal()"></button>
+
+      <!-- Annuler -->
+      <button
+        pButton
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-text p-button-secondary"
+        (click)="displayModalParametres = false">
+      </button>
+
+
+      <!-- Générer -->
+      <button
+        pButton
+        label="Générer"
+        icon="pi pi-check"
+        class="p-button-success"
+        [loading]="isLoading()"
+        (click)="validerParametresModal()">
+      </button>
+
     </div>
+
   </ng-template>
 
 </p-dialog>

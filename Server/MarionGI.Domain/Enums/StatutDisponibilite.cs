@@ -1,6 +1,6 @@
 ﻿namespace MarionGI.Domain.Enums;
 
-public enum StatutBien
+public enum StatutDisponibilite
 {
     Disponible = 1,
     Loue = 2,

@@ -195,6 +195,7 @@ public class AuthService : IAuthService
         new Claim("role", user.Role.ToString()),
         new Claim("given_name", user.Prenom ?? ""),
         new Claim("family_name", user.Nom ?? ""),
+        new Claim("SocieteId", user.SocieteId.ToString()),
         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
     };
 

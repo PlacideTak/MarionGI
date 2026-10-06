@@ -1,0 +1,1135 @@
+/* ==========================================================
+   MODALE UNITÉ LOCATIVE
+   ========================================================== */
+
+.unite-dialog {
+
+  .p-dialog-content {
+    padding: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .p-dialog-header {
+    padding: 1.25rem 1.5rem;
+  }
+}
+
+
+/* ==========================================================
+   FORMULAIRE
+   ========================================================== */
+
+.unite-form {
+
+  width: 100%;
+
+  padding: 1.25rem 1.5rem 1.5rem;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   GRILLE PRINCIPALE
+   Référence + Type + Bien
+   ========================================================== */
+
+.unite-form .form-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+
+  gap: 1rem 1.25rem;
+
+  width: 100%;
+}
+
+
+/* ==========================================================
+   GRILLE 3 COLONNES
+   Superficie + Loyer + Statut
+   ========================================================== */
+
+.unite-form .form-grid-three {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 1rem 1.25rem;
+
+  width: 100%;
+
+  margin-top: 1rem;
+}
+
+
+/* ==========================================================
+   CHAMP PLEINE LARGEUR
+   ========================================================== */
+
+.unite-form .field-full {
+
+  grid-column: 1 / -1;
+}
+
+
+/* ==========================================================
+   CHAMPS
+   ========================================================== */
+
+.unite-form .field {
+
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  min-width: 0;
+
+  margin: 0;
+
+  padding: 0;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   LABELS
+   ========================================================== */
+
+.unite-form .field label,
+.unite-form .photo-section > label {
+
+  display: block;
+
+  margin: 0 0 0.45rem;
+
+  font-size: 0.9rem;
+
+  font-weight: 600;
+
+  color: var(--text-color);
+}
+
+
+/* ==========================================================
+   INPUT TEXTE
+   ========================================================== */
+
+.unite-form input[pInputText] {
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   PRIME NG SELECT
+   ========================================================== */
+
+.unite-form .p-select {
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   PRIME NG INPUT NUMBER
+   ========================================================== */
+
+.unite-form .p-inputnumber {
+
+  display: block;
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+.unite-form .p-inputnumber-input {
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   ERREURS
+   ========================================================== */
+
+.unite-form .p-error {
+
+  display: block;
+
+  margin-top: 0.35rem;
+
+  font-size: 0.8rem;
+
+  line-height: 1.3;
+}
+
+
+/* ==========================================================
+   BIEN SÉLECTIONNÉ
+   ========================================================== */
+
+.unite-form .selected-property-info {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 0.75rem;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: 1.25rem;
+
+  padding: 0.85rem 1rem;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-form .selected-property-info > i {
+
+  flex-shrink: 0;
+
+  margin-top: 0.1rem;
+
+  font-size: 1.2rem;
+}
+
+
+.unite-form .selected-property-info > div {
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  gap: 0.2rem;
+}
+
+
+.unite-form .selected-property-info strong {
+
+  font-weight: 600;
+}
+
+
+.unite-form .selected-property-info small {
+
+  color: var(--text-color-secondary);
+
+  line-height: 1.4;
+}
+
+
+/* ==========================================================
+   OPTIONS DU BIEN
+   ========================================================== */
+
+.unite-form .bien-option {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.15rem;
+
+  min-width: 0;
+}
+
+
+.unite-form .bien-option small {
+
+  color: var(--text-color-secondary);
+
+  line-height: 1.3;
+}
+
+
+/* ==========================================================
+   SECTIONS PHOTOS
+   ========================================================== */
+
+.unite-form .photo-section {
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  margin-top: 1.25rem;
+}
+
+
+.unite-form .photo-section > small {
+
+  display: block;
+
+  margin-top: 0.5rem;
+
+  line-height: 1.4;
+}
+
+
+/* ==========================================================
+   INPUT FICHIER
+   ========================================================== */
+
+.unite-form .photo-file-input {
+
+  display: block;
+
+  width: 100%;
+
+  box-sizing: border-box;
+
+  padding: 0.6rem;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 6px;
+
+  background: var(--surface-ground);
+
+  cursor: pointer;
+}
+
+
+/* ==========================================================
+   PHOTOS
+   ========================================================== */
+
+.unite-form .photos-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(100px, 1fr));
+
+  gap: 0.75rem;
+
+  width: 100%;
+
+  margin-top: 0.75rem;
+}
+
+
+.unite-form .photo-preview-item {
+
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-form .photo-preview {
+
+  display: block;
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+/* ==========================================================
+   BOUTON SUPPRESSION PHOTO
+   ========================================================== */
+
+.unite-form .photo-remove-button {
+
+  position: absolute;
+
+  top: 0.35rem;
+
+  right: 0.35rem;
+
+  z-index: 2;
+
+  width: 2rem !important;
+
+  height: 2rem !important;
+
+  padding: 0 !important;
+}
+
+
+/* ==========================================================
+   COMPTEUR PHOTOS
+   ========================================================== */
+
+.unite-form .photo-counter {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 0.5rem;
+
+  width: 100%;
+
+  margin-top: 0.75rem;
+
+  color: var(--text-color-secondary);
+
+  font-size: 0.85rem;
+}
+
+
+/* ==========================================================
+   ACTIONS FORMULAIRE
+   ========================================================== */
+
+.unite-form .form-actions {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 0.75rem;
+
+  width: 100%;
+
+  margin-top: 1.5rem;
+
+  padding-top: 1rem;
+
+  border-top: 1px solid var(--surface-border);
+}
+
+
+.unite-form .form-actions button {
+
+  flex-shrink: 0;
+}
+
+
+/* ==========================================================
+   ==========================================================
+   MODALE DÉTAIL
+   ==========================================================
+   ========================================================== */
+
+.unite-detail-dialog {
+
+  .p-dialog-header {
+
+    padding: 1.25rem 1.5rem;
+  }
+
+  .p-dialog-content {
+
+    padding: 0 !important;
+
+    overflow-x: hidden;
+  }
+}
+
+
+.unite-detail {
+
+  width: 100%;
+
+  padding: 1.25rem 1.5rem 1.5rem;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   EN-TÊTE DÉTAIL
+   ========================================================== */
+
+.unite-detail .detail-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
+
+  padding-bottom: 1rem;
+
+  border-bottom: 1px solid var(--surface-border);
+}
+
+
+.unite-detail .detail-title {
+
+  min-width: 0;
+}
+
+
+.unite-detail .detail-reference {
+
+  display: block;
+
+  margin-bottom: 0.25rem;
+
+  color: var(--text-color-secondary);
+
+  font-size: 0.85rem;
+}
+
+
+.unite-detail h3 {
+
+  margin: 0;
+
+  font-size: 1.25rem;
+
+  font-weight: 600;
+}
+
+
+/* ==========================================================
+   GRILLE DES CARACTÉRISTIQUES
+   ========================================================== */
+
+.unite-detail .detail-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
+}
+
+
+.unite-detail .detail-item {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.4rem;
+
+  padding: 0.9rem 1rem;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-detail .detail-label {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.45rem;
+
+  color: var(--text-color-secondary);
+
+  font-size: 0.85rem;
+}
+
+
+.unite-detail .detail-item strong {
+
+  font-size: 1rem;
+}
+
+
+/* ==========================================================
+   SECTIONS DÉTAIL
+   ========================================================== */
+
+.unite-detail .detail-section {
+
+  margin-top: 1.5rem;
+}
+
+
+.unite-detail .detail-section h4 {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  margin: 0 0 0.75rem;
+
+  font-size: 1rem;
+
+  font-weight: 600;
+}
+
+
+/* ==========================================================
+   BIEN IMMOBILIER
+   ========================================================== */
+
+.unite-detail .property-detail {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.3rem;
+
+  padding: 1rem;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-detail .property-detail span {
+
+  color: var(--text-color-secondary);
+}
+
+
+/* ==========================================================
+   PHOTOS DÉTAIL
+   ========================================================== */
+
+.unite-detail .photos-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(0, 1fr));
+
+  gap: 0.75rem;
+
+  width: 100%;
+}
+
+
+.unite-detail .photo-preview-item {
+
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 1 / 1;
+
+  overflow: hidden;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-detail .photo-preview {
+
+  display: block;
+
+  width: 100%;
+
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+/* ==========================================================
+   CONTRATS
+   ========================================================== */
+
+.unite-detail .contracts-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.5rem;
+}
+
+
+.unite-detail .contract-item {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 1rem;
+
+  padding: 0.8rem 1rem;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.unite-detail .contract-item > div {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.2rem;
+}
+
+
+.unite-detail .contract-item span {
+
+  color: var(--text-color-secondary);
+
+  font-size: 0.85rem;
+}
+
+
+/* ==========================================================
+   AUCUN CONTRAT
+   ========================================================== */
+
+.unite-detail .empty-detail {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  margin-top: 1.5rem;
+
+  padding: 1rem;
+
+  color: var(--text-color-secondary);
+
+  border: 1px dashed var(--surface-border);
+
+  border-radius: 8px;
+}
+
+
+/* ==========================================================
+   ==========================================================
+   MODALE PAIEMENT
+   ==========================================================
+   ========================================================== */
+
+.paiement-dialog {
+
+  .p-dialog-header {
+
+    padding: 1.25rem 1.5rem;
+  }
+
+  .p-dialog-content {
+
+    padding: 0 !important;
+
+    overflow-x: hidden;
+  }
+}
+
+
+.paiement-form {
+
+  width: 100%;
+
+  padding: 1.25rem 1.5rem 1.5rem;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   RÉSUMÉ PAIEMENT
+   ========================================================== */
+
+.paiement-form .paiement-summary {
+
+  display: flex;
+
+  flex-direction: column;
+
+  width: 100%;
+
+  overflow: hidden;
+
+  border: 1px solid var(--surface-border);
+
+  border-radius: 8px;
+
+  background: var(--surface-ground);
+}
+
+
+.paiement-form .paiement-summary-row {
+
+  display: grid;
+
+  grid-template-columns:
+    150px minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 1rem;
+
+  min-height: 48px;
+
+  padding: 0.7rem 1rem;
+
+  border-bottom: 1px solid var(--surface-border);
+
+  box-sizing: border-box;
+}
+
+
+.paiement-form .paiement-summary-row:last-child {
+
+  border-bottom: none;
+}
+
+
+/* ==========================================================
+   LABEL PAIEMENT
+   ========================================================== */
+
+.paiement-form .paiement-label {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  color: var(--text-color-secondary);
+
+  font-size: 0.85rem;
+
+  font-weight: 500;
+}
+
+
+/* ==========================================================
+   INFORMATIONS CONTRAT
+   ========================================================== */
+
+.paiement-form .paiement-contract-info {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.2rem;
+
+  min-width: 0;
+}
+
+
+.paiement-form .paiement-contract-info strong {
+
+  overflow-wrap: anywhere;
+
+  font-weight: 600;
+}
+
+
+.paiement-form .paiement-contract-info small {
+
+  color: var(--text-color-secondary);
+
+  line-height: 1.4;
+}
+
+
+/* ==========================================================
+   CHAMPS PAIEMENT
+   ========================================================== */
+
+.paiement-form .paiement-field {
+
+  width: 100%;
+
+  margin-top: 1.25rem;
+}
+
+
+.paiement-form .paiement-field label {
+
+  display: block;
+
+  margin-bottom: 0.45rem;
+
+  font-size: 0.9rem;
+
+  font-weight: 600;
+}
+
+
+.paiement-form .paiement-field small {
+
+  display: block;
+
+  margin-top: 0.4rem;
+
+  color: var(--text-color-secondary);
+
+  line-height: 1.4;
+}
+
+
+.paiement-form .paiement-field input[pInputText],
+.paiement-form .paiement-field .p-select,
+.paiement-form .paiement-field .p-inputnumber {
+
+  width: 100%;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================================
+   OPTIONS MODE DE PAIEMENT
+   ========================================================== */
+
+.paiement-form .paiement-mode-option {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.6rem;
+}
+
+
+/* ==========================================================
+   INFORMATIONS
+   ========================================================== */
+
+.paiement-form .paiement-info {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 0.65rem;
+
+  margin-top: 1rem;
+
+  padding: 0.85rem 1rem;
+
+  border-radius: 8px;
+
+  background: var(--surface-100);
+
+  color: var(--text-color-secondary);
+
+  line-height: 1.4;
+
+  box-sizing: border-box;
+}
+
+
+.paiement-form .paiement-info i {
+
+  flex-shrink: 0;
+
+  margin-top: 0.1rem;
+}
+
+
+/* ==========================================================
+   ACTIONS PAIEMENT
+   ========================================================== */
+
+.paiement-form .paiement-actions {
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  align-items: center;
+
+  gap: 0.75rem;
+
+  margin-top: 1.5rem;
+
+  padding-top: 1rem;
+
+  border-top: 1px solid var(--surface-border);
+}
+
+
+/* ==========================================================
+   RESPONSIVE
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+  /* --------------------------------------------------------
+     FORMULAIRE
+     -------------------------------------------------------- */
+
+  .unite-form {
+
+    padding: 1rem;
+  }
+
+
+  .unite-form .form-grid,
+  .unite-form .form-grid-three {
+
+    grid-template-columns: 1fr;
+
+    gap: 1rem;
+  }
+
+
+  .unite-form .field-full {
+
+    grid-column: auto;
+  }
+
+
+  .unite-form .form-actions {
+
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+
+  .unite-form .form-actions button {
+
+    width: 100%;
+  }
+
+
+  .unite-form .photos-grid {
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+
+  /* --------------------------------------------------------
+     DÉTAIL
+     -------------------------------------------------------- */
+
+  .unite-detail {
+
+    padding: 1rem;
+  }
+
+
+  .unite-detail .detail-header {
+
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+
+  .unite-detail .detail-grid {
+
+    grid-template-columns: 1fr;
+  }
+
+
+  .unite-detail .photos-grid {
+
+    grid-template-columns:
+      repeat(3, minmax(0, 1fr));
+  }
+
+
+  .unite-detail .contract-item {
+
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  /* --------------------------------------------------------
+     PAIEMENT
+     -------------------------------------------------------- */
+
+  .paiement-form {
+
+    padding: 1rem;
+  }
+
+
+  .paiement-form .paiement-summary-row {
+
+    grid-template-columns: 1fr;
+
+    align-items: flex-start;
+
+    gap: 0.25rem;
+  }
+
+
+  .paiement-form .paiement-actions {
+
+    flex-direction: column-reverse;
+
+    align-items: stretch;
+  }
+
+
+  .paiement-form .paiement-actions p-button {
+
+    width: 100%;
+  }
+}

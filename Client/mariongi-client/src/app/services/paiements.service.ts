@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+
 import { environment } from '../../environments/environment.development';
 import { ModePaiement, PaiementDto } from '../models/gestimmo.models';
 
@@ -25,46 +26,119 @@ export interface StatutResponse {
   statut: 'EnAttente' | 'Confirme' | 'Echoue';
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class PaiementsService {
+
   private readonly http = inject(HttpClient);
+
   private readonly apiUrl = `${environment.apiUrl}/Paiements`;
 
-  initierPaiement(request: InitierPaiementRequest): Observable<PaiementResponse> {
-    return this.http.post<PaiementResponse>(`${this.apiUrl}/initier`, request);
+  // ============================================================
+  // INITIER UN PAIEMENT EN LIGNE
+  // ============================================================
+
+  initierPaiement(
+    request: InitierPaiementRequest
+  ): Observable<PaiementResponse> {
+
+    return this.http.post<PaiementResponse>(
+      `${this.apiUrl}/initier`,
+      request
+    );
   }
 
-  enregistrerPaiementEspeces(request: PaiementEspecesRequest): Observable<PaiementResponse> {
-    return this.http.post<PaiementResponse>(`${this.apiUrl}/especes`, request);
+  // ============================================================
+  // ENREGISTRER UN PAIEMENT EN ESPÈCES
+  // ============================================================
+
+  enregistrerPaiementEspeces(
+    request: PaiementEspecesRequest
+  ): Observable<PaiementResponse> {
+
+    return this.http.post<PaiementResponse>(
+      `${this.apiUrl}/especes`,
+      request
+    );
   }
 
-  getStatut(paiementId: string): Observable<StatutResponse> {
-    return this.http.get<StatutResponse>(`${this.apiUrl}/${paiementId}/statut`);
+  // ============================================================
+  // CONSULTER LE STATUT D'UN PAIEMENT
+  // ============================================================
+
+  getStatut(
+    paiementId: string
+  ): Observable<StatutResponse> {
+
+    return this.http.get<StatutResponse>(
+      `${this.apiUrl}/${paiementId}/statut`
+    );
   }
 
-  telechargerQuittanceBlob(paiementId: string): void {
-    this.http.get(`${this.apiUrl}/${paiementId}/quittance`, { responseType: 'blob' }).subscribe({
+  // ============================================================
+  // TÉLÉCHARGER UNE QUITTANCE
+  // ============================================================
+
+  telechargerQuittanceBlob(
+    paiementId: string
+  ): void {
+
+    this.http.get(
+      `${this.apiUrl}/${paiementId}/quittance`,
+      {
+        responseType: 'blob'
+      }
+    ).subscribe({
       next: (blob) => {
+
         const url = window.URL.createObjectURL(blob);
+
         const a = document.createElement('a');
+
         a.href = url;
         a.download = `Quittance_${paiementId}.pdf`;
+
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
+
         window.URL.revokeObjectURL(url);
       },
-      error: (err) => console.error('Erreur téléchargement quittance:', err)
+
+      error: (err) => {
+        console.error(
+          'Erreur lors du téléchargement de la quittance :',
+          err
+        );
+      }
     });
   }
 
+  // ============================================================
+  // RÉCUPÉRER LES PAIEMENTS
+  // ============================================================
+
   getPaiements(): Observable<PaiementDto[]> {
-     return this.http.get<PaiementDto[]>(`${this.apiUrl}/Paiements`);
+
+    return this.http.get<PaiementDto[]>(
+      this.apiUrl
+    );
   }
 
-  telechargerToutesLesQuittances(contratId: string): Observable<Blob> {
-  return this.http.get(`${this.apiUrl}/contrat/${contratId}/toutes-les-quittances`, { 
-    responseType: 'blob' 
-  });
-}
+  // ============================================================
+  // TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT
+  // ============================================================
 
+  telechargerToutesLesQuittances(
+    contratId: string
+  ): Observable<Blob> {
 
+    return this.http.get(
+      `${this.apiUrl}/contrat/${contratId}/toutes-les-quittances`,
+      {
+        responseType: 'blob'
+      }
+    );
+  }
 }

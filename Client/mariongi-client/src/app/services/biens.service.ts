@@ -1,88 +1,375 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BienDto, TypeBien, StatutBien } from '../models/gestimmo.models';
+
+import {
+  BienDto,
+  TypeBien,
+  CreerBienRequest,
+  ModifierBienRequest,
+  UniteLocativeDto
+} from '../models/gestimmo.models';
+
 import { environment } from '../../environments/environment.development';
+
+
+// ============================================================
+// TYPES DE RÉPONSE API
+// ============================================================
+
+export interface BienDetailDto extends BienDto {
+  unitesLocatives: UniteLocativeDto[];
+}
+
+export interface SupprimerBienResponse {
+  message: string;
+}
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class BiensService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/Biens`;
 
-  // --- Référentiels de libellés ---
-   public getStatutSeverity(statut: StatutBien): 'success' | 'info' | 'warn' | 'danger' {
-    switch (statut) {
-      case StatutBien.Disponible: return 'success';
-      case StatutBien.Loue: return 'info';
-      case StatutBien.EnTravaux: return 'danger';
-      case StatutBien.Reserve: return 'warn';
-      default: return 'danger';
+  private readonly http = inject(HttpClient);
+
+
+  // ==========================================================
+  // URL API
+  // ==========================================================
+
+  private readonly apiUrl =
+    `${environment.apiUrl}/BienImmobilier`;
+
+
+  // ==========================================================
+  // URL RACINE DU SERVEUR
+  //
+  // Exemple :
+  // environment.apiUrl = https://localhost:7263/api
+  //
+  // => serverUrl = https://localhost:7263
+  // ==========================================================
+
+  private readonly serverUrl =
+    environment.apiUrl.replace(/\/api\/?$/, '');
+
+
+  // ==========================================================
+  // RÉFÉRENTIEL : TYPES DE BIENS
+  // ==========================================================
+
+  readonly typesBien = [
+    {
+      label: 'Immeuble',
+      value: TypeBien.Immeuble
+    },
+    {
+      label: 'Maison',
+      value: TypeBien.Maison
+    },
+    {
+      label: 'Villa',
+      value: TypeBien.Villa
+    },
+    {
+      label: 'Boutique',
+      value: TypeBien.Boutique
+    },
+    {
+      label: 'Terrain',
+      value: TypeBien.Terrain
+    },
+    {
+      label: 'Bureau',
+      value: TypeBien.Bureau
+    },
+    {
+      label: 'Entrepôt',
+      value: TypeBien.Entrepot
+    },
+    {
+      label: 'Parking',
+      value: TypeBien.Parking
+    },
+    {
+      label: 'Magasin',
+      value: TypeBien.Magasin
+    },
+    {
+      label: 'Autre',
+      value: TypeBien.Autre
     }
+  ];
+
+
+  // ==========================================================
+  // URL D'UNE PHOTO
+  // ==========================================================
+
+  getPhotoUrl(
+    photo: string | null | undefined
+  ): string {
+
+    if (!photo) {
+      return '';
+    }
+
+    // Si le backend renvoie déjà une URL absolue
+    if (
+      photo.startsWith('http://') ||
+      photo.startsWith('https://')
+    ) {
+      return photo;
+    }
+
+    return `${this.serverUrl}${
+      photo.startsWith('/') ? '' : '/'
+    }${photo}`;
   }
 
-public getStatutLibelleSeverity(statut: string): 'success' | 'info' | 'warn' | 'danger' {
+
+  // ==========================================================
+  // LIBELLÉ TYPE
+  // ==========================================================
+
+  getTypeLibelle(
+    type: TypeBien
+  ): string {
+
+    const found = this.typesBien.find(
+      t => t.value === type
+    );
+
+    return found?.label ?? 'Inconnu';
+  }
+
+
+  // ==========================================================
+  // GET : LISTE DES BIENS
+  //
+  // GET /api/BienImmobilier
+  //
+  // Le backend filtre déjà par SocieteId.
+  // ==========================================================
+
+  getBiens(): Observable<BienDto[]> {
+
+    return this.http.get<BienDto[]>(
+      this.apiUrl
+    );
+  }
+
+
+  // ==========================================================
+  // GET : DÉTAIL D'UN BIEN
+  //
+  // GET /api/BienImmobilier/{id}
+  // ==========================================================
+
+  getBienById(
+    id: string
+  ): Observable<BienDetailDto> {
+
+    return this.http.get<BienDetailDto>(
+      `${this.apiUrl}/${id}`
+    );
+  }
+
+
+  // ==========================================================
+  // POST : CRÉER UN BIEN
+  //
+  // POST /api/BienImmobilier
+  //
+  // multipart/form-data
+  // ==========================================================
+
+  createBien(
+    request: CreerBienRequest
+  ): Observable<BienDto> {
+
+    const formData = new FormData();
+
+    formData.append(
+      'Reference',
+      request.reference
+    );
+
+    formData.append(
+      'Nom',
+      request.nom
+    );
+
+    formData.append(
+      'Type',
+      request.type.toString()
+    );
+
+    formData.append(
+      'Adresse',
+      request.adresse
+    );
+
+    formData.append(
+      'Ville',
+      request.ville
+    );
+
+    if (request.quartier) {
+      formData.append(
+        'Quartier',
+        request.quartier
+      );
+    }
+
+    formData.append(
+      'Superficie',
+      request.superficie.toString()
+    );
+
+
+    // ========================================================
+    // PHOTOS
+    // ========================================================
+
+    request.fichiers?.forEach(
+      fichier => {
+        formData.append(
+          'Fichiers',
+          fichier,
+          fichier.name
+        );
+      }
+    );
+
+    return this.http.post<BienDto>(
+      this.apiUrl,
+      formData
+    );
+  }
+
+
+  // ==========================================================
+  // PUT : MODIFIER UN BIEN
+  //
+  // PUT /api/BienImmobilier/{id}
+  //
+  // multipart/form-data
+  // ==========================================================
+
+  updateBien(
+    id: string,
+    request: ModifierBienRequest
+  ): Observable<void> {
+
+    const formData = new FormData();
+
+    formData.append(
+      'Reference',
+      request.reference
+    );
+
+    formData.append(
+      'Nom',
+      request.nom
+    );
+
+    formData.append(
+      'Type',
+      request.type.toString()
+    );
+
+    formData.append(
+      'Adresse',
+      request.adresse
+    );
+
+    formData.append(
+      'Ville',
+      request.ville
+    );
+
+    if (request.quartier) {
+      formData.append(
+        'Quartier',
+        request.quartier
+      );
+    }
+
+    formData.append(
+      'Superficie',
+      request.superficie.toString()
+    );
+
+
+    // ========================================================
+    // PHOTOS EXISTANTES
+    // ========================================================
+
+    request.photosExistantes?.forEach(
+      photo => {
+        formData.append(
+          'PhotosExistantes',
+          photo
+        );
+      }
+    );
+
+
+    // ========================================================
+    // NOUVELLES PHOTOS
+    // ========================================================
+
+    request.fichiers?.forEach(
+      fichier => {
+        formData.append(
+          'Fichiers',
+          fichier,
+          fichier.name
+        );
+      }
+    );
+
+    return this.http.put<void>(
+      `${this.apiUrl}/${id}`,
+      formData
+    );
+  }
+
+
+  // ==========================================================
+  // DELETE : SUPPRESSION LOGIQUE
+  //
+  // DELETE /api/BienImmobilier/{id}
+  // ==========================================================
+
+  deleteBien(
+    id: string
+  ): Observable<SupprimerBienResponse> {
+
+    return this.http.delete<SupprimerBienResponse>(
+      `${this.apiUrl}/${id}`
+    );
+  }
+
+  getStatutUniteLibelle(statut: number): string {
   switch (statut) {
-    case this.statutsBien[0].label: return 'info';     // Disponible
-    case this.statutsBien[1].label: return 'success';  // Loué
-    case this.statutsBien[2].label: return 'warn';      // Reserve
-    case this.statutsBien[3].label: return 'danger';   // En travaux
-    default: return 'danger';
+    case 1:
+      return 'Disponible';
+
+    case 2:
+      return 'Louée';
+
+    case 3:
+      return 'Réservée';
+
+    case 4:
+      return 'En maintenance';
+
+    default:
+      return 'Inconnu';
   }
 }
 
-  readonly typesBien = [
-    { label: 'Appartement', value: TypeBien.Appartement },
-    { label: 'Maison', value: TypeBien.Maison },
-    { label: 'Studio', value: TypeBien.Studio },
-    { label: 'Terrain', value: TypeBien.Terrain },
-    { label: 'Boutique', value: TypeBien.Boutique },
-    { label: 'Chambre', value: TypeBien.Chambre },
-    { label: 'Villa', value: TypeBien.Villa }
-  ];
-
-  readonly statutsBien = [
-    { label: 'Disponible', value: StatutBien.Disponible },
-    { label: 'Loué', value: StatutBien.Loue },
-    { label: 'Reserve', value: StatutBien.Reserve },
-    { label: 'En travaux', value: StatutBien.EnTravaux }
-  ];
-
-  getTypeLibelle(type: TypeBien): string {
-    const found = this.typesBien.find(t => t.value === type);
-    return found ? found.label : 'Inconnu';
-  }
-
-  getStatutLibelle(statut: StatutBien): string {
-    const found = this.statutsBien.find(s => s.value === statut);
-    return found ? found.label : 'Inconnu';
-  }
-
-  // --- Appels API existants ---
-
-  // GET: /api/Biens
-  getBiens(): Observable<BienDto[]> {
-    return this.http.get<BienDto[]>(this.apiUrl);
-  }
-
-  // GET: /api/Biens/{id}
-  getBienById(id: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
-  }
-
-  // POST: /api/Biens
-  createBien(formData: FormData): Observable<BienDto> {
-    return this.http.post<BienDto>(this.apiUrl, formData);
-  }
-
-  // PUT: /api/Biens/{id}
-  updateBien(id: string, formData: FormData): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, formData);
-  }
-
-  // DELETE: /api/Biens/{id}
-  deleteBien(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
-  }
 }

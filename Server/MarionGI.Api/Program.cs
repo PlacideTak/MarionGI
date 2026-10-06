@@ -92,7 +92,7 @@ builder.Services.AddAuthorization(options =>
 
     // 🎯 Lecture
     options.AddPolicy("Contrats.Read", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Agent", "Locataire"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
 
     // 🎯 Création
     options.AddPolicy("Contrats.Create", policy =>

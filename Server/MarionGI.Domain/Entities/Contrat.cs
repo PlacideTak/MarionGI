@@ -4,16 +4,38 @@ namespace MarionGI.Domain.Entities;
 
 public class Contrat : BaseEntity
 {
-    public Guid BienId { get; set; }
-    public Bien? Bien { get; set; }
+    // Référence unique du contrat
+    public string Reference { get; set; } = string.Empty;
+
+    // Unité locative concernée par le contrat
+    public Guid UniteLocativeId { get; set; }
+
+    public UniteLocative UniteLocative { get; set; } = null!;
+
+    // Locataire
     public Guid LocataireId { get; set; }
-    public Utilisateur? Locataire { get; set; } 
+
+    public Utilisateur Locataire { get; set; } = null!;
+
+    // Période du contrat
     public DateTime DateDebut { get; set; }
+
     public DateTime DateFin { get; set; }
+
+    // Conditions financières
     public decimal MontantLoyer { get; set; }
+
     public decimal MontantCaution { get; set; }
-    public StatutContrat Statut { get; set; } = StatutContrat.Actif;
+
+    public FrequencePaiement FrequencePaiement { get; set; }
+        = FrequencePaiement.Mensuel;
+
+    public int DelaiJoursTolerance { get; set; } = 5;
+
+    // État du contrat
+    public StatutContrat Statut { get; set; }
+        = StatutContrat.Actif;
+
+    // Paiements associés
     public ICollection<Paiement> Paiements { get; set; } = [];
-    public FrequencePaiement FrequencePaiement { get; set; } = FrequencePaiement.Mensuel;
-    public int DelaiJoursTolerance { get; set; } = 5; // Par exemple, exigible le 5 du mois
 }

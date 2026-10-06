@@ -1,0 +1,915 @@
+$primary-color: #2e7d5b;
+$primary-hover: #246348;
+
+$bg-light: #f8fafc;
+$border-color: #e2e8f0;
+
+$text-main: #1e293b;
+$text-muted: #64748b;
+$text-label: #334155;
+
+
+// ============================================================
+// CONTENEUR
+// ============================================================
+
+.gestimmo-layout {
+  background-color: $bg-light;
+  min-height: 100vh;
+  padding: 1.5rem;
+  box-sizing: border-box;
+
+  h2 {
+    color: $text-main;
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin: 0;
+  }
+}
+
+
+// ============================================================
+// EN-TÊTE
+// ============================================================
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 1rem;
+
+  margin-bottom: 1.5rem;
+}
+
+.page-description {
+  color: $text-muted;
+  font-size: 0.9rem;
+
+  margin: 0.4rem 0 0;
+}
+
+
+// ============================================================
+// PRIME NG
+// ============================================================
+
+.gestimmo-layout ::ng-deep {
+
+  // ----------------------------------------------------------
+  // CARD
+  // ----------------------------------------------------------
+
+  .p-card {
+    border-radius: 12px;
+
+    border: 1px solid rgba(
+      $border-color,
+      0.8
+    );
+
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+
+    margin-bottom: 1.5rem;
+
+    .p-card-body {
+      padding: 1.5rem;
+    }
+
+    .p-card-title {
+      font-size: 1.15rem;
+
+      font-weight: 600;
+
+      color: $text-main;
+
+      margin-bottom: 1rem;
+
+      border-bottom: 2px solid #f1f5f9;
+
+      padding-bottom: 0.75rem;
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // BOUTON SUCCESS
+  // ----------------------------------------------------------
+
+  .p-button-success:not(.p-button-text) {
+
+    background-color: $primary-color !important;
+
+    border-color: $primary-color !important;
+
+    font-weight: 600;
+
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease;
+
+    &:hover {
+
+      background-color: $primary-hover !important;
+
+      border-color: $primary-hover !important;
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // BOUTON TEXT
+  // ----------------------------------------------------------
+
+  .p-button.p-button-text {
+
+    background: transparent !important;
+
+    border: none !important;
+
+    padding: 0.5rem 0.75rem !important;
+
+    border-radius: 6px;
+
+    &:hover {
+
+      background-color: #f1f5f9 !important;
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // INPUT
+  // ----------------------------------------------------------
+
+  .p-inputtext {
+
+    width: 100%;
+
+    min-width: 0;
+
+    box-sizing: border-box;
+
+    border-radius: 8px;
+
+    border-color: $border-color;
+
+    padding: 0.75rem;
+
+    &:enabled:focus {
+
+      border-color: $primary-color;
+
+      box-shadow:
+        0 0 0 2px rgba(
+          $primary-color,
+          0.2
+        );
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // TABLE
+  // ----------------------------------------------------------
+
+  .p-datatable {
+
+    .p-datatable-wrapper,
+    .p-datatable-table-container {
+
+      overflow-x: auto;
+
+      -webkit-overflow-scrolling: touch;
+    }
+
+
+    .p-datatable-thead > tr > th {
+
+      background-color: #f8fafc;
+
+      color: $text-muted;
+
+      font-weight: 600;
+
+      font-size: 0.875rem;
+
+      text-transform: uppercase;
+
+      letter-spacing: 0.025em;
+
+      border-bottom: 2px solid $border-color;
+
+      padding: 1rem;
+    }
+
+
+    .p-datatable-tbody > tr {
+
+      transition:
+        background-color 0.2s ease;
+
+      > td {
+
+        padding: 1rem;
+
+        color: $text-main;
+
+        border-bottom:
+          1px solid $border-color;
+
+        font-size: 0.925rem;
+      }
+
+      &:hover {
+
+        background-color: #f1f5f9 !important;
+      }
+    }
+  }
+
+
+  // ----------------------------------------------------------
+  // TAG
+  // ----------------------------------------------------------
+
+  .p-tag {
+
+    font-weight: 600;
+  }
+
+
+  // ----------------------------------------------------------
+  // DIALOG
+  // ----------------------------------------------------------
+
+  .societe-dialog {
+
+    max-height:
+      calc(100dvh - 1rem);
+
+    .p-dialog-content {
+
+      overflow-x: hidden;
+    }
+  }
+}
+
+
+// ============================================================
+// NOM SOCIÉTÉ
+// ============================================================
+
+.societe-name {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 0.2rem;
+
+  min-width: 0;
+
+  strong {
+
+    color: $text-main;
+
+    font-weight: 600;
+
+    overflow-wrap: anywhere;
+  }
+
+  small {
+
+    color: $text-muted;
+
+    font-size: 0.78rem;
+
+    overflow-wrap: anywhere;
+  }
+}
+
+
+// ============================================================
+// COMPTEURS
+// ============================================================
+
+.count-value {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 0.45rem;
+
+  font-weight: 600;
+
+  color: $text-main;
+
+  i {
+
+    color: $primary-color;
+
+    font-size: 0.9rem;
+  }
+}
+
+
+// ============================================================
+// ACTIONS
+// ============================================================
+
+.col-actions {
+
+  width: 1%;
+
+  white-space: nowrap;
+
+  text-align: right;
+}
+
+.actions-group {
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.action-btn {
+
+  background: transparent;
+
+  border: none;
+
+  cursor: pointer;
+
+  padding: 0.5rem;
+
+  border-radius: 6px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition:
+    background-color 0.2s ease;
+
+  width: 2.25rem;
+
+  height: 2.25rem;
+
+  i {
+
+    font-size: 1rem;
+  }
+
+
+  &.edit-btn {
+
+    color: #475569;
+
+    &:hover {
+
+      background-color: #f1f5f9;
+
+      color: $text-main;
+    }
+  }
+
+
+  &.lock-btn {
+
+    color: #d97706;
+
+    &:hover {
+
+      background-color: #fef3c7;
+    }
+  }
+
+
+  &.unlock-btn {
+
+    color: $primary-color;
+
+    &:hover {
+
+      background-color: #e6f4ed;
+    }
+  }
+
+
+  &.delete-btn {
+
+    color: #dc2626;
+
+    &:hover {
+
+      background-color: #fee2e2;
+    }
+  }
+}
+
+
+// ============================================================
+// FORMULAIRE
+// ============================================================
+
+.societe-form {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 1rem;
+
+  padding-top: 0.5rem;
+
+
+  .field {
+
+    display: grid;
+
+    grid-template-columns:
+      140px
+      minmax(0, 1fr);
+
+    align-items: center;
+
+    gap: 1rem;
+
+
+    label {
+
+      color: $text-label;
+
+      font-size: 0.9rem;
+
+      font-weight: 600;
+
+      text-align: right;
+    }
+
+
+    input {
+
+      width: 100%;
+
+      min-width: 0;
+
+      box-sizing: border-box;
+    }
+  }
+
+
+  .form-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 0.75rem;
+
+    margin-top: 1.5rem;
+
+    padding-top: 1rem;
+
+    border-top:
+      1px solid $border-color;
+  }
+}
+
+
+// ============================================================
+// LOADING
+// ============================================================
+
+.loading-box {
+
+  min-height: 150px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 0.75rem;
+
+  color: $text-muted;
+
+  font-size: 0.95rem;
+
+
+  i {
+
+    font-size: 1.25rem;
+
+    color: $primary-color;
+  }
+}
+
+
+// ============================================================
+// MESSAGES
+// ============================================================
+
+.message-box {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.75rem;
+
+  padding: 0.85rem 1rem;
+
+  border-radius: 8px;
+
+  margin-bottom: 1rem;
+
+  font-size: 0.9rem;
+
+  font-weight: 500;
+
+
+  i {
+
+    font-size: 1.1rem;
+  }
+}
+
+.error-message {
+
+  background-color: #fef2f2;
+
+  color: #991b1b;
+
+  border:
+    1px solid #fecaca;
+}
+
+.success-message {
+
+  background-color: #f0fdf4;
+
+  color: #166534;
+
+  border:
+    1px solid #bbf7d0;
+}
+
+.message-close {
+
+  margin-left: auto;
+
+  border: none;
+
+  background: transparent;
+
+  cursor: pointer;
+
+  color: inherit;
+
+  padding: 0.25rem;
+
+  border-radius: 4px;
+
+  &:hover {
+
+    background-color: rgba(
+      0,
+      0,
+      0,
+      0.05
+    );
+  }
+}
+
+
+// ============================================================
+// TABLEAU VIDE
+// ============================================================
+
+.empty-table {
+
+  text-align: center;
+
+  padding: 3rem !important;
+
+  color: $text-muted;
+
+  i {
+
+    display: block;
+
+    font-size: 2rem;
+
+    color: $primary-color;
+
+    margin-bottom: 0.75rem;
+  }
+}
+
+
+// ============================================================
+// RESPONSIVE 768
+// ============================================================
+
+@media (max-width: 768px) {
+
+  .gestimmo-layout {
+
+    padding: 1rem;
+
+    h2 {
+
+      font-size: 1.1rem;
+    }
+  }
+
+
+  .page-header {
+
+    align-items: flex-start;
+  }
+
+
+  .gestimmo-layout ::ng-deep {
+
+    .p-card {
+
+      .p-card-body {
+
+        padding: 1.25rem;
+      }
+    }
+
+
+    .p-datatable {
+
+      .p-datatable-thead > tr > th,
+      .p-datatable-tbody > tr > td {
+
+        padding: 0.75rem;
+      }
+    }
+  }
+}
+
+
+// ============================================================
+// RESPONSIVE 600
+// ============================================================
+
+@media (max-width: 600px) {
+
+  .gestimmo-layout {
+
+    padding: 0.5rem;
+  }
+
+
+  .page-header {
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    h2 {
+
+      font-size: 1.05rem;
+    }
+
+
+    .btn-new {
+
+      width: 100%;
+
+      justify-content: center;
+    }
+  }
+
+
+  .gestimmo-layout ::ng-deep {
+
+    .p-card {
+
+      margin-bottom: 1rem;
+
+      border-radius: 10px;
+
+      .p-card-body {
+
+        padding: 1rem;
+      }
+
+      .p-card-title {
+
+        font-size: 1.05rem;
+      }
+    }
+
+
+    // --------------------------------------------------------
+    // TABLE MOBILE
+    // --------------------------------------------------------
+
+    .table-responsive-stack {
+
+      .p-datatable-table-container,
+      .p-datatable-wrapper {
+
+        overflow-x: visible;
+      }
+
+
+      .p-datatable-table,
+      .p-datatable-tbody {
+
+        display: block;
+
+        width: 100%;
+      }
+
+
+      .p-datatable-thead {
+
+        display: none;
+      }
+
+
+      .p-datatable-tbody > tr,
+      .p-datatable-tbody > tr:hover {
+
+        display: block;
+
+        background: #fff !important;
+
+        border:
+          1px solid $border-color;
+
+        border-radius: 10px;
+
+        margin-bottom: 0.75rem;
+
+        padding: 0.25rem 0;
+
+        box-shadow:
+          0 1px 2px rgba(
+            0,
+            0,
+            0,
+            0.05
+          );
+      }
+
+
+      .p-datatable-tbody > tr > td {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 1rem;
+
+        width: 100% !important;
+
+        box-sizing: border-box;
+
+        padding:
+          0.5rem 1rem;
+
+        border: 0;
+
+        text-align: right;
+
+        white-space: normal;
+
+        overflow-wrap: anywhere;
+
+
+        &::before {
+
+          content:
+            attr(data-label);
+
+          flex:
+            0 0 38%;
+
+          font-weight: 600;
+
+          font-size: 0.8rem;
+
+          color: $text-label;
+
+          text-align: left;
+        }
+      }
+
+
+      .p-datatable-tbody > tr > td.col-actions {
+
+        justify-content: flex-end;
+
+        margin-top: 0.25rem;
+
+        padding-top: 0.75rem;
+
+        border-top:
+          1px solid $border-color;
+
+        background: $bg-light;
+
+        border-radius:
+          0 0 10px 10px;
+      }
+
+
+      .p-datatable-emptymessage > td {
+
+        display: block;
+
+        text-align: center;
+
+        &::before {
+
+          content: none;
+        }
+      }
+
+
+      .hide-tablet {
+
+        display: flex;
+      }
+    }
+  }
+
+
+  .societe-form {
+
+    .field {
+
+      display: flex;
+
+      flex-direction: column;
+
+      align-items: stretch;
+
+      gap: 0.4rem;
+
+
+      label {
+
+        text-align: left;
+
+        font-size: 0.9rem;
+      }
+    }
+
+
+    .form-actions {
+
+      flex-direction: column-reverse;
+
+      align-items: stretch;
+
+      gap: 0.75rem;
+
+
+      button {
+
+        width: 100%;
+
+        justify-content: center;
+      }
+    }
+  }
+
+
+  .actions-group {
+
+    gap: 4px;
+  }
+
+
+  .action-btn {
+
+    width: 2.5rem;
+
+    height: 2.5rem;
+  }
+}

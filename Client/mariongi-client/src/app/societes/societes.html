@@ -1,0 +1,522 @@
+<p-confirmDialog></p-confirmDialog>
+
+<div class="gestimmo-layout">
+
+  <!-- ========================================================= -->
+  <!-- EN-TÊTE -->
+  <!-- ========================================================= -->
+
+  <div class="page-header">
+
+    <div>
+      <h2>Gestion des sociétés</h2>
+
+      <p class="page-description">
+        Gestion des sociétés enregistrées dans MarionGI.
+      </p>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      label="Nouvelle société"
+      icon="pi pi-plus"
+      class="p-button-success btn-new"
+      [disabled]="isLoading()"
+      (click)="ouvrirModalAjout()">
+    </button>
+
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- MESSAGE ERREUR -->
+  <!-- ========================================================= -->
+
+  @if (errorMessage()) {
+
+    <div class="message-box error-message">
+
+      <i class="pi pi-exclamation-circle"></i>
+
+      <span>
+        {{ errorMessage() }}
+      </span>
+
+    </div>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- MESSAGE SUCCÈS -->
+  <!-- ========================================================= -->
+
+  @if (successMessage()) {
+
+    <div class="message-box success-message">
+
+      <i class="pi pi-check-circle"></i>
+
+      <span>
+        {{ successMessage() }}
+      </span>
+
+      <button
+        type="button"
+        class="message-close"
+        (click)="successMessage.set('')"
+        aria-label="Fermer">
+        <i class="pi pi-times"></i>
+      </button>
+
+    </div>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- CHARGEMENT -->
+  <!-- ========================================================= -->
+
+  @if (isLoading() && societes().length === 0) {
+
+    <p-card>
+
+      <div class="loading-box">
+
+        <i class="pi pi-spin pi-spinner"></i>
+
+        <span>
+          Chargement des sociétés...
+        </span>
+
+      </div>
+
+    </p-card>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- TABLEAU -->
+  <!-- ========================================================= -->
+
+  @if (!isLoading() || societes().length > 0) {
+
+    <p-card>
+
+      <ng-template pTemplate="title">
+        Sociétés
+      </ng-template>
+
+      <p-table
+        styleClass="table-responsive-stack"
+        [value]="societes()"
+        [loading]="isLoading()"
+        responsiveLayout="scroll">
+
+        <!-- HEADER -->
+
+        <ng-template pTemplate="header">
+
+          <tr>
+
+            <th>
+              Société
+            </th>
+
+            <th class="hide-tablet">
+              Ville
+            </th>
+
+            <th class="hide-tablet">
+              Téléphone
+            </th>
+
+            <th>
+              Utilisateurs
+            </th>
+
+            <th>
+              Biens
+            </th>
+
+            <th>
+              Statut
+            </th>
+
+            <th class="col-actions">
+              Actions
+            </th>
+
+          </tr>
+
+        </ng-template>
+
+
+        <!-- BODY -->
+
+        <ng-template
+          pTemplate="body"
+          let-societe>
+
+          <tr>
+
+            <td data-label="Société">
+
+              <div class="societe-name">
+
+                <strong>
+                  {{ societe.nom }}
+                </strong>
+
+                @if (societe.numeroEntreprise) {
+
+                  <small>
+                    {{ societe.numeroEntreprise }}
+                  </small>
+
+                }
+
+              </div>
+
+            </td>
+
+
+            <td
+              data-label="Ville"
+              class="hide-tablet">
+
+              {{ societe.ville || 'Non renseignée' }}
+
+            </td>
+
+
+            <td
+              data-label="Téléphone"
+              class="hide-tablet">
+
+              {{ societe.telephone || 'Non renseigné' }}
+
+            </td>
+
+
+            <td data-label="Utilisateurs">
+
+              <span class="count-value">
+
+                <i class="pi pi-users"></i>
+
+                {{ societe.nombreUtilisateurs }}
+
+              </span>
+
+            </td>
+
+
+            <td data-label="Biens">
+
+              <span class="count-value">
+
+                <i class="pi pi-building"></i>
+
+                {{ societe.nombreBiens }}
+
+              </span>
+
+            </td>
+
+
+            <td data-label="Statut">
+
+              <p-tag
+                [value]="societe.actif ? 'Actif' : 'Inactif'"
+                [severity]="
+                  societe.actif
+                    ? 'success'
+                    : 'danger'
+                ">
+              </p-tag>
+
+            </td>
+
+
+            <td class="col-actions">
+
+              <div class="actions-group">
+
+                <!-- MODIFIER -->
+
+                <button
+                  type="button"
+                  class="action-btn edit-btn"
+                  title="Modifier"
+                  aria-label="Modifier"
+                  (click)="ouvrirModalModification(societe)">
+
+                  <i class="pi pi-pencil"></i>
+
+                </button>
+
+
+                <!-- STATUT -->
+
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.lock-btn]="societe.actif"
+                  [class.unlock-btn]="!societe.actif"
+                  [title]="
+                    societe.actif
+                      ? 'Désactiver'
+                      : 'Activer'
+                  "
+                  [attr.aria-label]="
+                    societe.actif
+                      ? 'Désactiver'
+                      : 'Activer'
+                  "
+                  (click)="basculerStatut(societe)">
+
+                  <i
+                    [class]="
+                      societe.actif
+                        ? 'pi pi-lock'
+                        : 'pi pi-lock-open'
+                    ">
+                  </i>
+
+                </button>
+
+
+                <!-- SUPPRIMER -->
+
+                <button
+                  type="button"
+                  class="action-btn delete-btn"
+                  title="Supprimer"
+                  aria-label="Supprimer"
+                  (click)="supprimerSociete(societe)">
+
+                  <i class="pi pi-trash"></i>
+
+                </button>
+
+              </div>
+
+            </td>
+
+          </tr>
+
+        </ng-template>
+
+
+        <!-- AUCUNE SOCIÉTÉ -->
+
+        <ng-template pTemplate="emptymessage">
+
+          <tr>
+
+            <td
+              colspan="7"
+              class="empty-table">
+
+              <i class="pi pi-building"></i>
+
+              <span>
+                Aucune société trouvée.
+              </span>
+
+            </td>
+
+          </tr>
+
+        </ng-template>
+
+      </p-table>
+
+    </p-card>
+
+  }
+
+
+  <!-- ========================================================= -->
+  <!-- MODALE -->
+  <!-- ========================================================= -->
+
+  <p-dialog
+    [header]="
+      isEditMode()
+        ? 'Modifier la société'
+        : 'Nouvelle société'
+    "
+    [(visible)]="displayModal"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [breakpoints]="{
+      '768px': '90vw',
+      '480px': '95vw'
+    }"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="societe-dialog">
+
+    <form
+      [formGroup]="societeForm"
+      (ngSubmit)="enregistrerSociete()"
+      class="societe-form">
+
+
+      <!-- NOM -->
+
+      <div class="field">
+
+        <label for="nom">
+          Nom *
+        </label>
+
+        <input
+          id="nom"
+          pInputText
+          formControlName="nom"
+          placeholder="Nom de la société" />
+
+      </div>
+
+
+      <!-- NUMÉRO -->
+
+      <div class="field">
+
+        <label for="numeroEntreprise">
+          N° entreprise
+        </label>
+
+        <input
+          id="numeroEntreprise"
+          pInputText
+          formControlName="numeroEntreprise"
+          placeholder="Numéro d'entreprise" />
+
+      </div>
+
+
+      <!-- ADRESSE -->
+
+      <div class="field">
+
+        <label for="adresse">
+          Adresse
+        </label>
+
+        <input
+          id="adresse"
+          pInputText
+          formControlName="adresse"
+          placeholder="Adresse" />
+
+      </div>
+
+
+      <!-- VILLE -->
+
+      <div class="field">
+
+        <label for="ville">
+          Ville
+        </label>
+
+        <input
+          id="ville"
+          pInputText
+          formControlName="ville"
+          placeholder="Ville" />
+
+      </div>
+
+
+      <!-- CODE POSTAL -->
+
+      <div class="field">
+
+        <label for="codePostal">
+          Code postal
+        </label>
+
+        <input
+          id="codePostal"
+          pInputText
+          formControlName="codePostal"
+          placeholder="Code postal" />
+
+      </div>
+
+
+      <!-- TELEPHONE -->
+
+      <div class="field">
+
+        <label for="telephone">
+          Téléphone
+        </label>
+
+        <input
+          id="telephone"
+          pInputText
+          formControlName="telephone"
+          type="tel"
+          placeholder="Téléphone" />
+
+      </div>
+
+
+      <!-- EMAIL -->
+
+      <div class="field">
+
+        <label for="email">
+          Email
+        </label>
+
+        <input
+          id="email"
+          pInputText
+          formControlName="email"
+          type="email"
+          placeholder="Adresse courriel" />
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="form-actions">
+
+        <button
+          pButton
+          label="Annuler"
+          type="button"
+          class="p-button-text"
+          (click)="fermerModal()">
+        </button>
+
+        <button
+          pButton
+          [label]="
+            isEditMode()
+              ? 'Enregistrer'
+              : 'Créer'
+          "
+          type="submit"
+          [disabled]="societeForm.invalid || isLoading()"
+          class="p-button-success">
+        </button>
+
+      </div>
+
+    </form>
+
+  </p-dialog>
+
+</div>

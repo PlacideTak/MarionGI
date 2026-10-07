@@ -510,15 +510,15 @@ export class DashboardHome implements OnInit {
                     unite.Reference ??
                     'N/A',
 
-                  bienReference:
-                    unite.bienImmobilier?.reference ??
-                    unite.bienImmobilier?.Reference ??
-                    'N/A',
+                    bienReference:
+                      unite.bien?.reference ??
+                      unite.bien?.Reference ??
+                      'N/A',
 
-                  bienNom:
-                    unite.bienImmobilier?.nom ??
-                    unite.bienImmobilier?.Nom ??
-                    'N/A',
+                    bienNom:
+                      unite.bien?.nom ??
+                      unite.bien?.Nom ??
+                      'N/A',
 
                   type:
                     this.getTypeUniteLibelle(

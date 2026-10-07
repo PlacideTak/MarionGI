@@ -116,8 +116,7 @@ public class RapportsController : ControllerBase
 
             var tauxOccupation =
                 totalUnites > 0
-                    ? (double)unitesLouees /
-                      totalUnites * 100
+                    ? (double)unitesLouees / totalUnites * 100
                     : 0;
 
             // ========================================================
@@ -128,11 +127,15 @@ public class RapportsController : ControllerBase
                 await _context.Paiements
                     .AsNoTracking()
                     .Where(p =>
+                        !p.EstSupprime &&
                         p.StatutTransaction ==
                             StatutTransaction.Confirme &&
                         p.Contrat != null &&
+                        !p.Contrat.EstSupprime &&
                         p.Contrat.UniteLocative != null &&
+                        !p.Contrat.UniteLocative.EstSupprime &&
                         p.Contrat.UniteLocative.BienImmobilier != null &&
+                        !p.Contrat.UniteLocative.BienImmobilier.EstSupprime &&
                         p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
                             societeId.Value &&
                         p.DatePaiement >= debutMois &&
@@ -143,6 +146,35 @@ public class RapportsController : ControllerBase
             // ========================================================
             // 4. ÉVOLUTION DES ENCAISSEMENTS SUR 12 MOIS
             // ========================================================
+            // Une seule requête SQL au lieu de 12 requêtes.
+            // ========================================================
+
+            var debutPeriodeGraphique =
+                debutMois.AddMonths(-11);
+
+            var paiementsGraphique =
+                await _context.Paiements
+                    .AsNoTracking()
+                    .Where(p =>
+                        !p.EstSupprime &&
+                        p.StatutTransaction ==
+                            StatutTransaction.Confirme &&
+                        p.Contrat != null &&
+                        !p.Contrat.EstSupprime &&
+                        p.Contrat.UniteLocative != null &&
+                        !p.Contrat.UniteLocative.EstSupprime &&
+                        p.Contrat.UniteLocative.BienImmobilier != null &&
+                        !p.Contrat.UniteLocative.BienImmobilier.EstSupprime &&
+                        p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
+                            societeId.Value &&
+                        p.DatePaiement >= debutPeriodeGraphique &&
+                        p.DatePaiement < debutMoisSuivant)
+                    .Select(p => new
+                    {
+                        p.DatePaiement,
+                        p.Montant
+                    })
+                    .ToListAsync();
 
             var labels = new List<string>();
             var datasets = new List<decimal>();
@@ -161,30 +193,17 @@ public class RapportsController : ControllerBase
                         new CultureInfo("fr-FR")));
 
                 var totalMois =
-                    await _context.Paiements
-                        .AsNoTracking()
+                    paiementsGraphique
                         .Where(p =>
-                            p.StatutTransaction ==
-                                StatutTransaction.Confirme &&
-                            p.Contrat != null &&
-                            p.Contrat.UniteLocative != null &&
-                            p.Contrat.UniteLocative.BienImmobilier != null &&
-                            p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
-                                societeId.Value &&
                             p.DatePaiement >= mois &&
                             p.DatePaiement < moisSuivant)
-                        .SumAsync(p => (decimal?)p.Montant)
-                        ?? 0m;
+                        .Sum(p => p.Montant);
 
                 datasets.Add(totalMois);
             }
 
             // ========================================================
             // 5. CONTRATS
-            // ========================================================
-            //
-            // On charge également les paiements car ils sont
-            // nécessaires au calcul réel des impayés.
             // ========================================================
 
             var contrats =
@@ -197,7 +216,9 @@ public class RapportsController : ControllerBase
                     .Where(c =>
                         !c.EstSupprime &&
                         c.UniteLocative != null &&
+                        !c.UniteLocative.EstSupprime &&
                         c.UniteLocative.BienImmobilier != null &&
+                        !c.UniteLocative.BienImmobilier.EstSupprime &&
                         c.UniteLocative.BienImmobilier.SocieteId ==
                             societeId.Value)
                     .ToListAsync();
@@ -215,6 +236,7 @@ public class RapportsController : ControllerBase
             var contratsExpires =
                 contrats
                     .Where(c =>
+                        c.Statut == StatutContrat.Actif &&
                         c.DateFin < maintenant)
                     .OrderBy(c => c.DateFin)
                     .ToList();
@@ -281,6 +303,7 @@ public class RapportsController : ControllerBase
             var contratsBientotExpires =
                 contrats
                     .Where(c =>
+                        c.Statut == StatutContrat.Actif &&
                         c.DateFin >= maintenant &&
                         c.DateFin <= dateLimiteAlerte)
                     .OrderBy(c => c.DateFin)
@@ -344,10 +367,6 @@ public class RapportsController : ControllerBase
             // ========================================================
             // 7. IMPAYÉS DU MOIS
             // ========================================================
-            //
-            // Un paiement partiel ne suffit plus à considérer le
-            // loyer comme entièrement payé.
-            // ========================================================
 
             var contratsActifs =
                 contrats
@@ -359,106 +378,64 @@ public class RapportsController : ControllerBase
                     .ToList();
 
             var impayes =
-                new List<object>();
+                ConstruireImpayes(
+                    contratsActifs,
+                    debutMois,
+                    debutMoisSuivant,
+                    maintenant);
 
-            foreach (var contrat in contratsActifs)
+            foreach (var impaye in impayes)
             {
-                var dateLimitePaiement =
-                    debutMois.AddDays(
-                        contrat.DelaiJoursTolerance);
+                alertes.Add(
+                    new
+                    {
+                        Id = impaye.ContratId,
 
-                if (maintenant <= dateLimitePaiement)
-                {
-                    continue;
-                }
+                        Titre =
+                            impaye.MontantPaye > 0
+                                ? "Loyer partiellement payé"
+                                : "Loyer en retard",
 
-                var montantPaye =
-                    contrat.Paiements?
-                        .Where(p =>
-                            p.StatutTransaction ==
-                                StatutTransaction.Confirme &&
-                            p.DatePaiement >= debutMois &&
-                            p.DatePaiement < debutMoisSuivant)
-                        .Sum(p => p.Montant)
-                    ?? 0m;
+                        Message =
+                            $"Le loyer de l'unité " +
+                            $"{impaye.UniteReference} " +
+                            $"de l'immeuble " +
+                            $"{impaye.BienNom} présente " +
+                            $"un solde de " +
+                            $"{impaye.Solde:N0} FCFA. " +
+                            $"Retard : " +
+                            $"{impaye.JoursDeRetard} jour(s). " +
+                            $"Locataire : " +
+                            $"{impaye.LocataireNom}.",
 
-                var montantDu =
-                    contrat.MontantLoyer;
+                        Severite = "danger",
 
-                var solde =
-                    montantDu - montantPaye;
+                        Type = "Impayé",
 
-                if (solde <= 0)
-                {
-                    continue;
-                }
+                        ContratId =
+                            impaye.ContratId,
 
-                var joursRetard =
-                    (maintenant.Date -
-                     dateLimitePaiement.Date).Days;
+                        UniteReference =
+                            impaye.UniteReference,
 
-                var uniteReference =
-                    contrat.UniteLocative?.Reference
-                    ?? TextesMessages.NonApplique;
+                        BienNom =
+                            impaye.BienNom,
 
-                var bienNom =
-                    contrat.UniteLocative?
-                        .BienImmobilier?
-                        .Nom
-                    ?? TextesMessages.NonApplique;
+                        MontantLoyer =
+                            impaye.MontantLoyer,
 
-                var locataireNom =
-                    contrat.Locataire == null
-                        ? TextesMessages.NonApplique
-                        : $"{contrat.Locataire.Prenom} " +
-                          $"{contrat.Locataire.Nom}";
+                        MontantPaye =
+                            impaye.MontantPaye,
 
-                var impaye = new
-                {
-                    Id = contrat.Id,
+                        Solde =
+                            impaye.Solde,
 
-                    Titre =
-                        montantPaye > 0
-                            ? "Loyer partiellement payé"
-                            : "Loyer en retard",
+                        DateLimite =
+                            impaye.DateLimite,
 
-                    Message =
-                        $"Le loyer de l'unité " +
-                        $"{uniteReference} de l'immeuble " +
-                        $"{bienNom} présente un solde de " +
-                        $"{solde:N0} FCFA. " +
-                        $"Retard : {joursRetard} jour(s). " +
-                        $"Locataire : {locataireNom}.",
-
-                    Severite = "danger",
-
-                    Type = "Impayé",
-
-                    ContratId = contrat.Id,
-
-                    UniteReference = uniteReference,
-
-                    BienNom = bienNom,
-
-                    MontantLoyer =
-                        montantDu,
-
-                    MontantPaye =
-                        montantPaye,
-
-                    Solde =
-                        solde,
-
-                    DateLimite =
-                        dateLimitePaiement,
-
-                    JoursDeRetard =
-                        joursRetard
-                };
-
-                impayes.Add(impaye);
-
-                alertes.Add(impaye);
+                        JoursDeRetard =
+                            impaye.JoursDeRetard
+                    });
             }
 
             // ========================================================
@@ -531,6 +508,8 @@ public class RapportsController : ControllerBase
 
             var contratsExpiresCount =
                 contrats.Count(c =>
+                    c.Statut ==
+                        StatutContrat.Actif &&
                     c.DateFin < maintenant);
 
             // ========================================================
@@ -571,16 +550,7 @@ public class RapportsController : ControllerBase
                     impayes.Count,
 
                 MontantImpayes =
-                    impayes.Sum(i =>
-                    {
-                        var property =
-                            i.GetType()
-                                .GetProperty("Solde");
-
-                        return property?.GetValue(i) is decimal value
-                            ? value
-                            : 0m;
-                    }),
+                    impayes.Sum(i => i.Solde),
 
                 Alertes = alertes,
 
@@ -647,10 +617,15 @@ public class RapportsController : ControllerBase
                     !b.EstSupprime)
                 .ToListAsync();
 
-        var uniteIds =
+        var unites =
             biens
                 .SelectMany(b => b.UnitesLocatives)
-                .Where(u => !u.EstSupprime)
+                .Where(u =>
+                    !u.EstSupprime)
+                .ToList();
+
+        var uniteIds =
+            unites
                 .Select(u => u.Id)
                 .ToList();
 
@@ -662,6 +637,10 @@ public class RapportsController : ControllerBase
                 .Include(c => c.Paiements)
                 .Where(c =>
                     !c.EstSupprime &&
+                    c.UniteLocative != null &&
+                    !c.UniteLocative.EstSupprime &&
+                    c.UniteLocative.BienImmobilier != null &&
+                    !c.UniteLocative.BienImmobilier.EstSupprime &&
                     uniteIds.Contains(
                         c.UniteLocativeId))
                 .ToListAsync();
@@ -670,14 +649,9 @@ public class RapportsController : ControllerBase
             contrats
                 .SelectMany(c => c.Paiements ?? [])
                 .Where(p =>
+                    !p.EstSupprime &&
                     p.StatutTransaction ==
                         StatutTransaction.Confirme)
-                .ToList();
-
-        var unites =
-            biens
-                .SelectMany(b => b.UnitesLocatives)
-                .Where(u => !u.EstSupprime)
                 .ToList();
 
         var totalUnites =
@@ -732,7 +706,7 @@ public class RapportsController : ControllerBase
                 .ToList();
 
         var impayes =
-            await ConstruireImpayesAsync(
+            ConstruireImpayes(
                 contratsActifs,
                 debutMois,
                 debutMoisSuivant,
@@ -778,8 +752,7 @@ public class RapportsController : ControllerBase
                     impayes.Count,
 
                 MontantImpayes =
-                    impayes.Sum(i =>
-                        i.Solde),
+                    impayes.Sum(i => i.Solde),
 
                 EncaissementsMois =
                     encaissementsMois
@@ -798,10 +771,7 @@ public class RapportsController : ControllerBase
                     {
                         b.Id,
                         b.Reference,
-
-                        // Nom de baptême de l'immeuble
                         b.Nom,
-
                         b.Type,
                         b.Adresse,
                         b.Ville,
@@ -864,7 +834,8 @@ public class RapportsController : ControllerBase
 
         var unites =
             bien.UnitesLocatives
-                .Where(u => !u.EstSupprime)
+                .Where(u =>
+                    !u.EstSupprime)
                 .ToList();
 
         var uniteIds =
@@ -880,6 +851,10 @@ public class RapportsController : ControllerBase
                 .Include(c => c.Paiements)
                 .Where(c =>
                     !c.EstSupprime &&
+                    c.UniteLocative != null &&
+                    !c.UniteLocative.EstSupprime &&
+                    c.UniteLocative.BienImmobilier != null &&
+                    !c.UniteLocative.BienImmobilier.EstSupprime &&
                     uniteIds.Contains(
                         c.UniteLocativeId))
                 .ToListAsync();
@@ -888,6 +863,7 @@ public class RapportsController : ControllerBase
             contrats
                 .SelectMany(c => c.Paiements ?? [])
                 .Where(p =>
+                    !p.EstSupprime &&
                     p.StatutTransaction ==
                         StatutTransaction.Confirme)
                 .ToList();
@@ -965,10 +941,7 @@ public class RapportsController : ControllerBase
             {
                 bien.Id,
                 bien.Reference,
-
-                // Nom de l'immeuble
                 bien.Nom,
-
                 bien.Type,
                 bien.Adresse,
                 bien.Ville,
@@ -1113,6 +1086,7 @@ public class RapportsController : ControllerBase
             contrats
                 .SelectMany(c => c.Paiements ?? [])
                 .Where(p =>
+                    !p.EstSupprime &&
                     p.StatutTransaction ==
                         StatutTransaction.Confirme)
                 .OrderByDescending(p =>
@@ -1283,11 +1257,15 @@ public class RapportsController : ControllerBase
             _context.Paiements
                 .AsNoTracking()
                 .Where(p =>
+                    !p.EstSupprime &&
                     p.StatutTransaction ==
                         StatutTransaction.Confirme &&
                     p.Contrat != null &&
+                    !p.Contrat.EstSupprime &&
                     p.Contrat.UniteLocative != null &&
+                    !p.Contrat.UniteLocative.EstSupprime &&
                     p.Contrat.UniteLocative.BienImmobilier != null &&
+                    !p.Contrat.UniteLocative.BienImmobilier.EstSupprime &&
                     p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
                         societeId.Value);
 
@@ -1302,7 +1280,6 @@ public class RapportsController : ControllerBase
 
         if (dateFin.HasValue)
         {
-            // La date de fin est incluse dans toute la journée.
             var finExclusive =
                 dateFin.Value.Date.AddDays(1);
 
@@ -1342,7 +1319,9 @@ public class RapportsController : ControllerBase
 
                     LocataireNom =
                         p.Contrat!.Locataire != null
-                            ? p.Contrat.Locataire.Prenom + " " +p.Contrat.Locataire.Nom
+                            ? p.Contrat.Locataire.Prenom +
+                              " " +
+                              p.Contrat.Locataire.Nom
                             : TextesMessages.NonApplique
                 })
                 .ToListAsync();
@@ -1402,8 +1381,10 @@ public class RapportsController : ControllerBase
             return Forbid();
         }
 
-        // On vérifie que le locataire possède au moins
-        // un contrat appartenant à la société courante.
+        // ========================================================
+        // Vérification de l'utilisateur
+        // ========================================================
+
         var locataire =
             await _context.Utilisateurs
                 .AsNoTracking()
@@ -1426,6 +1407,10 @@ public class RapportsController : ControllerBase
                 TextesMessages.LocataireIntrouvable);
         }
 
+        // ========================================================
+        // Contrats du locataire dans la société courante
+        // ========================================================
+
         var contratsLocataire =
             await _context.Contrats
                 .AsNoTracking()
@@ -1434,7 +1419,9 @@ public class RapportsController : ControllerBase
                     c.LocataireId ==
                         locataireId &&
                     c.UniteLocative != null &&
+                    !c.UniteLocative.EstSupprime &&
                     c.UniteLocative.BienImmobilier != null &&
+                    !c.UniteLocative.BienImmobilier.EstSupprime &&
                     c.UniteLocative.BienImmobilier.SocieteId ==
                         societeId.Value)
                 .Select(c => c.Id)
@@ -1445,11 +1432,17 @@ public class RapportsController : ControllerBase
             return Forbid();
         }
 
+        // ========================================================
+        // Paiements
+        // ========================================================
+
         var paiements =
             await _context.Paiements
                 .AsNoTracking()
                 .Where(p =>
+                    !p.EstSupprime &&
                     p.Contrat != null &&
+                    !p.Contrat.EstSupprime &&
                     contratsLocataire.Contains(
                         p.Contrat.Id))
                 .OrderByDescending(p =>
@@ -1535,7 +1528,9 @@ public class RapportsController : ControllerBase
                 .Where(c =>
                     !c.EstSupprime &&
                     c.UniteLocative != null &&
+                    !c.UniteLocative.EstSupprime &&
                     c.UniteLocative.BienImmobilier != null &&
+                    !c.UniteLocative.BienImmobilier.EstSupprime &&
                     c.UniteLocative.BienImmobilier.SocieteId ==
                         societeId.Value);
 
@@ -1575,8 +1570,9 @@ public class RapportsController : ControllerBase
 
                     LocataireNom =
                         c.Locataire != null
-                            ? $"{c.Locataire.Prenom} " +
-                              $"{c.Locataire.Nom}"
+                            ? c.Locataire.Prenom +
+                              " " +
+                              c.Locataire.Nom
                             : TextesMessages.NonApplique,
 
                     c.DateDebut,
@@ -1587,11 +1583,14 @@ public class RapportsController : ControllerBase
                     StatutContrat =
                         c.Statut.ToString(),
 
-                    // Statut réel calculé à partir des dates
                     EstExpire =
+                        c.Statut ==
+                            StatutContrat.Actif &&
                         c.DateFin < maintenant,
 
                     JoursAvantExpiration =
+                        c.Statut ==
+                            StatutContrat.Actif &&
                         c.DateFin >= maintenant
                             ? (c.DateFin.Date -
                                maintenant.Date).Days
@@ -1652,13 +1651,15 @@ public class RapportsController : ControllerBase
                         c.DateDebut <= maintenant &&
                         c.DateFin >= maintenant &&
                         c.UniteLocative != null &&
+                        !c.UniteLocative.EstSupprime &&
                         c.UniteLocative.BienImmobilier != null &&
+                        !c.UniteLocative.BienImmobilier.EstSupprime &&
                         c.UniteLocative.BienImmobilier.SocieteId ==
                             societeId.Value)
                     .ToListAsync();
 
             var impayes =
-                await ConstruireImpayesAsync(
+                ConstruireImpayes(
                     contratsActifs,
                     premierJourMois,
                     premierJourMoisSuivant,
@@ -1750,19 +1751,36 @@ public class RapportsController : ControllerBase
     // ============================================================
 
     /// <summary>
+    /// Récupère l'identifiant de l'utilisateur connecté.
+    /// Plusieurs noms de claims sont supportés pour rester
+    /// compatible avec les différents JWT/configurations.
+    /// </summary>
+    private Guid? GetCurrentUserId()
+    {
+        var value =
+            User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value
+            ?? User.FindFirst("Id")?.Value;
+
+        return Guid.TryParse(
+            value,
+            out var utilisateurId)
+            ? utilisateurId
+            : null;
+    }
+
+    /// <summary>
     /// Retourne la société de l'utilisateur actuellement connecté.
     /// Tous les rapports sont cloisonnés par cette société.
     /// </summary>
     private async Task<Guid?>
         GetSocieteIdUtilisateurConnecteAsync()
     {
-        var userIdClaim =
-            User.FindFirst(
-                ClaimTypes.NameIdentifier)?.Value;
+        var utilisateurId =
+            GetCurrentUserId();
 
-        if (!Guid.TryParse(
-                userIdClaim,
-                out var utilisateurId))
+        if (!utilisateurId.HasValue)
         {
             return null;
         }
@@ -1771,7 +1789,7 @@ public class RapportsController : ControllerBase
             await _context.Utilisateurs
                 .AsNoTracking()
                 .Where(u =>
-                    u.Id == utilisateurId &&
+                    u.Id == utilisateurId.Value &&
                     !u.EstSupprime &&
                     u.Statut)
                 .Select(u => new
@@ -1786,10 +1804,11 @@ public class RapportsController : ControllerBase
     /// <summary>
     /// Construit la liste des impayés du mois courant.
     /// Un paiement partiel laisse apparaître le solde restant.
+    /// Les paiements supprimés sont exclus.
     /// </summary>
-    private Task<List<ImpayeRapportDto>>
-        ConstruireImpayesAsync(
-            IEnumerable<dynamic> contrats,
+    private List<ImpayeRapportDto>
+        ConstruireImpayes(
+            IEnumerable<MarionGI.Domain.Entities.Contrat> contrats,
             DateTime debutMois,
             DateTime debutMoisSuivant,
             DateTime maintenant)
@@ -1808,27 +1827,21 @@ public class RapportsController : ControllerBase
                 continue;
             }
 
-            decimal montantPaye = 0m;
-
-            if (contrat.Paiements != null)
-            {
-                foreach (var paiement in contrat.Paiements)
-                {
-                    if (paiement.StatutTransaction ==
+            var montantPaye =
+                contrat.Paiements?
+                    .Where(p =>
+                        !p.EstSupprime &&
+                        p.StatutTransaction ==
                             StatutTransaction.Confirme &&
-                        paiement.DatePaiement >= debutMois &&
-                        paiement.DatePaiement < debutMoisSuivant)
-                    {
-                        montantPaye +=
-                            paiement.Montant;
-                    }
-                }
-            }
+                        p.DatePaiement >= debutMois &&
+                        p.DatePaiement < debutMoisSuivant)
+                    .Sum(p => p.Montant)
+                ?? 0m;
 
-            decimal montantLoyer =
+            var montantLoyer =
                 contrat.MontantLoyer;
 
-            decimal solde =
+            var solde =
                 montantLoyer - montantPaye;
 
             if (solde <= 0)
@@ -1907,7 +1920,7 @@ public class RapportsController : ControllerBase
                 });
         }
 
-        return Task.FromResult(result);
+        return result;
     }
 
     // ============================================================

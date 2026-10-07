@@ -1,9 +1,11 @@
 ﻿using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
@@ -22,87 +24,64 @@ public class UtilisateursController : ControllerBase
 
     // ============================================================
     // GET : api/Utilisateurs
-    //
-    // Administrateur :
-    //     -> tous les utilisateurs de toutes les sociétés
-    //
-    // Gestionnaire :
-    //     -> uniquement les utilisateurs de sa société
     // ============================================================
+
     [HttpGet]
-    public async Task<IActionResult> GetUtilisateurs()
+    public async Task<ActionResult<IEnumerable<UtilisateurDto>>> GetUtilisateurs(
+        CancellationToken cancellationToken)
     {
-        var currentUserId = GetCurrentUserId();
+        var utilisateurConnecte = await GetUtilisateurConnecteAsync(cancellationToken);
 
-        if (!currentUserId.HasValue)
-            return Unauthorized("Utilisateur connecté introuvable.");
+        if (utilisateurConnecte is null)
+            return Unauthorized();
 
-        var isAdmin = User.IsInRole("Administrateur");
-        var isGestionnaire = User.IsInRole("Gestionnaire");
-
-        var query = _context.Utilisateurs
+        IQueryable<Utilisateur> query = _context.Utilisateurs
             .AsNoTracking()
             .Where(u => !u.EstSupprime);
 
         // --------------------------------------------------------
-        // Gestionnaire :
-        // uniquement sa société
+        // Administrateur : accès à toutes les sociétés
+        // Gestionnaire : uniquement sa société
         // --------------------------------------------------------
-        if (isGestionnaire && !isAdmin)
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Gestionnaire)
         {
-            var societeId = await GetSocieteIdUtilisateurConnecteAsync();
-
-            if (societeId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
-
-            query = query.Where(u => u.SocieteId == societeId.Value);
+            query = query.Where(u =>
+                u.SocieteId == utilisateurConnecte.SocieteId);
         }
 
-        var users = await query
-            .OrderBy(u => u.Societe.Nom)
-            .ThenBy(u => u.Nom)
+        var utilisateurs = await query
+            .OrderBy(u => u.Nom)
             .ThenBy(u => u.Prenom)
-            .Select(u => new
+            .Select(u => new UtilisateurDto
             {
-                u.Id,
-                u.Nom,
-                u.Prenom,
-                u.Telephone,
-                u.Email,
-                u.Role,
-                u.Statut,
-                u.DerniereConnexion,
-                u.TelephoneVerifie,
-
-                u.SocieteId,
-
-                SocieteNom = u.Societe.Nom
+                Id = u.Id,
+                Nom = u.Nom,
+                Prenom = u.Prenom,
+                Telephone = u.Telephone,
+                Email = u.Email,
+                Role = u.Role,
+                Statut = u.Statut,
+                SocieteId = u.SocieteId
             })
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
-        return Ok(users);
+        return Ok(utilisateurs);
     }
-
 
     // ============================================================
     // GET : api/Utilisateurs/{id}
-    //
-    // Administrateur :
-    //     -> peut consulter n'importe quel utilisateur
-    //
-    // Gestionnaire :
-    //     -> uniquement un utilisateur de sa société
     // ============================================================
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        var currentUserId = GetCurrentUserId();
 
-        if (!currentUserId.HasValue)
-            return Unauthorized("Utilisateur connecté introuvable.");
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<UtilisateurDto>> GetUtilisateur(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var utilisateurConnecte = await GetUtilisateurConnecteAsync(cancellationToken);
+
+        if (utilisateurConnecte is null)
+            return Unauthorized();
 
         var query = _context.Utilisateurs
             .AsNoTracking()
@@ -110,64 +89,47 @@ public class UtilisateursController : ControllerBase
                 u.Id == id &&
                 !u.EstSupprime);
 
-        // Gestionnaire : restriction à sa société
-        if (User.IsInRole("Gestionnaire") &&
-            !User.IsInRole("Administrateur"))
+        // --------------------------------------------------------
+        // Gestionnaire : uniquement sa société
+        // --------------------------------------------------------
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Gestionnaire)
         {
-            var societeId = await GetSocieteIdUtilisateurConnecteAsync();
-
-            if (societeId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
-
-            query = query.Where(u => u.SocieteId == societeId.Value);
+            query = query.Where(u =>
+                u.SocieteId == utilisateurConnecte.SocieteId);
         }
 
-        var user = await query
-            .Select(u => new
+        var utilisateur = await query
+            .Select(u => new UtilisateurDto
             {
-                u.Id,
-                u.Nom,
-                u.Prenom,
-                u.Telephone,
-                u.Email,
-                u.Role,
-                u.Statut,
-                u.DerniereConnexion,
-                u.TelephoneVerifie,
-
-                u.SocieteId,
-
-                SocieteNom = u.Societe.Nom
+                Id = u.Id,
+                Nom = u.Nom,
+                Prenom = u.Prenom,
+                Telephone = u.Telephone,
+                Email = u.Email,
+                Role = u.Role,
+                Statut = u.Statut,
+                SocieteId = u.SocieteId
             })
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (user == null)
-            return NotFound("Utilisateur introuvable.");
+        if (utilisateur is null)
+            return NotFound();
 
-        return Ok(user);
+        return Ok(utilisateur);
     }
-
 
     // ============================================================
     // POST : api/Utilisateurs
-    //
-    // Administrateur :
-    //     -> doit fournir SocieteId
-    //
-    // Gestionnaire :
-    //     -> SocieteId imposé par le backend
-    //     -> ne peut pas créer un Administrateur
     // ============================================================
+
     [HttpPost]
-    public async Task<IActionResult> CreerUtilisateur(
-        [FromBody] CreerUtilisateurRequest request)
+    public async Task<ActionResult<UtilisateurDto>> CreerUtilisateur(
+        [FromBody] CreerUtilisateurRequest request,
+        CancellationToken cancellationToken)
     {
-        // --------------------------------------------------------
-        // Validation générale
-        // --------------------------------------------------------
+        if (request is null)
+            return BadRequest("La requête est obligatoire.");
 
         if (string.IsNullOrWhiteSpace(request.Nom))
             return BadRequest("Le nom est obligatoire.");
@@ -182,96 +144,87 @@ public class UtilisateursController : ControllerBase
             return BadRequest("Le mot de passe initial est obligatoire.");
 
         if (request.MotDePasseInitial.Length < 8)
-        {
             return BadRequest(
                 "Le mot de passe doit contenir au moins 8 caractères.");
-        }
 
-        var isAdmin = User.IsInRole("Administrateur");
-        var isGestionnaire = User.IsInRole("Gestionnaire");
+        if (!Enum.IsDefined(typeof(RoleUtilisateur), request.Role))
+            return BadRequest("Le rôle sélectionné est invalide.");
 
-        // --------------------------------------------------------
-        // Déterminer la société
-        // --------------------------------------------------------
+        var utilisateurConnecte =
+            await GetUtilisateurConnecteAsync(cancellationToken);
+
+        if (utilisateurConnecte is null)
+            return Unauthorized();
 
         Guid societeId;
 
-        if (isAdmin)
+        // ========================================================
+        // ADMINISTRATEUR
+        // ========================================================
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Administrateur)
         {
-            // L'administrateur global choisit la société.
             if (!request.SocieteId.HasValue ||
                 request.SocieteId.Value == Guid.Empty)
             {
                 return BadRequest(
-                    "La société de l'utilisateur est obligatoire.");
+                    "La société est obligatoire pour un nouvel utilisateur.");
             }
 
             societeId = request.SocieteId.Value;
         }
-        else if (isGestionnaire)
+        else
         {
-            // Le gestionnaire est obligatoirement rattaché
-            // à sa propre société.
-            var currentSocieteId =
-                await GetSocieteIdUtilisateurConnecteAsync();
+            // ====================================================
+            // GESTIONNAIRE
+            // ====================================================
 
-            if (currentSocieteId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
+            societeId = utilisateurConnecte.SocieteId;
 
-            societeId = currentSocieteId.Value;
-
-            // Le Gestionnaire ne peut pas créer un Administrateur.
+            // Un Gestionnaire ne peut pas créer un Administrateur
             if (request.Role == RoleUtilisateur.Administrateur)
             {
                 return Forbid();
             }
-        }
-        else
-        {
-            return Forbid();
+
+            // Le Gestionnaire ne peut pas choisir une autre société
+            if (request.SocieteId.HasValue &&
+                request.SocieteId.Value != societeId)
+            {
+                return Forbid();
+            }
         }
 
-        // --------------------------------------------------------
-        // Vérifier que la société existe
-        // --------------------------------------------------------
+        // ========================================================
+        // Vérification de la société
+        // ========================================================
 
         var societe = await _context.Societes
             .AsNoTracking()
-            .FirstOrDefaultAsync(s =>
-                s.Id == societeId &&
-                !s.EstSupprime);
+            .FirstOrDefaultAsync(
+                s =>
+                    s.Id == societeId &&
+                    !s.EstSupprime,
+                cancellationToken);
 
-        if (societe == null)
-        {
-            return BadRequest(
-                "La société sélectionnée est introuvable.");
-        }
-
-        // --------------------------------------------------------
-        // Une société inactive ne doit pas recevoir de nouveaux
-        // utilisateurs.
-        // --------------------------------------------------------
+        if (societe is null)
+            return BadRequest("La société sélectionnée n'existe pas.");
 
         if (!societe.Actif)
-        {
             return BadRequest(
                 "Impossible de créer un utilisateur dans une société inactive.");
-        }
 
-        // --------------------------------------------------------
-        // Vérifier l'unicité de l'email dans la société
-        // --------------------------------------------------------
-
-        var email = request.Email.Trim().ToLowerInvariant();
+        // ========================================================
+        // Email unique dans la société
+        // ========================================================
 
         var emailExiste = await _context.Utilisateurs
-            .AnyAsync(u =>
-                u.SocieteId == societeId &&
-                u.Email.ToLower() == email &&
-                !u.EstSupprime);
+            .AnyAsync(
+                u =>
+                    u.SocieteId == societeId &&
+                    !u.EstSupprime &&
+                    u.Email.ToLower() == request.Email.Trim().ToLower(),
+                cancellationToken);
 
         if (emailExiste)
         {
@@ -279,121 +232,70 @@ public class UtilisateursController : ControllerBase
                 "Un utilisateur avec cette adresse courriel existe déjà dans cette société.");
         }
 
-        // --------------------------------------------------------
+        // ========================================================
         // Création
-        // --------------------------------------------------------
+        // ========================================================
 
-        var user = new Utilisateur
+        var utilisateur = new Utilisateur
         {
             Id = Guid.NewGuid(),
 
             Nom = request.Nom.Trim(),
             Prenom = request.Prenom.Trim(),
+            Telephone = string.IsNullOrWhiteSpace(request.Telephone)
+                ? null
+                : request.Telephone.Trim(),
 
-            Telephone = request.Telephone?.Trim() ?? string.Empty,
+            Email = request.Email.Trim(),
 
-            Email = email,
-
-            MotDePasseHash =
-                BCrypt.Net.BCrypt.HashPassword(
-                    request.MotDePasseInitial),
-
+            // IMPORTANT :
+            // Role est un RoleUtilisateur et non une string
             Role = request.Role,
-
-            Statut = true,
 
             SocieteId = societeId,
 
-            DateCreation = DateTime.UtcNow,
-            EstSupprime = false
+            Statut = true,
+            EstSupprime = false,
+
+            MotDePasseHash =
+                BCrypt.Net.BCrypt.HashPassword(
+                    request.MotDePasseInitial)
         };
 
-        _context.Utilisateurs.Add(user);
+        _context.Utilisateurs.Add(utilisateur);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var dto = new UtilisateurDto
+        {
+            Id = utilisateur.Id,
+            Nom = utilisateur.Nom,
+            Prenom = utilisateur.Prenom,
+            Telephone = utilisateur.Telephone,
+            Email = utilisateur.Email,
+            Role = utilisateur.Role,
+            Statut = utilisateur.Statut,
+            SocieteId = utilisateur.SocieteId
+        };
 
         return CreatedAtAction(
-            nameof(GetById),
-            new { id = user.Id },
-            new
-            {
-                user.Id,
-                user.Nom,
-                user.Prenom,
-                user.Telephone,
-                user.Email,
-                user.Role,
-                user.Statut,
-                user.SocieteId,
-                SocieteNom = societe.Nom
-            });
+            nameof(GetUtilisateur),
+            new { id = utilisateur.Id },
+            dto);
     }
-
 
     // ============================================================
     // PUT : api/Utilisateurs/{id}
-    //
-    // Administrateur :
-    //     -> peut modifier n'importe quel utilisateur
-    //     -> peut changer sa société
-    //
-    // Gestionnaire :
-    //     -> uniquement utilisateur de sa société
-    //     -> ne peut pas changer la société
-    //     -> ne peut pas attribuer le rôle Administrateur
     // ============================================================
+
     [HttpPut("{id:guid}")]
-    public async Task<IActionResult> ModifierUtilisateur(
+    public async Task<ActionResult<UtilisateurDto>> ModifierUtilisateur(
         Guid id,
-        [FromBody] ModifierUtilisateurRequest request)
+        [FromBody] ModifierUtilisateurRequest request,
+        CancellationToken cancellationToken)
     {
-        // --------------------------------------------------------
-        // Recherche de l'utilisateur
-        // --------------------------------------------------------
-
-        var user = await _context.Utilisateurs
-            .FirstOrDefaultAsync(u =>
-                u.Id == id &&
-                !u.EstSupprime);
-
-        if (user == null)
-            return NotFound("Utilisateur introuvable.");
-
-        var isAdmin = User.IsInRole("Administrateur");
-        var isGestionnaire = User.IsInRole("Gestionnaire");
-
-        // --------------------------------------------------------
-        // Gestionnaire :
-        // il ne peut modifier qu'un utilisateur de sa société
-        // --------------------------------------------------------
-
-        if (isGestionnaire && !isAdmin)
-        {
-            var currentSocieteId =
-                await GetSocieteIdUtilisateurConnecteAsync();
-
-            if (currentSocieteId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
-
-            if (user.SocieteId != currentSocieteId.Value)
-            {
-                return Forbid();
-            }
-
-            // Le Gestionnaire ne peut pas transformer un utilisateur
-            // en Administrateur.
-            if (request.Role == RoleUtilisateur.Administrateur)
-            {
-                return Forbid();
-            }
-        }
-
-        // --------------------------------------------------------
-        // Validation
-        // --------------------------------------------------------
+        if (request is null)
+            return BadRequest("La requête est obligatoire.");
 
         if (string.IsNullOrWhiteSpace(request.Nom))
             return BadRequest("Le nom est obligatoire.");
@@ -404,98 +306,159 @@ public class UtilisateursController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Email))
             return BadRequest("L'adresse courriel est obligatoire.");
 
-        var email = request.Email.Trim().ToLowerInvariant();
+        if (!Enum.IsDefined(typeof(RoleUtilisateur), request.Role))
+            return BadRequest("Le rôle sélectionné est invalide.");
 
-        // --------------------------------------------------------
-        // Société cible
-        // --------------------------------------------------------
+        var utilisateurConnecte =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
-        Guid societeIdCible;
+        if (utilisateurConnecte is null)
+            return Unauthorized();
 
-        if (isAdmin)
+        var utilisateur = await _context.Utilisateurs
+            .FirstOrDefaultAsync(
+                u =>
+                    u.Id == id &&
+                    !u.EstSupprime,
+                cancellationToken);
+
+        if (utilisateur is null)
+            return NotFound("Utilisateur introuvable.");
+
+        // ========================================================
+        // Protection de l'Administrateur
+        // ========================================================
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Gestionnaire)
         {
-            // Administrateur :
-            // le SocieteId peut être modifié.
+            // Le Gestionnaire ne peut modifier que sa société
+            if (utilisateur.SocieteId != utilisateurConnecte.SocieteId)
+                return Forbid();
 
-            if (!request.SocieteId.HasValue ||
-                request.SocieteId.Value == Guid.Empty)
+            // Impossible pour un Gestionnaire de modifier un Admin
+            if (utilisateur.Role == RoleUtilisateur.Administrateur)
+                return Forbid();
+
+            // Impossible d'attribuer le rôle Administrateur
+            if (request.Role == RoleUtilisateur.Administrateur)
+                return Forbid();
+        }
+
+        // ========================================================
+        // Protection de son propre compte
+        // ========================================================
+
+        if (utilisateur.Id == utilisateurConnecte.Id)
+        {
+            // On ne permet pas de modifier son rôle
+            if (request.Role != utilisateur.Role)
             {
                 return BadRequest(
-                    "La société de l'utilisateur est obligatoire.");
+                    "Vous ne pouvez pas modifier votre propre rôle.");
             }
 
-            societeIdCible = request.SocieteId.Value;
+            // On ne permet pas de changer sa société
+            if (request.SocieteId.HasValue &&
+                request.SocieteId.Value != utilisateur.SocieteId)
+            {
+                return BadRequest(
+                    "Vous ne pouvez pas modifier votre propre société.");
+            }
+
+            // On ne permet pas de désactiver son propre compte
+            if (!request.Statut)
+            {
+                return BadRequest(
+                    "Vous ne pouvez pas désactiver votre propre compte.");
+            }
+        }
+
+        // ========================================================
+        // Détermination de la société
+        // ========================================================
+
+        Guid societeId;
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Administrateur)
+        {
+            societeId = request.SocieteId ?? utilisateur.SocieteId;
         }
         else
         {
-            // Gestionnaire :
-            // la société ne peut jamais être modifiée.
-            societeIdCible = user.SocieteId;
+            societeId = utilisateurConnecte.SocieteId;
+
+            if (request.SocieteId.HasValue &&
+                request.SocieteId.Value != societeId)
+            {
+                return Forbid();
+            }
         }
 
-        // --------------------------------------------------------
-        // Vérifier que la société cible existe
-        // --------------------------------------------------------
+        // ========================================================
+        // Société cible
+        // ========================================================
 
         var societe = await _context.Societes
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s =>
-                s.Id == societeIdCible &&
-                !s.EstSupprime);
+            .FirstOrDefaultAsync(
+                s =>
+                    s.Id == societeId &&
+                    !s.EstSupprime,
+                cancellationToken);
 
-        if (societe == null)
+        if (societe is null)
+            return BadRequest("La société sélectionnée n'existe pas.");
+
+        if (!societe.Actif && request.Statut)
         {
             return BadRequest(
-                "La société sélectionnée est introuvable.");
+                "Impossible d'activer un utilisateur dans une société inactive.");
         }
 
-        // --------------------------------------------------------
-        // Vérifier que la société cible est active
-        // --------------------------------------------------------
+        // ========================================================
+        // Email unique dans la société
+        // ========================================================
 
-        if (!societe.Actif)
-        {
-            return BadRequest(
-                "Impossible de rattacher un utilisateur à une société inactive.");
-        }
-
-        // --------------------------------------------------------
-        // Vérifier l'unicité de l'email dans la société cible
-        // --------------------------------------------------------
+        var emailNormalise = request.Email.Trim().ToLower();
 
         var emailExiste = await _context.Utilisateurs
-            .AnyAsync(u =>
-                u.Id != id &&
-                u.SocieteId == societeIdCible &&
-                u.Email.ToLower() == email &&
-                !u.EstSupprime);
+            .AnyAsync(
+                u =>
+                    u.Id != id &&
+                    u.SocieteId == societeId &&
+                    !u.EstSupprime &&
+                    u.Email.ToLower() == emailNormalise,
+                cancellationToken);
 
         if (emailExiste)
         {
             return Conflict(
-                "Un autre utilisateur utilise déjà cette adresse courriel dans cette société.");
+                "Un autre utilisateur avec cette adresse courriel existe déjà dans cette société.");
         }
 
-        // --------------------------------------------------------
-        // Modification
-        // --------------------------------------------------------
+        // ========================================================
+        // Mise à jour
+        // ========================================================
 
-        user.Nom = request.Nom.Trim();
-        user.Prenom = request.Prenom.Trim();
-        user.Telephone = request.Telephone?.Trim() ?? string.Empty;
-        user.Email = email;
-        user.Role = request.Role;
-        user.Statut = request.Statut;
+        utilisateur.Nom = request.Nom.Trim();
+        utilisateur.Prenom = request.Prenom.Trim();
 
-        // Changement de société uniquement pour Administrateur
-        if (isAdmin)
-        {
-            user.SocieteId = societeIdCible;
-        }
+        utilisateur.Telephone =
+            string.IsNullOrWhiteSpace(request.Telephone)
+                ? null
+                : request.Telephone.Trim();
 
-        // --------------------------------------------------------
-        // Mot de passe
-        // --------------------------------------------------------
+        utilisateur.Email = request.Email.Trim();
+
+        // IMPORTANT :
+        // Role est un enum
+        utilisateur.Role = request.Role;
+
+        utilisateur.Statut = request.Statut;
+        utilisateur.SocieteId = societeId;
+
+        // ========================================================
+        // Nouveau mot de passe facultatif
+        // ========================================================
 
         if (!string.IsNullOrWhiteSpace(request.NouveauMotDePasse))
         {
@@ -505,163 +468,180 @@ public class UtilisateursController : ControllerBase
                     "Le nouveau mot de passe doit contenir au moins 8 caractères.");
             }
 
-            user.MotDePasseHash =
+            utilisateur.MotDePasseHash =
                 BCrypt.Net.BCrypt.HashPassword(
                     request.NouveauMotDePasse);
         }
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync(cancellationToken);
+
+        var dto = new UtilisateurDto
+        {
+            Id = utilisateur.Id,
+            Nom = utilisateur.Nom,
+            Prenom = utilisateur.Prenom,
+            Telephone = utilisateur.Telephone,
+            Email = utilisateur.Email,
+            Role = utilisateur.Role,
+            Statut = utilisateur.Statut,
+            SocieteId = utilisateur.SocieteId
+        };
+
+        return Ok(dto);
+    }
+
+    // ============================================================
+    // PATCH : api/Utilisateurs/{id}/statut
+    // ============================================================
+
+    [HttpPatch("{id:guid}/statut")]
+    public async Task<IActionResult> ModifierStatut(
+        Guid id,
+        [FromBody] ModifierStatutUtilisateurRequest request,
+        CancellationToken cancellationToken)
+    {
+        var utilisateurConnecte =
+            await GetUtilisateurConnecteAsync(cancellationToken);
+
+        if (utilisateurConnecte is null)
+            return Unauthorized();
+
+        var utilisateur = await _context.Utilisateurs
+            .FirstOrDefaultAsync(
+                u =>
+                    u.Id == id &&
+                    !u.EstSupprime,
+                cancellationToken);
+
+        if (utilisateur is null)
+            return NotFound("Utilisateur introuvable.");
+
+        // ========================================================
+        // Impossible de modifier son propre statut
+        // ========================================================
+
+        if (utilisateur.Id == utilisateurConnecte.Id)
+        {
+            return BadRequest(
+                "Vous ne pouvez pas modifier votre propre statut.");
+        }
+
+        // ========================================================
+        // Gestionnaire
+        // ========================================================
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Gestionnaire)
+        {
+            // Un Gestionnaire ne gère que sa société
+            if (utilisateur.SocieteId != utilisateurConnecte.SocieteId)
+                return Forbid();
+
+            // Impossible de désactiver/modifier un Administrateur
+            if (utilisateur.Role == RoleUtilisateur.Administrateur)
+                return Forbid();
+        }
+
+        // ========================================================
+        // Si activation : vérifier que la société est active
+        // ========================================================
+
+        if (request.Statut)
+        {
+            var societeActive = await _context.Societes
+                .AnyAsync(
+                    s =>
+                        s.Id == utilisateur.SocieteId &&
+                        !s.EstSupprime &&
+                        s.Actif,
+                    cancellationToken);
+
+            if (!societeActive)
+            {
+                return BadRequest(
+                    "Impossible d'activer un utilisateur dans une société inactive.");
+            }
+        }
+
+        utilisateur.Statut = request.Statut;
+
+        await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
 
-
-    // ============================================================
-    // PATCH : api/Utilisateurs/{id}/statut
-    //
-    // Administrateur :
-    //     -> peut modifier n'importe quel utilisateur
-    //
-    // Gestionnaire :
-    //     -> uniquement dans sa société
-    // ============================================================
-    [HttpPatch("{id:guid}/statut")]
-    public async Task<IActionResult> ModifierStatutUtilisateur(
-        Guid id,
-        [FromBody] ModifierStatutUtilisateurRequest request)
-    {
-        var user = await _context.Utilisateurs
-            .FirstOrDefaultAsync(u =>
-                u.Id == id &&
-                !u.EstSupprime);
-
-        if (user == null)
-            return NotFound("Utilisateur introuvable.");
-
-        // --------------------------------------------------------
-        // Gestionnaire : uniquement sa société
-        // --------------------------------------------------------
-
-        if (User.IsInRole("Gestionnaire") &&
-            !User.IsInRole("Administrateur"))
-        {
-            var societeId =
-                await GetSocieteIdUtilisateurConnecteAsync();
-
-            if (societeId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
-
-            if (user.SocieteId != societeId.Value)
-                return Forbid();
-        }
-
-        // --------------------------------------------------------
-        // Empêcher de désactiver son propre compte
-        // --------------------------------------------------------
-
-        var currentUserId = GetCurrentUserId();
-
-        if (currentUserId.HasValue &&
-            currentUserId.Value == user.Id &&
-            !request.Statut)
-        {
-            return BadRequest(
-                "Vous ne pouvez pas désactiver votre propre compte.");
-        }
-
-        user.Statut = request.Statut;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            Message = request.Statut
-                ? "Utilisateur activé avec succès."
-                : "Utilisateur désactivé avec succès.",
-
-            user.Id,
-            user.Statut
-        });
-    }
-
-
     // ============================================================
     // DELETE : api/Utilisateurs/{id}
-    //
-    // Administrateur :
-    //     -> peut supprimer n'importe quel utilisateur
-    //
-    // Gestionnaire :
-    //     -> peut supprimer uniquement un utilisateur de sa société
     // ============================================================
-    [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> SupprimerUtilisateur(Guid id)
-    {
-        var user = await _context.Utilisateurs
-            .FirstOrDefaultAsync(u =>
-                u.Id == id &&
-                !u.EstSupprime);
 
-        if (user == null)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> SupprimerUtilisateur(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var utilisateurConnecte =
+            await GetUtilisateurConnecteAsync(cancellationToken);
+
+        if (utilisateurConnecte is null)
+            return Unauthorized();
+
+        var utilisateur = await _context.Utilisateurs
+            .FirstOrDefaultAsync(
+                u =>
+                    u.Id == id &&
+                    !u.EstSupprime,
+                cancellationToken);
+
+        if (utilisateur is null)
             return NotFound("Utilisateur introuvable.");
 
-        // --------------------------------------------------------
-        // Gestionnaire : uniquement sa société
-        // --------------------------------------------------------
+        // ========================================================
+        // Impossible de se supprimer soi-même
+        // ========================================================
 
-        if (User.IsInRole("Gestionnaire") &&
-            !User.IsInRole("Administrateur"))
-        {
-            var societeId =
-                await GetSocieteIdUtilisateurConnecteAsync();
-
-            if (societeId == null)
-            {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
-            }
-
-            if (user.SocieteId != societeId.Value)
-                return Forbid();
-        }
-
-        // --------------------------------------------------------
-        // Empêcher de supprimer son propre compte
-        // --------------------------------------------------------
-
-        var currentUserId = GetCurrentUserId();
-
-        if (currentUserId.HasValue &&
-            currentUserId.Value == user.Id)
+        if (utilisateur.Id == utilisateurConnecte.Id)
         {
             return BadRequest(
                 "Vous ne pouvez pas supprimer votre propre compte.");
         }
 
-        // --------------------------------------------------------
-        // Suppression logique
-        // --------------------------------------------------------
+        // ========================================================
+        // Impossible de supprimer un Administrateur
+        // ========================================================
 
-        user.EstSupprime = true;
-        user.Statut = false;
-        user.DateSuppression = DateTime.UtcNow;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
+        if (utilisateur.Role == RoleUtilisateur.Administrateur)
         {
-            Message = "Compte utilisateur supprimé avec succès."
-        });
+            return Forbid();
+        }
+
+        // ========================================================
+        // Gestionnaire : uniquement sa société
+        // ========================================================
+
+        if (utilisateurConnecte.Role == RoleUtilisateur.Gestionnaire)
+        {
+            if (utilisateur.SocieteId != utilisateurConnecte.SocieteId)
+                return Forbid();
+        }
+
+        // ========================================================
+        // Suppression logique
+        // ========================================================
+
+        utilisateur.EstSupprime = true;
+        utilisateur.Statut = false;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
     }
 
+    // ============================================================
+    // UTILITAIRE : utilisateur connecté
+    // ============================================================
 
-    // ============================================================
-    // Récupérer le SocieteId de l'utilisateur connecté
-    // ============================================================
-    private async Task<Guid?> GetSocieteIdUtilisateurConnecteAsync()
+    private async Task<UtilisateurConnecteInfo?>
+        GetUtilisateurConnecteAsync(
+            CancellationToken cancellationToken)
     {
         var currentUserId = GetCurrentUserId();
 
@@ -673,31 +653,74 @@ public class UtilisateursController : ControllerBase
             .Where(u =>
                 u.Id == currentUserId.Value &&
                 !u.EstSupprime &&
-                u.Statut)
-            .Select(u => (Guid?)u.SocieteId)
-            .FirstOrDefaultAsync();
+                u.Statut &&
+                u.SocieteId != Guid.Empty)
+            .Select(u => new UtilisateurConnecteInfo
+            {
+                Id = u.Id,
+                SocieteId = u.SocieteId,
+
+                // Role est un RoleUtilisateur
+                Role = u.Role
+            })
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
+    // ============================================================
+    // UTILITAIRE : récupération de l'ID depuis les claims JWT
+    // ============================================================
 
-    // ============================================================
-    // Récupérer l'ID de l'utilisateur connecté
-    // ============================================================
     private Guid? GetCurrentUserId()
     {
-        var userId =
-            User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var value =
+            User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub")
+            ?? User.FindFirstValue("Id");
 
-        if (Guid.TryParse(userId, out var id))
+        if (Guid.TryParse(value, out var id))
             return id;
 
         return null;
     }
+
+    // ============================================================
+    // DTO UTILISATEUR CONNECTÉ
+    // ============================================================
+
+    private sealed class UtilisateurConnecteInfo
+    {
+        public Guid Id { get; set; }
+
+        public Guid SocieteId { get; set; }
+
+        // IMPORTANT :
+        // Le type doit être RoleUtilisateur et non string.
+        public RoleUtilisateur Role { get; set; }
+    }
 }
 
+// =================================================================
+// DTOs
+// =================================================================
 
-// ================================================================
-// DTO - Création
-// ================================================================
+public record UtilisateurDto
+{
+    public Guid Id { get; init; }
+
+    public string Nom { get; init; } = string.Empty;
+
+    public string Prenom { get; init; } = string.Empty;
+
+    public string? Telephone { get; init; }
+
+    public string Email { get; init; } = string.Empty;
+
+    public RoleUtilisateur Role { get; init; }
+
+    public bool Statut { get; init; }
+
+    public Guid SocieteId { get; init; }
+}
 
 public record CreerUtilisateurRequest(
     string Nom,
@@ -709,11 +732,6 @@ public record CreerUtilisateurRequest(
     Guid? SocieteId
 );
 
-
-// ================================================================
-// DTO - Modification
-// ================================================================
-
 public record ModifierUtilisateurRequest(
     string Nom,
     string Prenom,
@@ -724,11 +742,6 @@ public record ModifierUtilisateurRequest(
     string? NouveauMotDePasse,
     Guid? SocieteId
 );
-
-
-// ================================================================
-// DTO - Modification du statut
-// ================================================================
 
 public record ModifierStatutUtilisateurRequest(
     bool Statut

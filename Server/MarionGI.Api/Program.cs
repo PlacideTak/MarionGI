@@ -81,56 +81,186 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// 6. Autorisations & Policies (Correction de l'erreur 500)
+// ============================================================
+// 6. AUTORISATIONS & POLICIES
+// ============================================================
+
 builder.Services.AddAuthorization(options =>
 {
+    // ========================================================
+    // POLICIES GENERALES
+    // ========================================================
+
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole("Administrateur"));
 
     options.AddPolicy("GestionnaireOrAdmin", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
-    // 🎯 Lecture
+
+    // ========================================================
+    // CONTRATS
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Locataire (uniquement ses contrats côté contrôleur)
     options.AddPolicy("Contrats.Read", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Locataire"));
 
-    // 🎯 Création
+    // Création :
+    // - Administrateur
+    // - Gestionnaire
     options.AddPolicy("Contrats.Create", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
-    // 🎯 Modification (résout le crash HTTP 500)
+    // Modification :
+    // - Administrateur
+    // - Gestionnaire
     options.AddPolicy("Contrats.Update", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
-    // 🎯 Suppression
+    // Suppression :
+    // - Administrateur seulement
     options.AddPolicy("Contrats.Delete", policy =>
-        policy.RequireRole("Administrateur"));
+        policy.RequireRole(
+            "Administrateur"));
 
-    // 🎯 Politiques pour les Biens Immobiliers
+
+    // ========================================================
+    // BIENS IMMOBILIERS
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
+    // - Locataire
+    //
+    // Le contrôleur doit limiter le Locataire à sa société /
+    // ses données autorisées.
     options.AddPolicy("Biens.Read", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Agent", "Locataire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Agent",
+            "Locataire"));
 
+    // Création
     options.AddPolicy("Biens.Create", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
+    // Modification
     options.AddPolicy("Biens.Update", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
+    // Suppression
     options.AddPolicy("Biens.Delete", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
-    // 🎯 Politiques pour les Demandes de Visite
+
+    // ========================================================
+    // UNITES LOCATIVES
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
+    // - Locataire
+    //
+    // IMPORTANT :
+    // Le contrôleur UnitesLocatives limite le Locataire
+    // uniquement à ses propres unités via ses contrats.
+    options.AddPolicy("UnitesLocatives.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Agent",
+            "Locataire"));
+
+    // Création :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("UnitesLocatives.Create", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Modification :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("UnitesLocatives.Update", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Suppression :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("UnitesLocatives.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+
+    // ========================================================
+    // DEMANDES DE VISITE
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
     options.AddPolicy("DemandesVisite.Read", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Agent"));
 
+    // Création :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
     options.AddPolicy("DemandesVisite.Create", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Agent"));
 
+    // Modification :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
     options.AddPolicy("DemandesVisite.Update", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire",
+            "Agent"));
 
+    // Suppression :
+    // - Administrateur
+    // - Gestionnaire
     options.AddPolicy("DemandesVisite.Delete", policy =>
-        policy.RequireRole("Administrateur", "Gestionnaire"));
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 });
 
 // 7. Contrôleurs & CORS

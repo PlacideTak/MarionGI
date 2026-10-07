@@ -1,10 +1,10 @@
-﻿using MarionGI.Domain.Entities;
-using MarionGI.Domain.Enums;
-using MarionGI.Persistence.Context;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MarionGI.Domain.Entities;
+using MarionGI.Domain.Enums;
 using System.Security.Claims;
+using MarionGI.Persistence.Context;
 
 namespace MarionGI.Api.Controllers;
 
@@ -14,67 +14,61 @@ namespace MarionGI.Api.Controllers;
 public class ContratsController : ControllerBase
 {
     private readonly MarionDbContext _context;
+    private readonly ILogger<ContratsController> _logger;
 
-    public ContratsController(MarionDbContext context)
+    public ContratsController(
+        MarionDbContext context,
+        ILogger<ContratsController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
-    // ============================================================
-    // GET: api/Contrats
-    // ============================================================
+    // =========================================================
+    // GET : api/Contrats
+    // =========================================================
 
     [HttpGet]
     [Authorize(Policy = "Contrats.Read")]
-    public async Task<IActionResult> GetContrats(
-        [FromQuery] StatutContrat? statut)
+    public async Task<ActionResult<IEnumerable<object>>> GetContrats(
+        [FromQuery] StatutContrat? statut = null)
     {
         var societeId = GetSocieteId();
+        var utilisateurId = GetUtilisateurId();
 
-        if (!societeId.HasValue)
-        {
-            return Unauthorized(new
-            {
-                message = "Société introuvable dans le jeton."
-            });
-        }
+        if (societeId == null || utilisateurId == null)
+            return Unauthorized();
 
         var query = _context.Contrats
             .AsNoTracking()
             .Where(c =>
                 !c.EstSupprime &&
                 c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
                 c.UniteLocative.BienImmobilier != null &&
+                !c.UniteLocative.BienImmobilier.EstSupprime &&
                 c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
 
-        // ========================================================
-        // Filtrage selon le rôle
-        // ========================================================
+        // -----------------------------------------------------
+        // Filtre selon le rôle
+        // -----------------------------------------------------
 
-        query = ApplyOwnershipFilter(query);
-
-        // ========================================================
-        // Filtre statut
-        // ========================================================
+        query = ApplyOwnershipFilter(query, utilisateurId.Value);
 
         if (statut.HasValue)
         {
+            if (!Enum.IsDefined(typeof(StatutContrat), statut.Value))
+                return BadRequest("Le statut du contrat est invalide.");
+
             query = query.Where(c => c.Statut == statut.Value);
         }
 
-        // ========================================================
-        // Projection DTO
-        // ========================================================
-
-        var result = await query
-            .OrderByDescending(c => c.DateCreation)
+        var contrats = await query
+            .OrderByDescending(c => c.DateDebut)
             .Select(c => new
             {
                 c.Id,
                 c.Reference,
-
-                c.UniteLocativeId,
-                c.LocataireId,
 
                 c.DateDebut,
                 c.DateFin,
@@ -86,49 +80,27 @@ public class ContratsController : ControllerBase
                 c.DelaiJoursTolerance,
 
                 c.Statut,
+                c.EstSupprime,
 
-                // ==================================================
-                // Unité locative
-                // ==================================================
+                UniteLocative = new
+                {
+                    c.UniteLocative!.Id,
+                    c.UniteLocative.Reference,
+                    c.UniteLocative.Type,
+                    c.UniteLocative.Superficie,
+                    c.UniteLocative.Loyer,
+                    c.UniteLocative.Statut
+                },
 
-                UniteLocative = c.UniteLocative == null
-                    ? null
-                    : new
-                    {
-                        c.UniteLocative.Id,
-                        c.UniteLocative.Reference,
-                        c.UniteLocative.Type,
-                        c.UniteLocative.Superficie,
-                        c.UniteLocative.Loyer,
-                        c.UniteLocative.Statut,
-
-                        c.UniteLocative.BienImmobilierId,
-
-                        // Informations du bien parent
-                        BienReference =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Reference
-                                : null,
-
-                        BienAdresse =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Adresse
-                                : null,
-
-                        BienVille =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Ville
-                                : null,
-
-                        SocieteId =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.SocieteId
-                                : Guid.Empty
-                    },
-
-                // ==================================================
-                // Locataire
-                // ==================================================
+                BienImmobilier = new
+                {
+                    c.UniteLocative.BienImmobilier!.Id,
+                    c.UniteLocative.BienImmobilier.Reference,
+                    c.UniteLocative.BienImmobilier.Nom,
+                    c.UniteLocative.BienImmobilier.Adresse,
+                    c.UniteLocative.BienImmobilier.Ville,
+                    c.UniteLocative.BienImmobilier.Quartier
+                },
 
                 Locataire = c.Locataire == null
                     ? null
@@ -137,54 +109,43 @@ public class ContratsController : ControllerBase
                         c.Locataire.Id,
                         c.Locataire.Nom,
                         c.Locataire.Prenom,
-
-                        NomComplet =
-                            c.Locataire.Prenom
-                            + " "
-                            + c.Locataire.Nom,
-
-                        c.Locataire.Email,
-                        c.Locataire.Telephone
+                        c.Locataire.Email
                     }
             })
             .ToListAsync();
 
-        return Ok(result);
+        return Ok(contrats);
     }
 
-    // ============================================================
-    // GET: api/Contrats/{id}
-    // ============================================================
+
+    // =========================================================
+    // GET : api/Contrats/{id}
+    // =========================================================
 
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "Contrats.Read")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<ActionResult<object>> GetContrat(Guid id)
     {
         var societeId = GetSocieteId();
+        var utilisateurId = GetUtilisateurId();
 
-        if (!societeId.HasValue)
-        {
-            return Unauthorized(new
-            {
-                message = "Société introuvable dans le jeton."
-            });
-        }
+        if (societeId == null || utilisateurId == null)
+            return Unauthorized();
 
         var query = _context.Contrats
             .AsNoTracking()
             .Where(c =>
-                !c.EstSupprime &&
                 c.Id == id &&
+                !c.EstSupprime &&
                 c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
                 c.UniteLocative.BienImmobilier != null &&
-                c.UniteLocative.BienImmobilier.SocieteId
-                    == societeId.Value);
+                !c.UniteLocative.BienImmobilier.EstSupprime &&
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
 
-        // ========================================================
-        // Sécurité propriétaire / locataire
-        // ========================================================
-
-        query = ApplyOwnershipFilter(query);
+        // Très important :
+        // le filtre est également appliqué sur l'accès direct par ID.
+        query = ApplyOwnershipFilter(query, utilisateurId.Value);
 
         var contrat = await query
             .Select(c => new
@@ -192,9 +153,6 @@ public class ContratsController : ControllerBase
                 c.Id,
                 c.Reference,
 
-                c.UniteLocativeId,
-                c.LocataireId,
-
                 c.DateDebut,
                 c.DateFin,
 
@@ -206,48 +164,25 @@ public class ContratsController : ControllerBase
 
                 c.Statut,
 
-                // ==================================================
-                // Unité locative
-                // ==================================================
+                UniteLocative = new
+                {
+                    c.UniteLocative!.Id,
+                    c.UniteLocative.Reference,
+                    c.UniteLocative.Type,
+                    c.UniteLocative.Superficie,
+                    c.UniteLocative.Loyer,
+                    c.UniteLocative.Statut
+                },
 
-                UniteLocative = c.UniteLocative == null
-                    ? null
-                    : new
-                    {
-                        c.UniteLocative.Id,
-                        c.UniteLocative.Reference,
-                        c.UniteLocative.Type,
-                        c.UniteLocative.Superficie,
-                        c.UniteLocative.Loyer,
-                        c.UniteLocative.Statut,
-
-                        c.UniteLocative.BienImmobilierId,
-
-                        // Informations du bien
-                        BienReference =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Reference
-                                : null,
-
-                        BienAdresse =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Adresse
-                                : null,
-
-                        BienVille =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.Ville
-                                : null,
-
-                        SocieteId =
-                            c.UniteLocative.BienImmobilier != null
-                                ? c.UniteLocative.BienImmobilier.SocieteId
-                                : Guid.Empty
-                    },
-
-                // ==================================================
-                // Locataire
-                // ==================================================
+                BienImmobilier = new
+                {
+                    c.UniteLocative.BienImmobilier!.Id,
+                    c.UniteLocative.BienImmobilier.Reference,
+                    c.UniteLocative.BienImmobilier.Nom,
+                    c.UniteLocative.BienImmobilier.Adresse,
+                    c.UniteLocative.BienImmobilier.Ville,
+                    c.UniteLocative.BienImmobilier.Quartier
+                },
 
                 Locataire = c.Locataire == null
                     ? null
@@ -256,19 +191,8 @@ public class ContratsController : ControllerBase
                         c.Locataire.Id,
                         c.Locataire.Nom,
                         c.Locataire.Prenom,
-
-                        NomComplet =
-                            c.Locataire.Prenom
-                            + " "
-                            + c.Locataire.Nom,
-
-                        c.Locataire.Email,
-                        c.Locataire.Telephone
+                        c.Locataire.Email
                     },
-
-                // ==================================================
-                // Paiements
-                // ==================================================
 
                 Paiements = c.Paiements
                     .Where(p => !p.EstSupprime)
@@ -278,200 +202,142 @@ public class ContratsController : ControllerBase
                         p.Id,
                         p.Montant,
                         p.DatePaiement,
-                        p.ModePaiement,
-                        p.StatutTransaction,
-                        p.ReferenceTransactionOperateur,
-                        p.NumeroQuittance,
-                        p.EnregistreParUtilisateurId
+                        p.ModePaiement
                     })
                     .ToList()
             })
             .FirstOrDefaultAsync();
 
         if (contrat == null)
-        {
-            return NotFound(new
-            {
-                message =
-                    "Contrat introuvable ou accès non autorisé."
-            });
-        }
+            return NotFound("Contrat introuvable.");
 
         return Ok(contrat);
     }
 
-    // ============================================================
-    // POST: api/Contrats
-    // ============================================================
+
+    // =========================================================
+    // POST : api/Contrats
+    // =========================================================
 
     [HttpPost]
     [Authorize(Policy = "Contrats.Create")]
-    public async Task<IActionResult> Creer(
+    public async Task<ActionResult<object>> Creer(
         [FromBody] CreerContratRequest request)
     {
         var societeId = GetSocieteId();
 
-        if (!societeId.HasValue)
+        if (societeId == null)
+            return Unauthorized();
+
+        // -----------------------------------------------------
+        // Validation de base
+        // -----------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(request.Reference))
+            return BadRequest("La référence du contrat est obligatoire.");
+
+        var reference = request.Reference.Trim();
+
+        if (request.DateFin < request.DateDebut)
+            return BadRequest(
+                "La date de fin doit être supérieure ou égale à la date de début.");
+
+        if (request.MontantLoyer <= 0)
+            return BadRequest(
+                "Le montant du loyer doit être supérieur à zéro.");
+
+        if (request.MontantCaution < 0)
+            return BadRequest(
+                "Le montant de la caution ne peut pas être négatif.");
+
+        if (request.DelaiJoursTolerance < 0)
+            return BadRequest(
+                "Le délai de tolérance ne peut pas être négatif.");
+
+        if (!Enum.IsDefined(
+                typeof(FrequencePaiement),
+                request.FrequencePaiement))
         {
-            return Unauthorized(new
-            {
-                message = "Société introuvable dans le jeton."
-            });
+            return BadRequest("La fréquence de paiement est invalide.");
         }
 
-        // ========================================================
-        // Validation de la référence
-        // ========================================================
-
-        var reference = request.Reference?.Trim();
-
-        if (string.IsNullOrWhiteSpace(reference))
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La référence du contrat est obligatoire."
-            });
-        }
-
-        if (reference.Length > 50)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La référence du contrat ne peut pas dépasser 50 caractères."
-            });
-        }
-
-        // ========================================================
-        // Vérifier l'unicité de la référence
-        // ========================================================
+        // -----------------------------------------------------
+        // Vérification référence
+        // Unique dans la société
+        // -----------------------------------------------------
 
         var referenceExiste = await _context.Contrats
             .AnyAsync(c =>
-                c.Reference == reference);
+                !c.EstSupprime &&
+                c.Reference == reference &&
+                c.UniteLocative != null &&
+                c.UniteLocative.BienImmobilier != null &&
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
 
         if (referenceExiste)
         {
-            return BadRequest(new
-            {
-                message =
-                    $"La référence de contrat « {reference} » est déjà utilisée."
-            });
+            return Conflict(
+                $"La référence '{reference}' est déjà utilisée dans cette société.");
         }
 
-        // ========================================================
-        // Validation des dates
-        // ========================================================
+        // -----------------------------------------------------
+        // Vérification unité locative
+        // -----------------------------------------------------
 
-        if (request.DateDebut >= request.DateFin)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La date de début doit être antérieure à la date de fin."
-            });
-        }
-
-        // ========================================================
-        // Validation du loyer
-        // ========================================================
-
-        if (request.MontantLoyer <= 0)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le montant du loyer doit être supérieur à zéro."
-            });
-        }
-
-        // ========================================================
-        // Validation de la caution
-        // ========================================================
-
-        if (request.MontantCaution < 0)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le montant de la caution ne peut pas être négatif."
-            });
-        }
-
-        // ========================================================
-        // Validation du délai de tolérance
-        // ========================================================
-
-        if (request.DelaiJoursTolerance < 0)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le délai de tolérance ne peut pas être négatif."
-            });
-        }
-
-        // ========================================================
-        // Vérifier l'unité locative
-        // ========================================================
-
-        var uniteLocative = await _context.UnitesLocatives
+        var unite = await _context.UnitesLocatives
             .Include(u => u.BienImmobilier)
             .FirstOrDefaultAsync(u =>
                 u.Id == request.UniteLocativeId &&
+                !u.EstSupprime &&
                 u.BienImmobilier != null &&
+                !u.BienImmobilier.EstSupprime &&
                 u.BienImmobilier.SocieteId == societeId.Value);
 
-        if (uniteLocative == null)
+        if (unite == null)
         {
-            return BadRequest(new
-            {
-                message =
-                    "Unité locative introuvable ou appartenant à une autre société."
-            });
+            return BadRequest(
+                "L'unité locative est introuvable ou n'appartient pas à votre société.");
         }
 
-        // ========================================================
-        // Vérifier le locataire
-        // ========================================================
+        // -----------------------------------------------------
+        // Vérification du locataire
+        // -----------------------------------------------------
 
         var locataire = await _context.Utilisateurs
             .FirstOrDefaultAsync(u =>
                 u.Id == request.LocataireId &&
-                u.SocieteId == societeId.Value);
+                u.SocieteId == societeId.Value &&
+                !u.EstSupprime &&
+                u.Role == RoleUtilisateur.Locataire);
 
         if (locataire == null)
         {
-            return BadRequest(new
-            {
-                message =
-                    "Locataire introuvable ou appartenant à une autre société."
-            });
+            return BadRequest(
+                "Le locataire est introuvable, supprimé ou ne possède pas le rôle Locataire.");
         }
 
-        // ========================================================
-        // Vérifier qu'il n'existe pas déjà un contrat actif
-        // ========================================================
+        // -----------------------------------------------------
+        // Vérification qu'il n'existe pas déjà un contrat actif
+        // -----------------------------------------------------
 
-        var contratActifExiste = await _context.Contrats
+        var contratActif = await _context.Contrats
             .AnyAsync(c =>
                 !c.EstSupprime &&
                 c.UniteLocativeId == request.UniteLocativeId &&
                 c.Statut == StatutContrat.Actif);
 
-        if (contratActifExiste)
+        if (contratActif)
         {
-            return BadRequest(new
-            {
-                message =
-                    "Cette unité locative possède déjà un contrat actif."
-            });
+            return Conflict(
+                "Cette unité locative possède déjà un contrat actif.");
         }
 
-        // ========================================================
+        // -----------------------------------------------------
         // Création
-        // ========================================================
+        //
+        // Nouveau contrat = EnAttente.
+        // L'unité ne devient Louée qu'à l'activation.
+        // -----------------------------------------------------
 
         var contrat = new Contrat
         {
@@ -479,198 +345,151 @@ public class ContratsController : ControllerBase
 
             Reference = reference,
 
-            UniteLocativeId =
-                request.UniteLocativeId,
+            UniteLocativeId = unite.Id,
+            LocataireId = locataire.Id,
 
-            LocataireId =
-                request.LocataireId,
+            DateDebut = request.DateDebut,
+            DateFin = request.DateFin,
 
-            DateDebut =
-                request.DateDebut,
+            MontantLoyer = request.MontantLoyer,
+            MontantCaution = request.MontantCaution,
 
-            DateFin =
-                request.DateFin,
-
-            MontantLoyer =
-                request.MontantLoyer,
-
-            MontantCaution =
-                request.MontantCaution,
-
-            FrequencePaiement =
-                request.FrequencePaiement,
+            FrequencePaiement = request.FrequencePaiement,
 
             DelaiJoursTolerance =
                 request.DelaiJoursTolerance,
 
-            Statut =
-                StatutContrat.Actif,
-
-            DateCreation =
-                DateTime.UtcNow,
+            Statut = StatutContrat.EnAttente,
 
             EstSupprime = false
         };
 
-        // ========================================================
-        // Synchroniser l'unité
-        // ========================================================
-
-        uniteLocative.Statut =
-            StatutDisponibilite.Loue;
-
         _context.Contrats.Add(contrat);
+
+        // Une unité avec contrat EnAttente reste disponible.
+        if (unite.Statut == StatutDisponibilite.Loue)
+        {
+            unite.Statut = StatutDisponibilite.Disponible;
+        }
 
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(
-            nameof(GetById),
+            nameof(GetContrat),
             new { id = contrat.Id },
             new
             {
                 contrat.Id,
                 contrat.Reference,
-                contrat.UniteLocativeId,
-                contrat.LocataireId,
+                contrat.Statut,
                 contrat.DateDebut,
                 contrat.DateFin,
                 contrat.MontantLoyer,
                 contrat.MontantCaution,
-                contrat.FrequencePaiement,
-                contrat.DelaiJoursTolerance,
-                contrat.Statut
+                contrat.UniteLocativeId,
+                contrat.LocataireId
             });
     }
 
-    // ============================================================
-    // PUT: api/Contrats/{id}
-    // ============================================================
+
+    // =========================================================
+    // PUT : api/Contrats/{id}
+    // =========================================================
 
     [HttpPut("{id:guid}")]
     [Authorize(Policy = "Contrats.Update")]
-    public async Task<IActionResult> Modifier(
+    public async Task<ActionResult<object>> Modifier(
         Guid id,
         [FromBody] ModifierContratRequest request)
     {
         var societeId = GetSocieteId();
 
-        if (!societeId.HasValue)
-        {
-            return Unauthorized(new
-            {
-                message = "Société introuvable dans le jeton."
-            });
-        }
+        if (societeId == null)
+            return Unauthorized();
 
-        // ========================================================
+        // -----------------------------------------------------
         // Validation
-        // ========================================================
+        // -----------------------------------------------------
 
-        if (request.DateDebut >= request.DateFin)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La date de début doit être antérieure à la date de fin."
-            });
-        }
+        if (request.DateFin < request.DateDebut)
+            return BadRequest(
+                "La date de fin doit être supérieure ou égale à la date de début.");
 
         if (request.MontantLoyer <= 0)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le montant du loyer doit être supérieur à zéro."
-            });
-        }
+            return BadRequest(
+                "Le montant du loyer doit être supérieur à zéro.");
 
         if (request.MontantCaution < 0)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le montant de la caution ne peut pas être négatif."
-            });
-        }
+            return BadRequest(
+                "Le montant de la caution ne peut pas être négatif.");
 
         if (request.DelaiJoursTolerance < 0)
+            return BadRequest(
+                "Le délai de tolérance ne peut pas être négatif.");
+
+        if (!Enum.IsDefined(
+                typeof(FrequencePaiement),
+                request.FrequencePaiement))
         {
-            return BadRequest(new
-            {
-                message =
-                    "Le délai de tolérance ne peut pas être négatif."
-            });
+            return BadRequest("La fréquence de paiement est invalide.");
         }
 
-        // ========================================================
-        // Récupérer le contrat
-        // ========================================================
+        if (!Enum.IsDefined(
+                typeof(StatutContrat),
+                request.Statut))
+        {
+            return BadRequest("Le statut du contrat est invalide.");
+        }
+
+        // -----------------------------------------------------
+        // Recherche sécurisée du contrat
+        // -----------------------------------------------------
 
         var contrat = await _context.Contrats
             .Include(c => c.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .FirstOrDefaultAsync(c =>
-                !c.EstSupprime &&
                 c.Id == id &&
+                !c.EstSupprime &&
                 c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
                 c.UniteLocative.BienImmobilier != null &&
-                c.UniteLocative.BienImmobilier.SocieteId
-                    == societeId.Value);
+                !c.UniteLocative.BienImmobilier.EstSupprime &&
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
 
         if (contrat == null)
-        {
-            return NotFound(new
-            {
-                message =
-                    "Contrat introuvable ou accès non autorisé."
-            });
-        }
+            return NotFound("Contrat introuvable.");
 
-        // ========================================================
-        // Vérifier le passage vers Actif
-        // ========================================================
+        // -----------------------------------------------------
+        // Si activation :
+        // vérifier qu'aucun autre contrat actif n'existe
+        // -----------------------------------------------------
 
         if (request.Statut == StatutContrat.Actif)
         {
-            var autreContratActif =
-                await _context.Contrats
-                    .AnyAsync(c =>
-                        !c.EstSupprime &&
-                        c.Id != contrat.Id &&
-                        c.UniteLocativeId ==
-                            contrat.UniteLocativeId &&
-                        c.Statut ==
-                            StatutContrat.Actif);
+            var autreContratActif = await _context.Contrats
+                .AnyAsync(c =>
+                    c.Id != contrat.Id &&
+                    !c.EstSupprime &&
+                    c.UniteLocativeId == contrat.UniteLocativeId &&
+                    c.Statut == StatutContrat.Actif);
 
             if (autreContratActif)
             {
-                return BadRequest(new
-                {
-                    message =
-                        "Cette unité possède déjà un autre contrat actif."
-                });
+                return Conflict(
+                    "Cette unité locative possède déjà un autre contrat actif.");
             }
         }
 
-        // ========================================================
+        // -----------------------------------------------------
         // Mise à jour
-        // ========================================================
+        // -----------------------------------------------------
 
-        // IMPORTANT :
-        // La référence n'est pas modifiée.
-        // Elle reste définitive pour ce contrat.
+        contrat.DateDebut = request.DateDebut;
+        contrat.DateFin = request.DateFin;
 
-        contrat.DateDebut =
-            request.DateDebut;
-
-        contrat.DateFin =
-            request.DateFin;
-
-        contrat.MontantLoyer =
-            request.MontantLoyer;
-
-        contrat.MontantCaution =
-            request.MontantCaution;
+        contrat.MontantLoyer = request.MontantLoyer;
+        contrat.MontantCaution = request.MontantCaution;
 
         contrat.FrequencePaiement =
             request.FrequencePaiement;
@@ -678,34 +497,111 @@ public class ContratsController : ControllerBase
         contrat.DelaiJoursTolerance =
             request.DelaiJoursTolerance;
 
-        contrat.Statut =
-            request.Statut;
+        contrat.Statut = request.Statut;
 
-        // ========================================================
-        // Synchroniser le statut de l'unité
-        // ========================================================
+        // -----------------------------------------------------
+        // Mise à jour du statut de l'unité
+        // -----------------------------------------------------
 
-        if (request.Statut == StatutContrat.Actif)
+        if (contrat.UniteLocative != null)
         {
-            contrat.UniteLocative!.Statut =
-                StatutDisponibilite.Loue;
+            if (request.Statut == StatutContrat.Actif)
+            {
+                contrat.UniteLocative.Statut =
+                    StatutDisponibilite.Loue;
+            }
+            else if (
+                request.Statut == StatutContrat.Resilie ||
+                request.Statut == StatutContrat.Expire)
+            {
+                var autreContratActif = await _context.Contrats
+                    .AnyAsync(c =>
+                        c.Id != contrat.Id &&
+                        !c.EstSupprime &&
+                        c.UniteLocativeId == contrat.UniteLocativeId &&
+                        c.Statut == StatutContrat.Actif);
+
+                if (!autreContratActif)
+                {
+                    contrat.UniteLocative.Statut =
+                        StatutDisponibilite.Disponible;
+                }
+            }
+            else if (request.Statut == StatutContrat.EnAttente)
+            {
+                contrat.UniteLocative.Statut =
+                    StatutDisponibilite.Disponible;
+            }
         }
-        else if (
-            request.Statut == StatutContrat.Resilie ||
-            request.Statut == StatutContrat.Expire)
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
         {
-            var autreContratActif =
-                await _context.Contrats.AnyAsync(c =>
-                    !c.EstSupprime &&
+            contrat.Id,
+            contrat.Reference,
+            contrat.DateDebut,
+            contrat.DateFin,
+            contrat.MontantLoyer,
+            contrat.MontantCaution,
+            contrat.FrequencePaiement,
+            contrat.DelaiJoursTolerance,
+            contrat.Statut
+        });
+    }
+
+
+    // =========================================================
+    // DELETE : api/Contrats/{id}
+    // =========================================================
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Contrats.Delete")]
+    public async Task<IActionResult> Supprimer(Guid id)
+    {
+        var societeId = GetSocieteId();
+
+        if (societeId == null)
+            return Unauthorized();
+
+        var contrat = await _context.Contrats
+            .Include(c => c.UniteLocative)
+                .ThenInclude(u => u.BienImmobilier)
+            .FirstOrDefaultAsync(c =>
+                c.Id == id &&
+                !c.EstSupprime &&
+                c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
+                c.UniteLocative.BienImmobilier != null &&
+                !c.UniteLocative.BienImmobilier.EstSupprime &&
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
+
+        if (contrat == null)
+            return NotFound("Contrat introuvable.");
+
+        // -----------------------------------------------------
+        // Suppression logique
+        // -----------------------------------------------------
+
+        contrat.EstSupprime = true;
+
+        // -----------------------------------------------------
+        // Si aucun autre contrat actif :
+        // l'unité redevient disponible
+        // -----------------------------------------------------
+
+        if (contrat.UniteLocative != null)
+        {
+            var autreContratActif = await _context.Contrats
+                .AnyAsync(c =>
                     c.Id != contrat.Id &&
-                    c.UniteLocativeId ==
-                        contrat.UniteLocativeId &&
-                    c.Statut ==
-                        StatutContrat.Actif);
+                    !c.EstSupprime &&
+                    c.UniteLocativeId == contrat.UniteLocativeId &&
+                    c.Statut == StatutContrat.Actif);
 
             if (!autreContratActif)
             {
-                contrat.UniteLocative!.Statut =
+                contrat.UniteLocative.Statut =
                     StatutDisponibilite.Disponible;
             }
         }
@@ -715,210 +611,134 @@ public class ContratsController : ControllerBase
         return NoContent();
     }
 
-    // ============================================================
-    // DELETE: api/Contrats/{id}
-    // ============================================================
 
-    [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "Contrats.Delete")]
-    public async Task<IActionResult> Supprimer(Guid id)
-    {
-        var societeId = GetSocieteId();
-
-        if (!societeId.HasValue)
-        {
-            return Unauthorized(new
-            {
-                message = "Société introuvable dans le jeton."
-            });
-        }
-
-        var contrat = await _context.Contrats
-            .Include(c => c.UniteLocative)
-                .ThenInclude(u => u.BienImmobilier)
-            .FirstOrDefaultAsync(c =>
-                !c.EstSupprime &&
-                c.Id == id &&
-                c.UniteLocative != null &&
-                c.UniteLocative.BienImmobilier != null &&
-                c.UniteLocative.BienImmobilier.SocieteId
-                    == societeId.Value);
-
-        if (contrat == null)
-        {
-            return NotFound(new
-            {
-                message =
-                    "Contrat introuvable ou accès non autorisé."
-            });
-        }
-
-        // ========================================================
-        // Soft delete
-        // ========================================================
-
-        contrat.EstSupprime = true;
-        contrat.DateSuppression = DateTime.UtcNow;
-
-        // ========================================================
-        // Vérifier s'il reste un autre contrat actif
-        // ========================================================
-
-        var autreContratActif =
-            await _context.Contrats.AnyAsync(c =>
-                !c.EstSupprime &&
-                c.Id != contrat.Id &&
-                c.UniteLocativeId ==
-                    contrat.UniteLocativeId &&
-                c.Statut ==
-                    StatutContrat.Actif);
-
-        if (!autreContratActif &&
-            contrat.UniteLocative != null)
-        {
-            contrat.UniteLocative.Statut =
-                StatutDisponibilite.Disponible;
-        }
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message =
-                "Contrat archivé avec succès."
-        });
-    }
-
-    // ============================================================
-    // RÉCUPÉRER LA SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
-    // ============================================================
-
-    private Guid? GetSocieteId()
-    {
-        var claim =
-            User.FindFirst("SocieteId")?.Value;
-
-        if (Guid.TryParse(
-                claim,
-                out var societeId))
-        {
-            return societeId;
-        }
-
-        return null;
-    }
-
-    // ============================================================
-    // FILTRE ABAC
-    // ============================================================
+    // =========================================================
+    // FILTRE D'ACCÈS AUX CONTRATS
+    // =========================================================
 
     private IQueryable<Contrat> ApplyOwnershipFilter(
-        IQueryable<Contrat> query)
+        IQueryable<Contrat> query,
+        Guid utilisateurId)
     {
-        var roles = User.Claims
-            .Where(c =>
-                c.Type == ClaimTypes.Role ||
-                c.Type == "role")
-            .Select(c => c.Value)
-            .ToList();
+        var role = User.FindFirstValue(ClaimTypes.Role)
+                   ?? User.FindFirstValue("role");
 
-        // ========================================================
-        // Administrateur / Admin / Gestionnaire
-        // ========================================================
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return query.Where(_ => false);
+        }
 
-        if (roles.Any(r =>
-            r.Equals(
-                "Administrateur",
-                StringComparison.OrdinalIgnoreCase)
-            ||
-            r.Equals(
-                "Gestionnaire",
-                StringComparison.OrdinalIgnoreCase)
-            ||
-            r.Equals(
-                "Admin",
-                StringComparison.OrdinalIgnoreCase)))
+        // -----------------------------------------------------
+        // Administrateur / Gestionnaire
+        // -----------------------------------------------------
+        //
+        // La société est déjà filtrée dans les requêtes
+        // appelantes.
+        // -----------------------------------------------------
+
+        if (role == "Administrateur" ||
+            role == "Gestionnaire")
         {
             return query;
         }
 
-        // ========================================================
+        // -----------------------------------------------------
         // Locataire
-        // ========================================================
+        // -----------------------------------------------------
 
-        if (roles.Any(r =>
-            r.Equals(
-                "Locataire",
-                StringComparison.OrdinalIgnoreCase)))
+        if (role == "Locataire")
         {
-            var userIdClaim =
-                User.FindFirstValue(
-                    ClaimTypes.NameIdentifier)
-                ??
-                User.FindFirstValue("sub");
-
-            if (!Guid.TryParse(
-                    userIdClaim,
-                    out var userId))
-            {
-                return query.Where(_ => false);
-            }
-
-            return query.Where(
-                c => c.LocataireId == userId);
+            return query.Where(c =>
+                c.LocataireId == utilisateurId);
         }
 
-        // ========================================================
-        // Agent / autres rôles
-        // ========================================================
+        // -----------------------------------------------------
+        // Agent / autres rôles :
+        // pas d'accès aux contrats
+        // -----------------------------------------------------
 
         return query.Where(_ => false);
     }
 
-    // ============================================================
-    // DTO DE CRÉATION
-    // ============================================================
 
-    public class CreerContratRequest
+    // =========================================================
+    // CLAIM : SOCIETE
+    // =========================================================
+
+    private Guid? GetSocieteId()
     {
-        public string Reference { get; set; } = string.Empty;
+        var value =
+            User.FindFirstValue("SocieteId")
+            ?? User.FindFirstValue("societeId");
 
-        public Guid UniteLocativeId { get; set; }
+        if (Guid.TryParse(value, out var id))
+            return id;
 
-        public Guid LocataireId { get; set; }
-
-        public DateTime DateDebut { get; set; }
-
-        public DateTime DateFin { get; set; }
-
-        public decimal MontantLoyer { get; set; }
-
-        public decimal MontantCaution { get; set; }
-
-        public FrequencePaiement FrequencePaiement { get; set; }
-            = FrequencePaiement.Mensuel;
-
-        public int DelaiJoursTolerance { get; set; } = 5;
+        return null;
     }
 
-    // ============================================================
-    // DTO DE MODIFICATION
-    // ============================================================
 
-    public class ModifierContratRequest
+    // =========================================================
+    // CLAIM : UTILISATEUR
+    // =========================================================
+
+    private Guid? GetUtilisateurId()
     {
-        public DateTime DateDebut { get; set; }
+        var value =
+            User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub");
 
-        public DateTime DateFin { get; set; }
+        if (Guid.TryParse(value, out var id))
+            return id;
 
-        public decimal MontantLoyer { get; set; }
-
-        public decimal MontantCaution { get; set; }
-
-        public FrequencePaiement FrequencePaiement { get; set; }
-
-        public int DelaiJoursTolerance { get; set; }
-
-        public StatutContrat Statut { get; set; }
+        return null;
     }
+}
+
+
+// =============================================================
+// DTO : CREATION
+// =============================================================
+
+public class CreerContratRequest
+{
+    public string Reference { get; set; } = string.Empty;
+
+    public Guid UniteLocativeId { get; set; }
+
+    public Guid LocataireId { get; set; }
+
+    public DateTime DateDebut { get; set; }
+
+    public DateTime DateFin { get; set; }
+
+    public decimal MontantLoyer { get; set; }
+
+    public decimal MontantCaution { get; set; }
+
+    public FrequencePaiement FrequencePaiement { get; set; }
+
+    public int DelaiJoursTolerance { get; set; } = 5;
+}
+
+
+// =============================================================
+// DTO : MODIFICATION
+// =============================================================
+
+public class ModifierContratRequest
+{
+    public DateTime DateDebut { get; set; }
+
+    public DateTime DateFin { get; set; }
+
+    public decimal MontantLoyer { get; set; }
+
+    public decimal MontantCaution { get; set; }
+
+    public FrequencePaiement FrequencePaiement { get; set; }
+
+    public int DelaiJoursTolerance { get; set; } = 5;
+
+    public StatutContrat Statut { get; set; }
 }

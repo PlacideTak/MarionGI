@@ -21,7 +21,6 @@ public class DemandesVisiteController : ControllerBase
         _context = context;
     }
 
-
     // ============================================================
     // GET : api/DemandesVisite
     // ============================================================
@@ -31,6 +30,16 @@ public class DemandesVisiteController : ControllerBase
     public async Task<IActionResult> GetDemandesVisite(
         CancellationToken cancellationToken)
     {
+        var utilisateurId = GetCurrentUserId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                Message = "Impossible d'identifier l'utilisateur connecté."
+            });
+        }
+
         var societeId =
             await GetSocieteIdUtilisateurConnecteAsync(
                 cancellationToken);
@@ -44,6 +53,18 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        // ========================================================
+        // REQUÊTE DE BASE
+        // ========================================================
+        //
+        // Toujours :
+        // - demande non supprimée
+        // - unité non supprimée
+        // - bien non supprimé
+        // - bien appartenant à la société
+        //
+        // ========================================================
+
         var query = _context.DemandesVisite
             .AsNoTracking()
             .Where(d =>
@@ -53,29 +74,27 @@ public class DemandesVisiteController : ControllerBase
                 d.UniteLocative.BienImmobilier.SocieteId ==
                     societeId.Value);
 
-
         // ========================================================
-        // AGENT :
-        // uniquement ses demandes
+        // AGENT
+        // ========================================================
+        //
+        // Un Agent ne voit QUE ses propres demandes.
+        //
+        // Le filtre est appliqué AVANT le Select.
+        // Il est donc impossible de récupérer les données d'un
+        // autre agent.
+        //
         // ========================================================
 
         if (IsAgent())
         {
-            var currentUserId = GetCurrentUserId();
-
-            if (currentUserId == null)
-            {
-                return Unauthorized(new
-                {
-                    Message =
-                        "Impossible d'identifier l'agent connecté."
-                });
-            }
-
             query = query.Where(
-                d => d.AgentId == currentUserId.Value);
+                d => d.AgentId == utilisateurId.Value);
         }
 
+        // ========================================================
+        // PROJECTION
+        // ========================================================
 
         var demandes =
             await query
@@ -123,7 +142,7 @@ public class DemandesVisiteController : ControllerBase
                     },
 
                     // =================================================
-                    // BIEN
+                    // BIEN IMMOBILIER
                     // =================================================
 
                     BienId =
@@ -189,7 +208,7 @@ public class DemandesVisiteController : ControllerBase
                         },
 
                     // =================================================
-                    // PROSPECT / VISITE
+                    // DEMANDE
                     // =================================================
 
                     d.NomProspect,
@@ -202,7 +221,6 @@ public class DemandesVisiteController : ControllerBase
 
         return Ok(demandes);
     }
-
 
     // ============================================================
     // GET : api/DemandesVisite/{id}
@@ -223,6 +241,16 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        var utilisateurId = GetCurrentUserId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                Message =
+                    "Impossible d'identifier l'utilisateur connecté."
+            });
+        }
 
         var societeId =
             await GetSocieteIdUtilisateurConnecteAsync(
@@ -237,17 +265,35 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        // ========================================================
+        // REQUÊTE SÉCURISÉE
+        // ========================================================
+        //
+        // Le filtre Agent est appliqué directement dans SQL.
+        //
+        // Un Agent qui connaît l'ID d'une demande d'un autre
+        // agent ne pourra donc pas la récupérer.
+        //
+        // ========================================================
+
+        var query = _context.DemandesVisite
+            .AsNoTracking()
+            .Where(d =>
+                d.Id == id &&
+                !d.EstSupprime &&
+                !d.UniteLocative.EstSupprime &&
+                !d.UniteLocative.BienImmobilier.EstSupprime &&
+                d.UniteLocative.BienImmobilier.SocieteId ==
+                    societeId.Value);
+
+        if (IsAgent())
+        {
+            query = query.Where(
+                d => d.AgentId == utilisateurId.Value);
+        }
 
         var demande =
-            await _context.DemandesVisite
-                .AsNoTracking()
-                .Where(d =>
-                    d.Id == id &&
-                    !d.EstSupprime &&
-                    !d.UniteLocative.EstSupprime &&
-                    !d.UniteLocative.BienImmobilier.EstSupprime &&
-                    d.UniteLocative.BienImmobilier.SocieteId ==
-                        societeId.Value)
+            await query
                 .Select(d => new
                 {
                     d.Id,
@@ -368,7 +414,6 @@ public class DemandesVisiteController : ControllerBase
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
-
         if (demande == null)
         {
             return NotFound(new
@@ -378,35 +423,8 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
-        // ========================================================
-        // AGENT :
-        // uniquement sa demande
-        // ========================================================
-
-        if (IsAgent())
-        {
-            var currentUserId = GetCurrentUserId();
-
-            if (currentUserId == null)
-            {
-                return Unauthorized(new
-                {
-                    Message =
-                        "Impossible d'identifier l'agent connecté."
-                });
-            }
-
-            if (demande.AgentId != currentUserId.Value)
-            {
-                return Forbid();
-            }
-        }
-
-
         return Ok(demande);
     }
-
 
     // ============================================================
     // POST : api/DemandesVisite
@@ -427,7 +445,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         // ========================================================
         // VALIDATION
         // ========================================================
@@ -441,7 +458,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         if (string.IsNullOrWhiteSpace(dto.NomProspect))
         {
             return BadRequest(new
@@ -450,7 +466,6 @@ public class DemandesVisiteController : ControllerBase
                     "Le nom du prospect est obligatoire."
             });
         }
-
 
         if (string.IsNullOrWhiteSpace(dto.TelephoneProspect))
         {
@@ -461,7 +476,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         if (dto.DateSouhaitee == default)
         {
             return BadRequest(new
@@ -471,6 +485,16 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        var utilisateurId = GetCurrentUserId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                Message =
+                    "Impossible d'identifier l'utilisateur connecté."
+            });
+        }
 
         var societeId =
             await GetSocieteIdUtilisateurConnecteAsync(
@@ -484,7 +508,6 @@ public class DemandesVisiteController : ControllerBase
                     "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
-
 
         // ========================================================
         // VÉRIFIER L'UNITÉ
@@ -506,7 +529,6 @@ public class DemandesVisiteController : ControllerBase
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
-
         if (unite == null)
         {
             return BadRequest(new
@@ -516,35 +538,21 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         // ========================================================
         // AGENT
         // ========================================================
 
         Guid? agentId = dto.AgentId;
 
-
         // --------------------------------------------------------
-        // Si l'utilisateur connecté est Agent :
-        // affectation forcée à lui-même.
+        // Si l'utilisateur est Agent :
+        // il est obligatoirement l'agent de la demande.
         // --------------------------------------------------------
 
         if (IsAgent())
         {
-            var currentUserId = GetCurrentUserId();
-
-            if (currentUserId == null)
-            {
-                return Unauthorized(new
-                {
-                    Message =
-                        "Impossible d'identifier l'agent connecté."
-                });
-            }
-
-            agentId = currentUserId.Value;
+            agentId = utilisateurId.Value;
         }
-
 
         // --------------------------------------------------------
         // Vérifier l'agent sélectionné
@@ -574,7 +582,6 @@ public class DemandesVisiteController : ControllerBase
             }
         }
 
-
         // ========================================================
         // CRÉATION
         // ========================================================
@@ -603,8 +610,7 @@ public class DemandesVisiteController : ControllerBase
                     ? string.Empty
                     : dto.Observations.Trim(),
 
-            // Le statut initial est toujours EnAttente.
-            // Le client ne peut pas imposer un autre statut.
+            // Le client ne décide pas du statut initial.
             Statut =
                 StatutDemandeVisite.EnAttente,
 
@@ -614,11 +620,9 @@ public class DemandesVisiteController : ControllerBase
             EstSupprime = false
         };
 
-
         _context.DemandesVisite.Add(nouvelleDemande);
 
         await _context.SaveChangesAsync(cancellationToken);
-
 
         return CreatedAtAction(
             nameof(GetDemandeVisite),
@@ -638,7 +642,6 @@ public class DemandesVisiteController : ControllerBase
                 nouvelleDemande.Statut
             });
     }
-
 
     // ============================================================
     // PUT : api/DemandesVisite/{id}
@@ -660,7 +663,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         if (dto == null)
         {
             return BadRequest(new
@@ -669,7 +671,6 @@ public class DemandesVisiteController : ControllerBase
                     "Les données de la demande sont obligatoires."
             });
         }
-
 
         if (id != dto.Id)
         {
@@ -680,7 +681,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         if (dto.UniteLocativeId == Guid.Empty)
         {
             return BadRequest(new
@@ -689,7 +689,6 @@ public class DemandesVisiteController : ControllerBase
                     "L'unité locative est obligatoire."
             });
         }
-
 
         if (string.IsNullOrWhiteSpace(dto.NomProspect))
         {
@@ -700,7 +699,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         if (string.IsNullOrWhiteSpace(dto.TelephoneProspect))
         {
             return BadRequest(new
@@ -709,7 +707,6 @@ public class DemandesVisiteController : ControllerBase
                     "Le téléphone du prospect est obligatoire."
             });
         }
-
 
         if (dto.DateSouhaitee == default)
         {
@@ -720,6 +717,16 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        var utilisateurId = GetCurrentUserId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                Message =
+                    "Impossible d'identifier l'utilisateur connecté."
+            });
+        }
 
         var societeId =
             await GetSocieteIdUtilisateurConnecteAsync(
@@ -734,9 +741,8 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         // ========================================================
-        // RÉCUPÉRER LA DEMANDE
+        // RÉCUPÉRER LA DEMANDE DANS LA SOCIÉTÉ
         // ========================================================
 
         var demande =
@@ -751,7 +757,6 @@ public class DemandesVisiteController : ControllerBase
                             societeId.Value,
                     cancellationToken);
 
-
         if (demande == null)
         {
             return NotFound(new
@@ -761,7 +766,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         // ========================================================
         // AGENT
         // ========================================================
@@ -770,30 +774,22 @@ public class DemandesVisiteController : ControllerBase
 
         if (IsAgent())
         {
-            var currentUserId = GetCurrentUserId();
+            // ----------------------------------------------------
+            // L'Agent ne peut modifier QUE ses propres demandes.
+            // ----------------------------------------------------
 
-            if (currentUserId == null)
-            {
-                return Unauthorized(new
-                {
-                    Message =
-                        "Impossible d'identifier l'agent connecté."
-                });
-            }
-
-
-            // Un Agent ne peut modifier que ses propres demandes.
-            if (demande.AgentId != currentUserId.Value)
+            if (demande.AgentId != utilisateurId.Value)
             {
                 return Forbid();
             }
 
+            // ----------------------------------------------------
+            // L'Agent ne peut pas transférer la demande à
+            // un autre agent.
+            // ----------------------------------------------------
 
-            // Un Agent ne peut pas modifier l'affectation.
-            // Même si Angular envoie null, on conserve son ID.
-            agentId = currentUserId.Value;
+            agentId = utilisateurId.Value;
         }
-
 
         // ========================================================
         // VÉRIFIER L'UNITÉ
@@ -811,7 +807,6 @@ public class DemandesVisiteController : ControllerBase
                             societeId.Value,
                     cancellationToken);
 
-
         if (!uniteExiste)
         {
             return BadRequest(new
@@ -820,7 +815,6 @@ public class DemandesVisiteController : ControllerBase
                     "L'unité locative est introuvable ou n'appartient pas à votre société."
             });
         }
-
 
         // ========================================================
         // VÉRIFIER L'AGENT
@@ -840,7 +834,6 @@ public class DemandesVisiteController : ControllerBase
                             !u.EstSupprime,
                         cancellationToken);
 
-
             if (!agentExiste)
             {
                 return BadRequest(new
@@ -850,7 +843,6 @@ public class DemandesVisiteController : ControllerBase
                 });
             }
         }
-
 
         // ========================================================
         // MISE À JOUR
@@ -876,30 +868,36 @@ public class DemandesVisiteController : ControllerBase
                 ? string.Empty
                 : dto.Observations.Trim();
 
-
-        // --------------------------------------------------------
-        // Statut
-        // --------------------------------------------------------
+        // ========================================================
+        // STATUT
+        // ========================================================
         //
-        // Le statut envoyé par Angular est accepté ici pour les
-        // utilisateurs autorisés à modifier.
+        // Un Agent ne peut pas modifier le statut.
         //
-        // Si l'utilisateur est Agent, on conserve le statut
-        // existant afin qu'un Agent ne puisse pas valider,
-        // annuler ou terminer lui-même une demande.
-        // --------------------------------------------------------
+        // Admin/Gestionnaire peuvent le modifier.
+        //
+        // ========================================================
 
         if (!IsAgent())
         {
+            if (!Enum.IsDefined(
+                    typeof(StatutDemandeVisite),
+                    dto.Statut))
+            {
+                return BadRequest(new
+                {
+                    Message =
+                        "Le statut de la demande est invalide."
+                });
+            }
+
             demande.Statut = dto.Statut;
         }
-
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
-
 
     // ============================================================
     // DELETE : api/DemandesVisite/{id}
@@ -920,7 +918,6 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
         var societeId =
             await GetSocieteIdUtilisateurConnecteAsync(
                 cancellationToken);
@@ -934,6 +931,9 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        // ========================================================
+        // DEMANDE DE LA SOCIÉTÉ
+        // ========================================================
 
         var demande =
             await _context.DemandesVisite
@@ -947,7 +947,6 @@ public class DemandesVisiteController : ControllerBase
                             societeId.Value,
                     cancellationToken);
 
-
         if (demande == null)
         {
             return NotFound(new
@@ -957,45 +956,19 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
-
-        // ========================================================
-        // AGENT :
-        // uniquement sa propre demande
-        // ========================================================
-
-        if (IsAgent())
-        {
-            var currentUserId = GetCurrentUserId();
-
-            if (currentUserId == null)
-            {
-                return Unauthorized(new
-                {
-                    Message =
-                        "Impossible d'identifier l'agent connecté."
-                });
-            }
-
-
-            if (demande.AgentId != currentUserId.Value)
-            {
-                return Forbid();
-            }
-        }
-
-
         // ========================================================
         // SUPPRESSION LOGIQUE
         // ========================================================
 
         demande.EstSupprime = true;
+
+        // Si ton entité possède bien DateSuppression.
         demande.DateSuppression = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
     }
-
 
     // ============================================================
     // UTILISATEUR CONNECTÉ
@@ -1016,9 +989,8 @@ public class DemandesVisiteController : ControllerBase
         return null;
     }
 
-
     // ============================================================
-    // SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
+    // SOCIÉTÉ DE L'UTILISATEUR
     // ============================================================
 
     private async Task<Guid?>
@@ -1032,7 +1004,6 @@ public class DemandesVisiteController : ControllerBase
             return null;
         }
 
-
         return await _context.Utilisateurs
             .AsNoTracking()
             .Where(u =>
@@ -1043,9 +1014,8 @@ public class DemandesVisiteController : ControllerBase
             .FirstOrDefaultAsync(cancellationToken);
     }
 
-
     // ============================================================
-    // DÉTECTER LE RÔLE AGENT
+    // RÔLE AGENT
     // ============================================================
 
     private bool IsAgent()
@@ -1066,19 +1036,3 @@ public class DemandesVisiteController : ControllerBase
                 StringComparison.OrdinalIgnoreCase);
     }
 }
-
-
-// =================================================================
-// DTO DE REQUÊTE
-// =================================================================
-//
-// Ce DTO est utilisé uniquement pour POST / PUT.
-//
-// IMPORTANT :
-// On ne reçoit PAS UniteLocative, Bien ou Agent comme objets.
-//
-// Angular envoie uniquement les IDs.
-// Le serveur vérifie ensuite que ces IDs appartiennent à la
-// société de l'utilisateur connecté.
-//
-

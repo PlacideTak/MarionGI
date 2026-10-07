@@ -36,10 +36,14 @@ public class PaiementsController : ControllerBase
     // ============================================================
     // 1. INITIER UN PAIEMENT MOBILE MONEY
     //
-    // UNIQUEMENT LOCATAIRE
+    // LOCATAIRE UNIQUEMENT
     //
-    // Le locataire peut uniquement payer un de SES contrats
-    // et uniquement si celui-ci est actif.
+    // Le locataire peut uniquement payer :
+    // - un contrat qui lui appartient
+    // - un contrat non supprimé
+    // - un contrat actif
+    // - une unité non supprimée
+    // - un bien non supprimé
     // ============================================================
 
     [HttpPost("initier")]
@@ -48,6 +52,12 @@ public class PaiementsController : ControllerBase
         [FromBody] InitierPaiementRequest request,
         [FromServices] IPaiementProvider paiementProvider)
     {
+        if (request == null)
+        {
+            return BadRequest(
+                "Les données du paiement sont obligatoires.");
+        }
+
         // --------------------------------------------------------
         // Validation
         // --------------------------------------------------------
@@ -68,6 +78,14 @@ public class PaiementsController : ControllerBase
         {
             return BadRequest(
                 "Le numéro de téléphone est obligatoire.");
+        }
+
+        if (!Enum.IsDefined(
+                typeof(ModePaiement),
+                request.ModePaiement))
+        {
+            return BadRequest(
+                "Le mode de paiement est invalide.");
         }
 
         if (request.ModePaiement == ModePaiement.Especes)
@@ -100,7 +118,13 @@ public class PaiementsController : ControllerBase
             .FirstOrDefaultAsync(c =>
                 c.Id == request.ContratId &&
                 c.LocataireId == utilisateurId.Value &&
-                !c.EstSupprime);
+                !c.EstSupprime &&
+
+                c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
+
+                c.UniteLocative.BienImmobilier != null &&
+                !c.UniteLocative.BienImmobilier.EstSupprime);
 
         if (contrat == null)
         {
@@ -138,7 +162,7 @@ public class PaiementsController : ControllerBase
         await _context.SaveChangesAsync();
 
         // --------------------------------------------------------
-        // Appel du fournisseur de paiement
+        // Appel du fournisseur
         // --------------------------------------------------------
 
         var resultat = await paiementProvider.InitierAsync(
@@ -147,7 +171,8 @@ public class PaiementsController : ControllerBase
 
                 Montant: request.Montant,
 
-                Telephone: request.Telephone.Trim(),
+                Telephone:
+                    request.Telephone.Trim(),
 
                 EmailClient:
                     contrat.Locataire?.Email
@@ -224,6 +249,12 @@ public class PaiementsController : ControllerBase
     public async Task<IActionResult> EnregistrerPaiementEspeces(
         [FromBody] PaiementEspecesRequest request)
     {
+        if (request == null)
+        {
+            return BadRequest(
+                "Les données du paiement sont obligatoires.");
+        }
+
         // --------------------------------------------------------
         // Validation
         // --------------------------------------------------------
@@ -266,7 +297,7 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Contrat appartenant à la société
+        // Contrat de la société
         // --------------------------------------------------------
 
         var contrat = await _context.Contrats
@@ -278,7 +309,10 @@ public class PaiementsController : ControllerBase
                 !c.EstSupprime &&
 
                 c.UniteLocative != null &&
+                !c.UniteLocative.EstSupprime &&
+
                 c.UniteLocative.BienImmobilier != null &&
+                !c.UniteLocative.BienImmobilier.EstSupprime &&
 
                 c.UniteLocative
                     .BienImmobilier
@@ -349,7 +383,7 @@ public class PaiementsController : ControllerBase
     //    uniquement leur société
     //
     // LOCATAIRE :
-    //    uniquement son paiement
+    //    uniquement ses paiements
     //
     // AGENT :
     //    aucun accès
@@ -363,6 +397,12 @@ public class PaiementsController : ControllerBase
             nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetStatut(Guid id)
     {
+        if (id == Guid.Empty)
+        {
+            return BadRequest(
+                "L'identifiant du paiement est invalide.");
+        }
+
         var paiement =
             await GetPaiementAccessibleAsync(id);
 
@@ -397,11 +437,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 4. TÉLÉCHARGER UNE QUITTANCE
-    //
-    // Le paiement doit :
-    //
-    // 1. être accessible à l'utilisateur
-    // 2. être confirmé
     // ============================================================
 
     [HttpGet("{id:guid}/quittance")]
@@ -412,6 +447,12 @@ public class PaiementsController : ControllerBase
             nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> TelechargerQuittance(Guid id)
     {
+        if (id == Guid.Empty)
+        {
+            return BadRequest(
+                "L'identifiant du paiement est invalide.");
+        }
+
         var paiement =
             await GetPaiementAccessibleAsync(
                 id,
@@ -448,9 +489,6 @@ public class PaiementsController : ControllerBase
     //
     // LOCATAIRE :
     //    uniquement ses paiements
-    //
-    // AGENT :
-    //    aucun accès
     // ============================================================
 
     [HttpGet]
@@ -465,12 +503,22 @@ public class PaiementsController : ControllerBase
             .AsNoTracking()
             .Where(p =>
                 !p.EstSupprime &&
-                p.Contrat != null &&
-                !p.Contrat.EstSupprime);
 
-        // --------------------------------------------------------
+                p.Contrat != null &&
+                !p.Contrat.EstSupprime &&
+
+                p.Contrat.UniteLocative != null &&
+                !p.Contrat.UniteLocative.EstSupprime &&
+
+                p.Contrat.UniteLocative
+                    .BienImmobilier != null &&
+
+                !p.Contrat.UniteLocative
+                    .BienImmobilier.EstSupprime);
+
+        // ========================================================
         // LOCATAIRE
-        // --------------------------------------------------------
+        // ========================================================
 
         if (User.IsInRole(
                 nameof(RoleUtilisateur.Locataire)))
@@ -489,9 +537,9 @@ public class PaiementsController : ControllerBase
                 utilisateurId.Value);
         }
 
-        // --------------------------------------------------------
+        // ========================================================
         // ADMINISTRATEUR / GESTIONNAIRE
-        // --------------------------------------------------------
+        // ========================================================
 
         else
         {
@@ -505,78 +553,78 @@ public class PaiementsController : ControllerBase
             }
 
             query = query.Where(p =>
-                p.Contrat.UniteLocative != null &&
-                p.Contrat.UniteLocative.BienImmobilier != null &&
                 p.Contrat.UniteLocative
-                    .BienImmobilier.SocieteId ==
+                    .BienImmobilier
+                    .SocieteId ==
                     societeId.Value);
         }
 
-        // --------------------------------------------------------
+        // ========================================================
         // PROJECTION
-        // --------------------------------------------------------
-        //
-        // Cette projection correspond maintenant directement
-        // au PaiementListItem côté Angular.
-        // --------------------------------------------------------
+        // ========================================================
 
-        var paiements = await query
-            .OrderByDescending(p => p.DatePaiement)
-            .Select(p => new PaiementListItemDto
-            {
-                Id =
-                    p.Id,
+        var paiements =
+            await query
+                .OrderByDescending(p => p.DatePaiement)
+                .Select(p => new PaiementListItemDto
+                {
+                    Id =
+                        p.Id,
 
-                DatePaiement =
-                    p.DatePaiement,
+                    DatePaiement =
+                        p.DatePaiement,
 
-                Montant =
-                    p.Montant,
+                    Montant =
+                        p.Montant,
 
-                Mode =
-                    p.ModePaiement,
+                    Mode =
+                        p.ModePaiement,
 
-                Statut =
-                    p.StatutTransaction,
+                    Statut =
+                        p.StatutTransaction,
 
-                NumeroQuittance =
-                    p.NumeroQuittance,
+                    NumeroQuittance =
+                        p.NumeroQuittance,
 
-                BienNom = p.Contrat.UniteLocative.BienImmobilier.Nom,
+                    // ------------------------------------------------
+                    // BIEN
+                    // ------------------------------------------------
 
-                LocataireNom =
-                    p.Contrat != null &&
-                    p.Contrat.Locataire != null
-
-                        ? $"{p.Contrat.Locataire.Nom} " +
-                          $"{p.Contrat.Locataire.Prenom}"
-
-                        : "N/A",
-
-                UniteReference =
-                    p.Contrat != null &&
-                    p.Contrat.UniteLocative != null
-
-                        ? p.Contrat
-                            .UniteLocative
-                            .Reference
-
-                        : "N/A",
-
-                BienReference =
-                    p.Contrat != null &&
-                    p.Contrat.UniteLocative != null &&
-                    p.Contrat.UniteLocative
-                        .BienImmobilier != null
-
-                        ? p.Contrat
+                    BienNom =
+                        p.Contrat
                             .UniteLocative
                             .BienImmobilier
-                            .Reference
+                            .Nom,
 
-                        : "N/A"
-            })
-            .ToListAsync();
+                    BienReference =
+                        p.Contrat
+                            .UniteLocative
+                            .BienImmobilier
+                            .Reference,
+
+                    // ------------------------------------------------
+                    // UNITÉ
+                    // ------------------------------------------------
+
+                    UniteReference =
+                        p.Contrat
+                            .UniteLocative
+                            .Reference,
+
+                    // ------------------------------------------------
+                    // LOCATAIRE
+                    // ------------------------------------------------
+
+                    LocataireNom =
+                        p.Contrat.Locataire != null
+                            ? (
+                                p.Contrat.Locataire.Nom
+                                + " "
+                                + p.Contrat.Locataire.Prenom
+                              ).Trim()
+                            : "N/A"
+                })
+                .ToListAsync();
 
         return Ok(paiements);
     }
@@ -586,7 +634,7 @@ public class PaiementsController : ControllerBase
     // 6. TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT
     //
     // ADMIN / GESTIONNAIRE :
-    //    uniquement les contrats de leur société
+    //    uniquement leur société
     //
     // LOCATAIRE :
     //    uniquement ses propres contrats
@@ -623,27 +671,40 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Paiements confirmés du contrat
+        // Paiements confirmés
         // --------------------------------------------------------
 
-        var paiements = await _context.Paiements
-            .Include(p => p.Contrat)
-                .ThenInclude(c => c.Locataire)
+        var paiements =
+            await _context.Paiements
+                .Include(p => p.Contrat)
+                    .ThenInclude(c => c.Locataire)
 
-            .Include(p => p.Contrat)
-                .ThenInclude(c => c.UniteLocative)
-                    .ThenInclude(u => u.BienImmobilier)
+                .Include(p => p.Contrat)
+                    .ThenInclude(c => c.UniteLocative)
+                        .ThenInclude(u => u.BienImmobilier)
 
-            .Where(p =>
-                p.ContratId == contratId &&
+                .Where(p =>
+                    p.ContratId == contratId &&
 
-                p.StatutTransaction ==
-                    StatutTransaction.Confirme &&
+                    p.StatutTransaction ==
+                        StatutTransaction.Confirme &&
 
-                !p.EstSupprime)
+                    !p.EstSupprime &&
 
-            .OrderBy(p => p.DatePaiement)
-            .ToListAsync();
+                    p.Contrat != null &&
+                    !p.Contrat.EstSupprime &&
+
+                    p.Contrat.UniteLocative != null &&
+                    !p.Contrat.UniteLocative.EstSupprime &&
+
+                    p.Contrat.UniteLocative
+                        .BienImmobilier != null &&
+
+                    !p.Contrat.UniteLocative
+                        .BienImmobilier.EstSupprime)
+
+                .OrderBy(p => p.DatePaiement)
+                .ToListAsync();
 
         if (paiements.Count == 0)
         {
@@ -652,7 +713,7 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Création du ZIP
+        // Création ZIP
         // --------------------------------------------------------
 
         await using var memoryStream =
@@ -695,7 +756,7 @@ public class PaiementsController : ControllerBase
     //
     // PUBLIC
     //
-    // Protégé par signature cryptographique.
+    // La signature cryptographique est obligatoire.
     // ============================================================
 
     [HttpPost("webhook/notchpay")]
@@ -817,7 +878,7 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Traitement de l'événement
+        // Événement
         // --------------------------------------------------------
 
         switch (payload.Event)
@@ -867,7 +928,14 @@ public class PaiementsController : ControllerBase
                 .AsNoTracking()
                 .Where(c =>
                     c.Id == contratId &&
-                    !c.EstSupprime);
+
+                    !c.EstSupprime &&
+
+                    c.UniteLocative != null &&
+                    !c.UniteLocative.EstSupprime &&
+
+                    c.UniteLocative.BienImmobilier != null &&
+                    !c.UniteLocative.BienImmobilier.EstSupprime);
 
         // --------------------------------------------------------
         // LOCATAIRE
@@ -904,9 +972,6 @@ public class PaiementsController : ControllerBase
             }
 
             query = query.Where(c =>
-                c.UniteLocative != null &&
-                c.UniteLocative.BienImmobilier != null &&
-
                 c.UniteLocative
                     .BienImmobilier
                     .SocieteId ==
@@ -919,17 +984,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 9. RÉCUPÉRER UN PAIEMENT ACCESSIBLE
-    //
-    // IMPORTANT :
-    //
-    // La vérification d'autorisation est effectuée dans la
-    // requête SQL elle-même.
-    //
-    // Il ne suffit jamais de faire :
-    //
-    //    FirstOrDefaultAsync(p => p.Id == id)
-    //
-    // puis de vérifier après.
     // ============================================================
 
     private async Task<Paiement?>
@@ -941,7 +995,7 @@ public class PaiementsController : ControllerBase
             _context.Paiements;
 
         // --------------------------------------------------------
-        // Relations nécessaires à la quittance
+        // Relations
         // --------------------------------------------------------
 
         if (inclureRelations)
@@ -971,8 +1025,16 @@ public class PaiementsController : ControllerBase
             !p.EstSupprime &&
 
             p.Contrat != null &&
+            !p.Contrat.EstSupprime &&
 
-            !p.Contrat.EstSupprime);
+            p.Contrat.UniteLocative != null &&
+            !p.Contrat.UniteLocative.EstSupprime &&
+
+            p.Contrat.UniteLocative
+                .BienImmobilier != null &&
+
+            !p.Contrat.UniteLocative
+                .BienImmobilier.EstSupprime);
 
         // --------------------------------------------------------
         // LOCATAIRE
@@ -991,7 +1053,7 @@ public class PaiementsController : ControllerBase
 
             query = query.Where(p =>
                 p.Contrat.LocataireId ==
-                    utilisateurId.Value);
+                utilisateurId.Value);
         }
 
         // --------------------------------------------------------
@@ -1009,11 +1071,6 @@ public class PaiementsController : ControllerBase
             }
 
             query = query.Where(p =>
-                p.Contrat.UniteLocative != null &&
-
-                p.Contrat.UniteLocative
-                    .BienImmobilier != null &&
-
                 p.Contrat.UniteLocative
                     .BienImmobilier
                     .SocieteId ==
@@ -1028,13 +1085,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 10. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
-    //
-    // Vérifie :
-    //
-    // - utilisateur existant
-    // - non supprimé
-    // - actif
-    // - société associée
     // ============================================================
 
     private async Task<Guid?>
@@ -1051,29 +1101,26 @@ public class PaiementsController : ControllerBase
         return await _context.Utilisateurs
             .AsNoTracking()
             .Where(u =>
-                u.Id ==
-                    currentUserId.Value &&
-
+                u.Id == currentUserId.Value &&
                 !u.EstSupprime &&
-
                 u.Statut)
-
             .Select(u =>
                 (Guid?)u.SocieteId)
-
             .FirstOrDefaultAsync();
     }
 
 
     // ============================================================
-    // 11. ID UTILISATEUR CONNECTÉ
+    // 11. UTILISATEUR CONNECTÉ
     // ============================================================
 
     private Guid? GetCurrentUserId()
     {
         var userId =
             User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
+                ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue("sub")
+            ?? User.FindFirstValue("Id");
 
         if (Guid.TryParse(
                 userId,
@@ -1153,7 +1200,7 @@ public class PaiementsController : ControllerBase
 
 
 // =================================================================
-// DTO LISTE DES PAIEMENTS
+// DTO : LISTE DES PAIEMENTS
 // =================================================================
 
 public sealed class PaiementListItemDto
@@ -1179,12 +1226,14 @@ public sealed class PaiementListItemDto
 
     public string BienReference { get; set; } =
         "N/A";
-    public string BienNom { get; set; } = "N/A";
+
+    public string BienNom { get; set; } =
+        "N/A";
 }
 
 
 // =================================================================
-// REQUESTS
+// REQUEST : PAIEMENT MOBILE MONEY
 // =================================================================
 
 public record InitierPaiementRequest(
@@ -1193,6 +1242,10 @@ public record InitierPaiementRequest(
     ModePaiement ModePaiement,
     string Telephone);
 
+
+// =================================================================
+// REQUEST : PAIEMENT ESPÈCES
+// =================================================================
 
 public record PaiementEspecesRequest(
     Guid ContratId,

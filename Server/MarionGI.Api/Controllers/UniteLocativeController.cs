@@ -38,31 +38,69 @@ public class UnitesLocativesController : ControllerBase
 
     // ============================================================
     // GET : api/UnitesLocatives
+    //
+    // ADMINISTRATEUR / GESTIONNAIRE / AGENT
+    //     -> toutes les unités non supprimées de leur société
+    //
+    // LOCATAIRE
+    //     -> uniquement les unités pour lesquelles il possède
+    //        au moins un contrat non supprimé
     // ============================================================
 
     [HttpGet]
     [Authorize(
         Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+                nameof(RoleUtilisateur.Gestionnaire) + "," +
+                nameof(RoleUtilisateur.Agent) + "," +
+                nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetUnites(
         CancellationToken cancellationToken)
     {
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur = await GetUtilisateurConnecteAsync(
+            cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var unites = await _context.UnitesLocatives
-            .AsNoTracking()
-            .Where(u =>
-                u.BienImmobilier.SocieteId == societeId.Value &&
-                !u.EstSupprime &&
-                !u.BienImmobilier.EstSupprime)
+        IQueryable<UniteLocative> query =
+            _context.UnitesLocatives
+                .AsNoTracking()
+                .Where(u =>
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime);
+
+        // ========================================================
+        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
+        // ========================================================
+
+        if (EstGestionnaireOuAgent(utilisateur.Role))
+        {
+            query = query.Where(u =>
+                u.BienImmobilier.SocieteId ==
+                utilisateur.SocieteId);
+        }
+
+        // ========================================================
+        // LOCATAIRE
+        // ========================================================
+
+        else if (utilisateur.Role == RoleUtilisateur.Locataire)
+        {
+            query = query.Where(u =>
+                u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.LocataireId == utilisateur.Id));
+        }
+
+        else
+        {
+            return Forbid();
+        }
+
+        var unites = await query
             .OrderBy(u => u.BienImmobilier.Reference)
             .ThenBy(u => u.Reference)
             .Select(u => new
@@ -98,24 +136,28 @@ public class UnitesLocativesController : ControllerBase
                 SocieteNom =
                     u.BienImmobilier.Societe.Nom,
 
-                // ==================================================
-                // CONTRATS
-                // ==================================================
-
                 NombreContrats =
                     u.Contrats.Count(c =>
-                        !c.EstSupprime),
-
-                // ==================================================
-                // IMPORTANT :
-                // indique directement à Angular si l'unité possède
-                // actuellement un contrat actif.
-                // ==================================================
+                        !c.EstSupprime &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        )),
 
                 AContratActif =
                     u.Contrats.Any(c =>
                         !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif),
+                        c.Statut == StatutContrat.Actif &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        )),
 
                 NombreDemandesVisite =
                     u.DemandesVisite.Count(d =>
@@ -133,7 +175,9 @@ public class UnitesLocativesController : ControllerBase
     [HttpGet("{id:guid}")]
     [Authorize(
         Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+                nameof(RoleUtilisateur.Gestionnaire) + "," +
+                nameof(RoleUtilisateur.Agent) + "," +
+                nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -144,23 +188,52 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant de l'unité est invalide.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur = await GetUtilisateurConnecteAsync(
+            cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var unite = await _context.UnitesLocatives
-            .AsNoTracking()
-            .Where(u =>
-                u.Id == id &&
-                u.BienImmobilier.SocieteId == societeId.Value &&
-                !u.EstSupprime &&
-                !u.BienImmobilier.EstSupprime)
+        IQueryable<UniteLocative> query =
+            _context.UnitesLocatives
+                .AsNoTracking()
+                .Where(u =>
+                    u.Id == id &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime);
+
+        // ========================================================
+        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
+        // ========================================================
+
+        if (EstGestionnaireOuAgent(utilisateur.Role))
+        {
+            query = query.Where(u =>
+                u.BienImmobilier.SocieteId ==
+                utilisateur.SocieteId);
+        }
+
+        // ========================================================
+        // LOCATAIRE
+        // ========================================================
+
+        else if (utilisateur.Role == RoleUtilisateur.Locataire)
+        {
+            query = query.Where(u =>
+                u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.LocataireId == utilisateur.Id));
+        }
+
+        else
+        {
+            return Forbid();
+        }
+
+        var unite = await query
             .Select(u => new
             {
                 u.Id,
@@ -184,12 +257,16 @@ public class UnitesLocativesController : ControllerBase
                     u.BienImmobilier.SocieteId
                 },
 
-                // ==================================================
-                // CONTRATS
-                // ==================================================
-
                 Contrats = u.Contrats
-                    .Where(c => !c.EstSupprime)
+                    .Where(c =>
+                        !c.EstSupprime &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        ))
                     .Select(c => new
                     {
                         c.Id,
@@ -201,14 +278,17 @@ public class UnitesLocativesController : ControllerBase
                     })
                     .ToList(),
 
-                // ==================================================
-                // CONTRAT ACTIF
-                // ==================================================
-
                 AContratActif =
                     u.Contrats.Any(c =>
                         !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif),
+                        c.Statut == StatutContrat.Actif &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        )),
 
                 NombreDemandesVisite =
                     u.DemandesVisite.Count(d =>
@@ -232,7 +312,9 @@ public class UnitesLocativesController : ControllerBase
     [HttpGet("bien/{bienImmobilierId:guid}")]
     [Authorize(
         Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+                nameof(RoleUtilisateur.Gestionnaire) + "," +
+                nameof(RoleUtilisateur.Agent) + "," +
+                nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetParBien(
         Guid bienImmobilierId,
         CancellationToken cancellationToken)
@@ -243,25 +325,27 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant du bien est invalide.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur = await GetUtilisateurConnecteAsync(
+            cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var bienExiste =
-            await _context.BiensImmobiliers
-                .AsNoTracking()
-                .AnyAsync(
-                    b =>
-                        b.Id == bienImmobilierId &&
-                        b.SocieteId == societeId.Value &&
-                        !b.EstSupprime,
-                    cancellationToken);
+        // ========================================================
+        // VERIFICATION DU BIEN
+        // ========================================================
+
+        var bienExiste = await _context.BiensImmobiliers
+            .AsNoTracking()
+            .AnyAsync(
+                b =>
+                    b.Id == bienImmobilierId &&
+                    !b.EstSupprime &&
+                    b.SocieteId == utilisateur.SocieteId,
+                cancellationToken);
 
         if (!bienExiste)
         {
@@ -269,11 +353,42 @@ public class UnitesLocativesController : ControllerBase
                 "Bien immobilier introuvable.");
         }
 
-        var unites = await _context.UnitesLocatives
-            .AsNoTracking()
-            .Where(u =>
-                u.BienImmobilierId == bienImmobilierId &&
-                !u.EstSupprime)
+        IQueryable<UniteLocative> query =
+            _context.UnitesLocatives
+                .AsNoTracking()
+                .Where(u =>
+                    u.BienImmobilierId == bienImmobilierId &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime);
+
+        // ========================================================
+        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
+        // ========================================================
+
+        if (EstGestionnaireOuAgent(utilisateur.Role))
+        {
+            // Le bien a déjà été vérifié comme appartenant
+            // à la société de l'utilisateur.
+        }
+
+        // ========================================================
+        // LOCATAIRE
+        // ========================================================
+
+        else if (utilisateur.Role == RoleUtilisateur.Locataire)
+        {
+            query = query.Where(u =>
+                u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.LocataireId == utilisateur.Id));
+        }
+
+        else
+        {
+            return Forbid();
+        }
+
+        var unites = await query
             .OrderBy(u => u.Reference)
             .Select(u => new
             {
@@ -289,16 +404,26 @@ public class UnitesLocativesController : ControllerBase
 
                 NombreContrats =
                     u.Contrats.Count(c =>
-                        !c.EstSupprime),
-
-                // ==================================================
-                // IMPORTANT POUR LE FRONTEND
-                // ==================================================
+                        !c.EstSupprime &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        )),
 
                 AContratActif =
                     u.Contrats.Any(c =>
                         !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif),
+                        c.Statut == StatutContrat.Actif &&
+                        (
+                            utilisateur.Role !=
+                                RoleUtilisateur.Locataire
+                            ||
+                            c.LocataireId ==
+                                utilisateur.Id
+                        )),
 
                 NombreDemandesVisite =
                     u.DemandesVisite.Count(d =>
@@ -310,7 +435,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // POST : api/UnitesLocatives
+    // POST
     // ============================================================
 
     [HttpPost]
@@ -338,13 +463,12 @@ public class UnitesLocativesController : ControllerBase
                 "Impossible de déterminer la société de l'utilisateur connecté.");
         }
 
-        var validation =
-            ValiderUnite(
-                request.Reference,
-                request.Type,
-                request.Superficie,
-                request.Loyer,
-                request.Statut);
+        var validation = ValiderUnite(
+            request.Reference,
+            request.Type,
+            request.Superficie,
+            request.Loyer,
+            request.Statut);
 
         if (validation != null)
         {
@@ -357,15 +481,14 @@ public class UnitesLocativesController : ControllerBase
                 "Le bien immobilier est obligatoire.");
         }
 
-        var bien =
-            await _context.BiensImmobiliers
-                .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    b =>
-                        b.Id == request.BienImmobilierId &&
-                        b.SocieteId == societeId.Value &&
-                        !b.EstSupprime,
-                    cancellationToken);
+        var bien = await _context.BiensImmobiliers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                b =>
+                    b.Id == request.BienImmobilierId &&
+                    b.SocieteId == societeId.Value &&
+                    !b.EstSupprime,
+                cancellationToken);
 
         if (bien == null)
         {
@@ -395,35 +518,18 @@ public class UnitesLocativesController : ControllerBase
         var unite = new UniteLocative
         {
             Id = Guid.NewGuid(),
-
-            Reference =
-                reference,
-
-            Type =
-                request.Type,
-
-            Superficie =
-                request.Superficie,
-
-            Loyer =
-                request.Loyer,
-
-            Statut =
-                request.Statut,
-
-            BienImmobilierId =
-                request.BienImmobilierId,
-
+            Reference = reference,
+            Type = request.Type,
+            Superficie = request.Superficie,
+            Loyer = request.Loyer,
+            Statut = request.Statut,
+            BienImmobilierId = request.BienImmobilierId,
             Photos = [],
-
-            DateCreation =
-                DateTime.UtcNow,
-
+            DateCreation = DateTime.UtcNow,
             EstSupprime = false
         };
 
-        var fichiersCrees =
-            new List<string>();
+        var fichiersCrees = new List<string>();
 
         try
         {
@@ -476,15 +582,12 @@ public class UnitesLocativesController : ControllerBase
                 unite.Statut,
                 unite.BienImmobilierId,
                 unite.Photos,
-
-                // Une unité nouvellement créée ne possède
-                // évidemment aucun contrat actif.
                 AContratActif = false
             });
     }
 
     // ============================================================
-    // PUT : api/UnitesLocatives/{id}
+    // PUT
     // ============================================================
 
     [HttpPut("{id:guid}")]
@@ -524,10 +627,10 @@ public class UnitesLocativesController : ControllerBase
                 .FirstOrDefaultAsync(
                     u =>
                         u.Id == id &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value &&
                         !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime,
+                        !u.BienImmobilier.EstSupprime &&
+                        u.BienImmobilier.SocieteId ==
+                            societeId.Value,
                     cancellationToken);
 
         if (unite == null)
@@ -536,13 +639,12 @@ public class UnitesLocativesController : ControllerBase
                 "Unité locative introuvable.");
         }
 
-        var validation =
-            ValiderUnite(
-                request.Reference,
-                request.Type,
-                request.Superficie,
-                request.Loyer,
-                request.Statut);
+        var validation = ValiderUnite(
+            request.Reference,
+            request.Type,
+            request.Superficie,
+            request.Loyer,
+            request.Statut);
 
         if (validation != null)
         {
@@ -555,23 +657,50 @@ public class UnitesLocativesController : ControllerBase
                 "Le bien immobilier est obligatoire.");
         }
 
-        var bien =
+        var bienExiste =
             await _context.BiensImmobiliers
                 .AsNoTracking()
                 .AnyAsync(
                     b =>
-                        b.Id ==
-                            request.BienImmobilierId &&
-                        b.SocieteId ==
-                            societeId.Value &&
+                        b.Id == request.BienImmobilierId &&
+                        b.SocieteId == societeId.Value &&
                         !b.EstSupprime,
                     cancellationToken);
 
-        if (!bien)
+        if (!bienExiste)
         {
             return NotFound(
                 "Le bien immobilier est introuvable ou n'appartient pas à votre société.");
         }
+
+        // ========================================================
+        // CONTRAT ACTIF
+        //
+        // Une unité louée ne doit pas être déplacée vers
+        // un autre bien.
+        // ========================================================
+
+        var contratActifExiste =
+            await _context.Contrats
+                .AsNoTracking()
+                .AnyAsync(
+                    c =>
+                        c.UniteLocativeId == id &&
+                        !c.EstSupprime &&
+                        c.Statut == StatutContrat.Actif,
+                    cancellationToken);
+
+        if (contratActifExiste &&
+            unite.BienImmobilierId !=
+                request.BienImmobilierId)
+        {
+            return Conflict(
+                "Cette unité possède un contrat actif et ne peut pas être déplacée vers un autre bien immobilier.");
+        }
+
+        // ========================================================
+        // REFERENCE UNIQUE DANS LE BIEN
+        // ========================================================
 
         var reference =
             NormaliserReference(request.Reference);
@@ -593,25 +722,24 @@ public class UnitesLocativesController : ControllerBase
                 "Une autre unité utilise déjà cette référence dans ce bien.");
         }
 
+        // ========================================================
+        // COHERENCE CONTRAT ACTIF / STATUT UNITE
+        // ========================================================
+
+        if (contratActifExiste &&
+            request.Statut != StatutDisponibilite.Loue)
+        {
+            return Conflict(
+                "Une unité possédant un contrat actif doit conserver le statut Louée.");
+        }
+
         var anciennesPhotos =
-            unite.Photos?
-                .ToList() ??
-            [];
+            unite.Photos?.ToList() ?? [];
 
         var photosFinales =
-            NettoyerPhotos(
-                request.PhotosExistantes);
-
-        photosFinales =
             FiltrerPhotosUnite(
-                photosFinales);
-
-        if (photosFinales.Count >
-            NombreMaxPhotos)
-        {
-            return BadRequest(
-                $"Une unité locative ne peut pas contenir plus de {NombreMaxPhotos} photos.");
-        }
+                NettoyerPhotos(
+                    request.PhotosExistantes));
 
         var fichiersCrees =
             new List<string>();
@@ -687,7 +815,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // PATCH : api/UnitesLocatives/{id}/statut
+    // PATCH : STATUT
     // ============================================================
 
     [HttpPatch("{id:guid}/statut")]
@@ -732,16 +860,37 @@ public class UnitesLocativesController : ControllerBase
                 .FirstOrDefaultAsync(
                     u =>
                         u.Id == id &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value &&
                         !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime,
+                        !u.BienImmobilier.EstSupprime &&
+                        u.BienImmobilier.SocieteId ==
+                            societeId.Value,
                     cancellationToken);
 
         if (unite == null)
         {
             return NotFound(
                 "Unité locative introuvable.");
+        }
+
+        // ========================================================
+        // CONTRAT ACTIF
+        // ========================================================
+
+        var contratActifExiste =
+            await _context.Contrats
+                .AsNoTracking()
+                .AnyAsync(
+                    c =>
+                        c.UniteLocativeId == id &&
+                        !c.EstSupprime &&
+                        c.Statut == StatutContrat.Actif,
+                    cancellationToken);
+
+        if (contratActifExiste &&
+            request.Statut != StatutDisponibilite.Loue)
+        {
+            return Conflict(
+                "Cette unité possède un contrat actif et doit conserver le statut Louée.");
         }
 
         unite.Statut =
@@ -756,13 +905,12 @@ public class UnitesLocativesController : ControllerBase
                 "Statut de l'unité modifié avec succès.",
 
             unite.Id,
-
             unite.Statut
         });
     }
 
     // ============================================================
-    // DELETE : api/UnitesLocatives/{id}
+    // DELETE
     // ============================================================
 
     [HttpDelete("{id:guid}")]
@@ -794,10 +942,10 @@ public class UnitesLocativesController : ControllerBase
                 .FirstOrDefaultAsync(
                     u =>
                         u.Id == id &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value &&
                         !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime,
+                        !u.BienImmobilier.EstSupprime &&
+                        u.BienImmobilier.SocieteId ==
+                            societeId.Value,
                     cancellationToken);
 
         if (unite == null)
@@ -808,6 +956,7 @@ public class UnitesLocativesController : ControllerBase
 
         var contratActifExiste =
             await _context.Contrats
+                .AsNoTracking()
                 .AnyAsync(
                     c =>
                         c.UniteLocativeId == id &&
@@ -822,20 +971,15 @@ public class UnitesLocativesController : ControllerBase
         }
 
         var photos =
-            unite.Photos?
-                .ToList() ??
-            [];
+            unite.Photos?.ToList() ?? [];
 
         unite.EstSupprime = true;
-
-        unite.DateSuppression =
-            DateTime.UtcNow;
+        unite.DateSuppression = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(
             cancellationToken);
 
-        SupprimerFichiersPhysiques(
-            photos);
+        SupprimerFichiersPhysiques(photos);
 
         return Ok(new
         {
@@ -845,7 +989,94 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // UPLOAD DES PHOTOS
+    // UTILISATEUR CONNECTE
+    // ============================================================
+
+    private async Task<UtilisateurConnecte?> GetUtilisateurConnecteAsync(
+        CancellationToken cancellationToken)
+    {
+        var currentUserId =
+            GetCurrentUserId();
+
+        if (!currentUserId.HasValue)
+        {
+            return null;
+        }
+
+        return await _context.Utilisateurs
+            .AsNoTracking()
+            .Where(u =>
+                u.Id == currentUserId.Value &&
+                !u.EstSupprime &&
+                u.Statut)
+            .Select(u => new UtilisateurConnecte
+            {
+                Id = u.Id,
+                SocieteId = u.SocieteId,
+                Role = u.Role
+            })
+            .FirstOrDefaultAsync(
+                cancellationToken);
+    }
+
+    private async Task<Guid?>
+        GetSocieteIdUtilisateurConnecteAsync(
+            CancellationToken cancellationToken)
+    {
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(
+                cancellationToken);
+
+        if (utilisateur == null ||
+            utilisateur.SocieteId == Guid.Empty)
+        {
+            return null;
+        }
+
+        return utilisateur.SocieteId;
+    }
+
+    // ============================================================
+    // UTILISATEUR CONNECTE
+    // ============================================================
+
+    private Guid? GetCurrentUserId()
+    {
+        var claims = new[]
+        {
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier),
+
+            User.FindFirstValue("sub"),
+
+            User.FindFirstValue("Id")
+        };
+
+        foreach (var claim in claims)
+        {
+            if (Guid.TryParse(claim, out var id))
+            {
+                return id;
+            }
+        }
+
+        return null;
+    }
+
+    // ============================================================
+    // ROLES
+    // ============================================================
+
+    private static bool EstGestionnaireOuAgent(
+        RoleUtilisateur role)
+    {
+        return role == RoleUtilisateur.Administrateur ||
+               role == RoleUtilisateur.Gestionnaire ||
+               role == RoleUtilisateur.Agent;
+    }
+
+    // ============================================================
+    // UPLOAD
     // ============================================================
 
     private async Task<ResultatUploadPhotosUnite>
@@ -856,8 +1087,7 @@ public class UnitesLocativesController : ControllerBase
             CancellationToken cancellationToken)
     {
         var photos =
-            new List<string>(
-                photosExistantes);
+            new List<string>(photosExistantes);
 
         if (photos.Count + fichiers.Count >
             NombreMaxPhotos)
@@ -891,8 +1121,7 @@ public class UnitesLocativesController : ControllerBase
                     fichier.FileName);
 
             if (string.IsNullOrWhiteSpace(extension) ||
-                !ExtensionsAutorisees.Contains(
-                    extension))
+                !ExtensionsAutorisees.Contains(extension))
             {
                 return ResultatUploadPhotosUnite.Echec(
                     $"Le format du fichier '{fichier.FileName}' n'est pas autorisé. Formats acceptés : JPG, JPEG, PNG et WEBP.");
@@ -927,11 +1156,8 @@ public class UnitesLocativesController : ControllerBase
             var cheminRelatif =
                 $"/uploads/unites/{nomFichier}";
 
-            photos.Add(
-                cheminRelatif);
-
-            fichiersCrees.Add(
-                cheminRelatif);
+            photos.Add(cheminRelatif);
+            fichiersCrees.Add(cheminRelatif);
         }
 
         return ResultatUploadPhotosUnite.SuccesResult(
@@ -962,7 +1188,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // SUPPRESSION PHYSIQUE DES FICHIERS
+    // SUPPRESSION PHYSIQUE
     // ============================================================
 
     private void SupprimerFichiersPhysiques(
@@ -973,8 +1199,7 @@ public class UnitesLocativesController : ControllerBase
             try
             {
                 var cheminComplet =
-                    GetCheminPhysique(
-                        chemin);
+                    GetCheminPhysique(chemin);
 
                 if (cheminComplet == null)
                 {
@@ -990,14 +1215,14 @@ public class UnitesLocativesController : ControllerBase
             }
             catch
             {
-                // La suppression physique d'un fichier ne doit pas
-                // faire échouer la suppression logique en base.
+                // Ne pas faire échouer la suppression logique
+                // à cause d'une erreur physique de fichier.
             }
         }
     }
 
     // ============================================================
-    // CHEMIN PHYSIQUE D'UNE PHOTO
+    // CHEMIN PHYSIQUE
     // ============================================================
 
     private string? GetCheminPhysique(
@@ -1036,7 +1261,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // FILTRER LES PHOTOS D'UNE UNITE
+    // FILTRER PHOTOS
     // ============================================================
 
     private static List<string> FiltrerPhotosUnite(
@@ -1062,10 +1287,6 @@ public class UnitesLocativesController : ControllerBase
             .ToList();
     }
 
-    // ============================================================
-    // NETTOYER LES PHOTOS
-    // ============================================================
-
     private static List<string> NettoyerPhotos(
         IEnumerable<string>? photos)
     {
@@ -1088,7 +1309,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // VALIDATION UNITE
+    // VALIDATION
     // ============================================================
 
     private static string? ValiderUnite(
@@ -1098,8 +1319,7 @@ public class UnitesLocativesController : ControllerBase
         decimal loyer,
         StatutDisponibilite statut)
     {
-        if (string.IsNullOrWhiteSpace(
-                reference))
+        if (string.IsNullOrWhiteSpace(reference))
         {
             return "La référence de l'unité est obligatoire.";
         }
@@ -1138,7 +1358,7 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // NORMALISATION REFERENCE
+    // NORMALISATION
     // ============================================================
 
     private static string NormaliserReference(
@@ -1148,58 +1368,23 @@ public class UnitesLocativesController : ControllerBase
             .Trim()
             .ToUpperInvariant();
     }
-
-    // ============================================================
-    // SOCIETE UTILISATEUR CONNECTE
-    // ============================================================
-
-    private async Task<Guid?>
-        GetSocieteIdUtilisateurConnecteAsync(
-            CancellationToken cancellationToken)
-    {
-        var currentUserId =
-            GetCurrentUserId();
-
-        if (!currentUserId.HasValue)
-        {
-            return null;
-        }
-
-        return await _context.Utilisateurs
-            .AsNoTracking()
-            .Where(u =>
-                u.Id == currentUserId.Value &&
-                !u.EstSupprime &&
-                u.Statut)
-            .Select(u =>
-                (Guid?)u.SocieteId)
-            .FirstOrDefaultAsync(
-                cancellationToken);
-    }
-
-    // ============================================================
-    // UTILISATEUR CONNECTE
-    // ============================================================
-
-    private Guid? GetCurrentUserId()
-    {
-        var userId =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
-
-        if (Guid.TryParse(
-                userId,
-                out var id))
-        {
-            return id;
-        }
-
-        return null;
-    }
 }
 
 // ==================================================================
-// DTO : CREATION
+// DTO UTILISATEUR CONNECTE
+// ==================================================================
+
+internal sealed class UtilisateurConnecte
+{
+    public Guid Id { get; set; }
+
+    public Guid SocieteId { get; set; }
+
+    public RoleUtilisateur Role { get; set; }
+}
+
+// ==================================================================
+// DTO CREATION
 // ==================================================================
 
 public class CreerUniteLocativeRequest
@@ -1220,7 +1405,7 @@ public class CreerUniteLocativeRequest
 }
 
 // ==================================================================
-// DTO : MODIFICATION
+// DTO MODIFICATION
 // ==================================================================
 
 public class ModifierUniteLocativeRequest
@@ -1243,7 +1428,7 @@ public class ModifierUniteLocativeRequest
 }
 
 // ==================================================================
-// DTO : MODIFICATION STATUT
+// DTO STATUT
 // ==================================================================
 
 public record ModifierStatutUniteRequest(

@@ -4,6 +4,7 @@ using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
 
@@ -25,21 +26,60 @@ public class BienImmobilierController : ControllerBase
 
     // ============================================================
     // GET : api/BienImmobilier
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
+    // - Locataire : uniquement les biens contenant ses unités
     // ============================================================
     [HttpGet]
+    [Authorize(Policy = "Biens.Read")]
     public async Task<IActionResult> GetBiens(
         CancellationToken cancellationToken)
     {
         var societeId = GetSocieteId();
 
         if (societeId == null)
-            return Unauthorized(new { message = "Société introuvable." });
+        {
+            return Unauthorized(new
+            {
+                message = "Société introuvable."
+            });
+        }
 
-        var biens = await _context.BiensImmobiliers
+        var utilisateurId = GetUtilisateurId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                message = "Utilisateur introuvable."
+            });
+        }
+
+        var estLocataire = User.IsInRole("Locataire");
+
+        var query = _context.BiensImmobiliers
             .AsNoTracking()
             .Where(b =>
                 b.SocieteId == societeId.Value &&
-                !b.EstSupprime)
+                !b.EstSupprime);
+
+        // --------------------------------------------------------
+        // LOCATAIRE :
+        // uniquement les biens contenant une unité qu'il loue
+        // --------------------------------------------------------
+        if (estLocataire)
+        {
+            query = query.Where(b =>
+                b.UnitesLocatives.Any(u =>
+                    !u.EstSupprime &&
+                    u.Contrats.Any(c =>
+                        !c.EstSupprime &&
+                        c.LocataireId == utilisateurId.Value)));
+        }
+
+        var biens = await query
             .OrderBy(b => b.Nom)
             .Select(b => new
             {
@@ -66,11 +106,14 @@ public class BienImmobilierController : ControllerBase
 
     // ============================================================
     // GET : api/BienImmobilier/{id}
-    // ============================================================
-    // ============================================================
-    // GET : api/BienImmobilier/{id}
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    // - Agent
+    // - Locataire : uniquement si le bien contient une de ses unités
     // ============================================================
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "Biens.Read")]
     public async Task<IActionResult> GetBien(
         Guid id,
         CancellationToken cancellationToken)
@@ -78,17 +121,47 @@ public class BienImmobilierController : ControllerBase
         var societeId = GetSocieteId();
 
         if (societeId == null)
+        {
             return Unauthorized(new
             {
                 message = "Société introuvable."
             });
+        }
 
-        var bien = await _context.BiensImmobiliers
+        var utilisateurId = GetUtilisateurId();
+
+        if (utilisateurId == null)
+        {
+            return Unauthorized(new
+            {
+                message = "Utilisateur introuvable."
+            });
+        }
+
+        var estLocataire = User.IsInRole("Locataire");
+
+        var query = _context.BiensImmobiliers
             .AsNoTracking()
             .Where(b =>
                 b.Id == id &&
                 b.SocieteId == societeId.Value &&
-                !b.EstSupprime)
+                !b.EstSupprime);
+
+        // --------------------------------------------------------
+        // LOCATAIRE :
+        // le bien doit contenir au moins une de ses unités
+        // --------------------------------------------------------
+        if (estLocataire)
+        {
+            query = query.Where(b =>
+                b.UnitesLocatives.Any(u =>
+                    !u.EstSupprime &&
+                    u.Contrats.Any(c =>
+                        !c.EstSupprime &&
+                        c.LocataireId == utilisateurId.Value)));
+        }
+
+        var bien = await query
             .Select(b => new
             {
                 b.Id,
@@ -104,10 +177,22 @@ public class BienImmobilierController : ControllerBase
 
                 SocieteNom = b.Societe.Nom,
 
-                // IMPORTANT :
-                // Le nom doit correspondre au BienDetailDto Angular.
+                // ------------------------------------------------
+                // Pour un locataire :
+                // uniquement ses propres unités.
+                //
+                // Pour les autres rôles :
+                // toutes les unités du bien.
+                // ------------------------------------------------
                 UnitesLocatives = b.UnitesLocatives
-                    .Where(u => !u.EstSupprime)
+                    .Where(u =>
+                        !u.EstSupprime &&
+                        (
+                            !estLocataire ||
+                            u.Contrats.Any(c =>
+                                !c.EstSupprime &&
+                                c.LocataireId == utilisateurId.Value)
+                        ))
                     .Select(u => new
                     {
                         u.Id,
@@ -117,9 +202,15 @@ public class BienImmobilierController : ControllerBase
                     })
                     .ToList(),
 
-                // Nombre calculé directement côté serveur.
                 NombreUnites = b.UnitesLocatives
-                    .Count(u => !u.EstSupprime)
+                    .Count(u =>
+                        !u.EstSupprime &&
+                        (
+                            !estLocataire ||
+                            u.Contrats.Any(c =>
+                                !c.EstSupprime &&
+                                c.LocataireId == utilisateurId.Value)
+                        ))
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -136,8 +227,10 @@ public class BienImmobilierController : ControllerBase
 
     // ============================================================
     // POST : api/BienImmobilier
+    // Administrateur / Gestionnaire uniquement
     // ============================================================
     [HttpPost]
+    [Authorize(Policy = "Biens.Create")]
     public async Task<IActionResult> CreerBien(
         [FromForm] CreerBienImmobilierRequest request,
         CancellationToken cancellationToken)
@@ -145,7 +238,12 @@ public class BienImmobilierController : ControllerBase
         var societeId = GetSocieteId();
 
         if (societeId == null)
-            return Unauthorized(new { message = "Société introuvable." });
+        {
+            return Unauthorized(new
+            {
+                message = "Société introuvable."
+            });
+        }
 
         // --------------------------------------------------------
         // Validation
@@ -159,10 +257,15 @@ public class BienImmobilierController : ControllerBase
             request.Type);
 
         if (erreurValidation != null)
-            return BadRequest(new { message = erreurValidation });
+        {
+            return BadRequest(new
+            {
+                message = erreurValidation
+            });
+        }
 
         // --------------------------------------------------------
-        // Nettoyage des données
+        // Nettoyage
         // --------------------------------------------------------
         var reference = NettoyerTexte(request.Reference);
         var nom = NettoyerTexte(request.Nom);
@@ -171,7 +274,7 @@ public class BienImmobilierController : ControllerBase
         var quartier = NettoyerTexte(request.Quartier);
 
         // --------------------------------------------------------
-        // Unicité de la référence
+        // Unicité référence
         // --------------------------------------------------------
         var referenceExiste = await _context.BiensImmobiliers
             .AsNoTracking()
@@ -192,7 +295,7 @@ public class BienImmobilierController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Unicité du NOM
+        // Unicité nom
         // --------------------------------------------------------
         var nomExiste = await _context.BiensImmobiliers
             .AsNoTracking()
@@ -213,7 +316,7 @@ public class BienImmobilierController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Upload des photos
+        // Upload photos
         // --------------------------------------------------------
         var resultatPhotos = await TraiterPhotos(
             request.Fichiers,
@@ -247,6 +350,8 @@ public class BienImmobilierController : ControllerBase
 
             Photos = resultatPhotos.Photos,
 
+            // IMPORTANT :
+            // la société vient toujours de l'utilisateur connecté.
             SocieteId = societeId.Value,
 
             DateCreation = DateTime.UtcNow,
@@ -261,8 +366,6 @@ public class BienImmobilierController : ControllerBase
         }
         catch (DbUpdateException)
         {
-            // Protection supplémentaire contre une concurrence :
-            // deux utilisateurs peuvent créer le même nom simultanément.
             return Conflict(new
             {
                 message =
@@ -290,8 +393,10 @@ public class BienImmobilierController : ControllerBase
 
     // ============================================================
     // PUT : api/BienImmobilier/{id}
+    // Administrateur / Gestionnaire uniquement
     // ============================================================
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "Biens.Update")]
     public async Task<IActionResult> ModifierBien(
         Guid id,
         [FromForm] ModifierBienImmobilierRequest request,
@@ -300,7 +405,12 @@ public class BienImmobilierController : ControllerBase
         var societeId = GetSocieteId();
 
         if (societeId == null)
-            return Unauthorized(new { message = "Société introuvable." });
+        {
+            return Unauthorized(new
+            {
+                message = "Société introuvable."
+            });
+        }
 
         // --------------------------------------------------------
         // Validation
@@ -314,10 +424,15 @@ public class BienImmobilierController : ControllerBase
             request.Type);
 
         if (erreurValidation != null)
-            return BadRequest(new { message = erreurValidation });
+        {
+            return BadRequest(new
+            {
+                message = erreurValidation
+            });
+        }
 
         // --------------------------------------------------------
-        // Recherche du bien
+        // Recherche du bien dans la société de l'utilisateur
         // --------------------------------------------------------
         var bien = await _context.BiensImmobiliers
             .FirstOrDefaultAsync(
@@ -345,7 +460,7 @@ public class BienImmobilierController : ControllerBase
         var quartier = NettoyerTexte(request.Quartier);
 
         // --------------------------------------------------------
-        // Unicité de la référence
+        // Unicité référence
         // --------------------------------------------------------
         var referenceExiste = await _context.BiensImmobiliers
             .AsNoTracking()
@@ -367,7 +482,7 @@ public class BienImmobilierController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Unicité du NOM
+        // Unicité nom
         // --------------------------------------------------------
         var nomExiste = await _context.BiensImmobiliers
             .AsNoTracking()
@@ -417,15 +532,11 @@ public class BienImmobilierController : ControllerBase
         // --------------------------------------------------------
         bien.Reference = reference;
         bien.Nom = nom;
-
         bien.Type = request.Type;
-
         bien.Adresse = adresse;
         bien.Ville = ville;
         bien.Quartier = quartier;
-
         bien.Superficie = request.Superficie;
-
         bien.Photos = photosFinales;
 
         try
@@ -459,8 +570,10 @@ public class BienImmobilierController : ControllerBase
 
     // ============================================================
     // DELETE : api/BienImmobilier/{id}
+    // Administrateur / Gestionnaire uniquement
     // ============================================================
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "Biens.Delete")]
     public async Task<IActionResult> SupprimerBien(
         Guid id,
         CancellationToken cancellationToken)
@@ -468,7 +581,12 @@ public class BienImmobilierController : ControllerBase
         var societeId = GetSocieteId();
 
         if (societeId == null)
-            return Unauthorized(new { message = "Société introuvable." });
+        {
+            return Unauthorized(new
+            {
+                message = "Société introuvable."
+            });
+        }
 
         var bien = await _context.BiensImmobiliers
             .FirstOrDefaultAsync(
@@ -487,14 +605,15 @@ public class BienImmobilierController : ControllerBase
         }
 
         // --------------------------------------------------------
-        // Vérifier les contrats actifs
+        // Vérifier les contrats actifs non supprimés
         // --------------------------------------------------------
         var contratActifExiste =
             await _context.Contrats
                 .AnyAsync(
                     c =>
-                        c.UniteLocative.BienImmobilierId == id &&
-                        c.Statut == StatutContrat.Actif,
+                        !c.EstSupprime &&
+                        c.Statut == StatutContrat.Actif &&
+                        c.UniteLocative.BienImmobilierId == id,
                     cancellationToken);
 
         if (contratActifExiste)
@@ -576,6 +695,21 @@ public class BienImmobilierController : ControllerBase
 
         if (Guid.TryParse(claim, out var societeId))
             return societeId;
+
+        return null;
+    }
+
+    // ============================================================
+    // UTILISATEUR
+    // ============================================================
+    private Guid? GetUtilisateurId()
+    {
+        var claim =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst("sub")?.Value;
+
+        if (Guid.TryParse(claim, out var utilisateurId))
+            return utilisateurId;
 
         return null;
     }

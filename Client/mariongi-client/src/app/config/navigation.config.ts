@@ -18,7 +18,8 @@ export const APP_NAV_ITEMS: NavItem[] = [
   {
     label: 'Biens immobiliers',
     icon: 'pi pi-building',
-    route: 'biens'
+    route: 'biens',
+    roles: [ROLES.Administrateur, ROLES.Admin]
   },
 
   {
@@ -28,7 +29,9 @@ export const APP_NAV_ITEMS: NavItem[] = [
     roles: [
       ROLES.Administrateur,
       ROLES.Admin,
-      ROLES.Gestionnaire
+      ROLES.Gestionnaire,
+      ROLES.Agent,
+      ROLES.Locataire
     ]
   },
 
@@ -63,7 +66,8 @@ export const APP_NAV_ITEMS: NavItem[] = [
     roles: [
       ROLES.Administrateur,
       ROLES.Admin,
-      ROLES.Gestionnaire
+      ROLES.Gestionnaire,
+      ROLES.Locataire
     ]
   },
 

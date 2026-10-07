@@ -420,34 +420,24 @@ export class RapportsService {
   }
 
 
-  // ==========================================================
-  // 9. EXPORT PDF
-  // ==========================================================
+telechargerRapportPdf(
+  typeRapport: string,
+  titreRapport: string,
+  donnees: unknown
+): Observable<Blob> {
 
-  telechargerRapportPdf(
-    typeRapport: string,
-    titreRapport: string,
-    donnees: unknown
-  ): Observable<Blob> {
+  const payload = {
+    typeRapport,
+    titreRapport,
+    donnees
+  };
 
-    const params =
-      new HttpParams()
-        .set(
-          'typeRapport',
-          typeRapport
-        )
-        .set(
-          'titreRapport',
-          titreRapport
-        );
-
-    return this.http.post(
-      `${this.apiUrl}/export-pdf`,
-      donnees,
-      {
-        params,
-        responseType: 'blob'
-      }
-    );
-  }
+  return this.http.post(
+    `${this.apiUrl}/export-pdf`,
+    payload,
+    {
+      responseType: 'blob'
+    }
+  );
+}
 }

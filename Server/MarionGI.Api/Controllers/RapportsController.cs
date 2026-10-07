@@ -1,4 +1,5 @@
-﻿using MarionGI.Domain.Enums;
+﻿using MarionGI.Application.Dtos;
+using MarionGI.Domain.Enums;
 using MarionGI.Infrastructure.Pdf;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
@@ -21,13 +22,16 @@ public class RapportsController : ControllerBase
 {
     private readonly MarionDbContext _context;
     private readonly IRapportPdfService _rapportPdfService;
+    private readonly ILogger<RapportsController> _logger;
 
     public RapportsController(
         MarionDbContext context,
-        IRapportPdfService rapportPdfService)
+        IRapportPdfService rapportPdfService,
+        ILogger<RapportsController> logger)
     {
         _context = context;
         _rapportPdfService = rapportPdfService;
+        _logger = logger;
     }
 
     // ============================================================
@@ -1699,41 +1703,204 @@ public class RapportsController : ControllerBase
     // ============================================================
 
     [HttpPost("export-pdf")]
-    public IActionResult ExporterRapportPdf(
-        [FromQuery] string typeRapport,
-        [FromQuery] string titreRapport,
-        [FromBody] JsonElement donnees)
+    public async Task<IActionResult> ExporterRapportPdf(
+     [FromBody] ExportRapportPdfRequest request)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(typeRapport))
+            // ========================================================
+            // 1. VALIDATION
+            // ========================================================
+
+            if (request == null)
             {
-                return BadRequest(
-                    "Le type de rapport est obligatoire.");
+                return BadRequest(new
+                {
+                    message = "La requête d'export est obligatoire."
+                });
             }
 
-            if (string.IsNullOrWhiteSpace(titreRapport))
+            if (string.IsNullOrWhiteSpace(request.TypeRapport))
             {
-                return BadRequest(
-                    "Le titre du rapport est obligatoire.");
+                return BadRequest(new
+                {
+                    message = "Le type de rapport est obligatoire."
+                });
             }
+
+            if (string.IsNullOrWhiteSpace(request.TitreRapport))
+            {
+                return BadRequest(new
+                {
+                    message = "Le titre du rapport est obligatoire."
+                });
+            }
+
+            // ========================================================
+            // 2. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
+            // ========================================================
+
+            var societeId =
+                await GetSocieteIdUtilisateurConnecteAsync();
+
+            if (!societeId.HasValue)
+            {
+                return Forbid();
+            }
+
+            // ========================================================
+            // 3. NORMALISATION
+            // ========================================================
+
+            var typeNormalise =
+                request.TypeRapport
+                    .Trim()
+                    .ToLowerInvariant();
+
+            var titre =
+                request.TitreRapport.Trim();
+
+            var donnees =
+                request.Donnees;
+
+            // ========================================================
+            // 4. VALIDATION DES DONNÉES
+            // ========================================================
+
+            if (donnees.ValueKind == JsonValueKind.Undefined ||
+                donnees.ValueKind == JsonValueKind.Null)
+            {
+                _logger.LogWarning(
+                    "Export PDF avec données nulles. " +
+                    "Type={TypeRapport}, Société={SocieteId}",
+                    typeNormalise,
+                    societeId.Value);
+
+                return BadRequest(new
+                {
+                    message =
+                        "Aucune donnée de rapport n'a été reçue."
+                });
+            }
+
+            if (donnees.ValueKind == JsonValueKind.Object &&
+                !donnees.EnumerateObject().Any())
+            {
+                _logger.LogWarning(
+                    "Export PDF avec objet JSON vide. " +
+                    "Type={TypeRapport}, Société={SocieteId}",
+                    typeNormalise,
+                    societeId.Value);
+
+                return BadRequest(new
+                {
+                    message =
+                        "Les données du rapport sont vides."
+                });
+            }
+
+            if (donnees.ValueKind == JsonValueKind.Array &&
+                !donnees.EnumerateArray().Any())
+            {
+                _logger.LogWarning(
+                    "Export PDF avec tableau JSON vide. " +
+                    "Type={TypeRapport}, Société={SocieteId}",
+                    typeNormalise,
+                    societeId.Value);
+
+                return BadRequest(new
+                {
+                    message =
+                        "Le rapport ne contient aucune donnée."
+                });
+            }
+
+            // ========================================================
+            // 5. LOG DES DONNÉES
+            // ========================================================
+
+            var jsonRecu =
+                donnees.GetRawText();
+
+            _logger.LogInformation(
+                "EXPORT PDF - Type={TypeRapport}, " +
+                "Titre={TitreRapport}, Société={SocieteId}, " +
+                "JsonLength={JsonLength}",
+                typeNormalise,
+                titre,
+                societeId.Value,
+                jsonRecu.Length);
+
+            _logger.LogDebug(
+                "EXPORT PDF - Données reçues : {Donnees}",
+                jsonRecu);
+
+            // ========================================================
+            // 6. GÉNÉRATION DU PDF
+            // ========================================================
 
             var pdfBytes =
                 _rapportPdfService.GenererRapportPdf(
-                    typeRapport,
-                    titreRapport,
+                    typeNormalise,
+                    titre,
                     donnees);
+
+            // ========================================================
+            // 7. VALIDATION DU PDF
+            // ========================================================
+
+            if (pdfBytes == null ||
+                pdfBytes.Length == 0)
+            {
+                _logger.LogError(
+                    "Le service PDF a retourné un fichier vide. " +
+                    "Type={TypeRapport}, Société={SocieteId}",
+                    typeNormalise,
+                    societeId.Value);
+
+                return StatusCode(
+                    StatusCodes.Status500InternalServerError,
+                    new
+                    {
+                        message =
+                            "Le service de génération PDF " +
+                            "n'a produit aucune donnée."
+                    });
+            }
+
+            _logger.LogInformation(
+                "PDF généré avec succès. " +
+                "Type={TypeRapport}, Taille={Taille} octets",
+                typeNormalise,
+                pdfBytes.Length);
+
+            // ========================================================
+            // 8. NOM DU FICHIER
+            // ========================================================
+
+            var nomFichier =
+                $"Rapport_{typeNormalise}_" +
+                $"{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+
+            // ========================================================
+            // 9. RETOUR
+            // ========================================================
 
             return File(
                 pdfBytes,
                 "application/pdf",
-                $"Rapport_{typeRapport}_" +
-                $"{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
+                nomFichier);
         }
         catch (Exception ex)
         {
+            _logger.LogError(
+                ex,
+                "Erreur lors de la génération du PDF. " +
+                "Type={TypeRapport}",
+                request?.TypeRapport);
+
             return StatusCode(
-                500,
+                StatusCodes.Status500InternalServerError,
                 new
                 {
                     message =

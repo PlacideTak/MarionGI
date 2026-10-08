@@ -3,18 +3,20 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment.development';
-import { ModePaiement, PaiementDto } from '../models/gestimmo.models';
+import { ModePaiement, PaiementDto, PaiementListItem } from '../models/gestimmo.models';
 
 export interface InitierPaiementRequest {
   contratId: string;
   montant: number;
   modePaiement: ModePaiement;
   telephone: string;
+  moisLoyer: string;
 }
 
 export interface PaiementEspecesRequest {
   contratId: string;
   montant: number;
+  moisLoyer: string;
 }
 
 export interface PaiementResponse {
@@ -119,12 +121,13 @@ export class PaiementsService {
   // RÉCUPÉRER LES PAIEMENTS
   // ============================================================
 
-  getPaiements(): Observable<PaiementDto[]> {
 
-    return this.http.get<PaiementDto[]>(
-      this.apiUrl
-    );
-  }
+    getPaiements(): Observable<PaiementListItem[]> {
+      return this.http.get<PaiementListItem[]>(
+        `${this.apiUrl}`
+      );
+    }
+
 
   // ============================================================
   // TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT

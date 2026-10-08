@@ -3,13 +3,13 @@
   <!-- =========================================================
        EN-TÊTE
        ========================================================= -->
+
   <div class="page-header mb-4">
 
     <div>
       <h2 class="m-0">Gestion des Contrats</h2>
     </div>
 
-    <!-- Création réservée aux administrateurs et gestionnaires -->
     <p-button
       *ngIf="canManageContrat"
       class="btn-new"
@@ -24,6 +24,7 @@
   <!-- =========================================================
        TABLEAU DES CONTRATS
        ========================================================= -->
+
   <div class="table-responsive">
 
     <p-table
@@ -34,13 +35,12 @@
       currentPageReportTemplate="{first} - {last} sur {totalRecords}"
       styleClass="p-datatable-striped table-responsive-stack">
 
-      <!-- EN-TÊTE -->
       <ng-template pTemplate="header">
 
         <tr>
 
           <th class="hide-tablet">
-            Référence
+            Réf.
           </th>
 
           <th>
@@ -78,20 +78,15 @@
       </ng-template>
 
 
-      <!-- =======================================================
-           CORPS
-           ======================================================= -->
       <ng-template
         pTemplate="body"
         let-contrat>
 
         <tr>
 
-          <!-- ===================================================
-               RÉFÉRENCE DU CONTRAT
-               =================================================== -->
+          <!-- RÉFÉRENCE -->
           <td
-            data-label="Référence"
+            data-label="Réf."
             class="hide-tablet">
 
             <span class="font-bold">
@@ -101,9 +96,7 @@
           </td>
 
 
-          <!-- ===================================================
-               UNITÉ LOCATIVE
-               =================================================== -->
+          <!-- UNITÉ LOCATIVE -->
           <td data-label="Unité locative">
 
             <div class="property-cell">
@@ -117,7 +110,7 @@
 
               <small
                 *ngIf="contrat.uniteLocative?.bienReference"
-                class="bien-reference text-color-secondary">
+                class="bien-reference">
 
                 Bien :
                 {{ contrat.uniteLocative.bienReference }}
@@ -137,85 +130,101 @@
           </td>
 
 
-          <!-- ===================================================
-               LOCATAIRE
-               =================================================== -->
+          <!-- LOCATAIRE -->
           <td data-label="Locataire">
 
-            {{
-              contrat.locataire?.prenom || ''
-            }}
-
-            {{
-              contrat.locataire?.nom || ''
-            }}
-
-            <span
+            <ng-container
               *ngIf="
-                !contrat.locataire?.prenom &&
-                !contrat.locataire?.nom
+                contrat.locataire?.prenom ||
+                contrat.locataire?.nom;
+                else locataireInconnu
               ">
+
+              {{ contrat.locataire?.prenom || '' }}
+              {{ contrat.locataire?.nom || '' }}
+
+            </ng-container>
+
+            <ng-template #locataireInconnu>
               N/A
-            </span>
+            </ng-template>
 
           </td>
 
 
-          <!-- ===================================================
-               PÉRIODE
-               =================================================== -->
+          <!-- PÉRIODE -->
           <td
             data-label="Période"
             class="nowrap">
 
-            {{ contrat.dateDebut | date:'dd/MM/yyyy' }}
+            <ng-container
+              *ngIf="
+                contrat.dateDebut &&
+                contrat.dateFin
+              ">
 
-            <span class="mx-1">
-              -
+              {{ contrat.dateDebut | date:'dd/MM/yyyy' }}
+
+              <span class="mx-1">
+                -
+              </span>
+
+              {{ contrat.dateFin | date:'dd/MM/yyyy' }}
+
+            </ng-container>
+
+            <span
+              *ngIf="
+                !contrat.dateDebut ||
+                !contrat.dateFin
+              ">
+
+              N/A
+
             </span>
-
-            {{ contrat.dateFin | date:'dd/MM/yyyy' }}
 
           </td>
 
 
-          <!-- ===================================================
-               LOYER
-               =================================================== -->
+          <!-- LOYER -->
           <td
             data-label="Loyer"
             class="nowrap">
 
             {{
-              contrat.montantLoyer
-              | number:'1.0-0'
+              contrat.montantLoyer != null
+                ? (contrat.montantLoyer | number:'1.0-0')
+                : 'N/A'
             }}
 
-            FCFA
+            <span
+              *ngIf="contrat.montantLoyer != null">
+              FCFA
+            </span>
 
           </td>
 
 
-          <!-- ===================================================
-               CAUTION
-               =================================================== -->
+          <!-- CAUTION -->
           <td
             data-label="Caution"
             class="nowrap hide-tablet">
 
             {{
-              contrat.montantCaution
-              | number:'1.0-0'
+              contrat.montantCaution != null
+                ? (contrat.montantCaution | number:'1.0-0')
+                : 'N/A'
             }}
 
-            FCFA
+            <span
+              *ngIf="contrat.montantCaution != null">
+              FCFA
+            </span>
 
           </td>
 
 
-          <!-- ===================================================
-               STATUT
-               =================================================== -->
+          <!-- STATUT -->
           <td data-label="Statut">
 
             <p-tag
@@ -226,9 +235,7 @@
           </td>
 
 
-          <!-- ===================================================
-               ACTIONS
-               =================================================== -->
+          <!-- ACTIONS -->
           <td
             *ngIf="canManageContrat"
             data-label="Actions"
@@ -236,7 +243,6 @@
 
             <div class="actions-group">
 
-              <!-- MODIFIER -->
               <p-button
                 icon="pi pi-pencil"
                 [rounded]="true"
@@ -248,8 +254,6 @@
                 (onClick)="editContrat(contrat)">
               </p-button>
 
-
-              <!-- SUPPRIMER -->
               <p-button
                 icon="pi pi-trash"
                 [rounded]="true"
@@ -270,9 +274,7 @@
       </ng-template>
 
 
-      <!-- =======================================================
-           AUCUN CONTRAT
-           ======================================================= -->
+      <!-- AUCUN CONTRAT -->
       <ng-template pTemplate="emptymessage">
 
         <tr>
@@ -297,208 +299,220 @@
 
 
 <!-- =========================================================
-     DIALOGUE : CONTRAT
+     DIALOGUE MODAL : CONTRAT
      ========================================================= -->
 
 <p-dialog
   [(visible)]="contratDialog"
-  [style]="{ width: '550px' }"
-  [breakpoints]="{
-    '960px': '75vw',
-    '600px': '95vw'
-  }"
-  [header]="
-    isEditMode
-      ? 'Modifier le Contrat'
-      : 'Nouveau Contrat'
-  "
   [modal]="true"
+  [blockScroll]="true"
   [draggable]="false"
   [resizable]="false"
-  [dismissableMask]="true"
-  styleClass="contrat-dialog">
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="false"
+  appendTo="body"
 
+  [style]="{
+    width: '700px',
+    maxWidth: 'calc(100vw - 2rem)'
+  }"
+
+  [breakpoints]="{
+    '960px': '80vw',
+    '640px': '95vw'
+  }"
+
+  [header]="isEditMode ? 'Modifier le Contrat' : 'Nouveau Contrat'"
+
+  styleClass="contrat-dialog"
+
+  (onHide)="fermerDialog()">
+
+
+  <!-- =======================================================
+       CONTENU
+       ======================================================= -->
 
   <ng-template pTemplate="content">
 
     <form
       [formGroup]="contratForm"
-      class="contrat-form">
+      class="contrat-form"
+      (ngSubmit)="saveContrat()">
 
 
-      <!-- =====================================================
-           RÉFÉRENCE DU CONTRAT
-           ===================================================== -->
-      <div class="field">
+      <!-- ===================================================
+           LIGNE 1 : RÉFÉRENCE + BIEN
+           =================================================== -->
 
-        <label for="reference">
-          Référence du contrat
-          <span class="text-red-500">*</span>
-        </label>
+      <div class="form-row">
 
-        <input
-          id="reference"
-          type="text"
-          pInputText
-          formControlName="reference"
-          maxlength="50"
-          class="w-full"
-          placeholder="Ex. CTR-2026-001"
-          [readonly]="isEditMode" />
+        <!-- RÉFÉRENCE -->
+        <div class="field">
 
-        <small
-          *ngIf="isEditMode"
-          class="text-color-secondary">
+          <label for="reference">
+            Référence du contrat
+            <span class="text-red-500">*</span>
+          </label>
 
-          La référence ne peut pas être modifiée.
+          <input
+            id="reference"
+            type="text"
+            pInputText
+            formControlName="reference"
+            class="w-full"
+            maxlength="50"
+            placeholder="Ex. CTR-2026-001"
+            [readonly]="isEditMode" />
 
-        </small>
+          <small
+            *ngIf="isEditMode"
+            class="text-color-secondary">
 
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('reference')?.touched &&
-            contratForm.get('reference')?.hasError('required')
-          ">
+            La référence ne peut pas être modifiée.
 
-          La référence du contrat est requise.
+          </small>
 
-        </small>
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('reference')?.touched &&
+              contratForm.get('reference')?.invalid
+            ">
 
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('reference')?.touched &&
-            contratForm.get('reference')?.hasError('maxlength')
-          ">
+            La référence du contrat est requise.
 
-          La référence ne peut pas dépasser 50 caractères.
+          </small>
 
-        </small>
-
-      </div>
+        </div>
 
 
-      <!-- =====================================================
-           BIEN IMMOBILIER
-           ===================================================== -->
-      <div class="field">
+        <!-- BIEN IMMOBILIER -->
+        <div class="field">
 
-        <label for="bienImmobilierId">
-          Bien immobilier
-          <span class="text-red-500">*</span>
-        </label>
+          <label for="bienImmobilierId">
+            Bien immobilier
+            <span class="text-red-500">*</span>
+          </label>
 
-        <p-select
-          inputId="bienImmobilierId"
-          formControlName="bienImmobilierId"
-          [options]="biensOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner un bien immobilier"
-          styleClass="w-full"
-          appendTo="body"
-          (onChange)="onBienChange($event.value)">
-        </p-select>
+          <p-select
+            inputId="bienImmobilierId"
+            formControlName="bienImmobilierId"
+            [options]="biensOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner un bien"
+            styleClass="w-full contrat-select"
+            appendTo="body"
+            (onChange)="onBienChange($event.value)">
+          </p-select>
 
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('bienImmobilierId')?.touched &&
-            contratForm.get('bienImmobilierId')?.invalid
-          ">
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('bienImmobilierId')?.touched &&
+              contratForm.get('bienImmobilierId')?.invalid
+            ">
 
-          Le bien immobilier est requis.
+            Le bien immobilier est requis.
 
-        </small>
+          </small>
+
+        </div>
 
       </div>
 
 
-      <!-- =====================================================
-           UNITÉ LOCATIVE
-           ===================================================== -->
-      <div class="field">
+      <!-- ===================================================
+           LIGNE 2 : UNITÉ + LOCATAIRE
+           =================================================== -->
 
-        <label for="uniteLocativeId">
-          Unité locative
-          <span class="text-red-500">*</span>
-        </label>
+      <div class="form-row unite-locataire-row">
 
-        <p-select
-          inputId="uniteLocativeId"
-          formControlName="uniteLocativeId"
-          [options]="unitesLocativesOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner une unité locative"
-          styleClass="w-full"
-          appendTo="body">
-        </p-select>
+        <!-- UNITÉ LOCATIVE -->
+        <div class="field">
 
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('uniteLocativeId')?.touched &&
-            contratForm.get('uniteLocativeId')?.invalid
-          ">
+          <label for="uniteLocativeId">
+            Unité locative
+            <span class="text-red-500">*</span>
+          </label>
 
-          L'unité locative est requise.
+          <p-select
+            inputId="uniteLocativeId"
+            formControlName="uniteLocativeId"
+            [options]="unitesLocativesOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner une unité"
+            styleClass="w-full contrat-select"
+            appendTo="body">
+          </p-select>
 
-        </small>
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('uniteLocativeId')?.touched &&
+              contratForm.get('uniteLocativeId')?.invalid
+            ">
 
-        <small
-          *ngIf="
-            contratForm.get('bienImmobilierId')?.value &&
-            unitesLocativesOptions.length === 0
-          "
-          class="text-color-secondary">
+            L'unité locative est requise.
 
-          Aucune unité locative disponible pour ce bien.
+          </small>
 
-        </small>
+          <small
+            *ngIf="
+              contratForm.get('bienImmobilierId')?.value &&
+              unitesLocativesOptions.length === 0
+            "
+            class="text-color-secondary">
+
+            Aucune unité locative disponible pour ce bien.
+
+          </small>
+
+        </div>
+
+
+        <!-- LOCATAIRE -->
+        <div class="field locataire-field">
+
+          <label for="locataireId">
+            Locataire
+            <span class="text-red-500">*</span>
+          </label>
+
+          <p-select
+            inputId="locataireId"
+            formControlName="locataireId"
+            [options]="locatairesOptions"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Sélectionner un locataire"
+            styleClass="w-full contrat-select"
+            appendTo="body">
+          </p-select>
+
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('locataireId')?.touched &&
+              contratForm.get('locataireId')?.invalid
+            ">
+
+            Le locataire est requis.
+
+          </small>
+
+        </div>
 
       </div>
 
 
-      <!-- =====================================================
-           LOCATAIRE
-           ===================================================== -->
-      <div class="field">
+      <!-- ===================================================
+           LIGNE 3 : DATES
+           =================================================== -->
 
-        <label for="locataireId">
-          Locataire
-          <span class="text-red-500">*</span>
-        </label>
-
-        <p-select
-          inputId="locataireId"
-          formControlName="locataireId"
-          [options]="locatairesOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner un locataire"
-          styleClass="w-full"
-          appendTo="body">
-        </p-select>
-
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('locataireId')?.touched &&
-            contratForm.get('locataireId')?.invalid
-          ">
-
-          Le locataire est requis.
-
-        </small>
-
-      </div>
-
-
-      <!-- =====================================================
-           DATES
-           ===================================================== -->
       <div class="form-row">
 
         <!-- DATE DÉBUT -->
@@ -517,7 +531,7 @@
             class="w-full" />
 
           <small
-            class="p-error"
+            class="p-error form-error"
             *ngIf="
               contratForm.get('dateDebut')?.touched &&
               contratForm.get('dateDebut')?.invalid
@@ -546,7 +560,7 @@
             class="w-full" />
 
           <small
-            class="p-error"
+            class="p-error form-error"
             *ngIf="
               contratForm.get('dateFin')?.touched &&
               contratForm.get('dateFin')?.invalid
@@ -561,9 +575,10 @@
       </div>
 
 
-      <!-- =====================================================
-           MONTANTS
-           ===================================================== -->
+      <!-- ===================================================
+           LIGNE 4 : MONTANTS
+           =================================================== -->
+
       <div class="form-row">
 
         <!-- LOYER -->
@@ -584,7 +599,7 @@
           </p-inputNumber>
 
           <small
-            class="p-error"
+            class="p-error form-error"
             *ngIf="
               contratForm.get('montantLoyer')?.touched &&
               contratForm.get('montantLoyer')?.invalid
@@ -615,7 +630,7 @@
           </p-inputNumber>
 
           <small
-            class="p-error"
+            class="p-error form-error"
             *ngIf="
               contratForm.get('montantCaution')?.touched &&
               contratForm.get('montantCaution')?.invalid
@@ -630,75 +645,80 @@
       </div>
 
 
-      <!-- =====================================================
-           FRÉQUENCE DE PAIEMENT
-           ===================================================== -->
-      <div class="field">
+      <!-- ===================================================
+           LIGNE 5 : FRÉQUENCE + TOLÉRANCE
+           =================================================== -->
 
-        <label for="frequencePaiement">
-          Fréquence de paiement
-          <span class="text-red-500">*</span>
-        </label>
+      <div class="form-row">
 
-        <p-inputNumber
-          inputId="frequencePaiement"
-          formControlName="frequencePaiement"
-          [min]="1"
-          [minFractionDigits]="0"
-          [maxFractionDigits]="0"
-          styleClass="w-full">
-        </p-inputNumber>
+        <!-- FRÉQUENCE -->
+        <div class="field">
 
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('frequencePaiement')?.touched &&
-            contratForm.get('frequencePaiement')?.invalid
-          ">
+          <label for="frequencePaiement">
+            Fréquence de paiement
+            <span class="text-red-500">*</span>
+          </label>
 
-          La fréquence de paiement est requise.
+          <p-inputNumber
+            inputId="frequencePaiement"
+            formControlName="frequencePaiement"
+            [min]="1"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full">
+          </p-inputNumber>
 
-        </small>
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('frequencePaiement')?.touched &&
+              contratForm.get('frequencePaiement')?.invalid
+            ">
+
+            La fréquence de paiement est requise.
+
+          </small>
+
+        </div>
+
+
+        <!-- DÉLAI -->
+        <div class="field">
+
+          <label for="delaiJoursTolerance">
+            Délai de tolérance (jours)
+            <span class="text-red-500">*</span>
+          </label>
+
+          <p-inputNumber
+            inputId="delaiJoursTolerance"
+            formControlName="delaiJoursTolerance"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="0"
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small
+            class="p-error form-error"
+            *ngIf="
+              contratForm.get('delaiJoursTolerance')?.touched &&
+              contratForm.get('delaiJoursTolerance')?.invalid
+            ">
+
+            Le délai de tolérance est requis.
+
+          </small>
+
+        </div>
 
       </div>
 
 
-      <!-- =====================================================
-           DÉLAI DE TOLÉRANCE
-           ===================================================== -->
-      <div class="field">
+      <!-- ===================================================
+           STATUT — MODIFICATION UNIQUEMENT
+           =================================================== -->
 
-        <label for="delaiJoursTolerance">
-          Délai de tolérance (jours)
-          <span class="text-red-500">*</span>
-        </label>
-
-        <p-inputNumber
-          inputId="delaiJoursTolerance"
-          formControlName="delaiJoursTolerance"
-          [min]="0"
-          [minFractionDigits]="0"
-          [maxFractionDigits]="0"
-          styleClass="w-full">
-        </p-inputNumber>
-
-        <small
-          class="p-error"
-          *ngIf="
-            contratForm.get('delaiJoursTolerance')?.touched &&
-            contratForm.get('delaiJoursTolerance')?.invalid
-          ">
-
-          Le délai de tolérance est requis.
-
-        </small>
-
-      </div>
-
-
-      <!-- =====================================================
-           STATUT
-           ===================================================== -->
       <div
         class="field"
         *ngIf="isEditMode">
@@ -715,12 +735,12 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Sélectionner un statut"
-          styleClass="w-full"
+          styleClass="w-full contrat-select"
           appendTo="body">
         </p-select>
 
         <small
-          class="p-error"
+          class="p-error form-error"
           *ngIf="
             contratForm.get('statut')?.touched &&
             contratForm.get('statut')?.invalid
@@ -738,23 +758,21 @@
 
 
   <!-- =========================================================
-       FOOTER
+       FOOTER DU DIALOGUE
        ========================================================= -->
+
   <ng-template pTemplate="footer">
 
     <div class="dialog-actions">
 
-      <!-- ANNULER -->
       <p-button
         label="Annuler"
         icon="pi pi-times"
         [text]="true"
         severity="secondary"
-        (onClick)="contratDialog = false">
+        (onClick)="fermerDialog()">
       </p-button>
 
-
-      <!-- ENREGISTRER -->
       <p-button
         label="Enregistrer"
         icon="pi pi-check"

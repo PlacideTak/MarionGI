@@ -61,6 +61,12 @@ import {
 } from '../models/gestimmo.models';
 
 
+interface MoisLoyerOption {
+  label: string;
+  value: string;
+}
+
+
 @Component({
   selector: 'app-unites-locatives',
 
@@ -210,6 +216,22 @@ export class UnitesLocatives
    * Par défaut, il correspond au loyer du contrat actif.
    */
   montantPaiement = 0;
+
+  /**
+   * Mois de loyer sélectionné pour le paiement.
+   *
+   * Format envoyé au backend :
+   * YYYY-MM-01T00:00:00
+   *
+   * Exemple :
+   * 2026-10-01T00:00:00
+   */
+  moisLoyerPaiement = '';
+
+  /**
+   * Liste des mois de loyer couverts par le contrat actif.
+   */
+  moisLoyerOptions: MoisLoyerOption[] = [];
 
   /**
    * Mode de paiement sélectionné.
@@ -459,7 +481,236 @@ export class UnitesLocatives
 
 
   // ============================================================
-  // PAIEMENT
+  // PAIEMENT - GESTION DES MOIS
+  // ============================================================
+
+  /**
+   * Convertit une date provenant de l'API en date locale
+   * sans subir de décalage lié au fuseau horaire.
+   *
+   * Exemple :
+   * "2026-10-01T00:00:00" -> 01/10/2026
+   */
+  private creerDateLocale(
+    valeur: string | Date
+  ): Date {
+
+    if (valeur instanceof Date) {
+
+      return new Date(
+        valeur.getFullYear(),
+        valeur.getMonth(),
+        valeur.getDate()
+      );
+    }
+
+    const texte =
+      String(valeur);
+
+    const partieDate =
+      texte.substring(0, 10);
+
+    const morceaux =
+      partieDate.split('-');
+
+    if (morceaux.length !== 3) {
+
+      return new Date(NaN);
+    }
+
+    const annee =
+      Number(morceaux[0]);
+
+    const mois =
+      Number(morceaux[1]);
+
+    const jour =
+      Number(morceaux[2]);
+
+    return new Date(
+      annee,
+      mois - 1,
+      jour
+    );
+  }
+
+
+  /**
+   * Retourne le premier jour du mois.
+   */
+  private premierJourDuMois(
+    date: Date
+  ): Date {
+
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      1
+    );
+  }
+
+
+  /**
+   * Transforme une date en valeur utilisable
+   * par le backend pour MoisLoyer.
+   *
+   * Exemple :
+   * 01/10/2026 -> 2026-10-01T00:00:00
+   */
+  private formatMoisLoyer(
+    date: Date
+  ): string {
+
+    const annee =
+      date.getFullYear();
+
+    const mois =
+      String(
+        date.getMonth() + 1
+      ).padStart(2, '0');
+
+    return `${annee}-${mois}-01T00:00:00`;
+  }
+
+
+  /**
+   * Génère tous les mois couverts par le contrat.
+   *
+   * Exemple :
+   *
+   * Contrat :
+   * 01/08/2026 -> 30/11/2026
+   *
+   * Résultat :
+   * Août 2026
+   * Septembre 2026
+   * Octobre 2026
+   * Novembre 2026
+   */
+  private genererMoisLoyerOptions(
+    contrat: ContratUniteDto
+  ): MoisLoyerOption[] {
+
+    const dateDebut =
+      this.creerDateLocale(
+        contrat.dateDebut
+      );
+
+    const dateFin =
+      contrat.dateFin
+        ? this.creerDateLocale(
+            contrat.dateFin
+          )
+        : new Date();
+
+    if (
+      Number.isNaN(dateDebut.getTime()) ||
+      Number.isNaN(dateFin.getTime())
+    ) {
+
+      return [];
+    }
+
+    let moisCourant =
+      this.premierJourDuMois(
+        dateDebut
+      );
+
+    const dernierMois =
+      this.premierJourDuMois(
+        dateFin
+      );
+
+    const options:
+      MoisLoyerOption[] = [];
+
+    while (
+      moisCourant <= dernierMois
+    ) {
+
+      const valeur =
+        this.formatMoisLoyer(
+          moisCourant
+        );
+
+      const libelle =
+        moisCourant.toLocaleDateString(
+          'fr-FR',
+          {
+            month: 'long',
+            year: 'numeric'
+          }
+        );
+
+      options.push({
+
+        label:
+          libelle.charAt(0).toUpperCase() +
+          libelle.slice(1),
+
+        value:
+          valeur
+      });
+
+      moisCourant =
+        new Date(
+          moisCourant.getFullYear(),
+          moisCourant.getMonth() + 1,
+          1
+        );
+    }
+
+    return options;
+  }
+
+
+  /**
+   * Détermine le mois à présélectionner.
+   *
+   * Le mois courant est privilégié lorsqu'il est
+   * couvert par le contrat.
+   *
+   * Si le contrat ne couvre pas le mois courant,
+   * le premier mois du contrat est sélectionné.
+   */
+  private determinerMoisLoyerParDefaut(
+    contrat: ContratUniteDto
+  ): string {
+
+    if (
+      this.moisLoyerOptions.length === 0
+    ) {
+
+      return '';
+    }
+
+    const maintenant =
+      new Date();
+
+    const moisCourant =
+      this.formatMoisLoyer(
+        this.premierJourDuMois(
+          maintenant
+        )
+      );
+
+    const moisCourantExiste =
+      this.moisLoyerOptions.some(
+        option =>
+          option.value === moisCourant
+      );
+
+    if (moisCourantExiste) {
+
+      return moisCourant;
+    }
+
+    return this.moisLoyerOptions[0].value;
+  }
+
+
+  // ============================================================
+  // OUVRIR PAIEMENT
   // ============================================================
 
   /**
@@ -572,6 +823,27 @@ export class UnitesLocatives
           this.montantPaiement =
             contratActif.montantLoyer;
 
+
+          // ----------------------------------------------------
+          // Génération des mois de loyer
+          // ----------------------------------------------------
+
+          this.moisLoyerOptions =
+            this.genererMoisLoyerOptions(
+              contratActif
+            );
+
+
+          // ----------------------------------------------------
+          // Présélection du mois
+          // ----------------------------------------------------
+
+          this.moisLoyerPaiement =
+            this.determinerMoisLoyerParDefaut(
+              contratActif
+            );
+
+
           this.modePaiementSelectionne =
             null;
 
@@ -623,6 +895,53 @@ export class UnitesLocatives
 
         detail:
           'Aucun contrat actif n’est associé au paiement.'
+      });
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // Mois de loyer obligatoire
+    // ----------------------------------------------------------
+
+    if (!this.moisLoyerPaiement) {
+
+      this.messageService.add({
+
+        severity: 'warn',
+
+        summary: 'Mois de loyer',
+
+        detail:
+          'Le mois de loyer à payer est obligatoire.'
+      });
+
+      return;
+    }
+
+
+    // ----------------------------------------------------------
+    // Vérification du mois
+    // ----------------------------------------------------------
+
+    const moisSelectionneExiste =
+      this.moisLoyerOptions.some(
+        option =>
+          option.value ===
+          this.moisLoyerPaiement
+      );
+
+    if (!moisSelectionneExiste) {
+
+      this.messageService.add({
+
+        severity: 'warn',
+
+        summary: 'Mois de loyer invalide',
+
+        detail:
+          'Le mois sélectionné ne correspond pas à la période du contrat.'
       });
 
       return;
@@ -740,6 +1059,7 @@ export class UnitesLocatives
       !this.contratPaiement ||
       this.modePaiementSelectionne === null
     ) {
+
       return;
     }
 
@@ -759,8 +1079,17 @@ export class UnitesLocatives
         this.modePaiementSelectionne,
 
       telephone:
-        this.telephonePaiement.trim()
+        this.telephonePaiement.trim(),
+
+      moisLoyer:
+        this.moisLoyerPaiement
     };
+
+
+    console.log(
+      'Paiement électronique envoyé:',
+      request
+    );
 
 
     this.paiementsService
@@ -837,6 +1166,7 @@ export class UnitesLocatives
   private enregistrerPaiementEspeces(): void {
 
     if (!this.contratPaiement) {
+
       return;
     }
 
@@ -850,8 +1180,17 @@ export class UnitesLocatives
         this.contratPaiement.id,
 
       montant:
-        this.montantPaiement
+        this.montantPaiement,
+
+      moisLoyer:
+        this.moisLoyerPaiement
     };
+
+
+    console.log(
+      'Paiement espèces envoyé:',
+      request
+    );
 
 
     this.paiementsService
@@ -928,6 +1267,7 @@ export class UnitesLocatives
   fermerPaiementModal(): void {
 
     if (this.paiementEnCours) {
+
       return;
     }
 
@@ -949,6 +1289,10 @@ export class UnitesLocatives
 
     this.montantPaiement = 0;
 
+    this.moisLoyerPaiement = '';
+
+    this.moisLoyerOptions = [];
+
     this.modePaiementSelectionne = null;
 
     this.telephonePaiement = '';
@@ -962,6 +1306,7 @@ export class UnitesLocatives
   ouvrirModalAjout(): void {
 
     if (!this.canManageUnites) {
+
       return;
     }
 
@@ -1001,6 +1346,7 @@ export class UnitesLocatives
   ): void {
 
     if (!this.canManageUnites) {
+
       return;
     }
 
@@ -1140,6 +1486,7 @@ export class UnitesLocatives
         );
 
       if (dejaSelectionne) {
+
         continue;
       }
 
@@ -1303,6 +1650,7 @@ export class UnitesLocatives
   sauvegarder(): void {
 
     if (!this.canManageUnites) {
+
       return;
     }
 
@@ -1628,6 +1976,7 @@ export class UnitesLocatives
   ): void {
 
     if (!this.canManageUnites) {
+
       return;
     }
 
@@ -1726,10 +2075,12 @@ export class UnitesLocatives
   ): void {
 
     if (!this.canManageUnites) {
+
       return;
     }
 
     if (unite.statut === statut) {
+
       return;
     }
 

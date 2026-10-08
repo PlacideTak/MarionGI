@@ -38,12 +38,14 @@ public class PaiementsController : ControllerBase
     //
     // LOCATAIRE UNIQUEMENT
     //
-    // Le locataire peut uniquement payer :
-    // - un contrat qui lui appartient
-    // - un contrat non supprimé
-    // - un contrat actif
-    // - une unité non supprimée
-    // - un bien non supprimé
+    // Règles :
+    // - le contrat appartient au locataire
+    // - contrat actif
+    // - unité et bien non supprimés
+    // - le mois appartient à la période du contrat
+    // - un paiement EnAttente bloque une nouvelle tentative
+    // - un paiement Confirme bloque une nouvelle tentative
+    // - un paiement Echoue peut être recommencé
     // ============================================================
 
     [HttpPost("initier")]
@@ -139,16 +141,72 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
+        // Normalisation du mois de loyer
+        // --------------------------------------------------------
+
+        var moisLoyer =
+            NormaliserMoisLoyer(request.MoisLoyer);
+
+        // --------------------------------------------------------
+        // Vérifier que le mois appartient au contrat
+        // --------------------------------------------------------
+
+        if (!MoisDansPeriodeContrat(
+                contrat,
+                moisLoyer))
+        {
+            return BadRequest(
+            $"Le loyer du mois de {moisLoyer:MM/yyyy} " +
+            $"ne peut pas être payé avec ce contrat. " +
+            $"Le contrat est valide du {contrat.DateDebut:dd/MM/yyyy} " +
+            $"au {contrat.DateFin:dd/MM/yyyy}.");
+        }
+
+        // --------------------------------------------------------
+        // Vérifier s'il existe déjà un paiement bloquant
+        //
+        // EnAttente  -> nouveau paiement interdit
+        // Confirme    -> nouveau paiement interdit
+        // Echoue      -> nouvelle tentative autorisée
+        // --------------------------------------------------------
+
+        var paiementExistant =
+            await GetPaiementBloquantAsync(
+                contrat.Id,
+                moisLoyer);
+
+        if (paiementExistant != null)
+        {
+            if (paiementExistant.StatutTransaction ==
+                StatutTransaction.EnAttente)
+            {
+                return Conflict(
+                    "Un paiement pour ce mois est déjà en cours de traitement.");
+            }
+
+            return Conflict(
+            $"Le loyer du mois de {moisLoyer:MMMM yyyy} " +
+            "a déjà été payé pour ce contrat. " +
+            "Un seul paiement est autorisé pour un même mois.");
+        }
+
+        // --------------------------------------------------------
         // Création du paiement
         // --------------------------------------------------------
 
         var paiement = new Paiement
         {
-            ContratId = contrat.Id,
+            ContratId =
+                contrat.Id,
 
-            Montant = request.Montant,
+            Montant =
+                request.Montant,
 
-            ModePaiement = request.ModePaiement,
+            MoisLoyer =
+                moisLoyer,
+
+            ModePaiement =
+                request.ModePaiement,
 
             StatutTransaction =
                 StatutTransaction.EnAttente,
@@ -159,17 +217,31 @@ public class PaiementsController : ControllerBase
 
         _context.Paiements.Add(paiement);
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Une autre requête peut avoir créé simultanément
+            // un paiement EnAttente ou Confirme pour le même mois.
+            return Conflict(
+                $"Un paiement du loyer de {moisLoyer:MMMM yyyy} " +
+                "est déjà en cours de traitement pour ce contrat. " +
+                "Veuillez attendre la fin du traitement avant de réessayer.");
+        }
 
         // --------------------------------------------------------
-        // Appel du fournisseur
+        // Appel du fournisseur Mobile Money
         // --------------------------------------------------------
 
         var resultat = await paiementProvider.InitierAsync(
             new InitierPaiementContext(
-                PaiementId: paiement.Id,
+                PaiementId:
+                    paiement.Id,
 
-                Montant: request.Montant,
+                Montant:
+                    request.Montant,
 
                 Telephone:
                     request.Telephone.Trim(),
@@ -182,7 +254,7 @@ public class PaiementsController : ControllerBase
                     request.ModePaiement,
 
                 Description:
-                    $"Loyer - Quittance {paiement.NumeroQuittance}"
+                    $"Loyer {moisLoyer:MM/yyyy} - Quittance {paiement.NumeroQuittance}"
             ));
 
         // --------------------------------------------------------
@@ -224,6 +296,9 @@ public class PaiementsController : ControllerBase
             NumeroQuittance =
                 paiement.NumeroQuittance,
 
+            MoisLoyer =
+                paiement.MoisLoyer,
+
             ReferenceTransactionOperateur =
                 paiement.ReferenceTransactionOperateur,
 
@@ -237,8 +312,6 @@ public class PaiementsController : ControllerBase
     // 2. ENREGISTRER UN PAIEMENT EN ESPÈCES
     //
     // ADMINISTRATEUR / GESTIONNAIRE UNIQUEMENT
-    //
-    // Le contrat doit appartenir à leur société.
     // ============================================================
 
     [HttpPost("especes")]
@@ -331,6 +404,47 @@ public class PaiementsController : ControllerBase
         }
 
         // --------------------------------------------------------
+        // Normalisation du mois
+        // --------------------------------------------------------
+
+        var moisLoyer =
+            NormaliserMoisLoyer(request.MoisLoyer);
+
+        // --------------------------------------------------------
+        // Vérifier la période du contrat
+        // --------------------------------------------------------
+
+        if (!MoisDansPeriodeContrat(
+                contrat,
+                moisLoyer))
+        {
+            return BadRequest(
+                "Le mois de loyer sélectionné ne correspond pas à la période du contrat.");
+        }
+
+        // --------------------------------------------------------
+        // Vérifier un paiement existant
+        // --------------------------------------------------------
+
+        var paiementExistant =
+            await GetPaiementBloquantAsync(
+                contrat.Id,
+                moisLoyer);
+
+        if (paiementExistant != null)
+        {
+            if (paiementExistant.StatutTransaction ==
+                StatutTransaction.EnAttente)
+            {
+                return Conflict(
+                    "Un paiement pour ce mois est déjà en cours de traitement.");
+            }
+
+            return Conflict(
+                "Le loyer de ce mois a déjà été payé.");
+        }
+
+        // --------------------------------------------------------
         // Création
         // --------------------------------------------------------
 
@@ -341,6 +455,9 @@ public class PaiementsController : ControllerBase
 
             Montant =
                 request.Montant,
+
+            MoisLoyer =
+                moisLoyer,
 
             ModePaiement =
                 ModePaiement.Especes,
@@ -357,7 +474,15 @@ public class PaiementsController : ControllerBase
 
         _context.Paiements.Add(paiement);
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return Conflict(
+                "Un paiement pour ce mois existe déjà.");
+        }
 
         return Ok(new
         {
@@ -370,6 +495,9 @@ public class PaiementsController : ControllerBase
             NumeroQuittance =
                 paiement.NumeroQuittance,
 
+            MoisLoyer =
+                paiement.MoisLoyer,
+
             Statut =
                 paiement.StatutTransaction.ToString()
         });
@@ -378,15 +506,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 3. CONSULTER LE STATUT D'UN PAIEMENT
-    //
-    // ADMIN / GESTIONNAIRE :
-    //    uniquement leur société
-    //
-    // LOCATAIRE :
-    //    uniquement ses paiements
-    //
-    // AGENT :
-    //    aucun accès
     // ============================================================
 
     [HttpGet("{id:guid}/statut")]
@@ -419,6 +538,9 @@ public class PaiementsController : ControllerBase
 
             NumeroQuittance =
                 paiement.NumeroQuittance,
+
+            MoisLoyer =
+                paiement.MoisLoyer,
 
             Statut =
                 paiement.StatutTransaction.ToString(),
@@ -483,12 +605,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 5. LISTE DES PAIEMENTS
-    //
-    // ADMIN / GESTIONNAIRE :
-    //    uniquement leur société
-    //
-    // LOCATAIRE :
-    //    uniquement ses paiements
     // ============================================================
 
     [HttpGet]
@@ -565,64 +681,51 @@ public class PaiementsController : ControllerBase
 
         var paiements =
             await query
-                .OrderByDescending(p => p.DatePaiement)
+                .OrderByDescending(p => p.MoisLoyer)
+                .ThenByDescending(p => p.DatePaiement)
                 .Select(p => new PaiementListItemDto
                 {
-                    Id =
-                        p.Id,
+                    Id = p.Id,
 
-                    DatePaiement =
-                        p.DatePaiement,
+                    ContratId = p.ContratId,
 
-                    Montant =
-                        p.Montant,
+                    DatePaiement = p.DatePaiement,
 
-                    Mode =
-                        p.ModePaiement,
+                    MoisLoyer = p.MoisLoyer,
 
-                    Statut =
-                        p.StatutTransaction,
+                    Montant = p.Montant,
 
-                    NumeroQuittance =
-                        p.NumeroQuittance,
+                    Mode = p.ModePaiement,
 
-                    // ------------------------------------------------
-                    // BIEN
-                    // ------------------------------------------------
+                    Statut = p.StatutTransaction,
+
+                    NumeroQuittance = p.NumeroQuittance,
 
                     BienNom =
-                        p.Contrat
-                            .UniteLocative
-                            .BienImmobilier
-                            .Nom,
+        p.Contrat
+            .UniteLocative
+            .BienImmobilier
+            .Nom,
 
                     BienReference =
-                        p.Contrat
-                            .UniteLocative
-                            .BienImmobilier
-                            .Reference,
-
-                    // ------------------------------------------------
-                    // UNITÉ
-                    // ------------------------------------------------
+        p.Contrat
+            .UniteLocative
+            .BienImmobilier
+            .Reference,
 
                     UniteReference =
-                        p.Contrat
-                            .UniteLocative
-                            .Reference,
-
-                    // ------------------------------------------------
-                    // LOCATAIRE
-                    // ------------------------------------------------
+        p.Contrat
+            .UniteLocative
+            .Reference,
 
                     LocataireNom =
-                        p.Contrat.Locataire != null
-                            ? (
-                                p.Contrat.Locataire.Nom
-                                + " "
-                                + p.Contrat.Locataire.Prenom
-                              ).Trim()
-                            : "N/A"
+        p.Contrat.Locataire != null
+            ? (
+                p.Contrat.Locataire.Nom
+                + " "
+                + p.Contrat.Locataire.Prenom
+              ).Trim()
+            : "N/A"
                 })
                 .ToListAsync();
 
@@ -632,12 +735,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 6. TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT
-    //
-    // ADMIN / GESTIONNAIRE :
-    //    uniquement leur société
-    //
-    // LOCATAIRE :
-    //    uniquement ses propres contrats
     // ============================================================
 
     [HttpGet(
@@ -703,7 +800,8 @@ public class PaiementsController : ControllerBase
                     !p.Contrat.UniteLocative
                         .BienImmobilier.EstSupprime)
 
-                .OrderBy(p => p.DatePaiement)
+                .OrderBy(p => p.MoisLoyer)
+                .ThenBy(p => p.DatePaiement)
                 .ToListAsync();
 
         if (paiements.Count == 0)
@@ -753,10 +851,6 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 7. WEBHOOK NOTCHPAY
-    //
-    // PUBLIC
-    //
-    // La signature cryptographique est obligatoire.
     // ============================================================
 
     [HttpPost("webhook/notchpay")]
@@ -906,7 +1000,20 @@ public class PaiementsController : ControllerBase
                 });
         }
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Une autre opération a éventuellement confirmé
+            // un paiement du même mois entre-temps.
+            return Conflict(new
+            {
+                error =
+                    "Impossible de confirmer ce paiement car un autre paiement confirmé existe déjà pour ce mois."
+            });
+        }
 
         return Ok(new
         {
@@ -1134,7 +1241,77 @@ public class PaiementsController : ControllerBase
 
 
     // ============================================================
-    // 12. VÉRIFICATION SIGNATURE WEBHOOK
+    // 12. NORMALISER LE MOIS DE LOYER
+    // ============================================================
+
+    private static DateTime NormaliserMoisLoyer(
+        DateTime moisLoyer)
+    {
+        return new DateTime(
+            moisLoyer.Year,
+            moisLoyer.Month,
+            1);
+    }
+
+
+    // ============================================================
+    // 13. VÉRIFIER QUE LE MOIS APPARTIENT AU CONTRAT
+    // ============================================================
+
+    private static bool MoisDansPeriodeContrat(
+        Contrat contrat,
+        DateTime moisLoyer)
+    {
+        var debutMois =
+            new DateTime(
+                moisLoyer.Year,
+                moisLoyer.Month,
+                1);
+
+        var finMois =
+            debutMois
+                .AddMonths(1)
+                .AddTicks(-1);
+
+        return debutMois <= contrat.DateFin &&
+               finMois >= contrat.DateDebut;
+    }
+
+
+    // ============================================================
+    // 14. RECHERCHER UN PAIEMENT BLOQUANT
+    //
+    // EnAttente  -> bloque
+    // Confirme   -> bloque
+    // Echoue     -> ne bloque pas
+    // ============================================================
+
+    private async Task<Paiement?>
+        GetPaiementBloquantAsync(
+            Guid contratId,
+            DateTime moisLoyer)
+    {
+        return await _context.Paiements
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p =>
+                p.ContratId == contratId &&
+
+                p.MoisLoyer == moisLoyer &&
+
+                !p.EstSupprime &&
+
+                (
+                    p.StatutTransaction ==
+                        StatutTransaction.EnAttente ||
+
+                    p.StatutTransaction ==
+                        StatutTransaction.Confirme
+                ));
+    }
+
+
+    // ============================================================
+    // 15. VÉRIFICATION SIGNATURE WEBHOOK
     // ============================================================
 
     private static bool VerifierSignature(
@@ -1185,7 +1362,7 @@ public class PaiementsController : ControllerBase
 
 
     // ============================================================
-    // 13. NUMÉRO DE QUITTANCE
+    // 16. NUMÉRO DE QUITTANCE
     // ============================================================
 
     private static string GenererNumeroQuittance()
@@ -1206,8 +1383,11 @@ public class PaiementsController : ControllerBase
 public sealed class PaiementListItemDto
 {
     public Guid Id { get; set; }
+    public Guid ContratId { get; set; }
 
     public DateTime DatePaiement { get; set; }
+
+    public DateTime MoisLoyer { get; set; }
 
     public decimal Montant { get; set; }
 
@@ -1240,7 +1420,8 @@ public record InitierPaiementRequest(
     Guid ContratId,
     decimal Montant,
     ModePaiement ModePaiement,
-    string Telephone);
+    string Telephone,
+    DateTime MoisLoyer);
 
 
 // =================================================================
@@ -1249,4 +1430,5 @@ public record InitierPaiementRequest(
 
 public record PaiementEspecesRequest(
     Guid ContratId,
-    decimal Montant);
+    decimal Montant,
+    DateTime MoisLoyer);

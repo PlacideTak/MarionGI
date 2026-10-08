@@ -407,10 +407,6 @@
 </div>
 
 
-<!-- ==========================================
-     MODALE AJOUT / MODIFICATION
-     ========================================== -->
-
 <p-dialog
   *ngIf="canManageBiens"
   [(visible)]="displayModal"
@@ -424,16 +420,21 @@
   [modal]="true"
 
   [style]="{
-    width: '650px'
+    width: '650px',
+    maxWidth: 'calc(100vw - 2rem)'
   }"
 
   [breakpoints]="{
-    '960px': '85vw',
+    '960px': '80vw',
     '600px': '95vw'
   }"
 
   [draggable]="false"
   [resizable]="false"
+  [closable]="true"
+  [closeOnEscape]="true"
+  [dismissableMask]="false"
+  appendTo="body"
 
   styleClass="bien-dialog">
 
@@ -445,144 +446,162 @@
 
 
     <!-- ========================================
-         NOM DU BIEN
+         LIGNE 1 : NOM + RÉFÉRENCE
          ======================================== -->
 
-    <div class="field">
+    <div class="form-row">
 
-      <label for="nom">
-        Nom du bien
-      </label>
+      <!-- NOM -->
+      <div class="field">
 
-      <input
-        id="nom"
-        type="text"
-        pInputText
-        formControlName="nom"
-        maxlength="150"
-        placeholder="Ex : Immeuble Marion" />
+        <label for="nom">
+          Nom du bien
+        </label>
 
-      <small class="text-secondary">
-        Nom utilisé pour identifier facilement le bien.
-      </small>
+        <input
+          id="nom"
+          type="text"
+          pInputText
+          formControlName="nom"
+          maxlength="150"
+          placeholder="Ex : Immeuble Marion" />
 
-      <small
-        *ngIf="
-          bienForm.get('nom')?.invalid &&
-          bienForm.get('nom')?.touched
-        "
-        class="p-error">
+        <small class="text-secondary">
+          Nom utilisé pour identifier facilement le bien.
+        </small>
 
-        Le nom du bien est obligatoire.
+        <small
+          *ngIf="
+            bienForm.get('nom')?.invalid &&
+            bienForm.get('nom')?.touched
+          "
+          class="p-error form-error">
 
-      </small>
+          Le nom du bien est obligatoire.
+
+        </small>
+
+      </div>
+
+
+      <!-- RÉFÉRENCE -->
+      <div class="field">
+
+        <label for="reference">
+          Référence
+        </label>
+
+        <input
+          id="reference"
+          type="text"
+          pInputText
+          formControlName="reference"
+          maxlength="50"
+          placeholder="Ex : MGI-DLA-001" />
+
+        <small
+          *ngIf="
+            bienForm.get('reference')?.invalid &&
+            bienForm.get('reference')?.touched
+          "
+          class="p-error form-error">
+
+          La référence est obligatoire.
+
+        </small>
+
+      </div>
 
     </div>
 
 
     <!-- ========================================
-         RÉFÉRENCE
+         LIGNE 2 : TYPE + VILLE
          ======================================== -->
 
-    <div class="field">
+    <div class="form-row">
 
-      <label for="reference">
-        Référence
-      </label>
+      <!-- TYPE -->
+      <div class="field">
 
-      <input
-        id="reference"
-        type="text"
-        pInputText
-        formControlName="reference"
-        maxlength="50"
-        placeholder="Ex : MGI-DLA-001" />
+        <label for="type">
+          Type de bien
+        </label>
 
-      <small
-        *ngIf="
-          bienForm.get('reference')?.invalid &&
-          bienForm.get('reference')?.touched
-        "
-        class="p-error">
+        <p-select
+          inputId="type"
+          [options]="bienService.typesBien"
+          formControlName="type"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un type"
+          styleClass="w-full bien-select"
+          appendTo="body">
+        </p-select>
 
-        La référence est obligatoire.
+      </div>
 
-      </small>
+
+      <!-- VILLE -->
+      <div class="field">
+
+        <label for="ville">
+          Ville
+        </label>
+
+        <input
+          id="ville"
+          type="text"
+          pInputText
+          formControlName="ville"
+          maxlength="100"
+          placeholder="Ex : Douala, Yaoundé..." />
+
+      </div>
 
     </div>
 
 
     <!-- ========================================
-         TYPE
+         LIGNE 3 : QUARTIER + SUPERFICIE
          ======================================== -->
 
-    <div class="field">
+    <div class="form-row">
 
-      <label for="type">
-        Type de bien
-      </label>
+      <!-- QUARTIER -->
+      <div class="field">
 
-      <p-select
-        inputId="type"
+        <label for="quartier">
+          Quartier
+        </label>
 
-        [options]="
-          bienService.typesBien
-        "
+        <input
+          id="quartier"
+          type="text"
+          pInputText
+          formControlName="quartier"
+          maxlength="100"
+          placeholder="Ex : Bonapriso, Bastos..." />
 
-        formControlName="type"
-
-        optionLabel="label"
-        optionValue="value"
-
-        placeholder="Sélectionner un type"
-
-        styleClass="w-full"
-
-        appendTo="body">
-
-      </p-select>
-
-    </div>
+      </div>
 
 
-    <!-- ========================================
-         VILLE
-         ======================================== -->
+      <!-- SUPERFICIE -->
+      <div class="field">
 
-    <div class="field">
+        <label for="superficie">
+          Superficie (m²)
+        </label>
 
-      <label for="ville">
-        Ville
-      </label>
+        <input
+          id="superficie"
+          type="number"
+          pInputText
+          formControlName="superficie"
+          min="1"
+          placeholder="Ex : 250" />
 
-      <input
-        id="ville"
-        type="text"
-        pInputText
-        formControlName="ville"
-        maxlength="100"
-        placeholder="Ex : Douala, Yaoundé..." />
-
-    </div>
-
-
-    <!-- ========================================
-         QUARTIER
-         ======================================== -->
-
-    <div class="field">
-
-      <label for="quartier">
-        Quartier
-      </label>
-
-      <input
-        id="quartier"
-        type="text"
-        pInputText
-        formControlName="quartier"
-        maxlength="100"
-        placeholder="Ex : Bonapriso, Bastos..." />
+      </div>
 
     </div>
 
@@ -604,26 +623,6 @@
         formControlName="adresse"
         maxlength="250"
         placeholder="Rue, immeuble..." />
-
-    </div>
-
-
-    <!-- ========================================
-         SUPERFICIE
-         ======================================== -->
-
-    <div class="field">
-
-      <label for="superficie">
-        Superficie (m²)
-      </label>
-
-      <input
-        id="superficie"
-        type="number"
-        pInputText
-        formControlName="superficie"
-        min="1" />
 
     </div>
 
@@ -653,9 +652,7 @@
           class="photo-preview-item">
 
           <img
-            [src]="
-              getPhotoUrl(photo)
-            "
+            [src]="getPhotoUrl(photo)"
             [alt]="'Photo actuelle ' + (i + 1)"
             class="photo-preview" />
 
@@ -667,9 +664,7 @@
             aria-label="Supprimer cette photo"
             pTooltip="Supprimer"
             tooltipPosition="top"
-            (click)="
-              supprimerPhotoExistante(i)
-            ">
+            (click)="supprimerPhotoExistante(i)">
           </button>
 
         </div>
@@ -742,9 +737,7 @@
             aria-label="Supprimer cette nouvelle photo"
             pTooltip="Supprimer"
             tooltipPosition="top"
-            (click)="
-              supprimerNouvellePhoto(i)
-            ">
+            (click)="supprimerNouvellePhoto(i)">
           </button>
 
         </div>
@@ -763,14 +756,11 @@
       <i class="pi pi-images"></i>
 
       <span>
-
         {{
           photosExistantes.length +
           fichiersSelectionnes.length
         }}
-
         / {{ maxPhotos }} photos
-
       </span>
 
     </div>
@@ -788,28 +778,19 @@
         label="Annuler"
         class="p-button-text p-button-secondary"
         (click)="displayModal = false">
-
       </button>
-
 
       <button
         pButton
         type="submit"
-
         [label]="
           isEditMode
             ? 'Modifier'
             : 'Créer'
         "
-
         icon="pi pi-check"
-
         class="p-button-success"
-
-        [disabled]="
-          bienForm.invalid
-        ">
-
+        [disabled]="bienForm.invalid">
       </button>
 
     </div>

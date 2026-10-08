@@ -559,7 +559,6 @@ export interface SupprimerUniteResponse {
   message: string;
 }
 
-
 export interface ContratDto {
 
   id: string;
@@ -596,18 +595,42 @@ export interface ContratDto {
 
   statut: StatutContrat;
 
+
   // ----------------------------------------------------------
-  // Unité locative
+  // UNITÉ LOCATIVE
   // ----------------------------------------------------------
 
   uniteLocative?: UniteLocativeDto | null;
 
+
   // ----------------------------------------------------------
-  // Locataire
+  // BIEN IMMOBILIER
+  // ----------------------------------------------------------
+
+  /**
+   * Bien immobilier associé à l'unité locative.
+   *
+   * Retourne par l'API sous la forme :
+   *
+   * "bienImmobilier": {
+   *   "id": "...",
+   *   "reference": "...",
+   *   "nom": "...",
+   *   "adresse": "...",
+   *   "ville": "...",
+   *   "quartier": "..."
+   * }
+   */
+  bienImmobilier?: BienDto | null;
+
+
+  // ----------------------------------------------------------
+  // LOCATAIRE
   // ----------------------------------------------------------
 
   locataire?: UtilisateurDto | null;
 }
+
 
 export interface CreerContratRequest {
 
@@ -687,6 +710,14 @@ export interface PaiementDto extends BaseEntity {
    * "Immeuble Marion"
    */
   bienNom?: string;
+
+  /**
+   * Premier jour du mois payé.
+   *
+   * Exemple :
+   * 2026-10-01 = loyer d'octobre 2026
+   */
+  moisLoyer: string;
 }
 
 
@@ -695,28 +726,20 @@ export interface PaiementDto extends BaseEntity {
 // ============================================================
 
 export interface PaiementListItem {
-
   id: string;
-
+  contratId: string;
   datePaiement: string;
-
+  moisLoyer: string;
   montant: number;
-
   mode: ModePaiement;
-
   statut: StatutTransaction;
-
   numeroQuittance: string;
-
   locataireNom: string;
-
   uniteReference: string;
-
-  /**
-   * Nom du bien affiché dans la liste.
-   */
+  bienReference: string;
   bienNom: string;
 }
+
 
 
 // ============================================================

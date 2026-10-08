@@ -109,25 +109,8 @@ export class DemandesVisite implements OnInit {
   // DEMANDE EN COURS
   // =========================================================
 
-  nouvelleDemande: DemandeVisiteDto = {
-
-    uniteLocativeId: '',
-
-    bienId: undefined,
-
-    agentId: null,
-
-    nomProspect: '',
-
-    telephoneProspect: '',
-
-    dateSouhaitee: new Date(),
-
-    observations: '',
-
-    statut:
-      StatutDemandeVisite.EnAttente
-  };
+  nouvelleDemande: DemandeVisiteDto =
+    this.creerNouvelleDemande();
 
 
   // =========================================================
@@ -136,14 +119,14 @@ export class DemandesVisite implements OnInit {
 
   get currentUserId(): string | null {
 
-    return this.authService.currentUser()?.id || null;
+    return this.authService.currentUser()?.id ?? null;
 
   }
 
 
   get currentUserRole(): string | null {
 
-    return this.authService.currentUser()?.role || null;
+    return this.authService.currentUser()?.role ?? null;
 
   }
 
@@ -154,19 +137,23 @@ export class DemandesVisite implements OnInit {
 
   get agentsAffiches(): UtilisateurDto[] {
 
+    const role =
+      this.currentUserRole?.toLowerCase();
+
     if (
-      this.currentUserRole?.toLowerCase() ===
-        ROLES.Agent.toLowerCase() &&
+      role === ROLES.Agent.toLowerCase() &&
       this.currentUserId
     ) {
 
       return this.agentsDisponibles.filter(
-        agent => agent.id === this.currentUserId
+        agent =>
+          agent.id === this.currentUserId
       );
 
     }
 
     return this.agentsDisponibles;
+
   }
 
 
@@ -181,6 +168,36 @@ export class DemandesVisite implements OnInit {
     this.chargerBiens();
 
     this.chargerAgents();
+
+  }
+
+
+  // =========================================================
+  // CRÉER UNE DEMANDE VIDE
+  // =========================================================
+
+  private creerNouvelleDemande(): DemandeVisiteDto {
+
+    return {
+
+      uniteLocativeId: '',
+
+      bienId: undefined,
+
+      agentId: null,
+
+      nomProspect: '',
+
+      telephoneProspect: '',
+
+      dateSouhaitee: new Date(),
+
+      observations: '',
+
+      statut:
+        StatutDemandeVisite.EnAttente
+
+    };
 
   }
 
@@ -201,6 +218,30 @@ export class DemandesVisite implements OnInit {
     return now
       .toISOString()
       .slice(0, 16);
+
+  }
+
+
+  // =========================================================
+  // FORMULAIRE INVALIDE
+  // =========================================================
+
+  get formulaireInvalide(): boolean {
+
+    const nomProspect =
+      this.nouvelleDemande.nomProspect?.trim() ?? '';
+
+    const telephoneProspect =
+      this.nouvelleDemande.telephoneProspect?.trim() ?? '';
+
+    return (
+      this.chargementUnites ||
+      !this.nouvelleDemande.uniteLocativeId ||
+      !nomProspect ||
+      !telephoneProspect ||
+      !this.nouvelleDemande.dateSouhaitee
+    );
+
   }
 
 
@@ -219,10 +260,11 @@ export class DemandesVisite implements OnInit {
         next: (data) => {
 
           this.demandes =
-            data || [];
+            Array.isArray(data)
+              ? data
+              : [];
 
-          this.chargementEnCours =
-            false;
+          this.chargementEnCours = false;
 
         },
 
@@ -233,8 +275,7 @@ export class DemandesVisite implements OnInit {
             err
           );
 
-          this.chargementEnCours =
-            false;
+          this.chargementEnCours = false;
 
           this.messageService.add({
 
@@ -269,7 +310,11 @@ export class DemandesVisite implements OnInit {
         next: (data) => {
 
           this.biensDisponibles =
-            data || [];
+            Array.isArray(data)
+              ? data.filter(
+                  bien => !bien.estSupprime
+                )
+              : [];
 
         },
 
@@ -279,6 +324,8 @@ export class DemandesVisite implements OnInit {
             'Erreur chargement des biens :',
             err
           );
+
+          this.biensDisponibles = [];
 
           this.messageService.add({
 
@@ -301,34 +348,36 @@ export class DemandesVisite implements OnInit {
   // =========================================================
   // CHARGER LES UNITÉS D'UN BIEN
   // =========================================================
-  //
-  // selectedUniteId est facultatif.
-  //
-  // - Création :
-  //     aucun selectedUniteId
-  //     → aucune unité sélectionnée
-  //
-  // - Modification :
-  //     selectedUniteId = unité actuelle
-  //     → l'unité est restaurée après le chargement
-  //
-  // =========================================================
 
   chargerUnitesDuBien(
     bienId: string,
     selectedUniteId?: string
   ): void {
 
-    this.unitesDisponibles = [];
+    if (!bienId) {
+
+      this.unitesDisponibles = [];
+
+      this.chargementUnites = false;
+
+      return;
+
+    }
+
 
     this.chargementUnites = true;
 
-    // -------------------------------------------------------
-    // En création, on réinitialise l'unité.
-    //
-    // En modification, on conserve temporairement
-    // l'identifiant afin de le restaurer après le chargement.
-    // -------------------------------------------------------
+    this.unitesDisponibles = [];
+
+
+    /*
+     * En création :
+     * aucune unité n'est présélectionnée.
+     *
+     * En modification :
+     * l'unité actuelle est conservée pendant
+     * le chargement HTTP.
+     */
 
     if (!selectedUniteId) {
 
@@ -346,15 +395,16 @@ export class DemandesVisite implements OnInit {
         next: (data) => {
 
           this.unitesDisponibles =
-            (data || []).filter(
-              unite =>
-                !unite.estSupprime
-            );
+            Array.isArray(data)
+              ? data.filter(
+                  unite => !unite.estSupprime
+                )
+              : [];
 
 
-          // ---------------------------------------------------
-          // RESTAURATION DE L'UNITÉ EN MODE MODIFICATION
-          // ---------------------------------------------------
+          // ===============================================
+          // RESTAURATION UNITÉ EN MODIFICATION
+          // ===============================================
 
           if (selectedUniteId) {
 
@@ -374,9 +424,9 @@ export class DemandesVisite implements OnInit {
             else {
 
               console.warn(
-                'L’unité locative associée à la demande n’a pas été trouvée parmi les unités du bien.',
+                'L’unité locative actuelle n’existe plus dans ce bien.',
                 {
-                  uniteLocativeId: selectedUniteId,
+                  selectedUniteId,
                   bienId
                 }
               );
@@ -389,8 +439,7 @@ export class DemandesVisite implements OnInit {
           }
 
 
-          this.chargementUnites =
-            false;
+          this.chargementUnites = false;
 
         },
 
@@ -401,14 +450,12 @@ export class DemandesVisite implements OnInit {
             err
           );
 
-          this.unitesDisponibles =
-            [];
+          this.unitesDisponibles = [];
 
           this.nouvelleDemande.uniteLocativeId =
             '';
 
-          this.chargementUnites =
-            false;
+          this.chargementUnites = false;
 
           this.messageService.add({
 
@@ -436,16 +483,18 @@ export class DemandesVisite implements OnInit {
     bienId: string | null
   ): void {
 
-    this.unitesDisponibles = [];
+    this.nouvelleDemande.bienId =
+      bienId || undefined;
 
     this.nouvelleDemande.uniteLocativeId =
       '';
 
-    this.nouvelleDemande.bienId =
-      bienId || undefined;
+    this.unitesDisponibles = [];
 
 
     if (!bienId) {
+
+      this.chargementUnites = false;
 
       return;
 
@@ -487,12 +536,69 @@ export class DemandesVisite implements OnInit {
 
         next: (data) => {
 
+          const agents =
+            Array.isArray(data)
+              ? data.filter(
+                  utilisateur =>
+                    utilisateur.role ===
+                    RoleUtilisateur.Agent
+                )
+              : [];
+
+
           this.agentsDisponibles =
-            (data || []).filter(
-              utilisateur =>
-                utilisateur.role ===
-                RoleUtilisateur.Agent
-            );
+            agents;
+
+
+          const currentUser =
+            this.authService.currentUser();
+
+
+          /*
+           * Si l'utilisateur connecté est un agent
+           * et que l'API ne retourne pas son compte,
+           * on l'ajoute localement.
+           */
+
+          if (
+            currentUser &&
+            this.currentUserRole?.toLowerCase() ===
+              ROLES.Agent.toLowerCase() &&
+            !this.agentsDisponibles.some(
+              agent =>
+                agent.id === currentUser.id
+            )
+          ) {
+
+            this.agentsDisponibles = [
+
+              ...this.agentsDisponibles,
+
+              {
+
+                id: currentUser.id,
+
+                nom: currentUser.nom,
+
+                prenom: currentUser.prenom,
+
+                email: currentUser.email,
+
+                role:
+                  RoleUtilisateur.Agent,
+
+                telephone: '',
+
+                statut: true,
+
+                societeId:
+                  currentUser.societeId ?? ''
+
+              }
+
+            ];
+
+          }
 
         },
 
@@ -502,6 +608,7 @@ export class DemandesVisite implements OnInit {
             'Impossible de charger les agents :',
             err
           );
+
 
           const currentUser =
             this.authService.currentUser();
@@ -525,7 +632,8 @@ export class DemandesVisite implements OnInit {
 
                 email: currentUser.email,
 
-                role: RoleUtilisateur.Agent,
+                role:
+                  RoleUtilisateur.Agent,
 
                 telephone: '',
 
@@ -541,8 +649,7 @@ export class DemandesVisite implements OnInit {
           }
           else {
 
-            this.agentsDisponibles =
-              [];
+            this.agentsDisponibles = [];
 
           }
 
@@ -563,32 +670,17 @@ export class DemandesVisite implements OnInit {
 
     this.unitesDisponibles = [];
 
-    this.nouvelleDemande = {
-
-      uniteLocativeId: '',
-
-      bienId: undefined,
-
-      agentId: null,
-
-      nomProspect: '',
-
-      telephoneProspect: '',
-
-      dateSouhaitee:
-        new Date(),
-
-      observations: '',
-
-      statut:
-        StatutDemandeVisite.EnAttente
-
-    };
+    this.chargementUnites = false;
 
 
-    // -------------------------------------------------------
-    // Agent connecté
-    // -------------------------------------------------------
+    this.nouvelleDemande =
+      this.creerNouvelleDemande();
+
+
+    /*
+     * Si l'utilisateur connecté est un agent,
+     * il est automatiquement assigné.
+     */
 
     if (
       this.currentUserRole?.toLowerCase() ===
@@ -602,8 +694,7 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    this.displayModal =
-      true;
+    this.displayModal = true;
 
   }
 
@@ -616,33 +707,54 @@ export class DemandesVisite implements OnInit {
     demande: DemandeVisiteDto
   ): void {
 
+    if (!demande) {
+
+      return;
+
+    }
+
+
     this.isEditMode = true;
 
+    this.unitesDisponibles = [];
 
-    // -------------------------------------------------------
-    // Récupération du bien parent
-    // -------------------------------------------------------
+    this.chargementUnites = false;
+
+
+    // ===============================================
+    // BIEN IMMOBILIER
+    // ===============================================
 
     const bienId =
-      demande.uniteLocative?.bienImmobilierId ??
-      demande.bienId;
+      demande.bienId
+      ??
+      demande.bien?.id
+      ??
+      demande.uniteLocative?.bienImmobilierId
+      ??
+      undefined;
 
 
-    // -------------------------------------------------------
-    // Récupération de l'unité actuelle
-    // -------------------------------------------------------
+    // ===============================================
+    // UNITÉ LOCATIVE
+    // ===============================================
 
     const uniteLocativeId =
-      demande.uniteLocativeId;
+      demande.uniteLocativeId
+      ??
+      demande.uniteLocative?.id
+      ??
+      '';
 
 
-    // -------------------------------------------------------
-    // Préparation du formulaire
-    // -------------------------------------------------------
+    // ===============================================
+    // FORMULAIRE
+    // ===============================================
 
     this.nouvelleDemande = {
 
-      id: demande.id,
+      id:
+        demande.id,
 
       uniteLocativeId:
         uniteLocativeId,
@@ -651,13 +763,13 @@ export class DemandesVisite implements OnInit {
         bienId,
 
       agentId:
-        demande.agentId || null,
+        demande.agentId ?? null,
 
       nomProspect:
-        demande.nomProspect,
+        demande.nomProspect ?? '',
 
       telephoneProspect:
-        demande.telephoneProspect,
+        demande.telephoneProspect ?? '',
 
       dateSouhaitee:
         demande.dateSouhaitee,
@@ -672,13 +784,9 @@ export class DemandesVisite implements OnInit {
     };
 
 
-    // -------------------------------------------------------
-    // Charger les unités du bien
-    //
-    // IMPORTANT :
-    // On passe l'identifiant de l'unité actuelle.
-    // Il sera restauré APRÈS le chargement HTTP.
-    // -------------------------------------------------------
+    // ===============================================
+    // CHARGEMENT DES UNITÉS
+    // ===============================================
 
     if (bienId) {
 
@@ -691,7 +799,7 @@ export class DemandesVisite implements OnInit {
     else {
 
       console.warn(
-        'Impossible de déterminer le bien associé à la demande de visite.',
+        'Impossible de déterminer le bien associé à la demande.',
         demande
       );
 
@@ -700,8 +808,28 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    this.displayModal =
-      true;
+    // ===============================================
+    // OUVERTURE
+    // ===============================================
+
+    this.displayModal = true;
+
+  }
+
+
+  // =========================================================
+  // FERMER LA MODALE
+  // =========================================================
+
+  fermerModal(): void {
+
+    this.displayModal = false;
+
+    this.chargementUnites = false;
+
+    this.unitesDisponibles = [];
+
+    this.isEditMode = false;
 
   }
 
@@ -712,9 +840,9 @@ export class DemandesVisite implements OnInit {
 
   enregistrerDemande(): void {
 
-    // -------------------------------------------------------
-    // Validation unité
-    // -------------------------------------------------------
+    // ===============================================
+    // VALIDATION UNITÉ
+    // ===============================================
 
     if (
       !this.nouvelleDemande.uniteLocativeId
@@ -736,13 +864,23 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    // -------------------------------------------------------
-    // Validation prospect
-    // -------------------------------------------------------
+    // ===============================================
+    // VALIDATION PROSPECT
+    // ===============================================
+
+    const nomProspect =
+      this.nouvelleDemande.nomProspect
+        ?.trim() ?? '';
+
+
+    const telephoneProspect =
+      this.nouvelleDemande.telephoneProspect
+        ?.trim() ?? '';
+
 
     if (
-      !this.nouvelleDemande.nomProspect?.trim() ||
-      !this.nouvelleDemande.telephoneProspect?.trim()
+      !nomProspect ||
+      !telephoneProspect
     ) {
 
       this.messageService.add({
@@ -761,9 +899,9 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    // -------------------------------------------------------
-    // Validation date
-    // -------------------------------------------------------
+    // ===============================================
+    // VALIDATION DATE
+    // ===============================================
 
     if (
       !this.nouvelleDemande.dateSouhaitee
@@ -776,7 +914,7 @@ export class DemandesVisite implements OnInit {
         summary: 'Date requise',
 
         detail:
-          'Veuillez renseigner la date et l\'heure souhaitées.'
+          'Veuillez renseigner la date et l’heure souhaitées.'
 
       });
 
@@ -814,8 +952,8 @@ export class DemandesVisite implements OnInit {
 
 
     if (
-      dateSelectionnee <
-      new Date()
+      dateSelectionnee.getTime() <
+      Date.now()
     ) {
 
       this.messageService.add({
@@ -825,7 +963,7 @@ export class DemandesVisite implements OnInit {
         summary: 'Date invalide',
 
         detail:
-          'La date et l\'heure ne peuvent pas être antérieures à maintenant.'
+          'La date et l’heure ne peuvent pas être antérieures à maintenant.'
 
       });
 
@@ -834,31 +972,37 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    // =======================================================
+    // ===============================================
     // PAYLOAD
-    // =======================================================
+    // ===============================================
 
     const payload: DemandeVisiteDto = {
+
+      ...(this.nouvelleDemande.id
+        ? {
+            id:
+              this.nouvelleDemande.id
+          }
+        : {}),
 
       uniteLocativeId:
         this.nouvelleDemande.uniteLocativeId,
 
       agentId:
-        this.nouvelleDemande.agentId ||
-        null,
+        this.nouvelleDemande.agentId ?? null,
 
       nomProspect:
-        this.nouvelleDemande.nomProspect.trim(),
+        nomProspect,
 
       telephoneProspect:
-        this.nouvelleDemande.telephoneProspect.trim(),
+        telephoneProspect,
 
       dateSouhaitee:
         this.nouvelleDemande.dateSouhaitee,
 
       observations:
-        this.nouvelleDemande.observations?.trim() ||
-        null,
+        this.nouvelleDemande.observations
+          ?.trim() || null,
 
       statut:
         this.nouvelleDemande.statut ??
@@ -867,35 +1011,29 @@ export class DemandesVisite implements OnInit {
     };
 
 
-    // =======================================================
+    // ===============================================
     // MODIFICATION
-    // =======================================================
+    // ===============================================
 
     if (
       this.isEditMode &&
       this.nouvelleDemande.id
     ) {
 
+      const id =
+        this.nouvelleDemande.id;
+
+
       this.demandesService
         .updateDemandeVisite(
-
-          this.nouvelleDemande.id,
-
-          {
-            ...payload,
-
-            id:
-              this.nouvelleDemande.id
-
-          }
-
+          id,
+          payload
         )
         .subscribe({
 
           next: () => {
 
-            this.displayModal =
-              false;
+            this.fermerModal();
 
             this.messageService.add({
 
@@ -915,7 +1053,7 @@ export class DemandesVisite implements OnInit {
           error: (err) => {
 
             console.error(
-              'Erreur mise à jour :',
+              'Erreur mise à jour demande :',
               err
             );
 
@@ -926,6 +1064,8 @@ export class DemandesVisite implements OnInit {
               summary: 'Erreur',
 
               detail:
+                err?.error?.message
+                ??
                 'Impossible de modifier la demande.'
 
             });
@@ -939,9 +1079,9 @@ export class DemandesVisite implements OnInit {
     }
 
 
-    // =======================================================
+    // ===============================================
     // CRÉATION
-    // =======================================================
+    // ===============================================
 
     this.demandesService
       .createDemandeVisite(
@@ -951,12 +1091,15 @@ export class DemandesVisite implements OnInit {
 
         next: (demandeCreee) => {
 
-          this.demandes.unshift(
-            demandeCreee
-          );
+          this.fermerModal();
 
-          this.displayModal =
-            false;
+          if (demandeCreee) {
+
+            this.demandes.unshift(
+              demandeCreee
+            );
+
+          }
 
           this.messageService.add({
 
@@ -976,7 +1119,7 @@ export class DemandesVisite implements OnInit {
         error: (err) => {
 
           console.error(
-            'Erreur création :',
+            'Erreur création demande :',
             err
           );
 
@@ -987,6 +1130,8 @@ export class DemandesVisite implements OnInit {
             summary: 'Erreur',
 
             detail:
+              err?.error?.message
+              ??
               'Erreur lors de la création de la demande.'
 
           });
@@ -1007,7 +1152,7 @@ export class DemandesVisite implements OnInit {
     nouveauStatut: StatutDemandeVisite
   ): void {
 
-    if (!demande.id) {
+    if (!demande?.id) {
 
       return;
 
@@ -1027,11 +1172,8 @@ export class DemandesVisite implements OnInit {
 
     this.demandesService
       .updateDemandeVisite(
-
         demande.id,
-
         demandeMiseAJour
-
       )
       .subscribe({
 
@@ -1067,6 +1209,8 @@ export class DemandesVisite implements OnInit {
             summary: 'Erreur',
 
             detail:
+              err?.error?.message
+              ??
               'Impossible de modifier le statut.'
 
           });
@@ -1103,6 +1247,18 @@ export class DemandesVisite implements OnInit {
 
       icon:
         'pi pi-exclamation-triangle',
+
+      acceptLabel:
+        'Oui',
+
+      rejectLabel:
+        'Non',
+
+      acceptButtonStyleClass:
+        'p-button-danger',
+
+      rejectButtonStyleClass:
+        'p-button-text',
 
       accept: () => {
 
@@ -1144,6 +1300,8 @@ export class DemandesVisite implements OnInit {
                 summary: 'Erreur',
 
                 detail:
+                  err?.error?.message
+                  ??
                   'Suppression impossible.'
 
               });
@@ -1160,7 +1318,7 @@ export class DemandesVisite implements OnInit {
 
 
   // =========================================================
-  // STATUTS
+  // STATUTS DISPONIBLES
   // =========================================================
 
   statutsDisponibles = [

@@ -62,6 +62,8 @@ public class UtilisateursController : ControllerBase
                 Email = u.Email,
                 Role = u.Role,
                 Statut = u.Statut,
+                SocieteNom = u.Societe.Nom,
+                DerniereConnexion = u.DerniereConnexion,
                 SocieteId = u.SocieteId
             })
             .ToListAsync(cancellationToken);
@@ -109,6 +111,8 @@ public class UtilisateursController : ControllerBase
                 Email = u.Email,
                 Role = u.Role,
                 Statut = u.Statut,
+                SocieteNom = u.Societe.Nom,
+                DerniereConnexion = u.DerniereConnexion,
                 SocieteId = u.SocieteId
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -275,6 +279,7 @@ public class UtilisateursController : ControllerBase
             Email = utilisateur.Email,
             Role = utilisateur.Role,
             Statut = utilisateur.Statut,
+            DerniereConnexion = utilisateur.DerniereConnexion,
             SocieteId = utilisateur.SocieteId
         };
 
@@ -484,6 +489,8 @@ public class UtilisateursController : ControllerBase
             Email = utilisateur.Email,
             Role = utilisateur.Role,
             Statut = utilisateur.Statut,
+            SocieteNom = utilisateur.Societe.Nom,
+            DerniereConnexion = utilisateur.DerniereConnexion,
             SocieteId = utilisateur.SocieteId
         };
 
@@ -716,10 +723,12 @@ public record UtilisateurDto
     public string Email { get; init; } = string.Empty;
 
     public RoleUtilisateur Role { get; init; }
+    public DateTime? DerniereConnexion { get; init; }
 
     public bool Statut { get; init; }
 
     public Guid SocieteId { get; init; }
+    public string? SocieteNom { get; init; }
 }
 
 public record CreerUtilisateurRequest(

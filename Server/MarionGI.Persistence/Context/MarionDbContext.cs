@@ -1,6 +1,7 @@
 ﻿using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Text.Json;
 
 namespace MarionGI.Persistence.Context;
@@ -60,14 +61,7 @@ public class MarionDbContext : DbContext
         // ========================================================
         // 1. DELETE BEHAVIOR GLOBAL
         // ========================================================
-        //
-        // Toutes les FK utilisent Restrict par défaut.
-        //
-        // Cela évite :
-        // - les suppressions en cascade accidentelles
-        // - les Multiple Cascade Paths SQL Server
-        // - la suppression physique de données historiques
-        //
+
         foreach (var foreignKey in modelBuilder.Model
                      .GetEntityTypes()
                      .SelectMany(e => e.GetForeignKeys()))
@@ -130,13 +124,11 @@ public class MarionDbContext : DbContext
             entity.Property(s => s.Email)
                 .HasMaxLength(200);
 
-
             // Société -> Utilisateurs
             entity.HasMany(s => s.Utilisateurs)
                 .WithOne(u => u.Societe)
                 .HasForeignKey(u => u.SocieteId)
                 .OnDelete(DeleteBehavior.Restrict);
-
 
             // Société -> Biens
             entity.HasMany(s => s.BiensImmobiliers)
@@ -174,7 +166,6 @@ public class MarionDbContext : DbContext
             entity.Property(u => u.OtpSecret)
                 .HasMaxLength(500);
 
-
             // Email unique dans une société
             entity.HasIndex(u => new
             {
@@ -183,7 +174,6 @@ public class MarionDbContext : DbContext
             })
             .IsUnique();
 
-
             // Téléphone unique dans une société
             entity.HasIndex(u => new
             {
@@ -191,7 +181,6 @@ public class MarionDbContext : DbContext
                 u.Telephone
             })
             .IsUnique();
-
 
             // Société de l'utilisateur
             entity.HasOne(u => u.Societe)
@@ -217,11 +206,9 @@ public class MarionDbContext : DbContext
             entity.Property(r => r.EstRevoque)
                 .HasDefaultValue(false);
 
-
             // Un token doit être unique
             entity.HasIndex(r => r.Token)
                 .IsUnique();
-
 
             // RefreshToken -> Utilisateur
             entity.HasOne(r => r.Utilisateur)
@@ -235,16 +222,8 @@ public class MarionDbContext : DbContext
         // 6. BIEN IMMOBILIER
         // ========================================================
 
-        // ========================================================
-        // 6. BIEN IMMOBILIER
-        // ========================================================
-
         modelBuilder.Entity<BienImmobilier>(entity =>
         {
-            // ----------------------------------------------------
-            // Propriétés
-            // ----------------------------------------------------
-
             entity.Property(b => b.Reference)
                 .HasMaxLength(50)
                 .IsRequired();
@@ -268,18 +247,7 @@ public class MarionDbContext : DbContext
             entity.Property(b => b.Superficie)
                 .HasPrecision(10, 2);
 
-
-            // ----------------------------------------------------
-            // Index unique sur la référence
-            // ----------------------------------------------------
-            //
-            // Une référence ne peut être utilisée qu'une seule fois
-            // dans une même société.
-            //
-            // Les biens supprimés logiquement peuvent être ignorés
-            // afin de permettre éventuellement la réutilisation
-            // d'une ancienne référence.
-            //
+            // Référence unique dans une société
             entity.HasIndex(b => new
             {
                 b.SocieteId,
@@ -288,22 +256,7 @@ public class MarionDbContext : DbContext
             .IsUnique()
             .HasFilter("[EstSupprime] = 0");
 
-
-            // ----------------------------------------------------
-            // Index unique sur le nom
-            // ----------------------------------------------------
-            //
-            // Le nom doit être unique à l'intérieur d'une société.
-            //
-            // Exemple :
-            //
-            // Société A -> "Immeuble Marion"       ✅
-            // Société A -> "Immeuble Marion"       ❌
-            // Société B -> "Immeuble Marion"       ✅
-            //
-            // Un bien supprimé logiquement ne bloque pas
-            // la réutilisation du nom.
-            //
+            // Nom unique dans une société
             entity.HasIndex(b => new
             {
                 b.SocieteId,
@@ -312,11 +265,7 @@ public class MarionDbContext : DbContext
             .IsUnique()
             .HasFilter("[EstSupprime] = 0");
 
-
-            // ----------------------------------------------------
             // Photos stockées en JSON
-            // ----------------------------------------------------
-
             entity.Property(b => b.Photos)
                 .HasColumnType("nvarchar(max)")
                 .HasConversion(
@@ -332,21 +281,13 @@ public class MarionDbContext : DbContext
                             ?? new List<string>()
                 );
 
-
-            // ----------------------------------------------------
             // Bien -> Société
-            // ----------------------------------------------------
-
             entity.HasOne(b => b.Societe)
                 .WithMany(s => s.BiensImmobiliers)
                 .HasForeignKey(b => b.SocieteId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
-            // ----------------------------------------------------
             // Bien -> Unités locatives
-            // ----------------------------------------------------
-
             entity.HasMany(b => b.UnitesLocatives)
                 .WithOne(u => u.BienImmobilier)
                 .HasForeignKey(u => u.BienImmobilierId)
@@ -370,7 +311,6 @@ public class MarionDbContext : DbContext
             entity.Property(u => u.Loyer)
                 .HasPrecision(18, 2);
 
-
             // Référence unique à l'intérieur du bien
             entity.HasIndex(u => new
             {
@@ -379,13 +319,11 @@ public class MarionDbContext : DbContext
             })
             .IsUnique();
 
-
             // Unité -> Bien
             entity.HasOne(u => u.BienImmobilier)
                 .WithMany(b => b.UnitesLocatives)
                 .HasForeignKey(u => u.BienImmobilierId)
                 .OnDelete(DeleteBehavior.Restrict);
-
 
             // Photos stockées en JSON
             entity.Property(u => u.Photos)
@@ -425,13 +363,11 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(5);
 
-
             // Contrat -> Unité locative
             entity.HasOne(c => c.UniteLocative)
                 .WithMany(u => u.Contrats)
                 .HasForeignKey(c => c.UniteLocativeId)
                 .OnDelete(DeleteBehavior.Restrict);
-
 
             // Contrat -> Locataire
             entity.HasOne(c => c.Locataire)
@@ -447,8 +383,15 @@ public class MarionDbContext : DbContext
 
         modelBuilder.Entity<Paiement>(entity =>
         {
+            // ----------------------------------------------------
+            // Propriétés
+            // ----------------------------------------------------
+
             entity.Property(p => p.Montant)
                 .HasPrecision(18, 2);
+
+            entity.Property(p => p.MoisLoyer)
+                .HasColumnType("datetime");
 
             entity.Property(p => p.ReferenceTransactionOperateur)
                 .HasMaxLength(200);
@@ -458,12 +401,65 @@ public class MarionDbContext : DbContext
                 .IsRequired();
 
 
+            // ----------------------------------------------------
+            // Index ContratId existant
+            // ----------------------------------------------------
+            //
+            // On le conserve explicitement afin qu'EF Core ne
+            // génère pas sa suppression lors de la migration.
+            //
+            entity.HasIndex(p => p.ContratId)
+                .HasDatabaseName("IX_Paiements_ContratId");
+
+
+            // ----------------------------------------------------
+            // Un seul paiement EN ATTENTE par contrat et par mois
+            // ----------------------------------------------------
+            //
+            // StatutTransaction = 1 => EnAttente
+            //
+            entity.HasIndex(p => new
+            {
+                p.ContratId,
+                p.MoisLoyer
+            })
+            .IsUnique()
+            .HasDatabaseName(
+                "IX_Paiements_ContratId_MoisLoyer_EnAttente")
+            .HasFilter(
+                "[EstSupprime] = 0 AND [StatutTransaction] = 1");
+
+
+            // ----------------------------------------------------
+            // Un seul paiement CONFIRMÉ par contrat et par mois
+            // ----------------------------------------------------
+            //
+            // StatutTransaction = 2 => Confirme
+            //
+            entity.HasIndex(p => new
+            {
+                p.ContratId,
+                p.MoisLoyer
+            })
+            .IsUnique()
+            .HasDatabaseName(
+                "IX_Paiements_ContratId_MoisLoyer_Confirme")
+            .HasFilter(
+                "[EstSupprime] = 0 AND [StatutTransaction] = 2");
+
+
+            // ----------------------------------------------------
             // Numéro de quittance unique
+            // ----------------------------------------------------
+
             entity.HasIndex(p => p.NumeroQuittance)
                 .IsUnique();
 
 
+            // ----------------------------------------------------
             // Paiement -> Contrat
+            // ----------------------------------------------------
+
             entity.HasOne(p => p.Contrat)
                 .WithMany(c => c.Paiements)
                 .HasForeignKey(p => p.ContratId)
@@ -489,16 +485,13 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(1000)
                 .IsRequired();
 
-
             // Demande -> Unité
             entity.HasOne(d => d.UniteLocative)
                 .WithMany(u => u.DemandesVisite)
                 .HasForeignKey(d => d.UniteLocativeId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             // Demande -> Agent
-            // Agent facultatif
             entity.HasOne(d => d.Agent)
                 .WithMany()
                 .HasForeignKey(d => d.AgentId)
@@ -522,7 +515,6 @@ public class MarionDbContext : DbContext
 
             entity.Property(n => n.Lu)
                 .HasDefaultValue(false);
-
 
             // Notification -> Utilisateur
             entity.HasOne(n => n.Utilisateur)
@@ -554,12 +546,8 @@ public class MarionDbContext : DbContext
                 .HasColumnType("nvarchar(max)")
                 .IsRequired();
 
-
-            // UtilisateurId est volontairement conservé
-            // comme Guid? sans navigation EF.
-            //
-            // Cela permet notamment d'enregistrer des actions
-            // effectuées automatiquement par le système.
+            // UtilisateurId volontairement conservé comme Guid?
+            // sans navigation EF.
         });
     }
 }

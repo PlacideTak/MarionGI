@@ -13,4 +13,7 @@ public class Paiement : BaseEntity
     public string? ReferenceTransactionOperateur { get; set; }
     public string NumeroQuittance { get; set; } = string.Empty; // Format: Q-YYYYMMDD-XXXX
     public Guid? EnregistreParUtilisateurId { get; set; }
+    // Premier jour du mois concerné par le loyer.
+    // Exemple : 2026-10-01 = loyer d'octobre 2026.
+    public DateTime MoisLoyer { get; set; }
 }

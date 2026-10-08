@@ -42,7 +42,7 @@ import {
 } from 'primeng/tooltip';
 
 import {
-  PaiementDto,
+  PaiementListItem,
   ModePaiement,
   StatutTransaction
 } from '../models/gestimmo.models';
@@ -75,7 +75,6 @@ import {
 })
 export class Paiements implements OnInit {
 
-
   // =========================================================
   // SERVICES
   // =========================================================
@@ -91,9 +90,9 @@ export class Paiements implements OnInit {
   // DONNÉES
   // =========================================================
 
-  paiements: PaiementDto[] = [];
+  paiements: PaiementListItem[] = [];
 
-  paiementsFiltres: PaiementDto[] = [];
+  paiementsFiltres: PaiementListItem[] = [];
 
   chargementEnCours = true;
 
@@ -102,19 +101,8 @@ export class Paiements implements OnInit {
   // CONTRAT SÉLECTIONNÉ
   // =========================================================
 
-  /**
-   * Contrat transmis depuis la liste des unités.
-   *
-   * Exemple :
-   * /paiements?contratId=xxxxxxxx
-   */
   contratId: string | null = null;
 
-
-  /**
-   * Indique si la page a été ouverte
-   * pour un contrat précis.
-   */
   modeContrat = false;
 
 
@@ -202,10 +190,6 @@ export class Paiements implements OnInit {
 
   ngOnInit(): void {
 
-    /**
-     * Récupère le contrat transmis par
-     * UnitesLocatives.
-     */
     this.route.queryParamMap.subscribe(params => {
 
       this.contratId =
@@ -231,14 +215,14 @@ export class Paiements implements OnInit {
       .getPaiements()
       .subscribe({
 
-        next: (data: PaiementDto[]) => {
+        next: (data: PaiementListItem[]) => {
 
           this.paiements =
             data ?? [];
 
 
           // ---------------------------------------------------
-          // Si un contrat est sélectionné
+          // FILTRAGE PAR CONTRAT
           // ---------------------------------------------------
 
           if (this.contratId) {
@@ -253,7 +237,6 @@ export class Paiements implements OnInit {
 
           this.paiementsFiltres =
             [...this.paiements];
-
 
           this.chargementEnCours =
             false;
@@ -292,7 +275,6 @@ export class Paiements implements OnInit {
     this.paiementsFiltres =
       this.paiements.filter(p => {
 
-
         // -----------------------------------------------------
         // RECHERCHE TEXTE
         // -----------------------------------------------------
@@ -317,13 +299,6 @@ export class Paiements implements OnInit {
 
           (
             p.bienNom
-              ?.toLowerCase()
-              .includes(texte)
-            ?? false
-          ) ||
-
-          (
-            p.referenceTransactionOperateur
               ?.toLowerCase()
               .includes(texte)
             ?? false
@@ -376,7 +351,6 @@ export class Paiements implements OnInit {
 
     this.filtreMode =
       undefined;
-
 
     this.paiementsFiltres =
       [...this.paiements];

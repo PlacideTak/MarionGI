@@ -35,6 +35,12 @@
       </div>
 
       @if (step() === 'credentials') {
+
+         <!-- Popup récupération mot de passe -->
+          <app-mot-de-passe-oublie
+            #modalRecuperation>
+          </app-mot-de-passe-oublie>
+
         <h1 class="card-title">Connexion</h1>
         <p class="card-subtitle">Accédez à votre espace MarionGI.</p>
 
@@ -182,6 +188,3 @@
 
   </main>
 </div>
-
-<!-- Inclusion de la modale/composant de récupération à la fin du template -->
-<app-mot-de-passe-oublie #modalRecuperation></app-mot-de-passe-oublie>

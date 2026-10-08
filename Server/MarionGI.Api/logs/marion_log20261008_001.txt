@@ -1,0 +1,47 @@
+2026-10-08 14:47:42.392 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-10-08 14:47:42.499 -04:00 [WRN] The property 'BienImmobilier.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-08 14:47:42.512 -04:00 [WRN] The property 'UniteLocative.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-08 14:47:42.551 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-08 14:50:04.064 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-10-08 14:50:04.611 -04:00 [INF] Now listening on: https://localhost:7232
+2026-10-08 14:50:04.616 -04:00 [INF] Now listening on: http://localhost:5190
+2026-10-08 14:50:04.810 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-10-08 14:50:04.816 -04:00 [INF] Hosting environment: Development
+2026-10-08 14:50:04.818 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-10-08 14:50:07.671 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - null null
+2026-10-08 14:50:07.778 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:07.789 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - 204 null null 120.9714ms
+2026-10-08 14:50:07.800 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-10-08 14:50:07.912 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:08.106 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-10-08 14:50:08.190 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-10-08 14:50:08.300 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType7`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-10-08 14:50:08.321 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 29.1966ms
+2026-10-08 14:50:08.336 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-10-08 14:50:08.346 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 545.4961ms
+2026-10-08 14:50:09.994 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/BienImmobilier - null null
+2026-10-08 14:50:10.004 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - null null
+2026-10-08 14:50:10.357 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:10.399 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:10.420 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/BienImmobilier - 204 null null 425.5369ms
+2026-10-08 14:50:10.430 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/BienImmobilier - null null
+2026-10-08 14:50:10.479 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - 204 null null 474.3666ms
+2026-10-08 14:50:10.488 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/UnitesLocatives - null null
+2026-10-08 14:50:10.531 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:10.542 -04:00 [INF] CORS policy execution successful.
+2026-10-08 14:50:10.552 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.BienImmobilierController.GetBiens (MarionGI.Api)'
+2026-10-08 14:50:10.552 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api)'
+2026-10-08 14:50:10.588 -04:00 [INF] Route matched with {action = "GetUnites", controller = "UnitesLocatives"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUnites(System.Threading.CancellationToken) on controller MarionGI.Api.Controllers.UnitesLocativesController (MarionGI.Api).
+2026-10-08 14:50:10.588 -04:00 [INF] Route matched with {action = "GetBiens", controller = "BienImmobilier"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetBiens(System.Threading.CancellationToken) on controller MarionGI.Api.Controllers.BienImmobilierController (MarionGI.Api).
+2026-10-08 14:50:13.514 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-10-08 14:50:13.666 -04:00 [WRN] The property 'BienImmobilier.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-08 14:50:13.702 -04:00 [WRN] The property 'UniteLocative.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-08 14:50:13.779 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-08 14:50:15.103 -04:00 [ERR] An error occurred using the connection to database 'MarionGIDb' on server 'DESKTOP-7A6BSF6\SQLEXPRESS01'.
+2026-10-08 14:50:15.103 -04:00 [ERR] An error occurred using the connection to database 'MarionGIDb' on server 'DESKTOP-7A6BSF6\SQLEXPRESS01'.
+2026-10-08 14:50:15.120 -04:00 [INF] Executed action MarionGI.Api.Controllers.BienImmobilierController.GetBiens (MarionGI.Api) in 4521.8451ms
+2026-10-08 14:50:15.126 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.BienImmobilierController.GetBiens (MarionGI.Api)'
+2026-10-08 14:50:15.120 -04:00 [INF] Executed action MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api) in 4527.2294ms
+2026-10-08 14:50:15.136 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api)'
+2026-10-08 14:50:15.147 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/UnitesLocatives - 499 null null 4659.1394ms
+2026-10-08 14:50:15.147 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/BienImmobilier - 499 null null 4716.9827ms

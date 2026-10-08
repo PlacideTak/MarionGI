@@ -1,321 +1,155 @@
-$border: #e2e8f0;
-$text: #334155;
-$bg-soft: #f8fafc;
-
-/* ==========================================
-   EN-TÊTE DE PAGE
-   ========================================== */
-
-.page-header {
-  display: flex;
-  flex-direction: column; // bouton sous le titre
-  align-items: flex-start;
-  gap: 1rem;
-
-  h2 {
-    margin: 0;
-  }
-}
-
-
-/* ==========================================
-   TABLEAU
-   ========================================== */
-
-.table-responsive {
-  width: 100%;
-  overflow-x: auto; // défilement de secours si le tableau est trop large
-  -webkit-overflow-scrolling: touch;
-}
-
-.nowrap {
-  white-space: nowrap;
-}
-
-.col-actions {
-  text-align: center;
-  white-space: nowrap;
-}
-
-.actions-group {
-  display: inline-flex;
-  gap: 0.5rem;
-}
-
-:host ::ng-deep {
-  .p-datatable {
-    .p-datatable-thead > tr > th,
-    .p-datatable-tbody > tr > td {
-      padding: 0.75rem 1rem;
-      vertical-align: middle;
-    }
-  }
-
-  .p-paginator {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.25rem;
-  }
-}
-
-
-/* ==========================================
-   DIALOG CONTRAT
-   ========================================== */
-
-:host ::ng-deep {
-  .contrat-dialog {
-    border-radius: 14px;
-    overflow: hidden;
-    max-height: calc(100dvh - 1rem);
-
-    .p-dialog-header {
-      padding: 1.25rem 1.5rem;
-      border-bottom: 1px solid #e9ecef;
-    }
-
-    .p-dialog-content {
-      padding: 1.5rem;
-      overflow-x: hidden;
-    }
-
-    .p-dialog-footer {
-      padding: 1rem 1.5rem;
-      background: $bg-soft;
-      border-top: 1px solid #e9ecef;
-    }
-
-    .p-select,
-    .p-inputnumber,
-    .p-inputnumber-input {
-      width: 100%;
-      min-width: 0;
-    }
-  }
-}
-
-
-/* ==========================================
-   FORMULAIRE
-   ========================================== */
+/* =========================================================
+   FORMULAIRE CONTRAT
+   ========================================================= */
 
 .contrat-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
 
-.field {
-  min-width: 0; // évite qu'un input déborde de sa colonne
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
 
   label {
-    display: block;
-    margin-bottom: 0.5rem;
     font-weight: 600;
-    color: var(--text-color, #{$text});
+    color: #334155;
   }
 
-  input[type='text'],
-  input[type='date'],
-  input[type='number'] {
+
+  /* =======================================================
+     LISTES DÉROULANTES PRIME NG
+     ======================================================= */
+
+  .contrat-select {
     width: 100%;
-    box-sizing: border-box;
-  }
-}
-
-/* Deux colonnes quand il y a la place, une seule sinon (sans media query) */
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
-  gap: 1rem;
-}
-
-.p-error {
-  display: block;
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-}
-
-
-/* ==========================================
-   TABLETTE (≤ 768px)
-   ========================================== */
-
-@media (max-width: 768px) {
-  :host ::ng-deep .p-datatable {
-    font-size: 0.9rem;
-
-    .hide-tablet {
-      display: none;
-    }
-
-    .p-datatable-thead > tr > th,
-    .p-datatable-tbody > tr > td {
-      padding: 0.6rem 0.75rem;
-    }
-  }
-}
-
-
-/* ==========================================
-   MOBILE (≤ 600px) : tableau -> cartes
-   ========================================== */
-
-@media (max-width: 600px) {
-
-  /* En-tête : titre puis bouton pleine largeur */
-  .page-header {
-    align-items: stretch; // bouton pleine largeur sur mobile
-
-    h2 {
-      font-size: 1.35rem;
-    }
-
-    .btn-new,
-    .btn-new ::ng-deep button {
-      width: 100%;
-    }
+    min-height: 44px;
   }
 
-  .table-responsive {
-    overflow-x: visible;
+  .contrat-select.p-select {
+    width: 100%;
+    min-height: 44px;
   }
 
-  :host ::ng-deep .table-responsive-stack {
-    font-size: 1rem;
-
-    .p-datatable-table,
-    .p-datatable-tbody {
-      display: block;
-      width: 100%;
-    }
-
-    .p-datatable-thead {
-      display: none;
-    }
-
-    // Les colonnes masquées en tablette redeviennent visibles dans les cartes
-    .hide-tablet {
-      display: flex;
-    }
-
-    .p-datatable-tbody > tr,
-    .p-datatable-tbody > tr:nth-child(even) {
-      display: block;
-      background: #fff;
-      border: 1px solid $border;
-      border-radius: 10px;
-      margin-bottom: 0.75rem;
-      padding: 0.25rem 0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .p-datatable-tbody > tr > td {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      width: 100% !important;
-      box-sizing: border-box;
-      padding: 0.5rem 1rem;
-      border: 0 !important;
-      text-align: right;
-      white-space: normal;
-      overflow-wrap: anywhere;
-
-      &::before {
-        content: attr(data-label);
-        flex: 0 0 35%;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: $text;
-        text-align: left;
-      }
-
-      &:not([data-label])::before {
-        content: none;
-      }
-    }
-
-    // Actions en pied de carte
-    .p-datatable-tbody > tr > td.col-actions {
-      justify-content: flex-end;
-      margin-top: 0.25rem;
-      padding-top: 0.75rem;
-      border-top: 1px solid $border !important;
-      background: $bg-soft;
-      border-radius: 0 0 10px 10px;
-    }
-
-    // Message "aucun contrat"
-    .p-datatable-emptymessage > td {
-      display: block;
-      text-align: center;
-
-      &::before {
-        content: none;
-      }
-    }
+  .contrat-select .p-select-label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.95rem;
   }
 
-  /* Dialog : le width vient de [breakpoints] côté HTML */
-  :host ::ng-deep .contrat-dialog {
-    .p-dialog-header {
-      padding: 1rem;
-    }
-
-    .p-dialog-content {
-      padding: 1rem;
-    }
-
-    .p-dialog-footer {
-      padding: 1rem;
-    }
+  .contrat-select .p-select-dropdown {
+    width: 2.75rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  // Boutons du dialog : pleine largeur, "Enregistrer" en premier
-  .dialog-actions {
-    flex-direction: column-reverse;
 
-    ::ng-deep button {
-      width: 100%;
-      justify-content: center;
-    }
+  /* =======================================================
+     CHAMPS INPUT
+     ======================================================= */
+
+  input[pInputText] {
+    min-height: 44px;
   }
+
+
+  /* =======================================================
+     INPUT NUMBER
+     ======================================================= */
+
+  p-inputNumber {
+    width: 100%;
+  }
+
+  p-inputNumber .p-inputnumber {
+    width: 100%;
+  }
+
+  p-inputNumber input {
+    min-height: 44px;
+    width: 100%;
+  }
+
+
+  /* =======================================================
+     MESSAGES D'ERREUR
+     ======================================================= */
+
+  .form-error {
+    display: block;
+    margin-top: 0.15rem;
+    color: #dc2626 !important;
+    font-size: 0.82rem;
+    font-weight: 500;
+  }
+
+  .p-error {
+    color: #dc2626 !important;
+  }
+
+
+  /* =======================================================
+     TEXTE SECONDAIRE
+     ======================================================= */
+
+  .text-color-secondary {
+    font-size: 0.8rem;
+    color: #64748b;
+  }
+
 }
 
 
-/* ==========================================
-   TRÈS PETITS TÉLÉPHONES (≤ 400px)
-   ========================================== */
+/* =========================================================
+   DIALOGUE CONTRAT
+   ========================================================= */
 
-@media (max-width: 400px) {
-  .page-header h2 {
-    font-size: 1.2rem;
+.contrat-dialog {
+
+  .p-dialog-content {
+    padding-top: 0.5rem;
   }
 
-  :host ::ng-deep .table-responsive-stack .p-datatable-tbody > tr > td {
-    padding: 0.4rem 0.75rem;
+  .p-dialog-footer {
+    padding-top: 0.75rem;
+  }
 
-    &::before {
-      flex-basis: 30%;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+  .contrat-form {
+
+    .form-row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
     }
+
+    .contrat-select,
+    .contrat-select.p-select {
+      min-height: 46px;
+    }
+
+    .contrat-select .p-select-label {
+      min-height: 46px;
+      font-size: 0.95rem;
+    }
+
   }
-}
 
-.property-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.bien-reference {
-  font-size: 0.8rem;
-  color: #64748b;
 }

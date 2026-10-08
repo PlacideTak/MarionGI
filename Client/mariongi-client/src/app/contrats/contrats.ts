@@ -114,24 +114,21 @@ export class Contrats implements OnInit {
   contrats: ContratDto[] = [];
 
   /**
-   * Les biens servent uniquement à déterminer
-   * les unités locatives disponibles.
+   * Biens utilisés uniquement pour filtrer
+   * les unités locatives.
    *
-   * IMPORTANT :
-   * bienImmobilierId n'est jamais envoyé à l'API
-   * lors de la création ou de la modification
-   * d'un contrat.
+   * bienImmobilierId n'est jamais envoyé
+   * à l'API pour un contrat.
    */
   biensOptions: DropdownItem[] = [];
 
   /**
-   * Unités locatives appartenant au bien sélectionné.
+   * Unités appartenant au bien sélectionné.
    */
   unitesLocativesOptions: DropdownItem[] = [];
 
   /**
-   * Locataires disponibles pour l'affectation
-   * d'un contrat.
+   * Locataires disponibles.
    */
   locatairesOptions: DropdownItem[] = [];
 
@@ -147,6 +144,14 @@ export class Contrats implements OnInit {
   // DIALOGUE / FORMULAIRE
   // ============================================================
 
+  /**
+   * Contrôle l'ouverture du p-dialog.
+   *
+   * IMPORTANT :
+   * Le HTML doit utiliser :
+   *
+   * [(visible)]="contratDialog"
+   */
   contratDialog = false;
 
   contratForm!: FormGroup;
@@ -210,12 +215,13 @@ export class Contrats implements OnInit {
     this.contratForm = this.fb.group({
 
       /**
-       * Référence saisie manuellement par l'utilisateur.
+       * Référence du contrat.
        *
        * Obligatoire.
        * Maximum 50 caractères.
        *
-       * Elle est envoyée uniquement lors de la création.
+       * Création : envoyée à l'API.
+       * Modification : affichée mais non envoyée.
        */
       reference: [
         '',
@@ -228,10 +234,10 @@ export class Contrats implements OnInit {
       /**
        * Champ Angular uniquement.
        *
-       * Il sert à déterminer quelles unités
-       * locatives doivent être affichées.
+       * Sert à déterminer les unités locatives
+       * appartenant au bien sélectionné.
        *
-       * Il n'est PAS envoyé à l'API.
+       * PAS envoyé à l'API.
        */
       bienImmobilierId: [
         '',
@@ -297,7 +303,7 @@ export class Contrats implements OnInit {
        * Utilisé uniquement lors de la modification.
        *
        * Lors de la création, le backend impose
-       * StatutContrat.Actif.
+       * le statut Actif.
        */
       statut: [
         StatutContrat.Actif,
@@ -623,9 +629,6 @@ export class Contrats implements OnInit {
 
     this.contratForm.reset({
 
-      /**
-       * Nouvelle référence vide.
-       */
       reference: '',
 
       bienImmobilierId: '',
@@ -653,192 +656,260 @@ export class Contrats implements OnInit {
   }
 
 
-  // ============================================================
-  // MODIFICATION
-  // ============================================================
+editContrat(contrat: ContratDto): void {
+  // ==========================================================
+  // PERMISSION
+  // ==========================================================
 
-  editContrat(
-    contrat: ContratDto
-  ): void {
+  if (!this.canManageContrat) {
 
-    if (!this.canManageContrat) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Accès refusé',
-
-        detail:
-          'Vous n\'avez pas les droits nécessaires pour modifier un contrat.'
-      });
-
-      return;
-    }
-
-    if (!contrat.id) {
-
-      this.messageService.add({
-
-        severity: 'error',
-
-        summary: 'Erreur',
-
-        detail:
-          'L\'identifiant du contrat est introuvable.'
-      });
-
-      return;
-    }
-
-    this.isEditMode = true;
-
-    this.selectedContratId =
-      contrat.id;
-
-    /*
-     * La référence est affichée dans le formulaire
-     * mais ne sera PAS envoyée lors du PUT.
-     */
-    const reference =
-      contrat.reference ?? '';
-
-    const uniteLocativeId =
-      contrat.uniteLocativeId
-      ?? contrat.uniteLocative?.id
-      ?? '';
-
-    const bienImmobilierId =
-      contrat.uniteLocative?.bienImmobilierId
-      ?? '';
-
-    const formattedDateDebut =
-      contrat.dateDebut
-        ? this.formatDateForInput(
-            contrat.dateDebut
-          )
-        : null;
-
-    const formattedDateFin =
-      contrat.dateFin
-        ? this.formatDateForInput(
-            contrat.dateFin
-          )
-        : null;
-
-    this.unitesLocativesOptions = [];
-
-    this.contratForm.patchValue({
-
-      /**
-       * Affichage de la référence existante.
-       */
-      reference,
-
-      bienImmobilierId,
-
-      uniteLocativeId: '',
-
-      locataireId:
-        contrat.locataireId
-        ?? contrat.locataire?.id
-        ?? '',
-
-      dateDebut:
-        formattedDateDebut,
-
-      dateFin:
-        formattedDateFin,
-
-      montantLoyer:
-        contrat.montantLoyer,
-
-      montantCaution:
-        contrat.montantCaution,
-
-      frequencePaiement:
-        contrat.frequencePaiement,
-
-      delaiJoursTolerance:
-        contrat.delaiJoursTolerance,
-
-      statut:
-        contrat.statut
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Accès refusé',
+      detail:
+        'Vous n\'avez pas les droits nécessaires pour modifier un contrat.'
     });
 
-    /*
-     * Charger les unités appartenant au bien.
-     */
-    if (bienImmobilierId) {
+    return;
+  }
 
-      this.unitesLocativesService
-        .getUnitesParBien(bienImmobilierId)
-        .subscribe({
+  // ==========================================================
+  // VÉRIFICATION ID
+  // ==========================================================
 
-          next: (
-            unites: UniteLocativeDto[]
-          ) => {
+  if (!contrat.id) {
 
-            if (!Array.isArray(unites)) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Erreur',
+      detail:
+        'L\'identifiant du contrat est introuvable.'
+    });
 
-              this.unitesLocativesOptions = [];
+    return;
+  }
 
-              return;
-            }
+  // ==========================================================
+  // MODE MODIFICATION
+  // ==========================================================
 
-            this.unitesLocativesOptions =
-              unites.map(
-                (unite: UniteLocativeDto) => ({
+  this.isEditMode = true;
+  this.selectedContratId = contrat.id;
 
-                  label:
-                    unite.reference,
+  // ==========================================================
+  // RÉCUPÉRATION DES IDs
+  //
+  // Structure réelle de l'API :
+  //
+  // contrat
+  //   ├── bienImmobilier.id
+  //   ├── uniteLocative.id
+  //   └── locataire.id
+  // ==========================================================
 
-                  value:
-                    unite.id
-                })
-              );
+  const bienImmobilierId =
+    contrat.bienImmobilier?.id ?? '';
 
-            /*
-             * Une fois les unités chargées,
-             * sélectionner celle du contrat.
-             */
-            this.contratForm.patchValue({
+  const uniteLocativeId =
+    contrat.uniteLocative?.id
+    ?? contrat.uniteLocativeId
+    ?? '';
 
-              uniteLocativeId
-            });
-          },
+  const locataireId =
+    contrat.locataire?.id
+    ?? contrat.locataireId
+    ?? '';
 
-          error: (
-            err: HttpErrorResponse
-          ) => {
+  // ==========================================================
+  // RESET DES OPTIONS D'UNITÉS
+  // ==========================================================
 
-            console.error(
-              'Erreur chargement unités du bien :',
-              err
-            );
+  this.unitesLocativesOptions = [];
+  // ==========================================================
+  // REMPLISSAGE DU FORMULAIRE
+  // ==========================================================
 
-            this.messageService.add({
+  this.contratForm.patchValue({
 
-              severity: 'error',
+    reference:
+      contrat.reference ?? '',
 
-              summary: 'Erreur',
+    bienImmobilierId:
+      bienImmobilierId,
 
-              detail:
-                'Impossible de charger les unités locatives du bien.'
-            });
-          }
-        });
+    // L'unité sera sélectionnée après son chargement
+    uniteLocativeId:
+      '',
 
-    } else {
+    locataireId:
+      locataireId,
 
-      this.contratForm.patchValue({
+    dateDebut:
+      contrat.dateDebut
+        ? this.formatDateForInput(contrat.dateDebut)
+        : null,
 
-        uniteLocativeId
-      });
-    }
+    dateFin:
+      contrat.dateFin
+        ? this.formatDateForInput(contrat.dateFin)
+        : null,
+
+    montantLoyer:
+      contrat.montantLoyer ?? null,
+
+    montantCaution:
+      contrat.montantCaution ?? 0,
+
+    frequencePaiement:
+      contrat.frequencePaiement ?? 1,
+
+    delaiJoursTolerance:
+      contrat.delaiJoursTolerance ?? 5,
+
+    statut:
+      contrat.statut
+  });
+
+
+  // ==========================================================
+  // CHARGEMENT DES UNITÉS DU BIEN
+  // ==========================================================
+
+  if (!bienImmobilierId) {
+
+    console.error(
+      'Le contrat ne contient pas de bien immobilier.',
+      contrat
+    );
+
+    this.messageService.add({
+      severity: 'warn',
+      summary: 'Bien immobilier introuvable',
+      detail:
+        'Impossible de déterminer le bien immobilier associé au contrat.'
+    });
 
     this.contratDialog = true;
+
+    return;
   }
+
+
+  this.unitesLocativesService
+    .getUnitesParBien(bienImmobilierId)
+    .subscribe({
+
+      // ======================================================
+      // UNITÉS CHARGÉES
+      // ======================================================
+
+      next: (
+        unites: UniteLocativeDto[]
+      ) => {
+
+        if (!Array.isArray(unites)) {
+
+          this.unitesLocativesOptions = [];
+
+          this.contratDialog = true;
+
+          return;
+        }
+
+
+        // ====================================================
+        // CONSTRUCTION DES OPTIONS
+        // ====================================================
+
+        this.unitesLocativesOptions =
+          unites.map(
+            (unite: UniteLocativeDto) => ({
+
+              label:
+                unite.reference,
+
+              value:
+                unite.id
+            })
+          );
+
+
+        // ====================================================
+        // SÉLECTION DE L'UNITÉ DU CONTRAT
+        // ====================================================
+
+        const uniteExiste =
+          this.unitesLocativesOptions.some(
+            option =>
+              option.value === uniteLocativeId
+          );
+
+
+        if (uniteExiste) {
+
+          this.contratForm.patchValue({
+
+            uniteLocativeId:
+              uniteLocativeId
+
+          });
+
+        } else {
+
+          console.warn(
+            'L\'unité locative du contrat n\'est pas présente dans les unités du bien.',
+            {
+              uniteLocativeId,
+              bienImmobilierId,
+              options:
+                this.unitesLocativesOptions
+            }
+          );
+
+          this.contratForm.patchValue({
+
+            uniteLocativeId:
+              ''
+
+          });
+        }
+
+
+        // ====================================================
+        // OUVERTURE DU MODAL
+        // ====================================================
+
+        this.contratDialog = true;
+      },
+
+
+      // ======================================================
+      // ERREUR
+      // ======================================================
+
+      error: (
+        err: HttpErrorResponse
+      ) => {
+
+        console.error(
+          'Erreur chargement unités du bien :',
+          err
+        );
+
+        this.messageService.add({
+
+          severity: 'error',
+
+          summary: 'Erreur',
+
+          detail:
+            'Impossible de charger les unités locatives du bien.'
+        });
+
+        this.contratDialog = true;
+      }
+    });
+}
 
 
   // ============================================================
@@ -895,11 +966,11 @@ export class Contrats implements OnInit {
       }
 
       /*
-       * La référence n'est volontairement PAS envoyée.
+       * IMPORTANT :
        *
-       * ModifierContratRequest ne contient pas Reference.
+       * La référence n'est PAS envoyée lors d'une modification.
        *
-       * La référence reste donc immutable après création.
+       * La référence est immutable après création.
        */
       const payload: ModifierContratRequest = {
 
@@ -958,7 +1029,7 @@ export class Contrats implements OnInit {
                 'Contrat mis à jour.'
             });
 
-            this.contratDialog = false;
+            this.fermerDialog();
 
             this.chargerContrats();
           },
@@ -982,27 +1053,8 @@ export class Contrats implements OnInit {
     // CRÉATION
     // ==========================================================
 
-    /*
-     * CreerContratRequest contient maintenant :
-     *
-     * - reference
-     * - uniteLocativeId
-     * - locataireId
-     * - dates
-     * - montants
-     * - fréquence
-     * - tolérance
-     *
-     * Il ne contient PAS :
-     *
-     * - bienImmobilierId
-     * - statut
-     */
     const payload: CreerContratRequest = {
 
-      /**
-       * Référence saisie manuellement.
-       */
       reference:
         String(
           formValue.reference ?? ''
@@ -1063,7 +1115,7 @@ export class Contrats implements OnInit {
               'Contrat créé.'
           });
 
-          this.contratDialog = false;
+          this.fermerDialog();
 
           this.chargerContrats();
         },
@@ -1078,6 +1130,22 @@ export class Contrats implements OnInit {
           );
         }
       });
+  }
+
+
+  // ============================================================
+  // FERMETURE DU DIALOGUE
+  // ============================================================
+
+  fermerDialog(): void {
+
+    this.contratDialog = false;
+
+    this.isEditMode = false;
+
+    this.selectedContratId = undefined;
+
+    this.unitesLocativesOptions = [];
   }
 
 
@@ -1132,7 +1200,7 @@ export class Contrats implements OnInit {
 
         this.contratsService
           .deleteContrat(
-            contrat.id
+            contrat.id!
           )
           .subscribe({
 
@@ -1300,13 +1368,6 @@ export class Contrats implements OnInit {
       return;
     }
 
-    /*
-     * L'API renvoie notamment ce message lorsque
-     * la référence existe déjà.
-     *
-     * Exemple :
-     * "La référence de contrat « CTR-2026-001 » est déjà utilisée."
-     */
     const apiMessage =
       err.error?.message;
 

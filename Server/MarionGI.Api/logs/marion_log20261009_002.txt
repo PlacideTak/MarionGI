@@ -1,0 +1,102 @@
+2026-10-09 13:47:36.788 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-10-09 13:47:36.990 -04:00 [WRN] The property 'BienImmobilier.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-09 13:47:37.013 -04:00 [WRN] The property 'UniteLocative.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-09 13:47:37.089 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:47:37.095 -04:00 [WRN] The 'PrioriteIncident' property 'Priorite' on entity type 'TicketIncident' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'PrioriteIncident' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:47:37.095 -04:00 [WRN] The 'StatutIncident' property 'Statut' on entity type 'TicketIncident' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'StatutIncident' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:48:27.836 -04:00 [INF] User profile is available. Using 'C:\Users\Nestor\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-10-09 13:48:28.723 -04:00 [INF] Now listening on: https://localhost:7232
+2026-10-09 13:48:28.726 -04:00 [INF] Now listening on: http://localhost:5190
+2026-10-09 13:48:28.914 -04:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-10-09 13:48:28.917 -04:00 [INF] Hosting environment: Development
+2026-10-09 13:48:28.922 -04:00 [INF] Content root path: C:\ProjetIA\GestionImmobiliere\MarionGI\Server\MarionGI.Api
+2026-10-09 13:49:35.700 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - null null
+2026-10-09 13:49:35.848 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:35.859 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - 204 null null 162.7858ms
+2026-10-09 13:49:35.874 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - null null
+2026-10-09 13:49:35.916 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:36.170 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-10-09 13:49:36.229 -04:00 [INF] Route matched with {action = "GetSessionTimeout", controller = "Configuration"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult GetSessionTimeout() on controller MarionGI.Api.Controllers.ConfigurationController (MarionGI.Api).
+2026-10-09 13:49:36.252 -04:00 [INF] Executing OkObjectResult, writing value of type '<>f__AnonymousType7`1[[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]'.
+2026-10-09 13:49:36.283 -04:00 [INF] Executed action MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api) in 42.9187ms
+2026-10-09 13:49:36.287 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.ConfigurationController.GetSessionTimeout (MarionGI.Api)'
+2026-10-09 13:49:36.291 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/configuration/session-timeout - 200 null application/json; charset=utf-8 416.306ms
+2026-10-09 13:49:36.632 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Tickets - null null
+2026-10-09 13:49:36.641 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:36.643 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Tickets - 204 null null 11.4541ms
+2026-10-09 13:49:36.645 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - null null
+2026-10-09 13:49:36.649 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Tickets - null null
+2026-10-09 13:49:36.655 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:36.660 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:36.661 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - 204 null null 15.9829ms
+2026-10-09 13:49:36.669 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/UnitesLocatives - null null
+2026-10-09 13:49:36.676 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.TicketsController.ObtenirTous (MarionGI.Api)'
+2026-10-09 13:49:36.677 -04:00 [INF] CORS policy execution successful.
+2026-10-09 13:49:36.688 -04:00 [INF] Executing endpoint 'MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api)'
+2026-10-09 13:49:36.701 -04:00 [INF] Route matched with {action = "GetUnites", controller = "UnitesLocatives"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] GetUnites(System.Threading.CancellationToken) on controller MarionGI.Api.Controllers.UnitesLocativesController (MarionGI.Api).
+2026-10-09 13:49:36.701 -04:00 [INF] Route matched with {action = "ObtenirTous", controller = "Tickets"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] ObtenirTous(System.Nullable`1[MarionGI.Domain.Enums.StatutIncident], System.Nullable`1[MarionGI.Domain.Enums.PrioriteIncident], System.Nullable`1[MarionGI.Domain.Enums.CategorieIncident], System.Nullable`1[System.Guid]) on controller MarionGI.Api.Controllers.TicketsController (MarionGI.Api).
+2026-10-09 13:49:38.203 -04:00 [WRN] Entity 'Utilisateur' has a global query filter defined and is the required end of a relationship with the entity 'RefreshToken'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-10-09 13:49:38.269 -04:00 [WRN] The property 'BienImmobilier.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-09 13:49:38.300 -04:00 [WRN] The property 'UniteLocative.Photos' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2026-10-09 13:49:38.379 -04:00 [WRN] The 'FrequencePaiement' property 'FrequencePaiement' on entity type 'Contrat' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'FrequencePaiement' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:49:38.384 -04:00 [WRN] The 'PrioriteIncident' property 'Priorite' on entity type 'TicketIncident' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'PrioriteIncident' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:49:38.388 -04:00 [WRN] The 'StatutIncident' property 'Statut' on entity type 'TicketIncident' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value '0', since this is the CLR default for the 'StatutIncident' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2026-10-09 13:49:41.151 -04:00 [INF] Executed DbCommand (181ms) [Parameters=[@__utilisateurId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[DateCreation], [u].[DateSuppression], [u].[DerniereConnexion], [u].[Email], [u].[EstSupprime], [u].[MotDePasseHash], [u].[Nom], [u].[OtpExpiration], [u].[OtpSecret], [u].[Prenom], [u].[Role], [u].[SocieteId], [u].[Statut], [u].[Telephone], [u].[TelephoneVerifie], [u].[TentativesConnexionEchouees], [u].[VerrouilleJusquA]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Id] = @__utilisateurId_0 AND [u].[Statut] = CAST(1 AS bit) AND [u].[EstSupprime] = CAST(0 AS bit)
+2026-10-09 13:49:41.151 -04:00 [INF] Executed DbCommand (195ms) [Parameters=[@__currentUserId_Value_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[SocieteId], [u].[Role]
+FROM [Utilisateurs] AS [u]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Id] = @__currentUserId_Value_0 AND [u].[EstSupprime] = CAST(0 AS bit) AND [u].[Statut] = CAST(1 AS bit)
+2026-10-09 13:49:41.796 -04:00 [INF] Executed DbCommand (443ms) [Parameters=[@__utilisateur_SocieteId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT [t].[Id], [t].[Reference], [t].[DateCreation], [t].[UniteLocativeId], [u0].[Reference] AS [ReferenceUnite], [b0].[Nom] AS [NomBienImmobilier], [t].[LocataireId], [u2].[Nom] AS [NomLocataire], [u2].[Prenom] AS [PrenomLocataire], [t].[Categorie], [t].[Description], [t].[Priorite], [t].[Statut], [t].[CoutEstime], [t].[CoutTotal], [t].[ValidationDevisRequise], [t].[DevisValide], [t].[DateIncident]
+FROM [TicketsIncidents] AS [t]
+INNER JOIN (
+    SELECT [u].[Id], [u].[BienImmobilierId], [u].[Reference]
+    FROM [UnitesLocatives] AS [u]
+    WHERE [u].[EstSupprime] = CAST(0 AS bit)
+) AS [u0] ON [t].[UniteLocativeId] = [u0].[Id]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Nom], [b].[SocieteId]
+    FROM [BiensImmobiliers] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [u0].[BienImmobilierId] = [b0].[Id]
+INNER JOIN (
+    SELECT [u1].[Id], [u1].[Nom], [u1].[Prenom]
+    FROM [Utilisateurs] AS [u1]
+    WHERE [u1].[EstSupprime] = CAST(0 AS bit)
+) AS [u2] ON [t].[LocataireId] = [u2].[Id]
+WHERE [t].[EstSupprime] = CAST(0 AS bit) AND [b0].[SocieteId] = @__utilisateur_SocieteId_0
+ORDER BY [t].[DateCreation] DESC
+2026-10-09 13:49:41.844 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[MarionGI.Api.Controllers.TicketIncidentListeDto, MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-10-09 13:49:41.903 -04:00 [INF] Executed DbCommand (492ms) [Parameters=[@__utilisateur_SocieteId_0='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[Reference], [u].[Type], [u].[Superficie], [u].[Loyer], [u].[Statut], [u].[Photos], [u].[BienImmobilierId], [b0].[Reference] AS [BienReference], [b0].[Adresse] AS [BienAdresse], [b0].[Ville] AS [BienVille], [b0].[Quartier] AS [BienQuartier], [b0].[Nom] AS [BienNom], [b0].[SocieteId], [s].[Nom] AS [SocieteNom], (
+    SELECT COUNT(*)
+    FROM [Contrats] AS [c]
+    WHERE [c].[EstSupprime] = CAST(0 AS bit) AND [u].[Id] = [c].[UniteLocativeId] AND [c].[EstSupprime] = CAST(0 AS bit)) AS [NombreContrats], CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Contrats] AS [c0]
+        WHERE [c0].[EstSupprime] = CAST(0 AS bit) AND [u].[Id] = [c0].[UniteLocativeId] AND [c0].[EstSupprime] = CAST(0 AS bit) AND [c0].[Statut] = 1) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END AS [AContratActif], (
+    SELECT COUNT(*)
+    FROM [DemandesVisite] AS [d]
+    WHERE [d].[EstSupprime] = CAST(0 AS bit) AND [u].[Id] = [d].[UniteLocativeId] AND [d].[EstSupprime] = CAST(0 AS bit)) AS [NombreDemandesVisite]
+FROM [UnitesLocatives] AS [u]
+INNER JOIN (
+    SELECT [b].[Id], [b].[Adresse], [b].[EstSupprime], [b].[Nom], [b].[Quartier], [b].[Reference], [b].[SocieteId], [b].[Ville]
+    FROM [BiensImmobiliers] AS [b]
+    WHERE [b].[EstSupprime] = CAST(0 AS bit)
+) AS [b0] ON [u].[BienImmobilierId] = [b0].[Id]
+INNER JOIN [Societes] AS [s] ON [b0].[SocieteId] = [s].[Id]
+WHERE [u].[EstSupprime] = CAST(0 AS bit) AND [u].[EstSupprime] = CAST(0 AS bit) AND [b0].[EstSupprime] = CAST(0 AS bit) AND [b0].[SocieteId] = @__utilisateur_SocieteId_0
+ORDER BY [b0].[Reference], [u].[Reference]
+2026-10-09 13:49:41.910 -04:00 [INF] Executed action MarionGI.Api.Controllers.TicketsController.ObtenirTous (MarionGI.Api) in 5198.2053ms
+2026-10-09 13:49:41.963 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.TicketsController.ObtenirTous (MarionGI.Api)'
+2026-10-09 13:49:41.967 -04:00 [INF] Executing OkObjectResult, writing value of type 'System.Collections.Generic.List`1[[<>f__AnonymousType73`18[[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.TypeUniteLocative, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Decimal, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[MarionGI.Domain.Enums.StatutDisponibilite, MarionGI.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null],[System.Collections.Generic.List`1[[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Guid, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.String, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Boolean, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[System.Int32, System.Private.CoreLib, Version=9.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], MarionGI.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]'.
+2026-10-09 13:49:41.980 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Tickets - 200 null application/json; charset=utf-8 5330.7659ms
+2026-10-09 13:49:42.033 -04:00 [INF] Executed action MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api) in 5326.7511ms
+2026-10-09 13:49:42.039 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api)'
+2026-10-09 13:49:42.046 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/UnitesLocatives - 200 null application/json; charset=utf-8 5377.4864ms

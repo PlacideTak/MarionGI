@@ -59,9 +59,13 @@ export const routes: Routes = [
             path: 'societes', 
             loadComponent: () => import('./societes/societes').then(m => m.Societes) 
           },
-           { 
+          { 
             path: 'uniteslocatives', 
             loadComponent: () => import('./uniteslocatives/uniteslocatives').then(m => m.UnitesLocatives) 
+          },
+          { 
+            path: 'tickets', 
+            loadComponent: () => import('./tickets/tickets').then(m => m.Tickets) 
           }
         ]
       }

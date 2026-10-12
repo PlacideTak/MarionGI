@@ -59,8 +59,20 @@ export const APP_NAV_ITEMS: NavItem[] = [
     ]
   },
 
+{
+  label: 'Incidents / Tickets',
+  icon: 'pi pi-wrench',
+  route: 'tickets',
+  roles: [
+    ROLES.Administrateur,
+    ROLES.Admin,
+    ROLES.Gestionnaire,
+    ROLES.Locataire
+  ]
+},
+
   {
-    label: 'Paiements',
+    label: 'Les paiements',
     icon: 'pi pi-dollar',
     route: 'paiements',
     roles: [

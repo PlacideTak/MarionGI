@@ -28,6 +28,9 @@ public class MarionDbContext : DbContext
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<JournalAudit> JournauxAudit => Set<JournalAudit>();
 
+    public DbSet<TicketIncident> TicketsIncidents => Set<TicketIncident>();
+    public DbSet<TicketIntervenant> TicketsIntervenants => Set<TicketIntervenant>();
+    public DbSet<TicketPhoto> TicketsPhotos => Set<TicketPhoto>();
 
     // ============================================================
     // CONVENTIONS EF CORE
@@ -95,6 +98,18 @@ public class MarionDbContext : DbContext
         modelBuilder.Entity<Notification>()
             .HasQueryFilter(n => !n.EstSupprime);
 
+        modelBuilder.Entity<TicketIncident>()
+    .HasQueryFilter(t => !t.EstSupprime);
+
+        modelBuilder.Entity<TicketIncident>()
+    .HasIndex(t => t.Reference)
+    .IsUnique();
+
+        modelBuilder.Entity<TicketIntervenant>()
+            .HasQueryFilter(t => !t.EstSupprime);
+
+        modelBuilder.Entity<TicketPhoto>()
+            .HasQueryFilter(t => !t.EstSupprime);
 
         // ========================================================
         // 3. SOCIETE
@@ -549,5 +564,151 @@ public class MarionDbContext : DbContext
             // UtilisateurId volontairement conservé comme Guid?
             // sans navigation EF.
         });
+
+// ========================================================
+// 14. TICKET INCIDENT
+// ========================================================
+
+modelBuilder.Entity<TicketIncident>(entity =>
+{
+    entity.Property(t => t.Description)
+        .IsRequired()
+        .HasMaxLength(4000);
+
+
+    entity.Property(t => t.CoutEstime)
+        .HasPrecision(18, 2);
+
+    entity.Property(t => t.CoutTotal)
+        .HasPrecision(18, 2)
+        .HasDefaultValue(0m);
+
+    entity.Property(t => t.Priorite)
+        .IsRequired()
+        .HasDefaultValue(PrioriteIncident.Moyenne);
+
+    entity.Property(t => t.Statut)
+        .IsRequired()
+        .HasDefaultValue(StatutIncident.Ouvert);
+
+    entity.Property(t => t.ImputableA)
+        .IsRequired()
+        .HasDefaultValue(ImputabiliteIncident.Indeterminee);
+
+    // Recherche des incidents par unité et par statut.
+    entity.HasIndex(t => new
+    {
+        t.UniteLocativeId,
+        t.Statut
+    });
+
+    // Recherche des incidents déclarés par un locataire.
+    entity.HasIndex(t => t.LocataireId);
+
+    // Un incident appartient à une unité locative.
+    entity.HasOne(t => t.UniteLocative)
+        .WithMany()
+        .HasForeignKey(t => t.UniteLocativeId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    // Locataire ayant déclaré l'incident.
+    entity.HasOne(t => t.Locataire)
+        .WithMany()
+        .HasForeignKey(t => t.LocataireId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    // Utilisateur ayant validé le devis, si applicable.
+    entity.HasOne(t => t.ValideParUtilisateur)
+        .WithMany()
+        .HasForeignKey(t => t.ValideParUtilisateurId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    // Un incident peut avoir plusieurs photos.
+    entity.HasMany(t => t.Photos)
+        .WithOne(p => p.TicketIncident)
+        .HasForeignKey(p => p.TicketIncidentId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    // Un incident peut avoir plusieurs intervenants.
+    entity.HasMany(t => t.Intervenants)
+        .WithOne(i => i.TicketIncident)
+        .HasForeignKey(i => i.TicketIncidentId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    entity.HasIndex(t => t.Reference)
+    .IsUnique()
+    .HasFilter("[EstSupprime] = 0");
+});
+
+        // ========================================================
+        // 15. TICKET INTERVENANT
+        // ========================================================
+
+        modelBuilder.Entity<TicketIntervenant>(entity =>
+        {
+            entity.Property(i => i.NomArtisan)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(i => i.Specialite)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(i => i.Telephone)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(i => i.MontantDevis)
+                .HasPrecision(18, 2);
+
+            entity.Property(i => i.MontantFacture)
+                .HasPrecision(18, 2);
+
+            // Recherche des intervenants d'un incident.
+            entity.HasIndex(i => i.TicketIncidentId);
+
+            entity.HasOne(i => i.TicketIncident)
+                .WithMany(t => t.Intervenants)
+                .HasForeignKey(i => i.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========================================================
+        // 16. TICKET PHOTO
+        // ========================================================
+
+        modelBuilder.Entity<TicketPhoto>(entity =>
+        {
+            entity.Property(p => p.UrlPhoto)
+                .HasMaxLength(1000)
+                .IsRequired();
+
+            entity.Property(p => p.Type)
+                .IsRequired();
+
+            entity.Property(p => p.DateAjout)
+                .IsRequired()
+                .HasDefaultValueSql("GETUTCDATE()");
+
+            // Affichage des photos d'un incident par date.
+            entity.HasIndex(p => new
+            {
+                p.TicketIncidentId,
+                p.DateAjout
+            });
+
+            // Incident associé à la photo.
+            entity.HasOne(p => p.TicketIncident)
+                .WithMany(t => t.Photos)
+                .HasForeignKey(p => p.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Utilisateur ayant ajouté la photo, facultatif.
+            entity.HasOne<Utilisateur>()
+                .WithMany()
+                .HasForeignKey(p => p.AjouteParUtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
     }
 }

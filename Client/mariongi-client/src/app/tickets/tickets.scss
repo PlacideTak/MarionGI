@@ -1,0 +1,1277 @@
+$primary: #2563eb;
+$primary-dark: #1d4ed8;
+$text: #334155;
+$text-muted: #64748b;
+$border: #e2e8f0;
+$bg-soft: #f8fafc;
+$white: #ffffff;
+$danger: #dc2626;
+$success: #16a34a;
+$radius: 12px;
+$shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+
+:host {
+  display: block;
+  min-width: 0;
+  color: $text;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.tickets-page {
+  width: 100%;
+  min-width: 0;
+  padding: 1.25rem;
+}
+
+.tickets-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.55rem;
+    font-weight: 750;
+    line-height: 1.3;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: $text-muted;
+    font-size: 0.92rem;
+  }
+}
+
+.tickets-stats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.ticket-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid $border;
+  border-radius: $radius;
+  background: $white;
+  box-shadow: $shadow;
+
+  span {
+    color: $text-muted;
+    font-size: 0.83rem;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 1.6rem;
+    font-weight: 750;
+    line-height: 1.2;
+  }
+}
+
+.tickets-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: $radius;
+  background: $white;
+  box-shadow: $shadow;
+}
+
+.tickets-filters {
+  display: grid;
+  grid-template-columns: minmax(200px, 1.7fr) repeat(3, minmax(145px, 1fr)) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 1rem;
+  border-bottom: 1px solid $border;
+  background: $white;
+
+  > input,
+  > p-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  > button {
+    white-space: nowrap;
+  }
+}
+
+.ticket-reference {
+  color: $primary-dark;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.ticket-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.2rem;
+}
+
+.empty-table-message {
+  padding: 2rem 1rem !important;
+  color: $text-muted;
+  text-align: center;
+}
+
+.w-full {
+  width: 100%;
+  min-width: 0;
+}
+
+/* Formulaires */
+
+.ticket-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem 1rem;
+  align-items: start;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  margin-bottom: 0.7rem;
+
+  > label:not(.checkbox-label) {
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 650;
+  }
+
+  > input:not([type='checkbox']):not([type='file']),
+  > textarea,
+  > p-select,
+  > p-inputNumber {
+    width: 100%;
+    min-width: 0;
+  }
+
+  > input[type='file'] {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.65rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: $bg-soft;
+    color: $text;
+    font-size: 0.85rem;
+  }
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: $white;
+  color: $text;
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus {
+    border-color: $primary;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+}
+
+textarea[ pTextarea ],
+textarea[pTextarea] {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+.field-error {
+  display: block;
+  color: $danger;
+  font-size: 0.78rem;
+  font-weight: 550;
+  line-height: 1.4;
+}
+
+.field-hint {
+  display: block;
+  color: $text-muted;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.checkbox-field {
+  justify-content: center;
+  min-height: 3rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: $text;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    width: 1rem;
+    height: 1rem;
+    flex: 0 0 auto;
+    accent-color: $primary;
+    cursor: pointer;
+  }
+}
+
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border;
+
+  > button + button {
+    margin-left: 0.75rem !important;
+  }
+}
+
+/* Affichage mobile */
+@media (max-width: 600px) {
+  .dialog-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+/* Prévisualisation des photos : miniatures carrées */
+
+
+/* =========================================================
+   PHOTOS DES TICKETS — FORMULAIRE DE CRÉATION / MODIFICATION
+   ========================================================= */
+
+.ticket-photos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.photos-section-label {
+  color: $text;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+/* Grille des photos existantes et nouvelles */
+.photos-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  align-items: start;
+  width: 100%;
+  min-width: 0;
+  margin: 0.25rem 0 0.75rem;
+}
+
+/* Carte d'une photo */
+.photo-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: $radius;
+  background: $white;
+  box-shadow: $shadow;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+    transform: translateY(-2px);
+  }
+
+  /* Lien contenant une photo existante */
+  a.photo-preview__image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 190px;
+    padding: 0.4rem;
+    overflow: hidden;
+    background: #f1f5f9;
+  }
+
+  /* Image existante ou nouvelle */
+  img,
+  img.photo-preview__image {
+    display: block;
+    width: 100%;
+    height: 190px;
+    min-width: 0;
+    padding: 0.35rem;
+    object-fit: contain;
+    object-position: center;
+    background: #f1f5f9;
+  }
+
+  /* Informations sous les photos existantes */
+  .photo-preview__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.65rem;
+    border-top: 1px solid $border;
+    overflow-wrap: anywhere;
+
+    small {
+      color: $text-muted;
+      font-size: 0.76rem;
+      line-height: 1.4;
+    }
+  }
+
+  .photo-new-label {
+    padding: 0.5rem 0.65rem 0.65rem;
+    color: $text-muted;
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
+  /* Bouton de suppression de la photo */
+  .photo-remove-button {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 2px solid $white !important;
+    border-radius: 50%;
+    background: $danger !important;
+    color: $white !important;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+
+    .p-button-icon {
+      font-size: 0.8rem;
+    }
+
+    &:hover {
+      background: #b91c1c !important;
+    }
+  }
+}
+
+/* Zone de sélection des nouvelles photos */
+.photos-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: $radius;
+  background: $bg-soft;
+
+  > label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $primary-dark;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  input[type='file'] {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    padding: 0.6rem;
+    border: 1px solid $border;
+    border-radius: 8px;
+    background: $white;
+    color: $text;
+    font-size: 0.82rem;
+  }
+
+  .field-hint {
+    color: $text-muted;
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .photos-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .photo-preview {
+    a.photo-preview__image,
+    img,
+    img.photo-preview__image {
+      height: 140px;
+    }
+  }
+
+  .photos-upload-zone {
+    padding: 0.8rem;
+  }
+}
+
+.ticket-photo {
+  img {
+    object-fit: contain;
+    background: #f1f5f9;
+  }
+}
+
+/* Détail du ticket */
+
+.loading-detail {
+  padding: 1.5rem;
+  color: $text-muted;
+  text-align: center;
+}
+
+.ticket-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid $border;
+
+  h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.15rem;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+  }
+
+  p {
+    margin: 0.5rem 0 0;
+    color: $text-muted;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
+.ticket-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.ticket-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.1rem 0;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    padding: 0.75rem;
+    border: 1px solid $border;
+    border-radius: 9px;
+    background: $bg-soft;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+}
+
+.detail-label {
+  color: $text-muted;
+  font-size: 0.78rem;
+}
+
+.ticket-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding: 0.25rem 0 1rem;
+  border-bottom: 1px solid $border;
+}
+
+.ticket-workflow {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid $border;
+  border-radius: 10px;
+  background: $bg-soft;
+
+  h3 {
+    margin: 0 0 0.85rem;
+    color: #0f172a;
+    font-size: 0.98rem;
+    font-weight: 700;
+  }
+
+  > small {
+    margin-top: 0.8rem;
+  }
+}
+
+.workflow-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.ticket-detail-section {
+  min-width: 0;
+  margin-top: 1.4rem;
+
+  h3 {
+    margin: 0 0 0.85rem;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+}
+
+.ticket-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 0.85rem;
+}
+
+.ticket-photo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+
+  a {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 1px solid $border;
+    border-radius: 9px;
+    background: $bg-soft;
+  }
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+  }
+
+  a:hover img {
+    transform: scale(1.04);
+  }
+
+  small {
+    color: $text-muted;
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.empty-detail-message {
+  margin: 0;
+  padding: 1rem;
+  border: 1px dashed $border;
+  border-radius: 8px;
+  color: $text-muted;
+  font-size: 0.87rem;
+  text-align: center;
+}
+
+/* Dialogues PrimeNG */
+
+:host ::ng-deep {
+  .p-dialog {
+    max-width: 100%;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .p-dialog .p-dialog-header {
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid $border;
+  }
+
+  .p-dialog .p-dialog-title {
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 750;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding: 1.1rem 1.25rem 1.25rem;
+  }
+
+  .p-inputtext,
+  .p-select,
+  .p-inputnumber,
+  .p-inputnumber-input,
+  textarea[pTextarea] {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.88rem;
+  }
+
+  .p-inputtext,
+  .p-inputnumber-input,
+  textarea[pTextarea] {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .p-select {
+    min-height: 2.7rem;
+    align-items: center;
+  }
+
+  .p-select-label {
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .p-button {
+    font-size: 0.84rem;
+  }
+
+  .p-datatable {
+    font-size: 0.85rem;
+  }
+
+  .p-datatable .p-datatable-thead > tr > th {
+    padding: 0.8rem 0.75rem;
+    background: $bg-soft;
+    color: $text;
+    font-size: 0.79rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.75rem;
+    vertical-align: middle;
+  }
+
+  .p-tag {
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+
+  .p-paginator {
+    padding: 0.55rem;
+  }
+
+  .p-inputtext:focus,
+  .p-inputnumber-input:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 1200px) {
+  .tickets-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    > input {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+@media (max-width: 900px) {
+  .tickets-page {
+    padding: 1rem;
+  }
+
+  .tickets-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ticket-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .tickets-page {
+    padding: 0.65rem;
+  }
+
+  .tickets-header {
+    align-items: stretch;
+    flex-direction: column;
+
+    h1 {
+      font-size: 1.3rem;
+    }
+
+    > button {
+      width: 100%;
+    }
+  }
+
+  .tickets-stats {
+    gap: 0.6rem;
+  }
+
+  .ticket-stat {
+    padding: 0.8rem;
+
+    span {
+      font-size: 0.75rem;
+    }
+
+    strong {
+      font-size: 1.35rem;
+    }
+  }
+
+  .tickets-filters {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.75rem;
+
+    > input {
+      grid-column: auto;
+    }
+
+    > button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .ticket-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+
+  .field-full {
+    grid-column: auto;
+  }
+
+  .ticket-detail-header {
+    flex-direction: column;
+  }
+
+  .ticket-detail-tags {
+    justify-content: flex-start;
+  }
+
+  .ticket-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .ticket-detail-actions {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .workflow-buttons {
+    flex-direction: column;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+.dialog-footer {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: stretch;
+  gap: 0.5rem;
+
+  > button,
+  > p-button {
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  > button + button {
+    margin-left: 0 !important;
+  }
+}
+  :host ::ng-deep {
+    .p-dialog .p-dialog-header {
+      padding: 0.9rem 1rem;
+    }
+
+    .p-dialog .p-dialog-content {
+      padding: 0.9rem 1rem 1rem;
+    }
+  }
+}
+/* Styles du popup de saisie du résultat de réparation */
+.resolution-dialog {
+  .p-dialog-header {
+    padding: 1.3rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .p-dialog-content {
+    padding: 1.5rem;
+  }
+}
+
+.resolution-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.2rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+
+  > i {
+    flex-shrink: 0;
+    color: #16a34a;
+    font-size: 1.7rem;
+  }
+
+  h3 {
+    margin: 0 0 0.5rem;
+    color: #166534;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    color: #475569;
+    line-height: 1.6;
+  }
+}
+
+.resolution-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+
+  label {
+    color: #334155;
+    font-weight: 600;
+
+    span {
+      color: #dc2626;
+    }
+  }
+
+  textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 190px;
+    padding: 0.9rem;
+    resize: vertical;
+    border-radius: 8px;
+    line-height: 1.6;
+  }
+
+  small {
+    color: #64748b;
+    text-align: right;
+  }
+}
+
+.resolution-footer {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 600px) {
+  .resolution-dialog {
+    .p-dialog-content {
+      padding: 1rem;
+    }
+  }
+
+  .resolution-footer {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+
+
+/* Conteneur de toutes les photos */
+.photos-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  margin: 0.75rem 0 1rem;
+  align-items: start;
+}
+
+/* Carte individuelle */
+.photo-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgb(15 23 42 / 10%);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.photo-preview:hover {
+  box-shadow: 0 6px 16px rgb(15 23 42 / 16%);
+  transform: translateY(-2px);
+}
+
+/* Zone d'affichage de la photo */
+.photo-preview__image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 190px;
+  padding: 0.35rem;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+/* Photo entière, sans découpage ni déformation */
+.photo-preview__image img,
+img.photo-preview__image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  object-fit: contain;
+  object-position: center;
+  background: #f1f5f9;
+}
+
+/* Informations sous la photo */
+.photo-preview__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.75rem;
+  padding-right: 0.75rem;
+  overflow-wrap: anywhere;
+  border-top: 1px solid #e2e8f0;
+}
+
+.photo-preview__info small,
+.photo-new-label {
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Bouton de suppression */
+.photo-remove-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgb(15 23 42 / 20%);
+}
+
+/* Zone d'ajout séparée des photos */
+.photos-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.photos-upload-zone > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #1d4ed8;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.photos-upload-zone input[type="file"] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+
+.photos-upload-zone .field-hint {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Affichage sur téléphone */
+@media (max-width: 480px) {
+  .photos-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .photo-preview__image {
+    height: 145px;
+  }
+
+  .photos-upload-zone {
+    padding: 0.85rem;
+  }
+}
+
+
+
+/* =========================================================
+   FORMULAIRE TICKET — VERSION COMPACTE
+   ========================================================= */
+
+/* Réduire la largeur globale des formulaires */
+:host ::ng-deep .ticket-form-dialog {
+  width: min(680px, 94vw) !important;
+  max-width: 94vw;
+}
+
+/* Réduire les espacements dans le formulaire */
+.ticket-form-grid {
+  gap: 0.55rem 0.8rem;
+}
+
+.field {
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+
+  > label:not(.checkbox-label) {
+    font-size: 0.8rem;
+  }
+
+  > input[type='file'] {
+    padding: 0.45rem;
+    font-size: 0.78rem;
+  }
+}
+
+/* Champs de saisie plus petits */
+.form-control {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.83rem;
+  border-radius: 7px;
+}
+
+/* Réduire les composants PrimeNG */
+:host ::ng-deep {
+  .p-dialog .p-dialog-header {
+    padding: 0.8rem 1rem;
+  }
+
+  .p-dialog .p-dialog-title {
+    font-size: 0.98rem;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding: 0.8rem 1rem 1rem;
+  }
+
+  .p-inputtext,
+  .p-inputnumber-input,
+  textarea[pTextarea] {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .p-select {
+    min-height: 2.35rem;
+    font-size: 0.82rem;
+  }
+
+  .p-select-label {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .p-button {
+    font-size: 0.8rem;
+  }
+}
+
+/* Description moins haute */
+textarea[pTextarea] {
+  min-height: 4rem;
+}
+
+/* =========================================================
+   PHOTOS — CARTES PLUS PETITES
+   ========================================================= */
+
+.photos-preview {
+  grid-template-columns: repeat(auto-fill, minmax(125px, 140px));
+  gap: 0.65rem;
+  margin: 0.4rem 0 0.65rem;
+}
+
+.photo-preview {
+  border-radius: 9px;
+
+  a.photo-preview__image {
+    height: 115px;
+    padding: 0.25rem;
+  }
+
+  img,
+  img.photo-preview__image {
+    height: 115px;
+    padding: 0.25rem;
+  }
+
+  .photo-preview__info {
+    gap: 0.2rem;
+    padding: 0.45rem;
+
+    small {
+      font-size: 0.7rem;
+    }
+  }
+
+  .photo-new-label {
+    padding: 0.35rem 0.45rem 0.45rem;
+    font-size: 0.7rem;
+  }
+
+  .photo-remove-button {
+    top: 0.3rem;
+    right: 0.3rem;
+    width: 1.8rem;
+    height: 1.8rem;
+  }
+}
+
+/* Zone d'ajout moins encombrante */
+.photos-upload-zone {
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+  padding: 0.75rem;
+
+  > label {
+    font-size: 0.82rem;
+  }
+
+  input[type='file'] {
+    padding: 0.4rem;
+    font-size: 0.76rem;
+  }
+
+  .field-hint {
+    font-size: 0.73rem;
+  }
+}
+
+/* Adaptation aux petits écrans */
+@media (max-width: 600px) {
+  :host ::ng-deep .ticket-form-dialog {
+    width: 95vw !important;
+    max-width: 95vw;
+  }
+
+  .ticket-form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.2rem;
+  }
+
+  .field-full {
+    grid-column: auto;
+  }
+
+  .photos-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .photo-preview {
+    a.photo-preview__image,
+    img,
+    img.photo-preview__image {
+      height: 125px;
+    }
+  }
+}

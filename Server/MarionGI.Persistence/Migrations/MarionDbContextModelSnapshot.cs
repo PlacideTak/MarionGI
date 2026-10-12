@@ -444,6 +444,201 @@ namespace MarionGI.Persistence.Migrations
                     b.ToTable("Societes");
                 });
 
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketIncident", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Categorie")
+                        .HasColumnType("int");
+
+                    b.Property<decimal?>("CoutEstime")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CoutTotal")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasDefaultValue(0m);
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("DateIncident")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateResolution")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateSuppression")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateValidationDevis")
+                        .HasColumnType("datetime");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<bool>("DevisValide")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EstSupprime")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("ImputableA")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<Guid>("LocataireId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Priorite")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(2);
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ResultatReparation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Statut")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1);
+
+                    b.Property<Guid>("UniteLocativeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("ValidationDevisRequise")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ValideParUtilisateurId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocataireId");
+
+                    b.HasIndex("Reference")
+                        .IsUnique()
+                        .HasFilter("[EstSupprime] = 0");
+
+                    b.HasIndex("ValideParUtilisateurId");
+
+                    b.HasIndex("UniteLocativeId", "Statut");
+
+                    b.ToTable("TicketsIncidents");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketIntervenant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Courriel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DateAssignation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateIntervention")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateSuppression")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("EstSupprime")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MontantDevis")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MontantFacture")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("NomArtisan")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Specialite")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Telephone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<Guid>("TicketIncidentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TicketIncidentId");
+
+                    b.ToTable("TicketsIntervenants");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketPhoto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AjouteParUtilisateurId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateAjout")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateSuppression")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("EstSupprime")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("TicketIncidentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UrlPhoto")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AjouteParUtilisateurId");
+
+                    b.HasIndex("TicketIncidentId", "DateAjout");
+
+                    b.ToTable("TicketsPhotos");
+                });
+
             modelBuilder.Entity("MarionGI.Domain.Entities.UniteLocative", b =>
                 {
                     b.Property<Guid>("Id")
@@ -652,6 +847,59 @@ namespace MarionGI.Persistence.Migrations
                     b.Navigation("Utilisateur");
                 });
 
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketIncident", b =>
+                {
+                    b.HasOne("MarionGI.Domain.Entities.Utilisateur", "Locataire")
+                        .WithMany()
+                        .HasForeignKey("LocataireId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MarionGI.Domain.Entities.UniteLocative", "UniteLocative")
+                        .WithMany()
+                        .HasForeignKey("UniteLocativeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MarionGI.Domain.Entities.Utilisateur", "ValideParUtilisateur")
+                        .WithMany()
+                        .HasForeignKey("ValideParUtilisateurId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Locataire");
+
+                    b.Navigation("UniteLocative");
+
+                    b.Navigation("ValideParUtilisateur");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketIntervenant", b =>
+                {
+                    b.HasOne("MarionGI.Domain.Entities.TicketIncident", "TicketIncident")
+                        .WithMany("Intervenants")
+                        .HasForeignKey("TicketIncidentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TicketIncident");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketPhoto", b =>
+                {
+                    b.HasOne("MarionGI.Domain.Entities.Utilisateur", null)
+                        .WithMany()
+                        .HasForeignKey("AjouteParUtilisateurId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MarionGI.Domain.Entities.TicketIncident", "TicketIncident")
+                        .WithMany("Photos")
+                        .HasForeignKey("TicketIncidentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("TicketIncident");
+                });
+
             modelBuilder.Entity("MarionGI.Domain.Entities.UniteLocative", b =>
                 {
                     b.HasOne("MarionGI.Domain.Entities.BienImmobilier", "BienImmobilier")
@@ -689,6 +937,13 @@ namespace MarionGI.Persistence.Migrations
                     b.Navigation("BiensImmobiliers");
 
                     b.Navigation("Utilisateurs");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.TicketIncident", b =>
+                {
+                    b.Navigation("Intervenants");
+
+                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("MarionGI.Domain.Entities.UniteLocative", b =>

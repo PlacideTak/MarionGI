@@ -1219,3 +1219,236 @@ export interface NavItem {
 
   route: string;
 }
+
+
+// ============================================================
+// TICKETS D'INCIDENTS
+// ============================================================
+
+export enum CategorieIncident {
+  Plomberie = 1,
+  Electricite = 2,
+  Maconnerie = 3,
+  Securite = 4,
+  Autre = 5
+}
+
+export enum PrioriteIncident {
+  Basse = 1,
+  Moyenne = 2,
+  Haute = 3,
+  Urgente = 4
+}
+
+export enum StatutIncident {
+  Ouvert = 1,
+  EnCours = 2,
+  EnAttenteValidation = 3,
+  Resolu = 4,
+  Cloture = 5
+}
+
+export enum ImputabiliteIncident {
+  Indeterminee = 0,
+  Societe = 1,
+  Locataire = 2
+}
+
+export enum TypePhotoIncident {
+  AvantIntervention = 1,
+  ApresIntervention = 2
+}
+
+
+// ============================================================
+// INTERVENANT D'UN TICKET
+// ============================================================
+
+export interface TicketIntervenantDto extends BaseEntity {
+  ticketIncidentId: string;
+  nomArtisan: string;
+  specialite: string;
+  telephone: string;
+  courriel?: string | null;
+  montantDevis?: number | null;
+  montantFacture?: number | null;
+  dateAssignation?: string | null;
+  dateIntervention?: string | null;
+}
+
+
+// ============================================================
+// PHOTO D'UN TICKET
+// ============================================================
+
+export interface TicketPhotoDto extends BaseEntity {
+  ticketIncidentId: string;
+  urlPhoto: string;
+  type: TypePhotoIncident;
+  ajouteParUtilisateurId?: string | null;
+  dateAjout: string;
+}
+
+
+// ============================================================
+// TICKET - ÉLÉMENT DE LISTE
+// ============================================================
+
+export interface LocataireOption {
+  id: string;
+  nom: string;
+  prenom: string;
+}
+
+export interface TicketIncidentDto extends BaseEntity {
+  uniteLocativeId: string;
+  locataireId: string;
+  reference?: string;
+  categorie: CategorieIncident;
+  description: string;
+  dateincident?: string;
+
+  priorite: PrioriteIncident;
+  statut: StatutIncident;
+
+  dateResolution?: string | null;
+  resultatReparation?: string | null;
+
+  coutEstime?: number | null;
+  coutTotal: number;
+
+  imputableA: ImputabiliteIncident;
+  validationDevisRequise: boolean;
+  devisValide: boolean;
+  dateValidationDevis?: string | null;
+  valideParUtilisateurId?: string | null;
+
+  // Informations complémentaires renvoyées par l'API
+  locataireNom?: string;
+  locataireTelephone?: string;
+
+  uniteReference?: string;
+  uniteType?: TypeUniteLocative;
+
+  bienImmobilierId?: string;
+  bienReference?: string;
+  bienNom?: string;
+  bienAdresse?: string;
+  bienVille?: string;
+
+  societeId?: string;
+  societeNom?: string;
+
+  nombrePhotos?: number;
+  nombreIntervenants?: number;
+}
+
+
+// ============================================================
+// TICKET - DÉTAIL
+// ============================================================
+
+export interface TicketIncidentDetailDto extends TicketIncidentDto {
+  photos: TicketPhotoDto[];
+  intervenants: TicketIntervenantDto[];
+}
+
+
+// ============================================================
+// CRÉATION D'UN TICKET
+// ============================================================
+
+export interface CreerTicketIncidentRequest {
+  uniteLocativeId: string;
+  locataireId?: string;
+
+  categorie: CategorieIncident;
+  description: string;
+  descriptionDegats?: string | null;
+
+  priorite: PrioriteIncident;
+
+  fichiers?: File[];
+}
+
+
+// ============================================================
+// MODIFICATION D'UN TICKET
+// ============================================================
+
+export interface ModifierTicketIncidentRequest {
+  categorie: CategorieIncident;
+  description: string;
+  descriptionDegats?: string | null;
+
+  priorite: PrioriteIncident;
+
+  coutEstime?: number | null;
+  imputableA: ImputabiliteIncident;
+
+  validationDevisRequise: boolean;
+}
+
+
+// ============================================================
+// CHANGEMENT DE STATUT
+// ============================================================
+
+export interface ModifierStatutTicketRequest {
+  statut: StatutIncident;
+  resultatReparation?: string | null;
+}
+
+
+// ============================================================
+// VALIDATION D'UN DEVIS
+// ============================================================
+
+export interface ValiderDevisTicketRequest {
+  devisValide: boolean;
+}
+
+
+// ============================================================
+// AJOUT D'UN INTERVENANT
+// ============================================================
+
+export interface CreerTicketIntervenantRequest {
+  nomArtisan: string;
+  specialite: string;
+  telephone: string;
+  courriel: string;
+
+  montantDevis?: number | null;
+  montantFacture?: number | null;
+
+  dateAssignation?: string | null;
+  dateIntervention?: string | null;
+}
+
+export interface ModifierTicketIntervenantRequest {
+  nomArtisan: string;
+  specialite: string;
+  telephone: string;
+  courriel?: string | null;
+  montantDevis?: number | null;
+  montantFacture?: number | null;
+  dateIntervention?: string | null;
+}
+
+// ============================================================
+// FILTRES DE RECHERCHE
+// ============================================================
+
+export interface TicketIncidentFilterCriteria {
+  recherche?: string;
+
+  statut?: StatutIncident;
+  priorite?: PrioriteIncident;
+  categorie?: CategorieIncident;
+
+  uniteLocativeId?: string;
+
+  dateDebut?: string;
+  dateFin?: string;
+}

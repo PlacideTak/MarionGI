@@ -7,24 +7,20 @@ public class Contrat : BaseEntity
     // Référence unique du contrat
     public string Reference { get; set; } = string.Empty;
 
-    // Unité locative concernée par le contrat
+    // Unité locative concernée
     public Guid UniteLocativeId { get; set; }
-
     public UniteLocative UniteLocative { get; set; } = null!;
 
-    // Locataire
+    // Locataire associé au contrat
     public Guid LocataireId { get; set; }
-
     public Utilisateur Locataire { get; set; } = null!;
 
     // Période du contrat
     public DateTime DateDebut { get; set; }
-
     public DateTime DateFin { get; set; }
 
     // Conditions financières
     public decimal MontantLoyer { get; set; }
-
     public decimal MontantCaution { get; set; }
 
     public FrequencePaiement FrequencePaiement { get; set; }

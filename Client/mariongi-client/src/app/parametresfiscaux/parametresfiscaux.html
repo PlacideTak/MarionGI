@@ -1,0 +1,714 @@
+
+<p-toast
+  position="top-right"
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
+
+<p-confirmDialog
+  [style]="{ width: 'min(28rem, 95vw)' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
+
+<div class="parametres-page">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div class="page-header__content">
+      <div class="page-header__icon">
+        <i class="pi pi-sliders-h"></i>
+      </div>
+
+      <div>
+        <h1>Paramètres fiscaux</h1>
+        <p class="page-subtitle">
+          Configurez les règles, taux et montants fiscaux applicables
+          à chaque année fiscale.
+        </p>
+      </div>
+    </div>
+
+    @if (canManageParametresFiscaux) {
+      <button
+        pButton
+        type="button"
+        label="Nouveau paramètre"
+        icon="pi pi-plus"
+        (click)="openNew()">
+      </button>
+    }
+  </div>
+
+  <!-- Indicateurs -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--blue">
+        <i class="pi pi-list"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Total des paramètres</span>
+        <strong>{{ parametresFiscaux.length }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--green">
+        <i class="pi pi-calendar"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Années fiscales couvertes</span>
+        <strong>
+          {{
+            parametresFiscaux
+              .map(p => p.anneeFiscale)
+              .filter((annee, index, annees) => annees.indexOf(annee) === index)
+              .length
+          }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--gray">
+        <i class="pi pi-filter"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Résultats filtrés</span>
+        <strong>{{ parametresFiltres.length }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accès refusé -->
+  @if (!canAccessParametresFiscaux) {
+    <div class="access-denied">
+      <i class="pi pi-lock"></i>
+
+      <div>
+        <h3>Accès non autorisé</h3>
+        <p>
+          Vous ne disposez pas des droits nécessaires pour consulter
+          les paramètres fiscaux.
+        </p>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Liste -->
+    <section class="content-card">
+
+      <div class="content-card__header">
+        <div>
+          <h2>Liste des paramètres fiscaux</h2>
+          <p>
+            Consultez les règles fiscales et leurs périodes de validité.
+          </p>
+        </div>
+
+        <span class="results-count">
+          {{ parametresFiltres.length }} résultat(s)
+        </span>
+      </div>
+
+      <!-- Recherche et filtres -->
+      <div class="filters">
+
+        <div class="filter-field filter-field--search">
+          <label for="rechercheParametre">Rechercher</label>
+
+          <span class="search-input">
+            <i class="pi pi-search"></i>
+
+            <input
+              id="rechercheParametre"
+              pInputText
+              type="text"
+              [(ngModel)]="recherche"
+              placeholder="Code, description..."
+              autocomplete="off">
+          </span>
+        </div>
+
+        <div class="filter-field">
+          <label for="filtreAnnee">Année fiscale</label>
+
+          <p-select
+            inputId="filtreAnnee"
+            [options]="[
+              { label: 'Toutes les années', value: null },
+              ...parametresFiscaux
+                .map(p => p.anneeFiscale)
+                .filter((annee, index, annees) => annees.indexOf(annee) === index)
+                .sort((a, b) => b - a)
+                .map(annee => ({ label: annee.toString(), value: annee }))
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filtreAnnee"
+            (ngModelChange)="filtreAnnee = $event"
+            placeholder="Toutes les années"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
+
+        <div class="filter-field">
+          <label for="filtreType">Type de paramètre</label>
+
+          <p-select
+            inputId="filtreType"
+            [options]="typeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filtreType"
+            (ngModelChange)="filtreType = $event"
+            placeholder="Tous les types"
+            styleClass="w-full"
+            appendTo="body"
+            [showClear]="true">
+          </p-select>
+        </div>
+
+        <div class="filter-actions">
+          <button
+            pButton
+            type="button"
+            label="Réinitialiser"
+            icon="pi pi-filter-slash"
+            class="p-button-outlined p-button-secondary"
+            (click)="reinitialiserFiltres()">
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-container">
+        <p-table
+          [value]="parametresFiltres"
+          [loading]="loading"
+          dataKey="id"
+          responsiveLayout="scroll"
+          [rowHover]="true"
+          [paginator]="parametresFiltres.length > 10"
+          [rows]="10"
+          [rowsPerPageOptions]="[5, 10, 25, 50]"
+          currentPageReportTemplate="{first} à {last} sur {totalRecords} paramètres"
+          [showCurrentPageReport]="true"
+          [tableStyle]="{ 'min-width': '66rem' }"
+          styleClass="p-datatable-sm parametres-table">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="col-annee">Année</th>
+              <th class="col-code">Code de règle</th>
+              <th>Description</th>
+              <th class="col-valeur">Valeur</th>
+              <th class="col-type">Type</th>
+              <th class="col-date">Début de validité</th>
+              <th class="col-date">Fin de validité</th>
+
+              @if (canManageParametresFiscaux) {
+                <th class="col-actions">Actions</th>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-parametre>
+            <tr>
+              <td>
+                <span class="annee-badge">
+                  {{ parametre.anneeFiscale }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="parametre-code"
+                  [title]="parametre.codeRegle">
+                  {{ parametre.codeRegle }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="description-cell"
+                  [title]="parametre.description">
+                  {{ parametre.description || 'Aucune description' }}
+                </span>
+              </td>
+
+              <td>
+                <span class="valeur-cell">
+                  {{ parametre.valeur | number: '1.0-4' }}
+                </span>
+              </td>
+
+              <td>
+                <span class="type-badge">
+                  {{ getTypeLabel(parametre.typeParametre) }}
+                </span>
+              </td>
+
+              <td>
+                <span class="date-cell">
+                  {{
+                    parametre.dateDebutValidite
+                      ? (parametre.dateDebutValidite | date: 'dd/MM/yyyy')
+                      : '—'
+                  }}
+                </span>
+              </td>
+
+              <td>
+                <span class="date-cell">
+                  {{
+                    parametre.dateFinValidite
+                      ? (parametre.dateFinValidite | date: 'dd/MM/yyyy')
+                      : 'Sans date de fin'
+                  }}
+                </span>
+              </td>
+
+              @if (canManageParametresFiscaux) {
+                <td>
+                  <div class="row-actions">
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary action-button"
+                      pTooltip="Modifier le paramètre"
+                      tooltipPosition="top"
+                      aria-label="Modifier le paramètre fiscal"
+                      (click)="editParametreFiscal(parametre)">
+                    </button>
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger action-button"
+                      pTooltip="Supprimer le paramètre"
+                      tooltipPosition="top"
+                      aria-label="Supprimer le paramètre fiscal"
+                      (click)="deleteParametreFiscal(parametre)">
+                    </button>
+
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td
+                [attr.colspan]="canManageParametresFiscaux ? 8 : 7">
+
+                <div class="empty-state">
+                  <div class="empty-state__icon">
+                    <i class="pi pi-inbox"></i>
+                  </div>
+
+                  <h3>
+                    {{
+                      recherche || filtreAnnee !== null || filtreType !== null
+                        ? 'Aucun résultat'
+                        : 'Aucun paramètre fiscal'
+                    }}
+                  </h3>
+
+                  <p>
+                    {{
+                      recherche || filtreAnnee !== null || filtreType !== null
+                        ? 'Modifiez vos critères de recherche ou réinitialisez les filtres.'
+                        : 'Aucun paramètre fiscal n’est encore enregistré.'
+                    }}
+                  </p>
+
+                  @if (
+                    canManageParametresFiscaux &&
+                    !recherche &&
+                    filtreAnnee === null &&
+                    filtreType === null
+                  ) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Créer un paramètre"
+                      icon="pi pi-plus"
+                      class="p-button-outlined"
+                      (click)="openNew()">
+                    </button>
+                  }
+
+                  @if (
+                    recherche ||
+                    filtreAnnee !== null ||
+                    filtreType !== null
+                  ) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Effacer les filtres"
+                      icon="pi pi-filter-slash"
+                      class="p-button-text"
+                      (click)="reinitialiserFiltres()">
+                    </button>
+                  }
+                </div>
+
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td
+                [attr.colspan]="canManageParametresFiscaux ? 8 : 7">
+                Chargement des paramètres fiscaux...
+              </td>
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+
+    </section>
+  }
+</div>
+
+<!-- Dialogue de création / modification -->
+<p-dialog
+  [(visible)]="parametreFiscalDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!saving"
+  [closeOnEscape]="!saving"
+  [dismissableMask]="false"
+  [style]="{ width: 'min(44rem, 96vw)' }"
+  [breakpoints]="{
+    '960px': '85vw',
+    '640px': '96vw'
+  }"
+  [header]="isEditMode ? 'Modifier le paramètre fiscal' : 'Nouveau paramètre fiscal'"
+  styleClass="parametre-dialog"
+  (onHide)="fermerDialog()">
+
+  <form
+    [formGroup]="parametreFiscalForm"
+    (ngSubmit)="saveParametreFiscal()"
+    novalidate>
+
+    <div class="dialog-intro">
+      <div class="dialog-intro__icon">
+        <i
+          class="pi"
+          [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus-circle'">
+        </i>
+      </div>
+
+      <p>
+        {{
+          isEditMode
+            ? 'Modifiez les informations et la période de validité de cette règle.'
+            : 'Renseignez les informations du nouveau paramètre fiscal.'
+        }}
+      </p>
+    </div>
+
+    <div class="form-grid">
+
+      <!-- Année fiscale -->
+      <div class="form-field">
+        <label for="anneeFiscale">
+          Année fiscale <span class="required">*</span>
+        </label>
+
+        <p-inputnumber
+          inputId="anneeFiscale"
+          formControlName="anneeFiscale"
+          [useGrouping]="false"
+          [min]="2000"
+          [max]="2100"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="0"
+          placeholder="Ex. : 2026"
+          styleClass="w-full"
+          [class.ng-invalid]="
+            parametreFiscalForm.get('anneeFiscale')?.invalid &&
+            parametreFiscalForm.get('anneeFiscale')?.touched
+          ">
+        </p-inputnumber>
+
+        @if (
+          parametreFiscalForm.get('anneeFiscale')?.invalid &&
+          parametreFiscalForm.get('anneeFiscale')?.touched
+        ) {
+          <small class="field-error">
+            Saisissez une année comprise entre 2000 et 2100.
+          </small>
+        }
+
+        <small class="field-hint">
+          Année à laquelle la règle fiscale s'applique.
+        </small>
+      </div>
+
+      <!-- Code de règle -->
+      <div class="form-field">
+        <label for="codeRegle">
+          Code de règle <span class="required">*</span>
+        </label>
+
+        <input
+          id="codeRegle"
+          pInputText
+          type="text"
+          formControlName="codeRegle"
+          maxlength="100"
+          placeholder="Ex. : IRPP_TAUX"
+          autocomplete="off"
+          [class.ng-invalid]="
+            parametreFiscalForm.get('codeRegle')?.invalid &&
+            parametreFiscalForm.get('codeRegle')?.touched
+          "
+          [class.ng-dirty]="parametreFiscalForm.get('codeRegle')?.touched">
+
+        @if (
+          parametreFiscalForm.get('codeRegle')?.hasError('required') &&
+          parametreFiscalForm.get('codeRegle')?.touched
+        ) {
+          <small class="field-error">
+            Le code de règle est obligatoire.
+          </small>
+        }
+
+        @if (
+          parametreFiscalForm.get('codeRegle')?.hasError('maxlength') &&
+          parametreFiscalForm.get('codeRegle')?.touched
+        ) {
+          <small class="field-error">
+            Le code ne doit pas dépasser 100 caractères.
+          </small>
+        }
+
+        <small class="field-hint">
+          Le code doit identifier clairement la règle fiscale.
+        </small>
+      </div>
+
+      <!-- Description -->
+      <div class="form-field form-field--full">
+        <label for="description">
+          Description <span class="required">*</span>
+        </label>
+
+        <textarea
+          id="description"
+          pTextarea
+          formControlName="description"
+          rows="3"
+          maxlength="1000"
+          [autoResize]="true"
+          placeholder="Décrivez la règle fiscale et son application..."
+          [class.ng-invalid]="
+            parametreFiscalForm.get('description')?.invalid &&
+            parametreFiscalForm.get('description')?.touched
+          "
+          [class.ng-dirty]="parametreFiscalForm.get('description')?.touched">
+        </textarea>
+
+        @if (
+          parametreFiscalForm.get('description')?.hasError('required') &&
+          parametreFiscalForm.get('description')?.touched
+        ) {
+          <small class="field-error">
+            La description est obligatoire.
+          </small>
+        }
+
+        @if (
+          parametreFiscalForm.get('description')?.hasError('maxlength') &&
+          parametreFiscalForm.get('description')?.touched
+        ) {
+          <small class="field-error">
+            La description ne doit pas dépasser 1 000 caractères.
+          </small>
+        }
+
+        <small class="field-hint">
+          Maximum 1 000 caractères.
+        </small>
+      </div>
+
+      <!-- Type de paramètre -->
+      <div class="form-field">
+        <label for="typeParametre">
+          Type de paramètre <span class="required">*</span>
+        </label>
+
+        <p-select
+          inputId="typeParametre"
+          formControlName="typeParametre"
+          [options]="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un type"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+
+        @if (
+          parametreFiscalForm.get('typeParametre')?.invalid &&
+          parametreFiscalForm.get('typeParametre')?.touched
+        ) {
+          <small class="field-error">
+            Le type de paramètre est obligatoire.
+          </small>
+        }
+
+        <small class="field-hint">
+          Précisez si la valeur représente un taux, un montant ou une autre donnée.
+        </small>
+      </div>
+
+      <!-- Valeur -->
+      <div class="form-field">
+        <label for="valeur">
+          Valeur <span class="required">*</span>
+        </label>
+
+        <p-inputnumber
+          inputId="valeur"
+          formControlName="valeur"
+          [min]="0"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="4"
+          [useGrouping]="false"
+          placeholder="Ex. : 0.10"
+          styleClass="w-full"
+          [class.ng-invalid]="
+            parametreFiscalForm.get('valeur')?.invalid &&
+            parametreFiscalForm.get('valeur')?.touched
+          ">
+        </p-inputnumber>
+
+        @if (
+          parametreFiscalForm.get('valeur')?.hasError('required') &&
+          parametreFiscalForm.get('valeur')?.touched
+        ) {
+          <small class="field-error">
+            La valeur est obligatoire.
+          </small>
+        }
+
+        @if (
+          parametreFiscalForm.get('valeur')?.hasError('min') &&
+          parametreFiscalForm.get('valeur')?.touched
+        ) {
+          <small class="field-error">
+            La valeur doit être supérieure ou égale à zéro.
+          </small>
+        }
+
+        <small class="field-hint">
+          Pour un taux stocké sous forme décimale, 0,10 représente 10 %.
+        </small>
+      </div>
+
+      <!-- Date de début -->
+      <div class="form-field">
+        <label for="dateDebutValidite">
+          Début de validité <span class="required">*</span>
+        </label>
+
+        <p-datepicker
+          inputId="dateDebutValidite"
+          formControlName="dateDebutValidite"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          placeholder="JJ/MM/AAAA"
+          styleClass="w-full"
+          appendTo="body">
+        </p-datepicker>
+
+        @if (
+          parametreFiscalForm.get('dateDebutValidite')?.invalid &&
+          parametreFiscalForm.get('dateDebutValidite')?.touched
+        ) {
+          <small class="field-error">
+            La date de début de validité est obligatoire.
+          </small>
+        }
+      </div>
+
+      <!-- Date de fin -->
+      <div class="form-field">
+        <label for="dateFinValidite">Fin de validité</label>
+
+        <p-datepicker
+          inputId="dateFinValidite"
+          formControlName="dateFinValidite"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          [showClear]="true"
+          placeholder="Aucune date de fin"
+          styleClass="w-full"
+          appendTo="body">
+        </p-datepicker>
+
+        @if (
+          parametreFiscalForm.get('dateFinValidite')?.value &&
+          parametreFiscalForm.get('dateDebutValidite')?.value &&
+          parametreFiscalForm.get('dateFinValidite')?.value <
+            parametreFiscalForm.get('dateDebutValidite')?.value
+        ) {
+          <small class="field-error">
+            La date de fin doit être postérieure ou égale à la date de début.
+          </small>
+        }
+
+        <small class="field-hint">
+          Laissez vide si la règle n'a pas de date de fin définie.
+        </small>
+      </div>
+
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-outlined p-button-secondary"
+        [disabled]="saving"
+        (click)="fermerDialog()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer le paramètre'"
+        [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+        [loading]="saving"
+        [disabled]="saving || parametreFiscalForm.invalid">
+      </button>
+    </div>
+
+  </form>
+</p-dialog>

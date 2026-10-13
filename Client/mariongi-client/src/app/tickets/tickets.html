@@ -1,940 +1,609 @@
 <p-toast></p-toast>
-
 <p-confirmDialog></p-confirmDialog>
 
 <div class="tickets-page">
 
+  <!-- En-tête -->
   <div class="tickets-header">
     <div>
-
       <h1>Gestion des incidents</h1>
-
       <p>Suivi des tickets, interventions et validations de devis.</p>
-
     </div>
 
     <button
-
       pButton
-
       type="button"
-
       label="Déclarer un incident"
-
       icon="pi pi-plus"
-
       (click)="ouvrirCreation()">
-
     </button>
-
   </div>
 
+  <!-- Statistiques -->
   <div class="tickets-stats">
 
-    <div class="ticket-stat">
-
-      <span>Total des tickets</span>
-
-      <strong>{{ tickets.length }}</strong>
-
+    <div class="ticket-stat ticket-stat-total">
+      <div class="ticket-stat-icon"><i class="pi pi-ticket"></i></div>
+      <div class="ticket-stat-content">
+        <span>Total des tickets</span>
+        <strong>{{ tickets.length }}</strong>
+      </div>
     </div>
 
-    <div class="ticket-stat">
-
-      <span>Ouverts</span>
-
-      <strong>{{ compterStatut(StatutIncident.Ouvert) }}</strong>
-
+    <div class="ticket-stat ticket-stat-ouvert">
+      <div class="ticket-stat-icon"><i class="pi pi-inbox"></i></div>
+      <div class="ticket-stat-content">
+        <span>Ouverts</span>
+        <strong>{{ compterStatut(StatutIncident.Ouvert) }}</strong>
+      </div>
     </div>
 
-
-    <div class="ticket-stat">
-
-      <span>En cours</span>
-
-      <strong>{{ compterStatut(StatutIncident.EnCours) }}</strong>
-
+    <div class="ticket-stat ticket-stat-encours">
+      <div class="ticket-stat-icon"><i class="pi pi-sync"></i></div>
+      <div class="ticket-stat-content">
+        <span>En cours</span>
+        <strong>{{ compterStatut(StatutIncident.EnCours) }}</strong>
+      </div>
     </div>
 
-
-  <div class="ticket-stat">
-
-      <span>En attente de validation</span>
-
-      <strong>{{ compterStatut(StatutIncident.EnAttenteValidation) }}</strong>
-
+    <div class="ticket-stat ticket-stat-attente">
+      <div class="ticket-stat-icon"><i class="pi pi-clock"></i></div>
+      <div class="ticket-stat-content">
+        <span>En attente de validation</span>
+        <strong>{{ compterStatut(StatutIncident.EnAttenteValidation) }}</strong>
+      </div>
     </div>
 
-    <div class="ticket-stat">
-
-      <span>Résolus</span>
-
-      <strong>{{ compterStatut(StatutIncident.Resolu) }}</strong>
-
+    <div class="ticket-stat ticket-stat-resolu">
+      <div class="ticket-stat-icon"><i class="pi pi-check-circle"></i></div>
+      <div class="ticket-stat-content">
+        <span>Résolus</span>
+        <strong>{{ compterStatut(StatutIncident.Resolu) }}</strong>
+      </div>
     </div>
 
-    <div class="ticket-stat">
-
-      <span>Clôturés</span>
-
-      <strong>{{ compterStatut(StatutIncident.Cloture) }}</strong>
-
+    <div class="ticket-stat ticket-stat-cloture">
+      <div class="ticket-stat-icon"><i class="pi pi-lock"></i></div>
+      <div class="ticket-stat-content">
+        <span>Clôturés</span>
+        <strong>{{ compterStatut(StatutIncident.Cloture) }}</strong>
+      </div>
     </div>
 
   </div>
 
+  <!-- Liste des tickets -->
   <section class="tickets-panel">
 
     <div class="tickets-filters">
 
       <input
-
         pInputText
-
         type="text"
-
         [(ngModel)]="recherche"
-
         (input)="rechercher()"
-
         placeholder="Rechercher un ticket, une unité, un locataire..."
-
         aria-label="Rechercher un ticket">
 
       <p-select
-
         [options]="statutsOptions"
-
         [(ngModel)]="filtreStatut"
-
         (onChange)="changerFiltres()"
-
         optionLabel="label"
-
         optionValue="value"
-
         placeholder="Tous les statuts"
-
         [showClear]="true">
-
       </p-select>
 
       <p-select
-
         [options]="prioritesOptions"
-
         [(ngModel)]="filtrePriorite"
-
         (onChange)="changerFiltres()"
-
         optionLabel="label"
-
         optionValue="value"
-
         placeholder="Toutes les priorités"
-
         [showClear]="true">
-
       </p-select>
 
       <p-select
-
         [options]="categoriesOptions"
-
         [(ngModel)]="filtreCategorie"
-
         (onChange)="changerFiltres()"
-
         optionLabel="label"
-
         optionValue="value"
-
         placeholder="Toutes les catégories"
-
         [showClear]="true">
-
       </p-select>
 
       <button
-
         pButton
-
         type="button"
-
         icon="pi pi-refresh"
-
         label="Actualiser"
-
         severity="secondary"
-
         (click)="chargerTickets()">
-
       </button>
 
       <button
-
         pButton
-
         type="button"
-
         icon="pi pi-filter-slash"
-
         label="Réinitialiser"
-
         severity="secondary"
-
         [outlined]="true"
-
         (click)="reinitialiserFiltres()">
-
       </button>
 
     </div>
 
     <p-table
-
       [value]="ticketsAffiches"
-
       [loading]="loading"
-
       dataKey="id"
-
       [paginator]="true"
-
       [rows]="10"
-
       [rowsPerPageOptions]="[10, 25, 50]"
-
       responsiveLayout="scroll"
-
       [tableStyle]="{ 'min-width': '65rem' }"
-
       currentPageReportTemplate="{first} à {last} sur {totalRecords} tickets"
-
       [showCurrentPageReport]="true">
 
       <ng-template pTemplate="header">
-
         <tr>
-
           <th>Référence</th>
-
           <th>Unité / Bien</th>
-
           <th>Locataire</th>
-
           <th>Catégorie</th>
-
           <th>Priorité</th>
-
           <th>Statut</th>
-
           <th>Date de l'incident</th>
-
           <th style="width: 12rem">Actions</th>
-
         </tr>
-
       </ng-template>
-
-
 
       <ng-template pTemplate="emptymessage">
-
         <tr>
-
           <td colspan="8" class="empty-table-message">
-
             Aucun ticket trouvé.
-
           </td>
-
         </tr>
-
       </ng-template>
 
-
-
       <ng-template pTemplate="body" let-ticket>
-
         <tr>
-
           <td>
-
             <strong class="ticket-reference">
-
               {{ ticket.reference || 'Référence non définie' }}
-
             </strong>
-
           </td>
 
-
-
           <td>
-
             <div>
-
               {{ ticket.uniteReference || ticket.referenceUnite || '—' }}
-
             </div>
-
             <small>
-
               {{ ticket.bienNom || ticket.nomBienImmobilier || '' }}
-
             </small>
-
           </td>
-
-
 
           <td>
-
             {{
-
               ticket.locataireNom
-
                 || (
-
                   (ticket.prenomLocataire || '') + ' '
-
                   + (ticket.nomLocataire || '')
-
                 ).trim()
-
                 || '—'
-
             }}
-
           </td>
-
-
 
           <td>{{ libelleCategorie(ticket.categorie) }}</td>
 
-
-
           <td>
-
             <p-tag
-
               [value]="libellePriorite(ticket.priorite)"
-
               [severity]="severitePriorite(ticket.priorite)">
-
             </p-tag>
-
           </td>
 
-
-
           <td>
-
             <p-tag
-
               [value]="libelleStatut(ticket.statut)"
-
               [severity]="severiteStatut(ticket.statut)">
-
             </p-tag>
-
           </td>
 
-
-
           <td>
-
             {{
-
               dateTicket(ticket)
-
                 ? (dateTicket(ticket) | date:'yyyy-MM-dd')
-
                 : '—'
-
             }}
-
           </td>
 
-
-
           <td>
-
             <div class="ticket-actions">
 
               <button
-
                 pButton
-
                 type="button"
-
                 icon="pi pi-eye"
-
                 severity="secondary"
-
                 [text]="true"
-
                 pTooltip="Consulter"
-
                 tooltipPosition="top"
-
                 (click)="ouvrirDetail(ticket)">
-
               </button>
-
-
 
               <button
-
                 pButton
-
                 type="button"
-
                 icon="pi pi-pencil"
-
                 severity="secondary"
-
                 [text]="true"
-
                 pTooltip="Modifier"
-
                 tooltipPosition="top"
-
                 (click)="ouvrirModification(ticket)">
-
               </button>
 
-
-
-            <button
-
-              pButton
-
-              type="button"
-
-              icon="pi pi-trash"
-
-              severity="danger"
-
-              [text]="true"
-
-              pTooltip="Supprimer"
-
-              tooltipPosition="top"
-
-              (click)="supprimerTicket(ticket)">
-
-            </button>
-
-
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                pTooltip="Supprimer"
+                tooltipPosition="top"
+                (click)="supprimerTicket(ticket)">
+              </button>
 
             </div>
-
           </td>
-
         </tr>
-
       </ng-template>
 
     </p-table>
-
   </section>
-
 </div>
 
 <!-- Création / modification d'un ticket -->
-
 <p-dialog
-
   [(visible)]="modalCreationVisible"
-
   [modal]="true"
-
   [draggable]="false"
-
   [resizable]="false"
-
-  [style]="{ width: 'min(56rem, 96vw)' }"
-
+  [style]="{ width: 'min(48rem, 96vw)' }"
   [breakpoints]="{ '768px': '96vw' }"
-
   [header]="modeEdition ? 'Modifier le ticket' : 'Déclarer un incident'"
-
+  styleClass="ticket-creation-dialog"
+  appendTo="body"
   (onHide)="fermerCreation()">
-
-
 
   <form [formGroup]="formulaire" (ngSubmit)="enregistrerTicket()">
 
     <div class="ticket-form-grid">
 
-
-
+      <!-- Référence -->
       <div class="field">
-
         <label for="reference">Référence du ticket *</label>
-
         <input
-
           id="reference"
-
           pInputText
-
           type="text"
-
           formControlName="reference"
-
           maxlength="50"
-
           autocomplete="off"
-
           placeholder="Ex. INC-2026-001"
-
           class="w-full">
 
-
-
         <small class="field-error" *ngIf="champInvalide('reference')">
-
           {{ messageErreurChamp('reference') }}
-
         </small>
-
       </div>
 
-
-
+      <!-- Date -->
       <div class="field">
-
         <label for="dateIncident">Date de l'incident *</label>
-
         <input
-
           id="dateIncident"
-
           type="date"
-
           formControlName="dateincident"
-
           [max]="dateMaximale"
-
           class="form-control">
 
-
-
         <small class="field-error" *ngIf="champInvalide('dateincident')">
-
           {{ messageErreurChamp('dateincident') }}
-
         </small>
-
       </div>
 
-
-
+      <!-- Unité -->
       <div class="field">
-
         <label for="uniteLocativeId">Unité locative *</label>
+
         <p-select
-            inputId="uniteLocativeId"
-            formControlName="uniteLocativeId"
-            [options]="unitesOptions"
-            optionLabel="label"
-            optionValue="value"
-            placeholder="Sélectionner une unité"
-            [loading]="loadingUnites"
-            [filter]="true"
-            [showClear]="true"
-            styleClass="w-full"
-            appendTo="body"
-            (onChange)="chargerLocatairesParUnite($event.value)">
-          </p-select>
+          inputId="uniteLocativeId"
+          formControlName="uniteLocativeId"
+          [options]="unitesOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner une unité"
+          [loading]="loadingUnites"
+          [filter]="true"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body"
+          (onChange)="chargerLocatairesParUnite($event.value)">
+        </p-select>
 
-        <small class="field-error" *ngIf="champInvalide('uniteLocativeId')">
-
+        <small
+          class="field-error"
+          *ngIf="champInvalide('uniteLocativeId')">
           {{ messageErreurChamp('uniteLocativeId') }}
-
         </small>
-
       </div>
 
+      <!-- Locataire -->
       <div class="field">
-
         <label for="locataireId">Locataire concerné</label>
 
-<p-select
-    inputId="locataireId"
-    formControlName="locataireId"
-    [options]="locatairesOptions"
-    optionLabel="label"
-    optionValue="value"
-    placeholder="Sélectionner un locataire"
-    [showClear]="true"
-    [filter]="true"
-    [disabled]="!formulaire.get('uniteLocativeId')?.value || loadingLocataires"
-    styleClass="w-full"
-    appendTo="body">
-  </p-select>
-
-      </div>
-
-
-
-      <div class="field">
-
-        <label for="categorie">Catégorie *</label>
-
         <p-select
-
-          inputId="categorie"
-
-          formControlName="categorie"
-
-          [options]="categoriesOptions"
-
+          inputId="locataireId"
+          formControlName="locataireId"
+          [options]="locatairesOptions"
           optionLabel="label"
-
           optionValue="value"
-
+          placeholder="Sélectionner un locataire"
+          [showClear]="true"
+          [filter]="true"
+          [disabled]="!formulaire.get('uniteLocativeId')?.value || loadingLocataires"
           styleClass="w-full"
-
           appendTo="body">
-
         </p-select>
-
-        <small class="field-error" *ngIf="champInvalide('categorie')">
-
-          {{ messageErreurChamp('categorie') }}
-
-        </small>
-
       </div>
 
-      <div class="field">
+      <!-- Quatre champs sur une seule ligne -->
+      <div class="ticket-form-row">
 
-        <label for="priorite">Priorité *</label>
+        <div class="field">
+          <label for="categorie">
+            Catégorie <span class="required">*</span>
+          </label>
 
-        <p-select
+          <p-select
+            inputId="categorie"
+            formControlName="categorie"
+            [options]="categoriesOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
 
-          inputId="priorite"
+          <small class="field-error" *ngIf="champInvalide('categorie')">
+            {{ messageErreurChamp('categorie') }}
+          </small>
+        </div>
 
-          formControlName="priorite"
+        <div class="field">
+          <label for="priorite">
+            Priorité <span class="required">*</span>
+          </label>
 
-          [options]="prioritesOptions"
+          <p-select
+            inputId="priorite"
+            formControlName="priorite"
+            [options]="prioritesOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
 
-          optionLabel="label"
+          <small class="field-error" *ngIf="champInvalide('priorite')">
+            {{ messageErreurChamp('priorite') }}
+          </small>
+        </div>
 
-          optionValue="value"
+        <div class="field">
+          <label for="imputableA">Responsabilité</label>
 
-          styleClass="w-full"
+          <p-select
+            inputId="imputableA"
+            formControlName="imputableA"
+            [options]="imputabilitesOptions"
+            optionLabel="label"
+            optionValue="value"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
 
-          appendTo="body">
-
-        </p-select>
-
-        <small class="field-error" *ngIf="champInvalide('priorite')">
-
-          {{ messageErreurChamp('priorite') }}
-
-        </small>
-
-      </div>
-
-
-
-      <div class="field">
-
-        <label for="coutEstime">Coût estimé</label>
-
+      <div class="field field-cout">
+        <label for="cout">Coût</label>
         <p-inputNumber
-
-          inputId="coutEstime"
-
-          formControlName="coutEstime"
-
-          [min]="0"
-
-          [minFractionDigits]="0"
-
-          [maxFractionDigits]="2"
-
+          inputId="cout"
+          formControlName="cout"
           styleClass="w-full"
-
-          inputStyleClass="w-full">
-
+          mode="currency"
+          currency="XAF"
+          locale="fr-FR">
         </p-inputNumber>
+      </div>
 
       </div>
 
-
-
-      <div class="field">
-
-        <label for="imputableA">Responsabilité</label>
-
-
-
-        <p-select
-
-          inputId="imputableA"
-
-          formControlName="imputableA"
-
-          [options]="imputabilitesOptions"
-
-          optionLabel="label"
-
-          optionValue="value"
-
-          styleClass="w-full"
-
-          appendTo="body">
-
-        </p-select>
-
-      </div>
-
-
-
+      <!-- Description -->
       <div class="field field-full">
-
         <label for="description">Description de l'incident *</label>
 
         <textarea
-
           id="description"
-
           pTextarea
-
           formControlName="description"
-
           rows="3"
-
           maxlength="4000"
-
           class="w-full"
-
           placeholder="Décris l'incident, les dégâts et les circonstances.">
-
         </textarea>
 
-
-
         <small class="field-error" *ngIf="champInvalide('description')">
-
           {{ messageErreurChamp('description') }}
-
         </small>
-
       </div>
 
-
-
+      <!-- Type de photos -->
       <div class="field">
-
         <label for="typePhoto">Type des photos</label>
 
-
         <p-select
-
           inputId="typePhoto"
-
           formControlName="typePhoto"
-
           [options]="typesPhotosOptions"
-
           optionLabel="label"
-
           optionValue="value"
-
           styleClass="w-full"
-
           appendTo="body">
-
         </p-select>
-
       </div>
 
-
-
+      <!-- Validation du devis -->
       <div class="field checkbox-field">
-
         <label class="checkbox-label" for="validationDevisRequise">
+          <input
+            id="validationDevisRequise"
+            type="checkbox"
+            formControlName="validationDevisRequise">
+          <span>Validation du devis requise avant résolution</span>
+        </label>
+      </div>
+
+      <!-- Photos -->
+      <div class="field field-full ticket-photos-field">
+
+        <label class="photos-section-label">Photos de l'incident</label>
+
+        <!-- Photos enregistrées -->
+        <div
+          class="photos-preview"
+          *ngIf="modeEdition && photosExistantes.length > 0">
+
+          <div
+            class="photo-preview"
+            *ngFor="let photo of photosExistantes; let i = index">
+
+            <a
+              class="photo-preview__image"
+              [href]="getPhotoUrl(photo.urlPhoto)"
+              target="_blank"
+              rel="noopener noreferrer">
+              <img
+                [src]="getPhotoUrl(photo.urlPhoto)"
+                [alt]="'Photo existante ' + (i + 1)">
+            </a>
+
+            <div class="photo-preview__info">
+              <small>{{ libelleTypePhoto(photo.type) }}</small>
+              <small>{{ photo.dateAjout | date:'yyyy-MM-dd HH:mm' }}</small>
+            </div>
+
+            <button
+              pButton
+              type="button"
+              icon="pi pi-times"
+              severity="danger"
+              [rounded]="true"
+              [text]="true"
+              class="photo-remove-button"
+              [attr.aria-label]="'Supprimer la photo ' + (i + 1)"
+              (click)="supprimerPhotoExistante(i)">
+            </button>
+
+          </div>
+        </div>
+
+        <p
+          class="empty-detail-message"
+          *ngIf="modeEdition && photosExistantes.length === 0">
+          Aucune photo enregistrée pour ce ticket.
+        </p>
+
+        <!-- Nouvelles photos -->
+        <div class="photos-preview" *ngIf="apercusPhotos.length > 0">
+
+          <div
+            class="photo-preview"
+            *ngFor="let apercu of apercusPhotos; let i = index">
+
+            <img
+              class="photo-preview__image"
+              [src]="apercu"
+              [alt]="'Nouvelle photo ' + (i + 1)">
+
+            <button
+              pButton
+              type="button"
+              icon="pi pi-times"
+              severity="danger"
+              [rounded]="true"
+              [text]="true"
+              class="photo-remove-button"
+              [attr.aria-label]="'Retirer la nouvelle photo ' + (i + 1)"
+              (click)="supprimerPhoto(i)">
+            </button>
+
+            <small class="photo-new-label">Nouvelle photo</small>
+          </div>
+        </div>
+
+        <!-- Zone de téléversement -->
+        <div class="photos-upload-zone">
+          <label for="photosTicketNouvelles">
+            <i class="pi pi-cloud-upload"></i>
+            {{ modeEdition ? 'Ajouter des photos' : 'Sélectionner des photos' }}
+          </label>
 
           <input
+            id="photosTicketNouvelles"
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+            multiple
+            (change)="selectionnerPhotos($event)">
 
-            id="validationDevisRequise"
-
-            type="checkbox"
-
-            formControlName="validationDevisRequise">
-
-          <span>Validation du devis requise avant résolution</span>
-
-        </label>
+          <small class="field-hint">
+            Maximum {{ nombreMaxPhotos }} photos au total,
+            10 Mo par fichier. Formats acceptés : JPG, PNG et WEBP.
+          </small>
+        </div>
 
       </div>
 
-
-
-<div class="field field-full ticket-photos-field">
-
-  <label class="photos-section-label">Photos de l'incident</label>
-
-  <!-- Photos déjà enregistrées -->
-  <div
-    class="photos-preview"
-    *ngIf="modeEdition && photosExistantes.length > 0">
-
-    <div
-      class="photo-preview"
-      *ngFor="let photo of photosExistantes; let i = index">
-
-      <a
-        class="photo-preview__image"
-        [href]="getPhotoUrl(photo.urlPhoto)"
-        target="_blank"
-        rel="noopener noreferrer">
-
-        <img
-          [src]="getPhotoUrl(photo.urlPhoto)"
-          [alt]="'Photo existante ' + (i + 1)">
-      </a>
-
-      <div class="photo-preview__info">
-        <small>{{ libelleTypePhoto(photo.type) }}</small>
-        <small>{{ photo.dateAjout | date:'yyyy-MM-dd HH:mm' }}</small>
-      </div>
-
-      <button
-        pButton
-        type="button"
-        icon="pi pi-times"
-        severity="danger"
-        [rounded]="true"
-        [text]="true"
-        class="photo-remove-button"
-        [attr.aria-label]="'Supprimer la photo ' + (i + 1)"
-         (click)="supprimerPhotoExistante(i)">
-      </button>
-
-    </div>
-  </div>
-
-  <p
-    class="empty-detail-message"
-    *ngIf="modeEdition && photosExistantes.length === 0">
-    Aucune photo enregistrée pour ce ticket.
-  </p>
-
-  <!-- Nouvelles photos sélectionnées -->
-  <div
-    class="photos-preview"
-    *ngIf="apercusPhotos.length > 0">
-
-    <div
-      class="photo-preview"
-      *ngFor="let apercu of apercusPhotos; let i = index">
-
-      <img
-        class="photo-preview__image"
-        [src]="apercu"
-        [alt]="'Nouvelle photo ' + (i + 1)">
-
-      <button
-        pButton
-        type="button"
-        icon="pi pi-times"
-        severity="danger"
-        [rounded]="true"
-        [text]="true"
-        class="photo-remove-button"
-        [attr.aria-label]="'Retirer la nouvelle photo ' + (i + 1)"
-        (click)="supprimerPhoto(i)">
-      </button>
-
-      <small class="photo-new-label">Nouvelle photo</small>
-
-    </div>
-  </div>
-
-  <!-- Zone d'ajout, séparée des vignettes -->
-  <div class="photos-upload-zone">
-
-    <label for="photosTicketNouvelles">
-      <i class="pi pi-cloud-upload"></i>
-      {{ modeEdition ? 'Ajouter des photos' : 'Sélectionner des photos' }}
-    </label>
-
-    <input
-      id="photosTicketNouvelles"
-      type="file"
-      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-      multiple
-      (change)="selectionnerPhotos($event)">
-
-    <small class="field-hint">
-      Maximum {{ nombreMaxPhotos }} photos au total,
-      10 Mo par fichier. Formats acceptés : JPG, PNG et WEBP.
-    </small>
-
-  </div>
-
-</div>
-
-
-
     </div>
 
-
-
+    <!-- Actions du formulaire -->
     <div class="dialog-footer">
-
       <button
-
         pButton
-
         type="button"
-
         label="Annuler"
-
         severity="secondary"
-
         [outlined]="true"
-
         [disabled]="saving"
-
         (click)="fermerCreation()">
-
       </button>
-
-
 
       <button
-
         pButton
-
         type="submit"
-
         [label]="modeEdition ? 'Enregistrer les modifications' : 'Créer le ticket'"
-
         [icon]="modeEdition ? 'pi pi-save' : 'pi pi-check'"
-
         [loading]="saving">
-
       </button>
-
     </div>
 
   </form>
-
 </p-dialog>
 
-
-
 <!-- Détail du ticket -->
-
 <p-dialog
   [(visible)]="modalDetailVisible"
   [modal]="true"
@@ -942,517 +611,330 @@
   [resizable]="false"
   [style]="{ width: 'min(56rem, 96vw)' }"
   [breakpoints]="{ '768px': '96vw' }"
-  header="Détail du ticket">
-
-
+  header="Détail du ticket"
+  appendTo="body">
 
   <div *ngIf="loadingDetail" class="loading-detail">
-
     Chargement du ticket...
-
   </div>
-
-
 
   <ng-container *ngIf="ticketSelectionne as ticket">
 
     <div class="ticket-detail-header">
-
       <div>
-
         <h3>{{ ticket.reference || 'Référence non définie' }}</h3>
-
         <p>{{ ticket.description }}</p>
-
       </div>
-
-
 
       <div class="ticket-detail-tags">
-
         <p-tag
-
           [value]="libelleStatut(ticket.statut)"
-
           [severity]="severiteStatut(ticket.statut)">
-
         </p-tag>
-
-
 
         <p-tag
-
           [value]="libellePriorite(ticket.priorite)"
-
           [severity]="severitePriorite(ticket.priorite)">
-
         </p-tag>
-
       </div>
-
     </div>
-
-
 
     <div class="ticket-detail-grid">
 
       <div>
-
         <span class="detail-label">Catégorie</span>
-
         <strong>{{ libelleCategorie(ticket.categorie) }}</strong>
-
       </div>
 
-
-
       <div>
-
         <span class="detail-label">Date de l'incident</span>
-
         <strong>
-
           {{
-
             dateTicket(ticket)
-
               ? (dateTicket(ticket) | date:'yyyy-MM-dd')
-
               : '—'
-
           }}
-
         </strong>
-
       </div>
 
-
-
       <div>
-
         <span class="detail-label">Coût estimé</span>
-
         <strong>{{ (ticket.coutEstime ?? 0) | number:'1.2-2' }}</strong>
-
       </div>
 
-
-
       <div>
-
         <span class="detail-label">Coût total</span>
-
         <strong>{{ ticket.coutTotal | number:'1.2-2' }}</strong>
-
       </div>
 
-
-
       <div>
-
         <span class="detail-label">Imputabilité</span>
-
         <strong>{{ libelleImputabilite(ticket.imputableA) }}</strong>
-
       </div>
 
       <div class="field-full">
         <span class="detail-label">Résultat de la réparation</span>
-        <strong class="repair-result">{{ ticket.resultatReparation || '—' }}</strong>
+        <strong class="repair-result">
+          {{ ticket.resultatReparation || '—' }}
+        </strong>
       </div>
 
-
-
       <div>
-
         <span class="detail-label">Validation du devis</span>
-
         <strong>
-
           {{
-
             ticket.validationDevisRequise
-
               ? (ticket.devisValide ? 'Devis validé' : 'Validation requise')
-
               : 'Non requise'
-
           }}
-
         </strong>
-
       </div>
 
     </div>
 
-
-
+    <!-- Actions de détail -->
     <div class="ticket-detail-actions">
 
       <button
-
         pButton
-
         type="button"
-
         label="Modifier"
-
         icon="pi pi-pencil"
-
         severity="secondary"
-
         [outlined]="true"
-
         (click)="ouvrirModification(ticket)">
-
       </button>
 
-
-
       <button
-
         pButton
-
         type="button"
-
         label="Ajouter un intervenant"
-
         icon="pi pi-user-plus"
-
         severity="secondary"
-
         [outlined]="true"
-
         (click)="ouvrirAjoutIntervenant()">
-
       </button>
 
-
-
       <button
-
         pButton
-
         type="button"
-
         label="Ajouter des photos"
-
         icon="pi pi-images"
-
         severity="secondary"
-
         [outlined]="true"
-
         (click)="ouvrirAjoutPhotos()">
-
       </button>
 
     </div>
 
-
-
+    <!-- Suivi du ticket -->
     <div class="ticket-workflow">
-
       <h3>Actions de suivi</h3>
-
-
 
       <div class="workflow-buttons">
 
         <button
-
           pButton
-
           type="button"
-
           label="En cours"
-
           severity="warn"
-
           [outlined]="true"
-
           [disabled]="saving || ticket.statut === StatutIncident.Cloture"
-
           (click)="changerStatutTicket(StatutIncident.EnCours)">
-
         </button>
 
-
-
         <button
-
           pButton
-
           type="button"
-
           label="En attente de validation"
-
           severity="secondary"
-
           [outlined]="true"
-
           [disabled]="saving || ticket.statut !== StatutIncident.EnCours"
-
           (click)="changerStatutTicket(StatutIncident.EnAttenteValidation)">
-
         </button>
 
-
-      <button
-
+        <button
           pButton
-
           type="button"
-
           label="Valider le devis"
-
           icon="pi pi-check-circle"
-
           [disabled]="
-
             saving
-
             || !ticket.validationDevisRequise
-
             || ticket.devisValide
-
           "
-
           (click)="validerDevisSelectionne()">
-
         </button>
 
         <button
-
           pButton
-
           type="button"
-
           label="Résoudre"
-
           severity="success"
-
           [outlined]="true"
-
           [disabled]="saving || ticket.statut === StatutIncident.Cloture"
-
           (click)="changerStatutTicket(StatutIncident.Resolu)">
-
         </button>
 
         <button
-
           pButton
-
           type="button"
-
           label="Clôturer"
-
           icon="pi pi-lock"
-
           severity="danger"
-
           [outlined]="true"
-
           [disabled]="saving || ticket.statut !== StatutIncident.Resolu"
-
           (click)="cloturerTicketSelectionne()">
-
         </button>
 
       </div>
 
-
-
       <small class="field-hint">
-
         L'API demeure responsable de vérifier les autorisations et les
-
         transitions de statut permises.
-
       </small>
-
     </div>
 
-
+    <!-- Photos du ticket -->
     <div class="ticket-detail-section">
-
       <h3>Photos</h3>
 
       <div class="ticket-photos" *ngIf="ticket.photos?.length; else sansPhotos">
-
         <div class="ticket-photo" *ngFor="let photo of ticket.photos">
 
           <a
-
             [href]="getPhotoUrl(photo.urlPhoto)"
-
             target="_blank"
-
             rel="noopener noreferrer">
-
             <img
-
               [src]="getPhotoUrl(photo.urlPhoto)"
-
               [alt]="libelleTypePhoto(photo.type)">
-
           </a>
 
-
-
           <small>{{ libelleTypePhoto(photo.type) }}</small>
-
           <small>{{ photo.dateAjout | date:'yyyy-MM-dd HH:mm' }}</small>
 
         </div>
-
       </div>
 
-
-
       <ng-template #sansPhotos>
-
         <p class="empty-detail-message">Aucune photo disponible.</p>
-
       </ng-template>
-
     </div>
 
+    <!-- Intervenants -->
+    <div class="ticket-detail-section">
+      <h3>Intervenants</h3>
 
-<div class="ticket-detail-section">
+      <p-table
+        [value]="ticket.intervenants || []"
+        [tableStyle]="{ 'min-width': '48rem' }"
+        responsiveLayout="scroll">
 
-  <h3>Intervenants</h3>
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Nom</th>
+            <th>Spécialité</th>
+            <th>Téléphone</th>
+            <th>Courriel</th>
+            <th>Devis</th>
+            <th>Facture</th>
+            <th>Date d'intervention</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
 
-  <p-table
-    [value]="ticket.intervenants || []"
-    [tableStyle]="{ 'min-width': '48rem' }"
-    responsiveLayout="scroll">
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8" class="empty-table-message">
+              Aucun intervenant enregistré.
+            </td>
+          </tr>
+        </ng-template>
 
-    <ng-template pTemplate="header">
-      <tr>
-        <th>Nom</th>
-        <th>Spécialité</th>
-        <th>Téléphone</th>
-        <th>Courriel</th>
-        <th>Devis</th>
-        <th>Facture</th>
-        <th>Date d'intervention</th>
-        <th>Actions</th>
-      </tr>
-    </ng-template>
+        <ng-template pTemplate="body" let-intervenant>
+          <tr>
+            <td>{{ intervenant.nomArtisan }}</td>
+            <td>{{ intervenant.specialite }}</td>
+            <td>{{ intervenant.telephone }}</td>
 
-    <ng-template pTemplate="emptymessage">
-      <tr>
-        <td colspan="8" class="empty-table-message">
-          Aucun intervenant enregistré.
-        </td>
-      </tr>
-    </ng-template>
+            <td>
+              <a
+                *ngIf="intervenant.courriel"
+                [href]="'mailto:' + intervenant.courriel">
+                {{ intervenant.courriel }}
+              </a>
+              <span *ngIf="!intervenant.courriel">—</span>
+            </td>
 
-    <ng-template pTemplate="body" let-intervenant>
-      <tr>
-        <td>{{ intervenant.nomArtisan }}</td>
+            <td>
+              {{
+                intervenant.montantDevis != null
+                  ? (intervenant.montantDevis | number:'1.2-2')
+                  : '—'
+              }}
+            </td>
 
-        <td>{{ intervenant.specialite }}</td>
+            <td>
+              {{
+                intervenant.montantFacture != null
+                  ? (intervenant.montantFacture | number:'1.2-2')
+                  : '—'
+              }}
+            </td>
 
-        <td>{{ intervenant.telephone }}</td>
+            <td>
+              {{
+                intervenant.dateIntervention
+                  ? (intervenant.dateIntervention | date:'yyyy-MM-dd')
+                  : '—'
+              }}
+            </td>
 
-        <td>
-          <a
-            *ngIf="intervenant.courriel"
-            [href]="'mailto:' + intervenant.courriel">
-            {{ intervenant.courriel }}
-          </a>
+            <td class="intervenant-actions">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-sm p-button-outlined"
+                severity="secondary"
+                aria-label="Modifier l'intervenant"
+                pTooltip="Modifier"
+                (click)="modifierIntervenant(intervenant)">
+              </button>
 
-          <span *ngIf="!intervenant.courriel">—</span>
-        </td>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-sm p-button-outlined p-button-danger"
+                aria-label="Supprimer l'intervenant"
+                pTooltip="Supprimer"
+                (click)="supprimerIntervenant(intervenant)">
+              </button>
+            </td>
+          </tr>
+        </ng-template>
 
-        <td>
-          {{
-            intervenant.montantDevis != null
-              ? (intervenant.montantDevis | number:'1.2-2')
-              : '—'
-          }}
-        </td>
-
-        <td>
-          {{
-            intervenant.montantFacture != null
-              ? (intervenant.montantFacture | number:'1.2-2')
-              : '—'
-          }}
-        </td>
-
-        <td>
-          {{
-            intervenant.dateIntervention
-              ? (intervenant.dateIntervention | date:'yyyy-MM-dd')
-              : '—'
-          }}
-        </td>
-
-        <td class="intervenant-actions">
-          <button
-            pButton
-            type="button"
-            icon="pi pi-pencil"
-            class="p-button-sm p-button-outlined"
-            severity="secondary"
-            aria-label="Modifier l'intervenant"
-            pTooltip="Modifier"
-            (click)="modifierIntervenant(intervenant)">
-          </button>
-
-          <button
-            pButton
-            type="button"
-            icon="pi pi-trash"
-            class="p-button-sm p-button-outlined p-button-danger"
-            aria-label="Supprimer l'intervenant"
-            pTooltip="Supprimer"
-            (click)="supprimerIntervenant(intervenant)">
-          </button>
-        </td>
-      </tr>
-    </ng-template>
-
-  </p-table>
-
-</div>
-
-
+      </p-table>
+    </div>
 
     <div class="dialog-footer">
-
       <button
-
         pButton
-
         type="button"
-
         label="Fermer"
-
         icon="pi pi-times"
-
         severity="secondary"
-
         [outlined]="true"
-
         (click)="fermerDetail()">
-
       </button>
-
     </div>
 
   </ng-container>
-
 </p-dialog>
 
-
-
-<!-- Ajout d'un intervenant -->
-
+<!-- Ajout / modification d'un intervenant -->
 <p-dialog
   [(visible)]="modalIntervenantVisible"
   [modal]="true"
@@ -1462,70 +944,40 @@
     ? 'Modifier un intervenant'
     : 'Ajouter un intervenant'"
   [style]="{ width: 'min(38rem, 96vw)' }"
-  [breakpoints]="{ '768px': '96vw' }">
-
-
+  [breakpoints]="{ '768px': '96vw' }"
+  appendTo="body">
 
   <form
-
     [formGroup]="formulaireIntervenant"
-
     (ngSubmit)="enregistrerIntervenant()">
-
-
 
     <div class="ticket-form-grid">
 
       <div class="field">
-
         <label for="nomArtisan">Nom de l'intervenant *</label>
-
         <input
-
           id="nomArtisan"
-
           pInputText
-
           formControlName="nomArtisan"
-
           class="w-full">
-
       </div>
-
-
 
       <div class="field">
-
         <label for="specialite">Spécialité *</label>
-
         <input
-
           id="specialite"
-
           pInputText
-
           formControlName="specialite"
-
           class="w-full">
-
       </div>
 
-
-
       <div class="field field-full">
-
         <label for="telephoneIntervenant">Téléphone *</label>
-
         <input
-
           id="telephoneIntervenant"
-
           pInputText
-
           formControlName="telephone"
-
           class="w-full">
-
       </div>
 
       <div class="field field-full">
@@ -1539,288 +991,178 @@
           maxlength="254"
           placeholder="nom@exemple.com"
           class="w-full">
+
         <small
           class="field-error"
           *ngIf="formulaireIntervenant.get('courriel')?.invalid
             && (formulaireIntervenant.get('courriel')?.touched
               || formulaireIntervenant.get('courriel')?.dirty)">
-          <ng-container *ngIf="formulaireIntervenant.get('courriel')?.errors?.['required']">
+
+          <ng-container
+            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['required']">
             Le courriel est obligatoire.
           </ng-container>
-          <ng-container *ngIf="formulaireIntervenant.get('courriel')?.errors?.['email']">
+
+          <ng-container
+            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['email']">
             Saisis une adresse courriel valide.
           </ng-container>
-          <ng-container *ngIf="formulaireIntervenant.get('courriel')?.errors?.['maxlength']">
+
+          <ng-container
+            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['maxlength']">
             Le courriel ne doit pas dépasser 254 caractères.
           </ng-container>
+
         </small>
       </div>
 
-
-
       <div class="field">
-
         <label for="montantDevis">Montant du devis</label>
-
         <p-inputNumber
-
           inputId="montantDevis"
-
           formControlName="montantDevis"
-
           [min]="0"
-
           styleClass="w-full"
-
           inputStyleClass="w-full">
-
         </p-inputNumber>
-
       </div>
-
-
 
       <div class="field">
-
         <label for="montantFacture">Montant facturé</label>
-
         <p-inputNumber
-
           inputId="montantFacture"
-
           formControlName="montantFacture"
-
           [min]="0"
-
           styleClass="w-full"
-
           inputStyleClass="w-full">
-
         </p-inputNumber>
-
       </div>
-
-
 
       <div class="field field-full">
-
         <label for="dateIntervention">Date d'intervention</label>
-
         <input
-
           id="dateIntervention"
-
           type="date"
-
           formControlName="dateIntervention"
-
           class="form-control">
-
       </div>
 
     </div>
 
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="saving"
+        (click)="modalIntervenantVisible = false">
+      </button>
 
-  <div class="dialog-footer">
-    <button
-      pButton
-      type="button"
-      label="Annuler"
-      severity="secondary"
-      [outlined]="true"
-      [disabled]="saving"
-      (click)="modalIntervenantVisible = false">
-    </button>
-
-    <button
-      pButton
-      type="submit"
-      [label]="modeEditionIntervenant
-        ? 'Enregistrer les modifications'
-        : 'Ajouter'"
-      [icon]="modeEditionIntervenant ? 'pi pi-save' : 'pi pi-check'"
-      [loading]="saving"
-      [disabled]="saving">
-    </button>
-  </div>
+      <button
+        pButton
+        type="submit"
+        [label]="modeEditionIntervenant
+          ? 'Enregistrer les modifications'
+          : 'Ajouter'"
+        [icon]="modeEditionIntervenant ? 'pi pi-save' : 'pi pi-check'"
+        [loading]="saving"
+        [disabled]="saving">
+      </button>
+    </div>
 
   </form>
-
 </p-dialog>
 
-
-
 <!-- Ajout de photos à un ticket existant -->
-
 <p-dialog
-
   [(visible)]="modalPhotosVisible"
-
   [modal]="true"
-
   [draggable]="false"
-
   [resizable]="false"
-
   header="Ajouter des photos"
-
   [style]="{ width: 'min(40rem, 96vw)' }"
-
-  [breakpoints]="{ '768px': '96vw' }">
-
-
+  [breakpoints]="{ '768px': '96vw' }"
+  appendTo="body">
 
   <div class="field">
-
     <label for="typePhotoSupplementaire">Type des photos</label>
 
-
-
     <p-select
-
       inputId="typePhotoSupplementaire"
-
       [options]="typesPhotosOptions"
-
       [(ngModel)]="typePhotoSupplementaire"
-
       optionLabel="label"
-
       optionValue="value"
-
       styleClass="w-full"
-
       appendTo="body">
-
     </p-select>
-
   </div>
-
-
 
   <div class="field">
-
     <label for="photosSupplementaires">Sélectionner les photos</label>
 
-
-
     <input
-
       id="photosSupplementaires"
-
       type="file"
-
       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-
       multiple
-
       (change)="selectionnerPhotosSupplementaires($event)">
 
-
-
     <small class="field-hint">
-
       Maximum {{ nombreMaxPhotos }} photos, 10 Mo par fichier.
-
     </small>
-
   </div>
 
-
-
   <div
-
     class="photos-preview"
-
     *ngIf="apercusPhotosSupplementaires.length">
 
-
-
     <div
-
       class="photo-preview"
-
       *ngFor="let photo of apercusPhotosSupplementaires; let i = index">
-
-
 
       <img [src]="photo" [alt]="'Photo supplémentaire ' + (i + 1)">
 
-
-
       <button
-
         pButton
-
         type="button"
-
         icon="pi pi-times"
-
         severity="danger"
-
         [rounded]="true"
-
         [text]="true"
-
         class="photo-remove-button"
-
         [attr.aria-label]="'Supprimer la photo supplémentaire ' + (i + 1)"
-
         (click)="supprimerPhotoSupplementaire(i)">
-
       </button>
-
     </div>
-
   </div>
-
-
 
   <div class="dialog-footer">
-
     <button
-
       pButton
-
       type="button"
-
       label="Annuler"
-
       severity="secondary"
-
       [outlined]="true"
-
       [disabled]="saving"
-
       (click)="modalPhotosVisible = false">
-
     </button>
-
-
 
     <button
-
       pButton
-
       type="button"
-
       label="Envoyer les photos"
-
       icon="pi pi-upload"
-
       [loading]="saving"
-
       [disabled]="saving || photosSupplementaires.length === 0"
-
       (click)="ajouterPhotosAuTicket()">
-
     </button>
-
   </div>
-
 </p-dialog>
 
-<!-- Popup de saisie du résultat de réparation avant résolution -->
+<!-- Résultat de réparation avant résolution -->
 <p-dialog
   [(visible)]="modalResolutionVisible"
   [modal]="true"
@@ -1845,7 +1187,10 @@
   </div>
 
   <div class="resolution-field">
-    <label for="resultatReparation">Description de la réparation <span>*</span></label>
+    <label for="resultatReparation">
+      Description de la réparation <span>*</span>
+    </label>
+
     <textarea
       id="resultatReparation"
       pInputTextarea
@@ -1855,7 +1200,9 @@
       maxlength="2000"
       placeholder="Ex. : Le robinet défectueux a été remplacé. Une vérification a confirmé l'absence de fuite."
       [autoResize]="false"
-      [disabled]="saving"></textarea>
+      [disabled]="saving">
+    </textarea>
+
     <small>{{ resultatReparationSaisi.length }} / 2000 caractères</small>
   </div>
 

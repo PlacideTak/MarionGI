@@ -1701,15 +1701,20 @@ public class TicketsController : ControllerBase
 // DTO : LISTE ET DÉTAIL
 // ============================================================
 
+
 public class TicketIncidentListeDto
 {
     public Guid Id { get; set; }
     public string Reference { get; set; } = string.Empty;
     public DateTime DateCreation { get; set; }
 
-    public Guid UniteLocativeId { get; set; }
-    public string ReferenceUnite { get; set; } = string.Empty;
+    // L'incident peut concerner l'immeuble entier.
+    public Guid BienImmobilierId { get; set; }
     public string NomBienImmobilier { get; set; } = string.Empty;
+
+    // L'unité locative est facultative.
+    public Guid? UniteLocativeId { get; set; }
+    public string? ReferenceUnite { get; set; }
 
     public Guid LocataireId { get; set; }
     public string NomLocataire { get; set; } = string.Empty;
@@ -1727,6 +1732,7 @@ public class TicketIncidentListeDto
     public bool DevisValide { get; set; }
     public DateTime DateIncident { get; set; }
 }
+
 
 public class TicketIncidentDetailDto : TicketIncidentListeDto
 {

@@ -317,29 +317,20 @@ export class Contrats implements OnInit {
   // CHARGEMENT DES CONTRATS
   // ============================================================
 
-  chargerContrats(): void {
+chargerContrats(): void {
+  this.loading = true;
 
-    this.contratsService
-      .getContrats()
-      .subscribe({
-
-        next: (data: ContratDto[]) => {
-
-          this.contrats =
-            Array.isArray(data)
-              ? [...data]
-              : [];
-        },
-
-        error: (err: HttpErrorResponse) => {
-
-          this.traiterErreurHttp(
-            err,
-            'chargement'
-          );
-        }
-      });
-  }
+  this.contratsService.getContrats().subscribe({
+    next: (data: ContratDto[]) => {
+      this.contrats = Array.isArray(data) ? [...data] : [];
+      this.loading = false;
+    },
+    error: (err: HttpErrorResponse) => {
+      this.loading = false;
+      this.traiterErreurHttp(err, 'chargement');
+    }
+  });
+}
 
 
   // ============================================================
@@ -1315,6 +1306,81 @@ editContrat(contrat: ContratDto): void {
     return parsedDate.toISOString();
   }
 
+
+  loading = false;
+
+recherche = '';
+
+filtreStatut: StatutContrat | null = null;
+
+get contratsFiltres(): ContratDto[] {
+  const terme = this.recherche.trim().toLowerCase();
+
+  return this.contrats.filter(contrat => {
+    const locataire = [
+      contrat.locataire?.prenom ?? '',
+      contrat.locataire?.nom ?? ''
+    ].join(' ').toLowerCase();
+
+    const unite = (
+      contrat.uniteLocative?.reference ?? ''
+    ).toLowerCase();
+
+    const bien = [
+      contrat.uniteLocative?.bienReference ?? '',
+      contrat.uniteLocative?.bienAdresse ?? ''
+    ].join(' ').toLowerCase();
+
+    const reference = (
+      contrat.reference ?? ''
+    ).toLowerCase();
+
+    const correspondRecherche =
+      !terme ||
+      reference.includes(terme) ||
+      locataire.includes(terme) ||
+      unite.includes(terme) ||
+      bien.includes(terme);
+
+    const correspondStatut =
+      this.filtreStatut === null ||
+      Number(contrat.statut) === Number(this.filtreStatut);
+
+    return correspondRecherche && correspondStatut;
+  });
+}
+
+
+get nombreTotalContrats(): number {
+  return this.contrats.length;
+}
+
+get nombreContratsActifs(): number {
+  return this.compterParStatut(StatutContrat.Actif);
+}
+
+get nombreContratsEnAttente(): number {
+  return this.compterParStatut(StatutContrat.EnAttente);
+}
+
+get nombreContratsExpires(): number {
+  return this.compterParStatut(StatutContrat.Expire);
+}
+
+get nombreContratsResilies(): number {
+  return this.compterParStatut(StatutContrat.Resilie);
+}
+
+private compterParStatut(statut: StatutContrat): number {
+  return this.contrats.filter(
+    contrat => Number(contrat.statut) === Number(statut)
+  ).length;
+}
+
+reinitialiserFiltres(): void {
+  this.recherche = '';
+  this.filtreStatut = null;
+}
 
   // ============================================================
   // ERREURS HTTP

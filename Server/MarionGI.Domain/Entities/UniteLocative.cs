@@ -25,4 +25,7 @@ public class UniteLocative : BaseEntity
     public ICollection<Contrat> Contrats { get; set; } = [];
 
     public ICollection<DemandeVisite> DemandesVisite { get; set; } = [];
+
+    // Charges directement affectées à cette unité
+    public ICollection<ChargeBien> Charges { get; set; } = [];
 }

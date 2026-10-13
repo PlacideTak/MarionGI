@@ -1,3 +1,12 @@
+/* =========================================================
+   MARIONGI — GESTION DES TICKETS
+   Feuille de styles harmonisée et responsive
+   ========================================================= */
+
+/* -------------------------
+   Variables
+   ------------------------- */
+
 $primary: #2563eb;
 $primary-dark: #1d4ed8;
 $text: #334155;
@@ -10,6 +19,10 @@ $success: #16a34a;
 $radius: 12px;
 $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
 
+/* -------------------------
+   Base
+   ------------------------- */
+
 :host {
   display: block;
   min-width: 0;
@@ -19,6 +32,15 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
 * {
   box-sizing: border-box;
 }
+
+.w-full {
+  width: 100%;
+  min-width: 0;
+}
+
+/* =========================================================
+   PAGE ET EN-TÊTE
+   ========================================================= */
 
 .tickets-page {
   width: 100%;
@@ -45,39 +67,108 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
     margin: 0.35rem 0 0;
     color: $text-muted;
     font-size: 0.92rem;
+    line-height: 1.5;
   }
 }
+
+/* =========================================================
+   STATISTIQUES
+   ========================================================= */
 
 .tickets-stats {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 1rem;
-  margin-bottom: 0.25rem;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
 }
 
 .ticket-stat {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.6rem;
   min-width: 0;
-  padding: 1rem 1.1rem;
+  padding: 0.75rem 0.65rem;
   border: 1px solid $border;
-  border-radius: $radius;
+  border-radius: 10px;
   background: $white;
-  box-shadow: $shadow;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.08);
+  }
+}
+
+.ticket-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.ticket-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
 
   span {
     color: $text-muted;
-    font-size: 0.83rem;
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.25;
   }
 
   strong {
     color: #0f172a;
-    font-size: 1.6rem;
-    font-weight: 750;
+    font-size: 1.3rem;
+    font-weight: 700;
     line-height: 1.2;
   }
 }
+
+/* Couleurs des indicateurs */
+
+.ticket-stat-total .ticket-stat-icon {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.ticket-stat-ouvert .ticket-stat-icon {
+  color: #2563eb;
+  background: #dbeafe;
+}
+
+.ticket-stat-encours .ticket-stat-icon {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.ticket-stat-attente .ticket-stat-icon {
+  color: #7c3aed;
+  background: #ede9fe;
+}
+
+.ticket-stat-resolu .ticket-stat-icon {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.ticket-stat-cloture .ticket-stat-icon {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+/* =========================================================
+   PANNEAU ET FILTRES
+   ========================================================= */
 
 .tickets-panel {
   min-width: 0;
@@ -90,7 +181,10 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
 
 .tickets-filters {
   display: grid;
-  grid-template-columns: minmax(200px, 1.7fr) repeat(3, minmax(145px, 1fr)) auto auto;
+  grid-template-columns:
+    minmax(200px, 1.7fr)
+    repeat(3, minmax(145px, 1fr))
+    auto auto;
   align-items: center;
   gap: 0.65rem;
   padding: 1rem;
@@ -103,7 +197,8 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
     min-width: 0;
   }
 
-  > button {
+  > button,
+  > p-button {
     white-space: nowrap;
   }
 }
@@ -127,37 +222,37 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
   text-align: center;
 }
 
-.w-full {
-  width: 100%;
-  min-width: 0;
-}
-
-/* Formulaires */
+/* =========================================================
+   FORMULAIRE DE CRÉATION ET MODIFICATION
+   ========================================================= */
 
 .ticket-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem 1rem;
   align-items: start;
+  gap: 0.55rem 0.8rem;
+  min-width: 0;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.3rem;
   min-width: 0;
-  margin-bottom: 0.7rem;
+  margin-bottom: 0.4rem;
 
   > label:not(.checkbox-label) {
-    color: #334155;
-    font-size: 0.85rem;
+    color: $text;
+    font-size: 0.8rem;
     font-weight: 650;
+    line-height: 1.4;
   }
 
   > input:not([type='checkbox']):not([type='file']),
   > textarea,
   > p-select,
-  > p-inputNumber {
+  > p-inputNumber,
+  > p-inputnumber {
     width: 100%;
     min-width: 0;
   }
@@ -165,49 +260,106 @@ $shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
   > input[type='file'] {
     width: 100%;
     max-width: 100%;
-    padding: 0.65rem;
+    padding: 0.45rem;
     border: 1px dashed #cbd5e1;
-    border-radius: 8px;
+    border-radius: 7px;
     background: $bg-soft;
     color: $text;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
   }
 }
+
+/* Champ occupant toute la largeur */
 
 .field-full {
   grid-column: 1 / -1;
 }
 
+/* Contrôles HTML natifs */
+
 .form-control {
   display: block;
   width: 100%;
-  min-height: 2.75rem;
-  padding: 0.65rem 0.75rem;
+  min-width: 0;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border-radius: 7px;
   background: $white;
   color: $text;
   font: inherit;
-  font-size: 0.9rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-size: 0.83rem;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 
   &:focus {
     border-color: $primary;
     outline: none;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
   }
+
+  &:disabled {
+    background: #f1f5f9;
+    color: $text-muted;
+    cursor: not-allowed;
+  }
 }
 
-textarea[ pTextarea ],
 textarea[pTextarea] {
-  min-height: 5.5rem;
+  min-height: 4rem;
   resize: vertical;
 }
 
-.field-error {
+/* Catégorie, priorité, coût et responsabilité sur une ligne */
+
+.ticket-form-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+  grid-column: 1 / -1;
+
+  .field,
+  .form-field {
+    min-width: 0;
+    margin-bottom: 0;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: $text;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  input,
+  select,
+  textarea,
+  p-select,
+  p-inputNumber,
+  p-inputnumber {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .required {
+    color: $danger;
+  }
+}
+
+/* Messages d'erreur */
+
+.field-error,
+.field .p-error,
+.field .ng-invalid.ng-touched + .p-error {
   display: block;
   color: $danger;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 550;
   line-height: 1.4;
 }
@@ -215,13 +367,15 @@ textarea[pTextarea] {
 .field-hint {
   display: block;
   color: $text-muted;
-  font-size: 0.78rem;
-  line-height: 1.5;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
+
+/* Case à cocher */
 
 .checkbox-field {
   justify-content: center;
-  min-height: 3rem;
+  min-height: 2.5rem;
 }
 
 .checkbox-label {
@@ -229,80 +383,73 @@ textarea[pTextarea] {
   align-items: center;
   gap: 0.55rem;
   color: $text;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   line-height: 1.45;
   cursor: pointer;
 
   input[type='checkbox'] {
+    flex: 0 0 auto;
     width: 1rem;
     height: 1rem;
-    flex: 0 0 auto;
     accent-color: $primary;
     cursor: pointer;
   }
 }
+
+/* Pied des formulaires */
 
 .dialog-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  margin-top: 1.2rem;
-  padding-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
   border-top: 1px solid $border;
 
+  > button,
+  > p-button {
+    flex-shrink: 0;
+  }
+
   > button + button {
-    margin-left: 0.75rem !important;
+    margin-left: 0.25rem;
   }
 }
-
-/* Affichage mobile */
-@media (max-width: 600px) {
-  .dialog-footer {
-    flex-direction: column-reverse;
-    align-items: stretch;
-    gap: 0.5rem;
-
-    button {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-}
-
-/* Prévisualisation des photos : miniatures carrées */
-
 
 /* =========================================================
-   PHOTOS DES TICKETS — FORMULAIRE DE CRÉATION / MODIFICATION
+   PHOTOS — FORMULAIRE
    ========================================================= */
 
 .ticket-photos-field {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.65rem;
   width: 100%;
   min-width: 0;
 }
 
 .photos-section-label {
   color: $text;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
-/* Grille des photos existantes et nouvelles */
+/* Grille des photos */
+
 .photos-preview {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(125px, 140px));
   align-items: start;
+  gap: 0.65rem;
   width: 100%;
   min-width: 0;
-  margin: 0.25rem 0 0.75rem;
+  margin: 0.4rem 0 0.65rem;
 }
 
-/* Carte d'une photo */
+/* Carte photo */
+
 .photo-preview {
   position: relative;
   display: flex;
@@ -310,76 +457,74 @@ textarea[pTextarea] {
   min-width: 0;
   overflow: hidden;
   border: 1px solid $border;
-  border-radius: $radius;
+  border-radius: 9px;
   background: $white;
-  box-shadow: $shadow;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 
   &:hover {
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
     transform: translateY(-2px);
   }
 
-  /* Lien contenant une photo existante */
   a.photo-preview__image {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    height: 190px;
-    padding: 0.4rem;
+    height: 115px;
+    padding: 0.25rem;
     overflow: hidden;
     background: #f1f5f9;
   }
 
-  /* Image existante ou nouvelle */
   img,
   img.photo-preview__image {
     display: block;
     width: 100%;
-    height: 190px;
+    height: 115px;
     min-width: 0;
-    padding: 0.35rem;
+    padding: 0.25rem;
     object-fit: contain;
     object-position: center;
     background: #f1f5f9;
   }
 
-  /* Informations sous les photos existantes */
   .photo-preview__info {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.2rem;
     min-width: 0;
-    padding: 0.65rem;
+    padding: 0.45rem;
     border-top: 1px solid $border;
     overflow-wrap: anywhere;
 
     small {
       color: $text-muted;
-      font-size: 0.76rem;
+      font-size: 0.7rem;
       line-height: 1.4;
     }
   }
 
   .photo-new-label {
-    padding: 0.5rem 0.65rem 0.65rem;
+    padding: 0.35rem 0.45rem 0.45rem;
     color: $text-muted;
-    font-size: 0.78rem;
+    font-size: 0.7rem;
     line-height: 1.4;
   }
 
-  /* Bouton de suppression de la photo */
   .photo-remove-button {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    top: 0.3rem;
+    right: 0.3rem;
     z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 1.8rem;
+    height: 1.8rem;
     padding: 0;
     border: 2px solid $white !important;
     border-radius: 50%;
@@ -388,7 +533,7 @@ textarea[pTextarea] {
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
 
     .p-button-icon {
-      font-size: 0.8rem;
+      font-size: 0.72rem;
     }
 
     &:hover {
@@ -397,16 +542,17 @@ textarea[pTextarea] {
   }
 }
 
-/* Zone de sélection des nouvelles photos */
+/* Zone de téléversement */
+
 .photos-upload-zone {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.5rem;
   width: 100%;
   min-width: 0;
-  margin-top: 0.5rem;
-  padding: 1rem;
+  margin-top: 0.3rem;
+  padding: 0.75rem;
   border: 2px dashed #cbd5e1;
   border-radius: $radius;
   background: $bg-soft;
@@ -416,7 +562,7 @@ textarea[pTextarea] {
     align-items: center;
     gap: 0.5rem;
     color: $primary-dark;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 700;
     cursor: pointer;
   }
@@ -425,49 +571,24 @@ textarea[pTextarea] {
     display: block;
     width: 100%;
     max-width: 100%;
-    padding: 0.6rem;
+    padding: 0.4rem;
     border: 1px solid $border;
-    border-radius: 8px;
+    border-radius: 7px;
     background: $white;
     color: $text;
-    font-size: 0.82rem;
+    font-size: 0.76rem;
   }
 
   .field-hint {
     color: $text-muted;
-    font-size: 0.78rem;
+    font-size: 0.73rem;
     line-height: 1.5;
   }
 }
 
-/* Mobile */
-@media (max-width: 600px) {
-  .photos-preview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
-  }
-
-  .photo-preview {
-    a.photo-preview__image,
-    img,
-    img.photo-preview__image {
-      height: 140px;
-    }
-  }
-
-  .photos-upload-zone {
-    padding: 0.8rem;
-  }
-}
-
-.ticket-photo {
-  img {
-    object-fit: contain;
-    background: #f1f5f9;
-  }
-}
-
-/* Détail du ticket */
+/* =========================================================
+   DÉTAIL DU TICKET
+   ========================================================= */
 
 .loading-detail {
   padding: 1.5rem;
@@ -561,6 +682,7 @@ textarea[pTextarea] {
   }
 
   > small {
+    display: block;
     margin-top: 0.8rem;
   }
 }
@@ -582,6 +704,8 @@ textarea[pTextarea] {
     font-weight: 700;
   }
 }
+
+/* Photos dans le détail */
 
 .ticket-photos {
   display: grid;
@@ -609,7 +733,8 @@ textarea[pTextarea] {
     display: block;
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    background: #f1f5f9;
     transition: transform 0.2s ease;
   }
 
@@ -634,7 +759,9 @@ textarea[pTextarea] {
   text-align: center;
 }
 
-/* Dialogues PrimeNG */
+/* =========================================================
+   DIALOGUES PRIMENG
+   ========================================================= */
 
 :host ::ng-deep {
   .p-dialog {
@@ -644,18 +771,18 @@ textarea[pTextarea] {
   }
 
   .p-dialog .p-dialog-header {
-    padding: 1.1rem 1.25rem;
+    padding: 0.8rem 1rem;
     border-bottom: 1px solid $border;
   }
 
   .p-dialog .p-dialog-title {
     color: #0f172a;
-    font-size: 1.05rem;
+    font-size: 0.98rem;
     font-weight: 750;
   }
 
   .p-dialog .p-dialog-content {
-    padding: 1.1rem 1.25rem 1.25rem;
+    padding: 0.8rem 1rem 1rem;
   }
 
   .p-inputtext,
@@ -665,27 +792,27 @@ textarea[pTextarea] {
   textarea[pTextarea] {
     width: 100%;
     min-width: 0;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
   }
 
   .p-inputtext,
   .p-inputnumber-input,
   textarea[pTextarea] {
-    padding: 0.65rem 0.75rem;
+    padding: 0.45rem 0.6rem;
   }
 
   .p-select {
-    min-height: 2.7rem;
+    min-height: 2.35rem;
     align-items: center;
   }
 
   .p-select-label {
-    padding-top: 0.65rem;
-    padding-bottom: 0.65rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .p-button {
-    font-size: 0.84rem;
+    font-size: 0.8rem;
   }
 
   .p-datatable {
@@ -720,157 +847,41 @@ textarea[pTextarea] {
     border-color: $primary;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
   }
-}
 
-/* Responsive */
-
-@media (max-width: 1200px) {
-  .tickets-filters {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-
-    > input {
-      grid-column: 1 / -1;
-    }
+  /* Erreurs de validation PrimeNG */
+  .p-error {
+    color: $danger;
+    font-size: 0.76rem;
   }
 }
 
-@media (max-width: 900px) {
-  .tickets-page {
-    padding: 1rem;
-  }
+/* Dialogue de création/modification du ticket.
+   Correspond à styleClass="ticket-creation-dialog". */
 
-  .tickets-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ticket-detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+:host ::ng-deep .ticket-creation-dialog {
+  width: min(48rem, 96vw) !important;
+  max-width: 96vw;
 }
 
-@media (max-width: 600px) {
-  .tickets-page {
-    padding: 0.65rem;
-  }
+/* Compatibilité avec les anciennes classes éventuelles */
 
-  .tickets-header {
-    align-items: stretch;
-    flex-direction: column;
-
-    h1 {
-      font-size: 1.3rem;
-    }
-
-    > button {
-      width: 100%;
-    }
-  }
-
-  .tickets-stats {
-    gap: 0.6rem;
-  }
-
-  .ticket-stat {
-    padding: 0.8rem;
-
-    span {
-      font-size: 0.75rem;
-    }
-
-    strong {
-      font-size: 1.35rem;
-    }
-  }
-
-  .tickets-filters {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 0.75rem;
-
-    > input {
-      grid-column: auto;
-    }
-
-    > button {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-  .ticket-form-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.25rem;
-  }
-
-  .field-full {
-    grid-column: auto;
-  }
-
-  .ticket-detail-header {
-    flex-direction: column;
-  }
-
-  .ticket-detail-tags {
-    justify-content: flex-start;
-  }
-
-  .ticket-detail-grid {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.6rem;
-  }
-
-  .ticket-detail-actions {
-    flex-direction: column;
-
-    button {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-  .workflow-buttons {
-    flex-direction: column;
-
-    button {
-      width: 100%;
-      justify-content: center;
-    }
-  }
-
-.dialog-footer {
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: stretch;
-  gap: 0.5rem;
-
-  > button,
-  > p-button {
-    width: 100%;
-    margin: 0 !important;
-  }
-
-  > button + button {
-    margin-left: 0 !important;
-  }
+:host ::ng-deep .ticket-form-dialog {
+  width: min(48rem, 96vw) !important;
+  max-width: 96vw;
 }
-  :host ::ng-deep {
-    .p-dialog .p-dialog-header {
-      padding: 0.9rem 1rem;
-    }
 
-    .p-dialog .p-dialog-content {
-      padding: 0.9rem 1rem 1rem;
-    }
-  }
-}
-/* Styles du popup de saisie du résultat de réparation */
+/* =========================================================
+   DIALOGUE DU RÉSULTAT DE RÉPARATION
+   ========================================================= */
+
 .resolution-dialog {
   .p-dialog-header {
-    padding: 1.3rem 1.5rem;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 1.1rem 1.25rem;
+    border-bottom: 1px solid $border;
   }
 
   .p-dialog-content {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 }
 
@@ -878,16 +889,16 @@ textarea[pTextarea] {
   display: flex;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 1.2rem;
-  background: #f0fdf4;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
   border: 1px solid #bbf7d0;
   border-radius: 10px;
+  background: #f0fdf4;
 
   > i {
     flex-shrink: 0;
-    color: #16a34a;
-    font-size: 1.7rem;
+    color: $success;
+    font-size: 1.5rem;
   }
 
   h3 {
@@ -907,28 +918,36 @@ textarea[pTextarea] {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  min-width: 0;
 
   label {
-    color: #334155;
+    color: $text;
     font-weight: 600;
 
     span {
-      color: #dc2626;
+      color: $danger;
     }
   }
 
   textarea {
     box-sizing: border-box;
     width: 100%;
-    min-height: 190px;
-    padding: 0.9rem;
-    resize: vertical;
+    min-height: 150px;
+    padding: 0.8rem;
+    border: 1px solid #cbd5e1;
     border-radius: 8px;
     line-height: 1.6;
+    resize: vertical;
+
+    &:focus {
+      border-color: $primary;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
   }
 
   small {
-    color: #64748b;
+    color: $text-muted;
     text-align: right;
   }
 }
@@ -938,320 +957,105 @@ textarea[pTextarea] {
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid $border;
 }
 
-@media (max-width: 600px) {
-  .resolution-dialog {
-    .p-dialog-content {
-      padding: 1rem;
+/* =========================================================
+   RESPONSIVE — ÉCRANS INTERMÉDIAIRES
+   ========================================================= */
+
+@media (max-width: 1200px) {
+  .tickets-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    > input {
+      grid-column: 1 / -1;
     }
   }
 
-  .resolution-footer {
-    flex-direction: column-reverse;
+  .tickets-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
 
-    button {
+@media (max-width: 900px) {
+  .tickets-page {
+    padding: 1rem;
+  }
+
+  .ticket-form-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ticket-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — TABLETTES ET TÉLÉPHONES
+   ========================================================= */
+
+@media (max-width: 600px) {
+  .tickets-page {
+    padding: 0.65rem;
+  }
+
+  .tickets-header {
+    align-items: stretch;
+    flex-direction: column;
+
+    h1 {
+      font-size: 1.3rem;
+    }
+
+    > button,
+    > p-button {
       width: 100%;
     }
   }
-}
 
-
-
-/* Conteneur de toutes les photos */
-.photos-preview {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 1.25rem;
-  width: 100%;
-  margin: 0.75rem 0 1rem;
-  align-items: start;
-}
-
-/* Carte individuelle */
-.photo-preview {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  box-shadow: 0 3px 8px rgb(15 23 42 / 10%);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.photo-preview:hover {
-  box-shadow: 0 6px 16px rgb(15 23 42 / 16%);
-  transform: translateY(-2px);
-}
-
-/* Zone d'affichage de la photo */
-.photo-preview__image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 190px;
-  padding: 0.35rem;
-  overflow: hidden;
-  background: #f1f5f9;
-}
-
-/* Photo entière, sans découpage ni déformation */
-.photo-preview__image img,
-img.photo-preview__image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  object-fit: contain;
-  object-position: center;
-  background: #f1f5f9;
-}
-
-/* Informations sous la photo */
-.photo-preview__info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  min-width: 0;
-  padding: 0.75rem;
-  padding-right: 0.75rem;
-  overflow-wrap: anywhere;
-  border-top: 1px solid #e2e8f0;
-}
-
-.photo-preview__info small,
-.photo-new-label {
-  color: #475569;
-  font-size: 0.8rem;
-  line-height: 1.4;
-}
-
-/* Bouton de suppression */
-.photo-remove-button {
-  position: absolute;
-  top: 0.5rem;
-  right: 0.5rem;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  background: #ffffff !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgb(15 23 42 / 20%);
-}
-
-/* Zone d'ajout séparée des photos */
-.photos-upload-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.75rem;
-  width: 100%;
-  margin-top: 1rem;
-  padding: 1.25rem;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-}
-
-.photos-upload-zone > label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #1d4ed8;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.photos-upload-zone input[type="file"] {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-}
-
-.photos-upload-zone .field-hint {
-  color: #64748b;
-  font-size: 0.8rem;
-  line-height: 1.5;
-}
-
-/* Affichage sur téléphone */
-@media (max-width: 480px) {
-  .photos-preview {
+  .tickets-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem;
+    gap: 0.5rem;
   }
 
-  .photo-preview__image {
-    height: 145px;
+  .ticket-stat {
+    gap: 0.45rem;
+    padding: 0.65rem 0.5rem;
   }
 
-  .photos-upload-zone {
-    padding: 0.85rem;
-  }
-}
-
-
-
-/* =========================================================
-   FORMULAIRE TICKET — VERSION COMPACTE
-   ========================================================= */
-
-/* Réduire la largeur globale des formulaires */
-:host ::ng-deep .ticket-form-dialog {
-  width: min(680px, 94vw) !important;
-  max-width: 94vw;
-}
-
-/* Réduire les espacements dans le formulaire */
-.ticket-form-grid {
-  gap: 0.55rem 0.8rem;
-}
-
-.field {
-  gap: 0.3rem;
-  margin-bottom: 0.4rem;
-
-  > label:not(.checkbox-label) {
-    font-size: 0.8rem;
+  .ticket-stat-icon {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
   }
 
-  > input[type='file'] {
-    padding: 0.45rem;
-    font-size: 0.78rem;
-  }
-}
+  .ticket-stat-content {
+    span {
+      font-size: 0.68rem;
+    }
 
-/* Champs de saisie plus petits */
-.form-control {
-  min-height: 2.35rem;
-  padding: 0.45rem 0.6rem;
-  font-size: 0.83rem;
-  border-radius: 7px;
-}
-
-/* Réduire les composants PrimeNG */
-:host ::ng-deep {
-  .p-dialog .p-dialog-header {
-    padding: 0.8rem 1rem;
-  }
-
-  .p-dialog .p-dialog-title {
-    font-size: 0.98rem;
-  }
-
-  .p-dialog .p-dialog-content {
-    padding: 0.8rem 1rem 1rem;
-  }
-
-  .p-inputtext,
-  .p-inputnumber-input,
-  textarea[pTextarea] {
-    padding: 0.45rem 0.6rem;
-    font-size: 0.82rem;
-  }
-
-  .p-select {
-    min-height: 2.35rem;
-    font-size: 0.82rem;
-  }
-
-  .p-select-label {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-  }
-
-  .p-button {
-    font-size: 0.8rem;
-  }
-}
-
-/* Description moins haute */
-textarea[pTextarea] {
-  min-height: 4rem;
-}
-
-/* =========================================================
-   PHOTOS — CARTES PLUS PETITES
-   ========================================================= */
-
-.photos-preview {
-  grid-template-columns: repeat(auto-fill, minmax(125px, 140px));
-  gap: 0.65rem;
-  margin: 0.4rem 0 0.65rem;
-}
-
-.photo-preview {
-  border-radius: 9px;
-
-  a.photo-preview__image {
-    height: 115px;
-    padding: 0.25rem;
-  }
-
-  img,
-  img.photo-preview__image {
-    height: 115px;
-    padding: 0.25rem;
-  }
-
-  .photo-preview__info {
-    gap: 0.2rem;
-    padding: 0.45rem;
-
-    small {
-      font-size: 0.7rem;
+    strong {
+      font-size: 1.15rem;
     }
   }
 
-  .photo-new-label {
-    padding: 0.35rem 0.45rem 0.45rem;
-    font-size: 0.7rem;
-  }
+  .tickets-filters {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.75rem;
 
-  .photo-remove-button {
-    top: 0.3rem;
-    right: 0.3rem;
-    width: 1.8rem;
-    height: 1.8rem;
-  }
-}
+    > input {
+      grid-column: auto;
+    }
 
-/* Zone d'ajout moins encombrante */
-.photos-upload-zone {
-  gap: 0.5rem;
-  margin-top: 0.3rem;
-  padding: 0.75rem;
-
-  > label {
-    font-size: 0.82rem;
-  }
-
-  input[type='file'] {
-    padding: 0.4rem;
-    font-size: 0.76rem;
-  }
-
-  .field-hint {
-    font-size: 0.73rem;
-  }
-}
-
-/* Adaptation aux petits écrans */
-@media (max-width: 600px) {
-  :host ::ng-deep .ticket-form-dialog {
-    width: 95vw !important;
-    max-width: 95vw;
+    > button,
+    > p-button {
+      width: 100%;
+      justify-content: center;
+    }
   }
 
   .ticket-form-grid {
@@ -1259,12 +1063,58 @@ textarea[pTextarea] {
     gap: 0.2rem;
   }
 
+  .ticket-form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
   .field-full {
     grid-column: auto;
   }
 
+  .ticket-detail-header {
+    flex-direction: column;
+  }
+
+  .ticket-detail-tags {
+    justify-content: flex-start;
+  }
+
+  .ticket-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+  }
+
+  .ticket-detail-actions,
+  .workflow-buttons {
+    flex-direction: column;
+
+    button,
+    p-button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .dialog-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+
+    > button,
+    > p-button {
+      width: 100%;
+      margin: 0 !important;
+    }
+
+    > button + button {
+      margin-left: 0 !important;
+    }
+  }
+
   .photos-preview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   .photo-preview {
@@ -1274,4 +1124,43 @@ textarea[pTextarea] {
       height: 125px;
     }
   }
+
+  .photos-upload-zone {
+    padding: 0.65rem;
+  }
+
+  .resolution-dialog {
+    .p-dialog-content {
+      padding: 1rem;
+    }
+  }
+
+  .resolution-footer {
+    flex-direction: column-reverse;
+
+    button,
+    p-button {
+      width: 100%;
+    }
+  }
+
+  :host ::ng-deep {
+    .p-dialog .p-dialog-header {
+      padding: 0.8rem 0.9rem;
+    }
+
+    .p-dialog .p-dialog-content {
+      padding: 0.8rem 0.9rem 0.9rem;
+    }
+  }
+
+  :host ::ng-deep .ticket-creation-dialog,
+  :host ::ng-deep .ticket-form-dialog {
+    width: 96vw !important;
+    max-width: 96vw;
+  }
+}
+
+.ticket-form-row .field-cout {
+  max-width: 100px;
 }

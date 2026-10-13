@@ -1,244 +1,311 @@
-<!-- =========================================================
-     PAGE : DEMANDES DE VISITE
-     ========================================================= -->
+<p-toast></p-toast>
 
-<div class="card p-3 md:p-4 demandes-visite">
+<p-confirmDialog
+  [style]="{ width: '30rem' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
 
-  <!-- =======================================================
-       EN-TÊTE
-       ======================================================= -->
+<div class="demandes-visite">
 
-  <div class="page-header mb-4">
-
-    <div>
-      <h2 class="m-0">Gestion des Demandes de Visite</h2>
+  <!-- EN-TÊTE -->
+  <div class="page-header">
+    <div class="page-heading">
+      <h2>Gestion des demandes de visite</h2>
+      <p>Consultez et gérez les demandes de visite des prospects.</p>
     </div>
 
     <p-button
       class="btn-new"
-      label="Nouvelle Demande"
+      label="Nouvelle demande"
       icon="pi pi-plus"
       (onClick)="ouvrirModalCreation()">
     </p-button>
+  </div>
+
+  <!-- CARTES DE SYNTHÈSE -->
+  <div class="summary-grid">
+
+    <div class="summary-card summary-card--total">
+      <div class="summary-card__icon">
+        <i class="pi pi-calendar"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Total des demandes</span>
+        <strong class="summary-card__value">
+          {{ nombreTotalDemandes }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card--pending">
+      <div class="summary-card__icon">
+        <i class="pi pi-clock"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">En attente</span>
+        <strong class="summary-card__value">
+          {{ nombreDemandesEnAttente }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card--confirmed">
+      <div class="summary-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Confirmées</span>
+        <strong class="summary-card__value">
+          {{ nombreDemandesConfirmees }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card--completed">
+      <div class="summary-card__icon">
+        <i class="pi pi-calendar-plus"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Effectuées</span>
+        <strong class="summary-card__value">
+          {{ nombreDemandesEffectuees }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card summary-card--cancelled">
+      <div class="summary-card__icon">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Annulées</span>
+        <strong class="summary-card__value">
+          {{ nombreDemandesAnnulees }}
+        </strong>
+      </div>
+    </div>
 
   </div>
 
+  <!-- TABLEAU ET FILTRES -->
+  <section class="demande-panel">
 
-  <!-- =======================================================
-       TABLEAU
-       ======================================================= -->
+    <div class="panel-header">
+      <div>
+        <h3>Liste des demandes</h3>
+        <p>Recherchez une demande ou filtrez par statut.</p>
+      </div>
+    </div>
 
-  <div class="table-responsive">
+    <div class="demandes-filters">
 
-    <p-table
-      [value]="demandes"
-      [paginator]="true"
-      [rows]="10"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
-      styleClass="p-datatable-striped table-responsive-stack">
+      <div class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          pInputText
+          type="text"
+          [(ngModel)]="recherche"
+          placeholder="Prospect, téléphone, bien, unité..."
+          aria-label="Rechercher une demande">
+      </div>
 
-      <ng-template pTemplate="header">
+      <select
+        class="filter-select"
+        [(ngModel)]="filtreStatut"
+        aria-label="Filtrer par statut">
 
-        <tr>
+        <option [ngValue]="null">Tous les statuts</option>
 
-          <th>Date souhaitée</th>
+        <option
+          *ngFor="let statut of statutsDisponibles"
+          [ngValue]="statut.value">
+          {{ statut.label }}
+        </option>
+      </select>
 
-          <th>Prospect</th>
+      <p-button
+        label="Actualiser"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="chargementEnCours"
+        (onClick)="chargerDemandes()">
+      </p-button>
 
-          <th>Téléphone</th>
+      <p-button
+        label="Réinitialiser"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [text]="true"
+        (onClick)="reinitialiserFiltres()">
+      </p-button>
 
-          <th>Bien / Unité</th>
+    </div>
 
-          <th>Agent assigné</th>
+    <div class="table-responsive">
 
-          <th>Statut</th>
+      <p-table
+        [value]="demandesFiltrees"
+        [loading]="chargementEnCours"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} à {last} sur {totalRecords}"
+        [rowHover]="true"
+        dataKey="id"
+        responsiveLayout="scroll"
+        styleClass="p-datatable-striped demandes-table">
 
-          <th class="actions-header">
-            Actions
-          </th>
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Date souhaitée</th>
+            <th>Prospect</th>
+            <th>Téléphone</th>
+            <th>Bien / unité</th>
+            <th>Agent assigné</th>
+            <th>Statut</th>
+            <th class="actions-header">Actions</th>
+          </tr>
+        </ng-template>
 
-        </tr>
+        <ng-template pTemplate="body" let-demande>
+          <tr>
 
-      </ng-template>
-
-
-      <ng-template pTemplate="body" let-demande>
-
-        <tr>
-
-          <!-- DATE -->
-          <td data-label="Date souhaitée">
-            {{ demande.dateSouhaitee | date:'dd/MM/yyyy HH:mm' }}
-          </td>
-
-
-          <!-- PROSPECT -->
-          <td data-label="Prospect">
-            {{ demande.nomProspect }}
-          </td>
-
-
-          <!-- TÉLÉPHONE -->
-          <td data-label="Téléphone">
-            {{ demande.telephoneProspect }}
-          </td>
-
-
-          <!-- BIEN / UNITÉ -->
-          <td data-label="Bien / Unité">
-
-            <div class="bien-unite-cell">
-
-              <span class="bien-name">
-                {{ demande.bien?.nom 
-                  ?? demande.uniteLocative?.bienReference
-                  ?? 'N/A-' }} -
+            <td data-label="Date souhaitée">
+              <span class="date-value">
+                {{ demande.dateSouhaitee | date:'dd/MM/yyyy' }}
               </span>
+              <span class="date-time">
+                {{ demande.dateSouhaitee | date:'HH:mm' }}
+              </span>
+            </td>
 
+            <td data-label="Prospect">
+              <span class="primary-value">
+                {{ demande.nomProspect || 'N/A' }}
+              </span>
+            </td>
+
+            <td data-label="Téléphone">
+              {{ demande.telephoneProspect || 'N/A' }}
+            </td>
+
+            <td data-label="Bien / unité">
+              <div class="property-cell">
+                <span class="property-name">
+                  {{
+                    demande.bien?.nom
+                    ?? demande.uniteLocative?.bienReference
+                    ?? 'Bien non renseigné'
+                  }}
+                </span>
+                <span class="unit-reference">
+                  {{ demande.uniteLocative?.reference ?? 'Unité N/A' }}
+                </span>
+              </div>
+            </td>
+
+            <td data-label="Agent assigné">
+              <ng-container *ngIf="demande.agent; else aucunAgent">
+                {{ demande.agent.prenom }} {{ demande.agent.nom }}
+              </ng-container>
+              <ng-template #aucunAgent>
+                <span class="text-muted">Aucun agent</span>
+              </ng-template>
+            </td>
+
+            <td data-label="Statut">
               <span
-                class="unite-name"
-                *ngIf="demande.uniteLocative?.reference">
-                {{ demande.uniteLocative.reference }}
+                class="statut-badge"
+                [ngClass]="getStatutBadgeClass(demande.statut)">
+                {{ getStatutLibelle(demande.statut) }}
               </span>
+            </td>
 
-            </div>
+            <td data-label="Actions" class="actions-cell">
+              <div class="actions-group">
 
-          </td>
+                <p-button
+                  icon="pi pi-pencil"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="info"
+                  pTooltip="Modifier"
+                  tooltipPosition="top"
+                  (onClick)="ouvrirModalModification(demande)">
+                </p-button>
 
+                <p-button
+                  *ngIf="demande.statut === statutsDisponibles[0].value"
+                  icon="pi pi-check"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="success"
+                  pTooltip="Confirmer"
+                  tooltipPosition="top"
+                  (onClick)="changerStatut(
+                    demande,
+                    statutsDisponibles[1].value
+                  )">
+                </p-button>
 
-          <!-- AGENT -->
-          <td data-label="Agent assigné">
+                <p-button
+                  *ngIf="
+                    demande.statut === statutsDisponibles[0].value ||
+                    demande.statut === statutsDisponibles[1].value
+                  "
+                  icon="pi pi-times"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="warn"
+                  pTooltip="Annuler la demande"
+                  tooltipPosition="top"
+                  (onClick)="changerStatut(
+                    demande,
+                    statutsDisponibles[2].value
+                  )">
+                </p-button>
 
-            <ng-container *ngIf="demande.agent; else aucunAgent">
+                <p-button
+                  icon="pi pi-trash"
+                  [rounded]="true"
+                  [text]="true"
+                  severity="danger"
+                  pTooltip="Supprimer"
+                  tooltipPosition="top"
+                  (onClick)="supprimerDemande(demande.id)">
+                </p-button>
 
-              {{ demande.agent.prenom }}
-              {{ demande.agent.nom }}
+              </div>
+            </td>
 
-            </ng-container>
+          </tr>
+        </ng-template>
 
-            <ng-template #aucunAgent>
-              <span class="text-muted">
-                Aucun
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="7" class="empty-message">
+              <i class="pi pi-inbox"></i>
+              <span>
+                {{
+                  recherche || filtreStatut !== null
+                    ? 'Aucune demande ne correspond aux critères de recherche.'
+                    : 'Aucune demande de visite trouvée.'
+                }}
               </span>
-            </ng-template>
+            </td>
+          </tr>
+        </ng-template>
 
-          </td>
+      </p-table>
 
-
-          <!-- STATUT -->
-          <td data-label="Statut">
-
-            <span
-              class="statut-badge"
-              [ngClass]="getStatutBadgeClass(demande.statut)">
-
-              {{ getStatutLibelle(demande.statut) }}
-
-            </span>
-
-          </td>
-
-
-          <!-- ACTIONS -->
-          <td
-            data-label="Actions"
-            class="actions-cell">
-
-            <!-- MODIFIER -->
-            <p-button
-              icon="pi pi-pencil"
-              [text]="true"
-              severity="info"
-              pTooltip="Modifier"
-              tooltipPosition="top"
-              (onClick)="ouvrirModalModification(demande)">
-            </p-button>
-
-
-            <!-- CONFIRMER -->
-            <p-button
-              *ngIf="demande.statut === statutsDisponibles[0].value"
-              icon="pi pi-check"
-              [text]="true"
-              severity="success"
-              pTooltip="Confirmer"
-              tooltipPosition="top"
-              (onClick)="
-                changerStatut(
-                  demande,
-                  statutsDisponibles[1].value
-                )
-              ">
-            </p-button>
-
-
-            <!-- ANNULER -->
-            <p-button
-              *ngIf="demande.statut === statutsDisponibles[0].value ||
-                     demande.statut === statutsDisponibles[1].value"
-              icon="pi pi-times"
-              [text]="true"
-              severity="warn"
-              pTooltip="Annuler"
-              tooltipPosition="top"
-              (onClick)="
-                changerStatut(
-                  demande,
-                  statutsDisponibles[2].value
-                )
-              ">
-            </p-button>
-
-
-            <!-- SUPPRIMER -->
-            <p-button
-              icon="pi pi-trash"
-              [text]="true"
-              severity="danger"
-              pTooltip="Supprimer"
-              tooltipPosition="top"
-              (onClick)="supprimerDemande(demande.id)">
-            </p-button>
-
-          </td>
-
-        </tr>
-
-      </ng-template>
-
-
-      <!-- =====================================================
-           ÉTAT VIDE
-           ===================================================== -->
-
-      <ng-template pTemplate="emptymessage">
-
-        <tr>
-
-          <td
-            colspan="7"
-            class="empty-message">
-
-            Aucune demande de visite trouvée.
-
-          </td>
-
-        </tr>
-
-      </ng-template>
-
-    </p-table>
-
-  </div>
+    </div>
+  </section>
 
 </div>
 
-
-<!-- =========================================================
-     MODAL DEMANDE DE VISITE
-     ========================================================= -->
-
+<!-- MODALE -->
 <p-dialog
   [(visible)]="displayModal"
   [modal]="true"
@@ -249,183 +316,115 @@
   [closeOnEscape]="true"
   [dismissableMask]="false"
   appendTo="body"
-
-  [style]="{
-    width: '700px',
-    maxWidth: 'calc(100vw - 2rem)'
-  }"
-
-  [breakpoints]="{
-    '960px': '80vw',
-    '640px': '95vw'
-  }"
-
-  [header]="
-    isEditMode
-      ? 'Modifier la Demande de Visite'
-      : 'Nouvelle Demande de Visite'
-  "
-
+  [style]="{ width: '700px', maxWidth: 'calc(100vw - 2rem)' }"
+  [breakpoints]="{ '960px': '80vw', '640px': '95vw' }"
+  [header]="isEditMode
+    ? 'Modifier la demande de visite'
+    : 'Nouvelle demande de visite'"
   styleClass="demande-visite-dialog"
-
-  (onHide)="fermerModal()"
->
-
-
-  <!-- =======================================================
-       CONTENU
-       ======================================================= -->
+  (onHide)="fermerModal()">
 
   <ng-template pTemplate="content">
 
     <div class="demande-form">
 
-      <!-- BIEN IMMOBILIER -->
       <div class="form-field">
-
-        <label for="bienId">
-          Bien immobilier
-        </label>
-
+        <label for="bienId">Bien immobilier</label>
         <select
           id="bienId"
           class="form-control"
           [(ngModel)]="nouvelleDemande.bienId"
-          (ngModelChange)="onBienChange($event)"
-        >
+          (ngModelChange)="onBienChange($event)">
 
-          <option [ngValue]="undefined">
-            Sélectionner un bien
-          </option>
+          <option [ngValue]="undefined">Sélectionner un bien</option>
 
           <option
             *ngFor="let bien of biensDisponibles"
-            [ngValue]="bien.id"
-          >
+            [ngValue]="bien.id">
             {{ bien.reference }} - {{ bien.nom }}
           </option>
-
         </select>
-
       </div>
 
-
-      <!-- UNITÉ LOCATIVE -->
       <div class="form-field">
-
         <label for="uniteLocativeId">
-
-          Unité locative
-
-          <span class="required">*</span>
-
+          Unité locative <span class="required">*</span>
         </label>
 
         <div class="select-with-loading">
-
           <select
             id="uniteLocativeId"
             class="form-control"
             [(ngModel)]="nouvelleDemande.uniteLocativeId"
             (ngModelChange)="onUniteChange($event)"
-            [disabled]="
-              !nouvelleDemande.bienId ||
-              chargementUnites
-            "
-          >
+            [disabled]="!nouvelleDemande.bienId || chargementUnites">
 
             <option value="">
               {{
                 chargementUnites
-                  ? 'Chargement...'
+                  ? 'Chargement des unités...'
                   : 'Sélectionner une unité'
               }}
             </option>
 
             <option
               *ngFor="let unite of unitesDisponibles"
-              [value]="unite.id"
-            >
+              [value]="unite.id">
               {{ unite.reference }}
             </option>
-
           </select>
 
           <i
             *ngIf="chargementUnites"
             class="pi pi-spin pi-spinner loading-icon">
           </i>
-
         </div>
 
+        <small class="field-error" *ngIf="
+          !chargementUnites &&
+          nouvelleDemande.bienId &&
+          unitesDisponibles.length === 0
+        ">
+          Aucune unité disponible pour ce bien.
+        </small>
       </div>
 
-
-      <!-- AGENT -->
       <div class="form-field">
-
-        <label for="agentId">
-          Agent assigné
-        </label>
-
+        <label for="agentId">Agent assigné</label>
         <select
           id="agentId"
           class="form-control"
-          [(ngModel)]="nouvelleDemande.agentId"
-        >
+          [(ngModel)]="nouvelleDemande.agentId">
 
-          <option [ngValue]="null">
-            Aucun agent
-          </option>
+          <option [ngValue]="null">Aucun agent</option>
 
           <option
             *ngFor="let agent of agentsAffiches"
-            [ngValue]="agent.id"
-          >
+            [ngValue]="agent.id">
             {{ agent.prenom }} {{ agent.nom }}
           </option>
-
         </select>
-
       </div>
 
-
-      <!-- STATUT -->
       <div class="form-field">
-
-        <label for="statut">
-          Statut
-        </label>
-
+        <label for="statut">Statut</label>
         <select
           id="statut"
           class="form-control"
-          [(ngModel)]="nouvelleDemande.statut"
-        >
+          [(ngModel)]="nouvelleDemande.statut">
 
           <option
             *ngFor="let statut of statutsDisponibles"
-            [ngValue]="statut.value"
-          >
+            [ngValue]="statut.value">
             {{ statut.label }}
           </option>
-
         </select>
-
       </div>
 
-
-      <!-- NOM DU PROSPECT -->
       <div class="form-field">
-
         <label for="nomProspect">
-
-          Nom du prospect
-
-          <span class="required">*</span>
-
+          Nom du prospect <span class="required">*</span>
         </label>
-
         <input
           id="nomProspect"
           type="text"
@@ -433,22 +432,13 @@
           class="form-control"
           [(ngModel)]="nouvelleDemande.nomProspect"
           maxlength="150"
-        />
-
+          placeholder="Nom complet du prospect">
       </div>
 
-
-      <!-- TÉLÉPHONE -->
       <div class="form-field">
-
         <label for="telephoneProspect">
-
-          Téléphone
-
-          <span class="required">*</span>
-
+          Téléphone <span class="required">*</span>
         </label>
-
         <input
           id="telephoneProspect"
           type="tel"
@@ -456,61 +446,38 @@
           class="form-control"
           [(ngModel)]="nouvelleDemande.telephoneProspect"
           maxlength="30"
-        />
-
+          placeholder="Numéro de téléphone">
       </div>
 
-
-      <!-- DATE -->
-      <div class="form-field">
-
+      <div class="form-field form-field-full">
         <label for="dateSouhaitee">
-
-          Date et heure souhaitées
-
-          <span class="required">*</span>
-
+          Date et heure souhaitées <span class="required">*</span>
         </label>
-
         <input
           id="dateSouhaitee"
           type="datetime-local"
           class="form-control"
-          [(ngModel)]="nouvelleDemande.dateSouhaitee"
-          [min]="minDateString"
-        />
-
+          [(ngModel)]="dateSouhaiteeInput"
+          [min]="minDateString">
       </div>
 
-
-      <!-- OBSERVATIONS -->
       <div class="form-field form-field-full">
-
-        <label for="observations">
-          Observations
-        </label>
-
+        <label for="observations">Observations</label>
         <textarea
           id="observations"
           class="form-control"
           [(ngModel)]="nouvelleDemande.observations"
-          rows="2"
-          maxlength="500">
+          rows="3"
+          maxlength="500"
+          placeholder="Informations complémentaires...">
         </textarea>
-
+        <small class="field-hint">500 caractères maximum.</small>
       </div>
 
     </div>
-
   </ng-template>
 
-
-  <!-- =======================================================
-       FOOTER
-       ======================================================= -->
-
   <ng-template pTemplate="footer">
-
     <div class="dialog-actions">
 
       <p-button
@@ -519,38 +486,20 @@
         icon="pi pi-times"
         [text]="true"
         severity="secondary"
+        [disabled]="enregistrementEnCours"
         (onClick)="fermerModal()">
       </p-button>
 
-
       <p-button
         type="button"
-        label="Enregistrer"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer la demande'"
         icon="pi pi-check"
-        severity="primary"
+        [loading]="enregistrementEnCours"
         [disabled]="formulaireInvalide"
         (onClick)="enregistrerDemande()">
       </p-button>
 
     </div>
-
   </ng-template>
 
 </p-dialog>
-
-
-<!-- =========================================================
-     TOAST
-     ========================================================= -->
-
-<p-toast></p-toast>
-
-
-<!-- =========================================================
-     CONFIRMATION
-     ========================================================= -->
-
-<p-confirmDialog
-  [style]="{ width: '30rem' }"
-  [breakpoints]="{ '600px': '95vw' }">
-</p-confirmDialog>

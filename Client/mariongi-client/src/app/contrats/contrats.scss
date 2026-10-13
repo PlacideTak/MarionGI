@@ -1,155 +1,407 @@
-/* =========================================================
-   FORMULAIRE CONTRAT
-   ========================================================= */
+:host {
+  display: block;
+  color: #334155;
+}
 
+.contrats-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  min-width: 0;
+}
+
+/* En-tête de page */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-title h1 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.page-title p {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.92rem;
+}
+
+/* Panneau principal */
+.contrats-panel {
+  min-width: 0;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+}
+
+/* Recherche et filtres */
+.contrats-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 220px) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.search-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+}
+
+.filter-select {
+  width: 100%;
+  min-height: 42px;
+}
+
+/* Tableau */
+.contrats-table {
+  width: 100%;
+}
+
+.reference-value {
+  color: #1d4ed8;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.property-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 130px;
+}
+
+.property-cell strong {
+  color: #334155;
+  font-weight: 600;
+}
+
+.property-cell small {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.period-cell,
+.amount-cell {
+  white-space: nowrap;
+}
+
+.period-separator {
+  margin: 0 0.25rem;
+  color: #94a3b8;
+}
+
+.col-actions {
+  min-width: 100px;
+  text-align: center;
+}
+
+.actions-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.empty-message {
+  padding: 2rem 1rem !important;
+  color: #64748b;
+  text-align: center;
+}
+
+/* Formulaire de la modale */
 .contrat-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-top: 0.25rem;
+}
 
-  .form-row {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.contrat-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 1.25rem;
+  row-gap: 1rem;
+}
+
+.contrat-form .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.contrat-form label {
+  color: #334155;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.contrat-form input[pInputText] {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.contrat-form .contrat-select,
+.contrat-form .contrat-select.p-select {
+  width: 100%;
+  min-height: 42px;
+}
+
+.contrat-form .contrat-select .p-select-label {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.92rem;
+}
+
+.contrat-form .contrat-select .p-select-dropdown {
+  width: 2.5rem;
+}
+
+.contrat-form p-inputNumber,
+.contrat-form p-inputNumber .p-inputnumber {
+  display: block;
+  width: 100%;
+}
+
+.contrat-form p-inputNumber input {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+
+.contrat-form .form-error,
+.contrat-form .p-error {
+  display: block;
+  margin-top: 0.1rem;
+  color: #dc2626 !important;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.contrat-form .text-color-secondary {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* Pied de la modale */
+.contrat-dialog .p-dialog-content {
+  padding-top: 0.75rem;
+}
+
+.contrat-dialog .p-dialog-footer {
+  padding-top: 0.75rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* Tablettes */
+@media (max-width: 960px) {
+  .contrats-page {
+    padding: 1rem;
+  }
+
+  .contrats-filters {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* Mobiles */
+@media (max-width: 640px) {
+  .contrats-page {
+    padding: 0.5rem;
     gap: 1rem;
-    margin-bottom: 1rem;
   }
 
-  .field {
-    display: flex;
+  .page-header {
+    align-items: stretch;
     flex-direction: column;
-    gap: 0.35rem;
   }
 
-  label {
-    font-weight: 600;
-    color: #334155;
+  .page-title h1 {
+    font-size: 1.3rem;
   }
 
+  .contrats-panel {
+    padding: 0.85rem;
+    border-radius: 8px;
+  }
 
-  /* =======================================================
-     LISTES DÉROULANTES PRIME NG
-     ======================================================= */
+  .contrats-filters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
 
-  .contrat-select {
+  .contrats-filters > * {
     width: 100%;
-    min-height: 44px;
   }
 
-  .contrat-select.p-select {
-    width: 100%;
-    min-height: 44px;
+  .contrat-form {
+    gap: 0.9rem;
   }
 
-  .contrat-select .p-select-label {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    padding: 0.65rem 0.75rem;
-    font-size: 0.95rem;
+  .contrat-form .form-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.9rem;
   }
 
-  .contrat-select .p-select-dropdown {
-    width: 2.75rem;
-    min-height: 44px;
+  .dialog-actions {
+    justify-content: stretch;
+  }
+
+  .dialog-actions p-button {
+    flex: 1 1 auto;
+  }
+}
+
+
+/* ============================
+   Cartes de synthèse
+   ============================ */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.25rem 0;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1.1rem;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--surface-border, #e2e8f0);
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgb(15 23 42 / 4%);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgb(15 23 42 / 8%);
+  }
+
+  &__icon {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    font-size: 1.25rem;
   }
 
-
-  /* =======================================================
-     CHAMPS INPUT
-     ======================================================= */
-
-  input[pInputText] {
-    min-height: 44px;
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
   }
 
-
-  /* =======================================================
-     INPUT NUMBER
-     ======================================================= */
-
-  p-inputNumber {
-    width: 100%;
-  }
-
-  p-inputNumber .p-inputnumber {
-    width: 100%;
-  }
-
-  p-inputNumber input {
-    min-height: 44px;
-    width: 100%;
-  }
-
-
-  /* =======================================================
-     MESSAGES D'ERREUR
-     ======================================================= */
-
-  .form-error {
-    display: block;
-    margin-top: 0.15rem;
-    color: #dc2626 !important;
+  &__label {
+    color: var(--text-color-secondary, #64748b);
     font-size: 0.82rem;
-    font-weight: 500;
+    line-height: 1.3;
   }
 
-  .p-error {
-    color: #dc2626 !important;
+  &__value {
+    color: var(--text-color, #1e293b);
+    font-size: 1.65rem;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
-
-  /* =======================================================
-     TEXTE SECONDAIRE
-     ======================================================= */
-
-  .text-color-secondary {
-    font-size: 0.8rem;
-    color: #64748b;
+  &--total &__icon {
+    color: #2563eb;
+    background: #eff6ff;
   }
 
+  &--active &__icon {
+    color: #15803d;
+    background: #f0fdf4;
+  }
+
+  &--pending &__icon {
+    color: #b45309;
+    background: #fffbeb;
+  }
+
+  &--expired &__icon {
+    color: #c2410c;
+    background: #fff7ed;
+  }
+
+  &--terminated &__icon {
+    color: #b91c1c;
+    background: #fef2f2;
+  }
 }
 
-
-/* =========================================================
-   DIALOGUE CONTRAT
-   ========================================================= */
-
-.contrat-dialog {
-
-  .p-dialog-content {
-    padding-top: 0.5rem;
+/* Tablettes */
+@media (max-width: 1100px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .p-dialog-footer {
-    padding-top: 0.75rem;
-  }
-
 }
 
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
+/* Mobiles */
 @media (max-width: 640px) {
-
-  .contrat-form {
-
-    .form-row {
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-    }
-
-    .contrat-select,
-    .contrat-select.p-select {
-      min-height: 46px;
-    }
-
-    .contrat-select .p-select-label {
-      min-height: 46px;
-      font-size: 0.95rem;
-    }
-
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin: 1rem 0;
   }
 
+  .summary-card {
+    gap: 0.6rem;
+    padding: 0.8rem;
+
+    &__icon {
+      width: 38px;
+      height: 38px;
+      font-size: 1rem;
+    }
+
+    &__label {
+      font-size: 0.75rem;
+    }
+
+    &__value {
+      font-size: 1.35rem;
+    }
+  }
+}
+
+@media (max-width: 380px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

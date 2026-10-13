@@ -1,256 +1,230 @@
-<div class="card p-3 md:p-4">
+<div class="contrats-page">
 
-  <!-- =========================================================
-       EN-TÊTE
-       ========================================================= -->
-
-  <div class="page-header mb-4">
-
-    <div>
-      <h2 class="m-0">Gestion des Contrats</h2>
+  <!-- En-tête -->
+  <div class="page-header">
+    <div class="page-title">
+      <h1>Gestion des contrats</h1>
+      <p>Gérez les baux, les locataires et les conditions de location.</p>
     </div>
 
     <p-button
       *ngIf="canManageContrat"
-      class="btn-new"
-      label="Nouveau Contrat"
+      label="Nouveau contrat"
       icon="pi pi-plus"
       (onClick)="openNew()">
     </p-button>
-
   </div>
 
+  <!-- Résumé des contrats -->
+<div class="summary-grid">
 
-  <!-- =========================================================
-       TABLEAU DES CONTRATS
-       ========================================================= -->
+  <!-- Total -->
+  <div class="summary-card summary-card--total">
+    <div class="summary-card__icon">
+      <i class="pi pi-file"></i>
+    </div>
+    <div class="summary-card__content">
+      <span class="summary-card__label">Total des contrats</span>
+      <strong class="summary-card__value">
+        {{ nombreTotalContrats }}
+      </strong>
+    </div>
+  </div>
 
-  <div class="table-responsive">
+  <!-- Actifs -->
+  <div class="summary-card summary-card--active">
+    <div class="summary-card__icon">
+      <i class="pi pi-check-circle"></i>
+    </div>
+    <div class="summary-card__content">
+      <span class="summary-card__label">Contrats actifs</span>
+      <strong class="summary-card__value">
+        {{ nombreContratsActifs }}
+      </strong>
+    </div>
+  </div>
 
+  <!-- En attente -->
+  <div class="summary-card summary-card--pending">
+    <div class="summary-card__icon">
+      <i class="pi pi-clock"></i>
+    </div>
+    <div class="summary-card__content">
+      <span class="summary-card__label">En attente</span>
+      <strong class="summary-card__value">
+        {{ nombreContratsEnAttente }}
+      </strong>
+    </div>
+  </div>
+
+  <!-- Expirés -->
+  <div class="summary-card summary-card--expired">
+    <div class="summary-card__icon">
+      <i class="pi pi-calendar-times"></i>
+    </div>
+    <div class="summary-card__content">
+      <span class="summary-card__label">Contrats expirés</span>
+      <strong class="summary-card__value">
+        {{ nombreContratsExpires }}
+      </strong>
+    </div>
+  </div>
+
+  <!-- Résiliés -->
+  <div class="summary-card summary-card--terminated">
+    <div class="summary-card__icon">
+      <i class="pi pi-ban"></i>
+    </div>
+    <div class="summary-card__content">
+      <span class="summary-card__label">Contrats résiliés</span>
+      <strong class="summary-card__value">
+        {{ nombreContratsResilies }}
+      </strong>
+    </div>
+  </div>
+
+</div>
+
+  <!-- Tableau -->
+  <section class="contrats-panel">
+
+    <!-- Recherche et filtres -->
+    <div class="contrats-filters">
+
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="recherche"
+        placeholder="Rechercher un contrat, une unité, un locataire..."
+        aria-label="Rechercher un contrat"
+        class="search-input">
+
+      <p-select
+        [options]="statutOptions"
+        [(ngModel)]="filtreStatut"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Tous les statuts"
+        [showClear]="true"
+        styleClass="filter-select">
+      </p-select>
+
+      <p-button
+        label="Actualiser"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="chargerContrats()">
+      </p-button>
+
+      <p-button
+        label="Réinitialiser"
+        icon="pi pi-filter-slash"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="reinitialiserFiltres()">
+      </p-button>
+
+    </div>
+
+    <!-- Tableau des contrats -->
     <p-table
-      [value]="contrats"
+      [value]="contratsFiltres"
+      [loading]="loading"
+      dataKey="id"
       [paginator]="true"
       [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
       [showCurrentPageReport]="true"
-      currentPageReportTemplate="{first} - {last} sur {totalRecords}"
-      styleClass="p-datatable-striped table-responsive-stack">
+      currentPageReportTemplate="{first} à {last} sur {totalRecords}"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-striped contrats-table">
 
       <ng-template pTemplate="header">
-
         <tr>
-
-          <th class="hide-tablet">
-            Réf.
-          </th>
-
-          <th>
-            Unité locative
-          </th>
-
-          <th>
-            Locataire
-          </th>
-
-          <th>
-            Période
-          </th>
-
-          <th>
-            Loyer
-          </th>
-
-          <th class="hide-tablet">
-            Caution
-          </th>
-
-          <th>
-            Statut
-          </th>
-
-          <th
-            *ngIf="canManageContrat"
-            class="col-actions">
-            Actions
-          </th>
-
+          <th>Référence</th>
+          <th>Unité locative</th>
+          <th>Locataire</th>
+          <th>Période</th>
+          <th>Loyer</th>
+          <th>Caution</th>
+          <th>Statut</th>
+          <th *ngIf="canManageContrat" class="col-actions">Actions</th>
         </tr>
-
       </ng-template>
 
-
-      <ng-template
-        pTemplate="body"
-        let-contrat>
-
+      <ng-template pTemplate="body" let-contrat>
         <tr>
-
-          <!-- RÉFÉRENCE -->
-          <td
-            data-label="Réf."
-            class="hide-tablet">
-
-            <span class="font-bold">
+          <td>
+            <span class="reference-value">
               {{ contrat.reference || 'N/A' }}
             </span>
-
           </td>
 
-
-          <!-- UNITÉ LOCATIVE -->
-          <td data-label="Unité locative">
-
+          <td>
             <div class="property-cell">
+              <strong>
+                {{ contrat.uniteLocative?.reference || 'Unité non assignée' }}
+              </strong>
 
-              <span class="font-bold">
-                {{
-                  contrat.uniteLocative?.reference
-                  || 'Unité non assignée'
-                }}
-              </span>
-
-              <small
-                *ngIf="contrat.uniteLocative?.bienReference"
-                class="bien-reference">
-
-                Bien :
-                {{ contrat.uniteLocative.bienReference }}
-
+              <small *ngIf="contrat.uniteLocative?.bienReference">
+                Bien : {{ contrat.uniteLocative.bienReference }}
               </small>
 
-              <small
-                *ngIf="contrat.uniteLocative?.bienAdresse"
-                class="text-color-secondary">
-
+              <small *ngIf="contrat.uniteLocative?.bienAdresse">
                 {{ contrat.uniteLocative.bienAdresse }}
-
               </small>
-
             </div>
-
           </td>
 
-
-          <!-- LOCATAIRE -->
-          <td data-label="Locataire">
-
-            <ng-container
-              *ngIf="
-                contrat.locataire?.prenom ||
-                contrat.locataire?.nom;
-                else locataireInconnu
-              ">
-
-              {{ contrat.locataire?.prenom || '' }}
-              {{ contrat.locataire?.nom || '' }}
-
-            </ng-container>
-
-            <ng-template #locataireInconnu>
-              N/A
-            </ng-template>
-
+          <td>
+            {{
+              (
+                (contrat.locataire?.prenom || '') + ' ' +
+                (contrat.locataire?.nom || '')
+              ).trim() || 'N/A'
+            }}
           </td>
 
-
-          <!-- PÉRIODE -->
-          <td
-            data-label="Période"
-            class="nowrap">
-
-            <ng-container
-              *ngIf="
-                contrat.dateDebut &&
-                contrat.dateFin
-              ">
-
+          <td class="period-cell">
+            <ng-container *ngIf="contrat.dateDebut && contrat.dateFin; else periodeInconnue">
               {{ contrat.dateDebut | date:'dd/MM/yyyy' }}
-
-              <span class="mx-1">
-                -
-              </span>
-
+              <span class="period-separator">—</span>
               {{ contrat.dateFin | date:'dd/MM/yyyy' }}
-
             </ng-container>
 
-            <span
-              *ngIf="
-                !contrat.dateDebut ||
-                !contrat.dateFin
-              ">
-
-              N/A
-
-            </span>
-
+            <ng-template #periodeInconnue> N/A </ng-template>
           </td>
 
-
-          <!-- LOYER -->
-          <td
-            data-label="Loyer"
-            class="nowrap">
-
-            {{
-              contrat.montantLoyer != null
-                ? (contrat.montantLoyer | number:'1.0-0')
-                : 'N/A'
-            }}
-
-            <span
-              *ngIf="contrat.montantLoyer != null">
-              FCFA
-            </span>
-
+          <td class="amount-cell">
+            <ng-container *ngIf="contrat.montantLoyer != null; else loyerInconnu">
+              {{ contrat.montantLoyer | number:'1.0-0' }} FCFA
+            </ng-container>
+            <ng-template #loyerInconnu> N/A </ng-template>
           </td>
 
-
-          <!-- CAUTION -->
-          <td
-            data-label="Caution"
-            class="nowrap hide-tablet">
-
-            {{
-              contrat.montantCaution != null
-                ? (contrat.montantCaution | number:'1.0-0')
-                : 'N/A'
-            }}
-
-            <span
-              *ngIf="contrat.montantCaution != null">
-              FCFA
-            </span>
-
+          <td class="amount-cell">
+            <ng-container *ngIf="contrat.montantCaution != null; else cautionInconnue">
+              {{ contrat.montantCaution | number:'1.0-0' }} FCFA
+            </ng-container>
+            <ng-template #cautionInconnue> N/A </ng-template>
           </td>
 
-
-          <!-- STATUT -->
-          <td data-label="Statut">
-
+          <td>
             <p-tag
               [value]="getStatutLabel(contrat.statut)"
               [severity]="getSeverity(contrat.statut)">
             </p-tag>
-
           </td>
 
-
-          <!-- ACTIONS -->
-          <td
-            *ngIf="canManageContrat"
-            data-label="Actions"
-            class="col-actions">
-
+          <td *ngIf="canManageContrat" class="col-actions">
             <div class="actions-group">
-
               <p-button
                 icon="pi pi-pencil"
                 [rounded]="true"
                 [outlined]="true"
                 severity="info"
                 ariaLabel="Modifier le contrat"
-                pTooltip="Modifier le contrat"
-                tooltipPosition="top"
                 (onClick)="editContrat(contrat)">
               </p-button>
 
@@ -260,42 +234,27 @@
                 [outlined]="true"
                 severity="danger"
                 ariaLabel="Supprimer le contrat"
-                pTooltip="Supprimer le contrat"
-                tooltipPosition="top"
                 (onClick)="deleteContrat(contrat)">
               </p-button>
-
             </div>
-
           </td>
-
         </tr>
-
       </ng-template>
 
-
-      <!-- AUCUN CONTRAT -->
       <ng-template pTemplate="emptymessage">
-
         <tr>
-
           <td
             [attr.colspan]="canManageContrat ? 8 : 7"
-            class="text-center p-4">
-
-            Aucun contrat disponible.
-
+            class="empty-message">
+            Aucun contrat ne correspond aux critères de recherche.
           </td>
-
         </tr>
-
       </ng-template>
 
     </p-table>
-
-  </div>
-
+  </section>
 </div>
+
 
 
 <!-- =========================================================

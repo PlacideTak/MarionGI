@@ -1452,3 +1452,64 @@ export interface TicketIncidentFilterCriteria {
   dateDebut?: string;
   dateFin?: string;
 }
+
+// DTO correspondant aux données retournées par l'API.
+export interface RegimeFiscalDto {
+  id: string;
+  code: string;
+  libelle: string;
+  description: string;
+  estActif: boolean;
+  dateCreation: string;
+}
+
+// DTO utilisé pour créer un régime fiscal.
+export interface CreerRegimeFiscalRequest  {
+  code: string;
+  libelle: string;
+  description: string;
+  estActif: boolean;
+}
+
+// DTO utilisé pour modifier un régime fiscal.
+export interface ModifierRegimeFiscalRequest
+  extends CreerRegimeFiscalRequest {}
+
+
+// ============================================================
+// PARAMÈTRE FISCAL - DTO DE RÉPONSE
+// ============================================================
+
+export interface ParametreFiscalDto {
+  id: string;
+  anneeFiscale: number;
+  codeRegle: string;
+  description: string;
+  valeur: number;
+  typeParametre: number;
+  dateDebutValidite: string;
+  dateFinValidite: string | null;
+  dateCreation: string;
+}
+
+// ============================================================
+// PARAMÈTRE FISCAL - DTO DE CRÉATION
+// ============================================================
+
+export interface CreerParametreFiscalRequest {
+  anneeFiscale: number;
+  codeRegle: string;
+  description: string;
+  valeur: number;
+  typeParametre: number;
+  dateDebutValidite: string;
+  dateFinValidite: string | null;
+}
+
+// ============================================================
+// PARAMÈTRE FISCAL - DTO DE MODIFICATION
+// ============================================================
+
+export interface ModifierParametreFiscalRequest
+  extends CreerParametreFiscalRequest {
+}

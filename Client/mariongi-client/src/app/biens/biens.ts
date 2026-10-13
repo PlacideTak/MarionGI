@@ -1137,6 +1137,44 @@ export class Biens implements OnInit {
   }
 
 
+
+  
+  // ============================================================
+  // INDICATEURS DE SYNTHÈSE
+  // ============================================================
+
+  /**
+   * Nombre total d'unités locatives associées aux biens chargés.
+   */
+  get nombreUnitesTotal(): number {
+    return this.biens.reduce(
+      (total, bien) => total + (bien.nombreUnites ?? 0),
+      0
+    );
+  }
+
+  /**
+   * Nombre de villes distinctes représentées dans la liste.
+   */
+  get nombreVilles(): number {
+    const villes = this.biens
+      .map(bien => (bien.ville ?? '').trim().toLocaleLowerCase())
+      .filter(ville => ville.length > 0);
+
+    return new Set(villes).size;
+  }
+
+  /**
+   * Nombre total de photos associées aux biens chargés.
+   */
+  get nombrePhotosTotal(): number {
+    return this.biens.reduce(
+      (total, bien) => total + (bien.photos?.length ?? 0),
+      0
+    );
+  }
+
+  
   // ============================================================
   // LIBELLÉ TYPE
   // ============================================================

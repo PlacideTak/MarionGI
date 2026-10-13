@@ -25,4 +25,7 @@ public class BienImmobilier : BaseEntity
     public List<string> Photos { get; set; } = [];
 
     public ICollection<UniteLocative> UnitesLocatives { get; set; } = [];
+
+    // Charges générales et charges de ses unités
+    public ICollection<ChargeBien> Charges { get; set; } = [];
 }

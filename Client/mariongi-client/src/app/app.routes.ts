@@ -66,6 +66,14 @@ export const routes: Routes = [
           { 
             path: 'tickets', 
             loadComponent: () => import('./tickets/tickets').then(m => m.Tickets) 
+          },
+          { 
+            path: 'regimesfiscaux', 
+            loadComponent: () => import('./regimesfiscaux/regimesfiscaux').then(m => m.RegimesFiscaux) 
+          },
+          { 
+            path: 'parametresfiscaux', 
+            loadComponent: () => import('./parametresfiscaux/parametresfiscaux').then(m => m.ParametresFiscaux) 
           }
         ]
       }

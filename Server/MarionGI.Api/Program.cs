@@ -222,6 +222,121 @@ builder.Services.AddAuthorization(options =>
 
 
     // ========================================================
+    // TRANCHES IRPP
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("TranchesIRPP.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création :
+    // - Administrateur seulement
+    options.AddPolicy("TranchesIRPP.Create", policy =>
+        policy.RequireRole(
+            "Administrateur"));
+
+    // Modification :
+    // - Administrateur seulement
+    options.AddPolicy("TranchesIRPP.Update", policy =>
+        policy.RequireRole(
+            "Administrateur"));
+
+    // Suppression :
+    // - Administrateur seulement
+    options.AddPolicy("TranchesIRPP.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur"));
+
+
+
+    // ========================================================
+    // RÉGIMES FISCAUX
+    // ========================================================
+
+    // Lecture : Administrateur et Gestionnaire
+    options.AddPolicy("RegimesFiscaux.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création : Administrateur seulement
+    options.AddPolicy("RegimesFiscaux.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // Modification : Administrateur seulement
+    options.AddPolicy("RegimesFiscaux.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // Suppression : Administrateur seulement
+    options.AddPolicy("RegimesFiscaux.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+
+    // ========================================================
+    // PARAMÈTRES FISCAUX
+    // ========================================================
+
+    // Lecture : Administrateur et Gestionnaire
+    options.AddPolicy("ParametresFiscaux.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création : Administrateur seulement
+    options.AddPolicy("ParametresFiscaux.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // Modification : Administrateur seulement
+    options.AddPolicy("ParametresFiscaux.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // Suppression : Administrateur seulement
+    options.AddPolicy("ParametresFiscaux.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+
+    // ========================================================
+    // CHARGES IMMOBILIÈRES
+    // ========================================================
+
+    // Lecture :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("Charges.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("Charges.Create", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Modification :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("Charges.Update", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Suppression :
+    // - Administrateur
+    // - Gestionnaire
+    options.AddPolicy("Charges.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+
+    // ========================================================
     // DEMANDES DE VISITE
     // ========================================================
 

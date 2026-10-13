@@ -1,0 +1,555 @@
+<p-toast
+  position="top-right"
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
+
+<p-confirmDialog
+  [style]="{ width: 'min(28rem, 95vw)' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
+
+<div class="regimes-page">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div class="page-header__content">
+      <div class="page-header__icon">
+        <i class="pi pi-wallet"></i>
+      </div>
+
+      <div>
+        <h1>Régimes fiscaux</h1>
+        <p class="page-subtitle">
+          Gestion des régimes fiscaux applicables aux biens immobiliers.
+        </p>
+      </div>
+    </div>
+
+    @if (canManageRegimesFiscaux) {
+      <button
+        pButton
+        type="button"
+        label="Nouveau régime"
+        icon="pi pi-plus"
+        class="p-button-primary"
+        (click)="openNew()">
+      </button>
+    }
+  </div>
+
+  <!-- Indicateurs -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--blue">
+        <i class="pi pi-list"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Total des régimes</span>
+        <strong>{{ regimesFiscaux.length }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Régimes actifs</span>
+        <strong>
+          {{
+            regimesFiscaux.filter(r => r.estActif).length
+          }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--gray">
+        <i class="pi pi-ban"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Régimes inactifs</span>
+        <strong>
+          {{
+            regimesFiscaux.filter(r => !r.estActif).length
+          }}
+        </strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Accès refusé -->
+  @if (!canAccessRegimesFiscaux) {
+    <div class="access-denied">
+      <i class="pi pi-lock"></i>
+      <div>
+        <h3>Accès non autorisé</h3>
+        <p>
+          Vous ne disposez pas des droits nécessaires pour consulter
+          les régimes fiscaux.
+        </p>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Liste -->
+    <section class="content-card">
+
+      <div class="content-card__header">
+        <div>
+          <h2>Liste des régimes fiscaux</h2>
+          <p>
+            Consultez et gérez les régimes fiscaux enregistrés.
+          </p>
+        </div>
+
+        <span class="results-count">
+          {{ regimesFiltres.length }}
+          résultat(s)
+        </span>
+      </div>
+
+      <!-- Recherche et filtres -->
+      <div class="filters">
+
+        <div class="filter-field filter-field--search">
+          <label for="rechercheRegime">Rechercher</label>
+          <span class="p-input-icon-left search-input">
+            <i class="pi pi-search"></i>
+            <input
+              id="rechercheRegime"
+              pInputText
+              type="text"
+              [(ngModel)]="recherche"
+              placeholder="Code, libellé ou description..."
+              autocomplete="off">
+          </span>
+        </div>
+
+        <div class="filter-field filter-field--status">
+          <label for="filtreActif">Statut</label>
+          <p-select
+            inputId="filtreActif"
+            [options]="[
+              { label: 'Tous les statuts', value: null },
+              { label: 'Actif', value: true },
+              { label: 'Inactif', value: false }
+            ]"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filtreActif"
+            (ngModelChange)="onFiltreActifChange($event)"
+            placeholder="Tous les statuts"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
+
+        <div class="filter-actions">
+          <button
+            pButton
+            type="button"
+            label="Réinitialiser"
+            icon="pi pi-filter-slash"
+            class="p-button-outlined p-button-secondary"
+            (click)="reinitialiserFiltres()">
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-container">
+        <p-table
+          [value]="regimesFiltres"
+          [loading]="loading"
+          dataKey="id"
+          responsiveLayout="scroll"
+          [rowHover]="true"
+          [paginator]="regimesFiltres.length > 10"
+          [rows]="10"
+          [rowsPerPageOptions]="[5, 10, 25, 50]"
+          currentPageReportTemplate="{first} à {last} sur {totalRecords} régimes"
+          [showCurrentPageReport]="true"
+          [tableStyle]="{ 'min-width': '48rem' }"
+          styleClass="p-datatable-sm regimes-table">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="col-code">Code</th>
+              <th>Libellé</th>
+              <th>Description</th>
+              <th class="col-status">Statut</th>
+              <th class="col-date">Date de création</th>
+              @if (canManageRegimesFiscaux) {
+                <th class="col-actions">Actions</th>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-regime>
+            <tr>
+              <td>
+                <span class="regime-code">
+                  {{ regime.code }}
+                </span>
+              </td>
+
+              <td>
+                <span class="regime-name">
+                  {{ regime.libelle }}
+                </span>
+              </td>
+
+              <td>
+                <span
+                  class="description-cell"
+                  [title]="regime.description || ''">
+                  {{ regime.description || 'Aucune description' }}
+                </span>
+              </td>
+
+              <td>
+                <p-tag
+                  [value]="getStatutLabel(regime.estActif)"
+                  [severity]="getSeverity(regime.estActif)">
+                </p-tag>
+              </td>
+
+              <td>
+                <span class="date-cell">
+                  {{
+                    regime.dateCreation
+                      ? (regime.dateCreation | date: 'dd/MM/yyyy')
+                      : '—'
+                  }}
+                </span>
+              </td>
+
+              @if (canManageRegimesFiscaux) {
+                <td>
+                  <div class="row-actions">
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary action-button"
+                      pTooltip="Modifier le régime"
+                      tooltipPosition="top"
+                      aria-label="Modifier le régime fiscal"
+                      (click)="editRegimeFiscal(regime)">
+                    </button>
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger action-button"
+                      pTooltip="Supprimer le régime"
+                      tooltipPosition="top"
+                      aria-label="Supprimer le régime fiscal"
+                      (click)="deleteRegimeFiscal(regime)">
+                    </button>
+
+                  </div>
+                </td>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td
+                [attr.colspan]="canManageRegimesFiscaux ? 6 : 5">
+                <div class="empty-state">
+                  <div class="empty-state__icon">
+                    <i class="pi pi-inbox"></i>
+                  </div>
+
+                  <h3>
+                    {{
+                      recherche || filtreActif !== null
+                        ? 'Aucun résultat'
+                        : 'Aucun régime fiscal'
+                    }}
+                  </h3>
+
+                  <p>
+                    {{
+                      recherche || filtreActif !== null
+                        ? 'Modifiez vos critères de recherche ou réinitialisez les filtres.'
+                        : 'Aucun régime fiscal n’est encore enregistré.'
+                    }}
+                  </p>
+
+                  @if (
+                    canManageRegimesFiscaux &&
+                    !recherche &&
+                    filtreActif === null
+                  ) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Créer un régime"
+                      icon="pi pi-plus"
+                      class="p-button-outlined"
+                      (click)="openNew()">
+                    </button>
+                  }
+
+                  @if (recherche || filtreActif !== null) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Effacer les filtres"
+                      icon="pi pi-filter-slash"
+                      class="p-button-text"
+                      (click)="reinitialiserFiltres()">
+                    </button>
+                  }
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td
+                [attr.colspan]="canManageRegimesFiscaux ? 6 : 5">
+                Chargement des régimes fiscaux...
+              </td>
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+
+    </section>
+  }
+</div>
+
+<!-- Dialogue de création / modification -->
+<p-dialog
+  [(visible)]="regimeFiscalDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!saving"
+  [closeOnEscape]="!saving"
+  [dismissableMask]="false"
+  [style]="{ width: 'min(40rem, 96vw)' }"
+  [breakpoints]="{
+    '960px': '80vw',
+    '640px': '96vw'
+  }"
+  [header]="isEditMode ? 'Modifier le régime fiscal' : 'Nouveau régime fiscal'"
+  styleClass="regime-dialog"
+  (onHide)="fermerDialog()">
+
+  <form
+    [formGroup]="regimeFiscalForm"
+    (ngSubmit)="saveRegimeFiscal()"
+    novalidate>
+
+    <div class="dialog-intro">
+      <div class="dialog-intro__icon">
+        <i
+          class="pi"
+          [ngClass]="isEditMode ? 'pi-pencil' : 'pi-plus-circle'">
+        </i>
+      </div>
+
+      <p>
+        {{
+          isEditMode
+            ? 'Modifiez les informations du régime fiscal.'
+            : 'Renseignez les informations du nouveau régime fiscal.'
+        }}
+      </p>
+    </div>
+
+    <div class="form-grid">
+
+      <!-- Code -->
+      <div class="form-field">
+        <label for="code">
+          Code <span class="required">*</span>
+        </label>
+
+        <input
+          id="code"
+          pInputText
+          type="text"
+          formControlName="code"
+          maxlength="50"
+          placeholder="Ex. : REEL"
+          autocomplete="off"
+          [class.ng-invalid]="
+            regimeFiscalForm.get('code')?.invalid &&
+            regimeFiscalForm.get('code')?.touched
+          "
+          [class.ng-dirty]="regimeFiscalForm.get('code')?.touched">
+
+        @if (
+          regimeFiscalForm.get('code')?.hasError('required') &&
+          regimeFiscalForm.get('code')?.touched
+        ) {
+          <small class="field-error">
+            Le code est obligatoire.
+          </small>
+        }
+
+        @if (
+          regimeFiscalForm.get('code')?.hasError('maxlength') &&
+          regimeFiscalForm.get('code')?.touched
+        ) {
+          <small class="field-error">
+            Le code ne doit pas dépasser 50 caractères.
+          </small>
+        }
+
+        <small class="field-hint">
+          Maximum 50 caractères.
+        </small>
+      </div>
+
+      <!-- Libellé -->
+      <div class="form-field">
+        <label for="libelle">
+          Libellé <span class="required">*</span>
+        </label>
+
+        <input
+          id="libelle"
+          pInputText
+          type="text"
+          formControlName="libelle"
+          maxlength="150"
+          placeholder="Ex. : Régime réel"
+          autocomplete="off"
+          [class.ng-invalid]="
+            regimeFiscalForm.get('libelle')?.invalid &&
+            regimeFiscalForm.get('libelle')?.touched
+          "
+          [class.ng-dirty]="regimeFiscalForm.get('libelle')?.touched">
+
+        @if (
+          regimeFiscalForm.get('libelle')?.hasError('required') &&
+          regimeFiscalForm.get('libelle')?.touched
+        ) {
+          <small class="field-error">
+            Le libellé est obligatoire.
+          </small>
+        }
+
+        @if (
+          regimeFiscalForm.get('libelle')?.hasError('maxlength') &&
+          regimeFiscalForm.get('libelle')?.touched
+        ) {
+          <small class="field-error">
+            Le libellé ne doit pas dépasser 150 caractères.
+          </small>
+        }
+
+        <small class="field-hint">
+          Maximum 150 caractères.
+        </small>
+      </div>
+
+      <!-- Description -->
+      <div class="form-field form-field--full">
+        <label for="description">Description</label>
+
+        <textarea
+          id="description"
+          pTextarea
+          formControlName="description"
+          rows="4"
+          maxlength="1000"
+          [autoResize]="true"
+          placeholder="Décrivez le régime fiscal et ses particularités..."
+          [class.ng-invalid]="
+            regimeFiscalForm.get('description')?.invalid &&
+            regimeFiscalForm.get('description')?.touched
+          "
+          [class.ng-dirty]="regimeFiscalForm.get('description')?.touched">
+        </textarea>
+
+        @if (
+          regimeFiscalForm.get('description')?.hasError('maxlength') &&
+          regimeFiscalForm.get('description')?.touched
+        ) {
+          <small class="field-error">
+            La description ne doit pas dépasser 1 000 caractères.
+          </small>
+        }
+
+        <small class="field-hint">
+          Maximum 1 000 caractères.
+        </small>
+      </div>
+
+      <!-- Statut -->
+      <div class="form-field form-field--full">
+        <label for="estActif">
+          Statut <span class="required">*</span>
+        </label>
+
+        <p-select
+          inputId="estActif"
+          formControlName="estActif"
+          [options]="statutOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un statut"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+
+        @if (
+          regimeFiscalForm.get('estActif')?.hasError('required') &&
+          regimeFiscalForm.get('estActif')?.touched
+        ) {
+          <small class="field-error">
+            Le statut est obligatoire.
+          </small>
+        }
+
+        <small class="field-hint">
+          Un régime inactif reste enregistré, mais ne devrait plus être proposé
+          pour les nouvelles opérations.
+        </small>
+      </div>
+
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-outlined p-button-secondary"
+        [disabled]="saving"
+        (click)="fermerDialog()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer le régime'"
+        [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+        [loading]="saving"
+        [disabled]="saving || regimeFiscalForm.invalid">
+      </button>
+    </div>
+
+  </form>
+</p-dialog>

@@ -1,3 +1,4 @@
+
 <p-toast
   [breakpoints]="{
     '600px': {
@@ -9,24 +10,19 @@
 </p-toast>
 
 <p-confirmDialog
-  [style]="{ width: '30rem' }"
+  [style]="{ width: 'min(30rem, 95vw)' }"
   [breakpoints]="{ '600px': '95vw' }">
 </p-confirmDialog>
 
+<div class="biens-page">
 
-<div class="card">
-
-  <!-- ==========================================
-       EN-TÊTE
-       ========================================== -->
-
-  <div class="page-header mb-4">
-
-    <div>
-      <h2>Gestion des Biens Immobiliers</h2>
-
-      <p class="text-secondary">
-        Gestion des propriétés immobilières de votre société
+  <!-- En-tête -->
+  <header class="page-header">
+    <div class="page-heading">
+      <span class="page-eyebrow">PATRIMOINE IMMOBILIER</span>
+      <h1>Biens immobiliers</h1>
+      <p>
+        Gérez vos propriétés, leurs caractéristiques et leurs photos.
       </p>
     </div>
 
@@ -34,500 +30,388 @@
       *ngIf="canManageBiens"
       pButton
       type="button"
-      label="Nouveau Bien"
+      label="Nouveau bien"
       icon="pi pi-plus"
-      class="p-button-success btn-new"
+      class="btn-new"
       (click)="ouvrirModalAjout()">
     </button>
+  </header>
 
-  </div>
+  <!-- Cartes de synthèse -->
+  <section class="summary-grid" aria-label="Synthèse des biens">
 
+    <article class="summary-card">
+      <div class="summary-icon icon-building">
+        <i class="pi pi-building"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Biens immobiliers</span>
+        <strong class="summary-value">{{ biens.length }}</strong>
+        <span class="summary-description">Biens enregistrés</span>
+      </div>
+    </article>
 
-  <!-- ==========================================
-       TABLEAU
-       ========================================== -->
+    <article class="summary-card">
+      <div class="summary-icon icon-units">
+        <i class="pi pi-home"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Unités locatives</span>
+        <strong class="summary-value">{{ nombreUnitesTotal }}</strong>
+        <span class="summary-description">Unités associées aux biens</span>
+      </div>
+    </article>
 
-  <p-table
-    #dt
-    styleClass="table-responsive-stack"
-    dataKey="id"
-    [value]="biens"
-    [loading]="chargement"
-    [paginator]="true"
-    [rows]="10"
-    [globalFilterFields]="[
-      'nom',
-      'reference',
-      'ville',
-      'quartier',
-      'adresse'
-    ]">
+    <article class="summary-card">
+      <div class="summary-icon icon-location">
+        <i class="pi pi-map-marker"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Villes couvertes</span>
+        <strong class="summary-value">{{ nombreVilles }}</strong>
+        <span class="summary-description">Villes distinctes</span>
+      </div>
+    </article>
 
-    <!-- ========================================
-         RECHERCHE
-         ======================================== -->
+    <article class="summary-card">
+      <div class="summary-icon icon-photos">
+        <i class="pi pi-images"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Photos</span>
+        <strong class="summary-value">{{ nombrePhotosTotal }}</strong>
+        <span class="summary-description">Photos des biens</span>
+      </div>
+    </article>
 
-    <ng-template pTemplate="caption">
+  </section>
 
-      <div class="table-search">
+  <!-- Zone principale -->
+  <section class="content-panel">
 
-        <i class="pi pi-search"></i>
-
-        <input
-          pInputText
-          type="text"
-          class="w-full"
-          (input)="
-            dt.filterGlobal(
-              $any($event.target).value,
-              'contains'
-            )
-          "
-          placeholder="Rechercher un bien..." />
-
+    <div class="panel-heading">
+      <div>
+        <h2>Liste des biens</h2>
+        <p>Consultez et recherchez les biens immobiliers enregistrés.</p>
       </div>
 
-    </ng-template>
+      <span class="results-count">
+        {{ biens.length }}
+        {{ biens.length > 1 ? 'biens' : 'bien' }}
+      </span>
+    </div>
 
+    <!-- Recherche et filtres -->
+    <div class="filters-panel">
 
-    <!-- ========================================
-         EN-TÊTE
-         ======================================== -->
+      <div class="search-field">
+        <i class="pi pi-search"></i>
+        <input
+          #rechercheBien
+          pInputText
+          type="text"
+          placeholder="Rechercher par nom, référence, ville..."
+          aria-label="Rechercher un bien immobilier"
+          (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
+      </div>
 
-    <ng-template pTemplate="header">
+      <div class="type-filter">
+        <label for="filtreTypeBien">Type de bien</label>
+        <p-select
+          inputId="filtreTypeBien"
+          [options]="bienService.typesBien"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les types"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body"
+          (onChange)="dt.filter($event.value ?? null, 'type', 'equals')">
+        </p-select>
+      </div>
 
-      <tr>
+      <button
+        pButton
+        type="button"
+        label="Réinitialiser"
+        icon="pi pi-filter-slash"
+        class="reset-button"
+        (click)="dt.clear(); rechercheBien.value = ''">
+      </button>
 
-        <th class="col-photo">
-          Photo
-        </th>
+    </div>
 
-        <th pSortableColumn="nom">
-          Nom
-          <p-sortIcon field="nom"></p-sortIcon>
-        </th>
+    <!-- Tableau -->
+    <p-table
+      #dt
+      styleClass="biens-table"
+      dataKey="id"
+      [value]="biens"
+      [loading]="chargement"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 20, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords} biens"
+      [globalFilterFields]="[
+        'nom',
+        'reference',
+        'ville',
+        'quartier',
+        'adresse'
+      ]"
+      [rowHover]="true"
+      responsiveLayout="scroll">
 
-        <th pSortableColumn="reference">
-          Référence
-          <p-sortIcon field="reference"></p-sortIcon>
-        </th>
+      <ng-template pTemplate="header">
+        <tr>
+          <th class="col-photo">Photo</th>
 
-        <th class="hide-tablet">
-          Type
-        </th>
+          <th pSortableColumn="nom">
+            Bien immobilier
+            <p-sortIcon field="nom"></p-sortIcon>
+          </th>
 
-        <th pSortableColumn="ville">
-          Ville / Quartier
-          <p-sortIcon field="ville"></p-sortIcon>
-        </th>
+          <th pSortableColumn="reference">
+            Référence
+            <p-sortIcon field="reference"></p-sortIcon>
+          </th>
 
-        <th
-          pSortableColumn="superficie"
-          class="hide-tablet">
+          <th>Type</th>
 
-          Superficie
+          <th pSortableColumn="ville">
+            Localisation
+            <p-sortIcon field="ville"></p-sortIcon>
+          </th>
 
-          <p-sortIcon
-            field="superficie">
-          </p-sortIcon>
+          <th pSortableColumn="superficie" class="col-superficie">
+            Superficie
+            <p-sortIcon field="superficie"></p-sortIcon>
+          </th>
 
-        </th>
+          <th class="col-unites">Unités</th>
 
-        <th>
-          Unités
-        </th>
+          <th class="col-actions">Actions</th>
+        </tr>
+      </ng-template>
 
-        <th class="col-actions">
-          Actions
-        </th>
+      <ng-template pTemplate="body" let-bien>
+        <tr>
 
-      </tr>
+          <!-- Photo -->
+          <td data-label="Photo" class="col-photo">
+            <div class="photo-cell">
+              <img
+                *ngIf="bien.photos?.length > 0; else noPhoto"
+                [src]="bienService.getPhotoUrl(bien.photos[0])"
+                [alt]="'Photo du bien ' + bien.nom"
+                class="property-thumbnail" />
 
-    </ng-template>
+              <ng-template #noPhoto>
+                <div class="property-thumbnail thumbnail-placeholder">
+                  <i class="pi pi-building"></i>
+                </div>
+              </ng-template>
 
+              <span
+                *ngIf="bien.photos?.length > 1"
+                class="photo-count">
+                +{{ bien.photos.length - 1 }}
+              </span>
+            </div>
+          </td>
 
-    <!-- ========================================
-         CORPS
-         ======================================== -->
+          <!-- Nom -->
+          <td data-label="Bien immobilier">
+            <div class="property-name">
+              <strong>{{ bien.nom || 'Sans nom' }}</strong>
+              <small>{{ bien.adresse || 'Adresse non renseignée' }}</small>
+            </div>
+          </td>
 
-    <ng-template
-      pTemplate="body"
-      let-bien>
-
-      <tr>
-
-        <!-- ====================================
-             PHOTO
-             ==================================== -->
-
-        <td
-          data-label="Photo"
-          class="col-photo">
-
-          <div class="photo-cell">
-
-            <img
-              *ngIf="
-                bien.photos &&
-                bien.photos.length > 0;
-                else noPhoto
-              "
-              [src]="
-                bienService.getPhotoUrl(
-                  bien.photos[0]
-                )
-              "
-              [alt]="'Photo du bien ' + bien.nom"
-              class="thumb shadow-2 border-round" />
-
-
-            <ng-template #noPhoto>
-
-              <div
-                class="thumb thumb-placeholder border-round">
-
-                <i class="pi pi-building"></i>
-
-              </div>
-
-            </ng-template>
-
-
-            <span
-              *ngIf="
-                bien.photos &&
-                bien.photos.length > 1
-              "
-              class="text-xs font-bold text-primary">
-
-              +{{ bien.photos.length - 1 }}
-
+          <!-- Référence -->
+          <td data-label="Référence">
+            <span class="reference-value">
+              {{ bien.reference || 'N/A' }}
             </span>
-
-          </div>
-
-        </td>
-
-
-        <!-- ====================================
-             NOM
-             ==================================== -->
-
-        <td data-label="Nom">
-
-          <strong>
-            {{ bien.nom || 'N/A' }}
-          </strong>
-
-        </td>
-
-
-        <!-- ====================================
-             RÉFÉRENCE
-             ==================================== -->
-
-        <td data-label="Référence">
-
-          <span>
-            {{ bien.reference || 'N/A' }}
-          </span>
-
-        </td>
-
-
-        <!-- ====================================
-             TYPE
-             ==================================== -->
-
-        <td
-          data-label="Type"
-          class="hide-tablet">
-
-          {{
-            bienService.getTypeLibelle(
-              bien.type
-            )
-          }}
-
-        </td>
-
-
-        <!-- ====================================
-             LOCALISATION
-             ==================================== -->
-
-        <td
-          data-label="Ville / Quartier">
-
-          <div class="location-cell">
-
-            <strong>
-              {{ bien.ville || 'N/A' }}
-            </strong>
-
-            <small
-              *ngIf="bien.quartier">
-
-              {{ bien.quartier }}
-
-            </small>
-
-          </div>
-
-        </td>
-
-
-        <!-- ====================================
-             SUPERFICIE
-             ==================================== -->
-
-        <td
-          data-label="Superficie"
-          class="nowrap hide-tablet">
-
-          {{ bien.superficie | number:'1.0-2' }}
-          m²
-
-        </td>
-
-
-        <!-- ====================================
-             UNITÉS
-             ==================================== -->
-
-        <td data-label="Unités">
-
-          <span class="unit-count">
-
-            <i class="pi pi-home"></i>
-
-            {{ bien.nombreUnites ?? 0 }}
-
-          </span>
-
-        </td>
-
-
-        <!-- ====================================
-             ACTIONS
-             ==================================== -->
-
-        <td class="col-actions">
-
-          <div class="actions-group">
-
-            <!-- MODIFIER -->
-
-            <button
-              *ngIf="canManageBiens"
-              pButton
-              type="button"
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-text p-button-warning"
-              aria-label="Modifier"
-              pTooltip="Modifier"
-              tooltipPosition="top"
-              (click)="
-                ouvrirModalModification(bien)
-              ">
-            </button>
-
-
-            <!-- VOIR -->
-
-            <a
-              pButton
-              icon="pi pi-eye"
-              class="p-button-rounded p-button-text p-button-info"
-              aria-label="Voir la fiche détaillée"
-              pTooltip="Voir la fiche détaillée"
-              tooltipPosition="top"
-              [routerLink]="[
-                '/biens/fiche',
-                bien.id
-              ]">
-            </a>
-
-
-            <!-- ARCHIVER -->
-
-            <button
-              *ngIf="canManageBiens"
-              pButton
-              type="button"
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger"
-              aria-label="Archiver"
-              pTooltip="Archiver"
-              tooltipPosition="top"
-              (click)="
-                supprimerBien(bien)
-              ">
-            </button>
-
-          </div>
-
-        </td>
-
-      </tr>
-
-    </ng-template>
-
-
-    <!-- ========================================
-         AUCUN RÉSULTAT
-         ======================================== -->
-
-    <ng-template pTemplate="emptymessage">
-
-      <tr>
-
-        <td
-          colspan="8"
-          class="text-center p-4">
-
-          <div class="empty-state">
-
-            <i class="pi pi-building"></i>
-
-            <p>
-              Aucun bien immobilier trouvé.
-            </p>
-
-          </div>
-
-        </td>
-
-      </tr>
-
-    </ng-template>
-
-  </p-table>
-
+          </td>
+
+          <!-- Type -->
+          <td data-label="Type">
+            <span class="type-badge">
+              {{ getTypeLibelle(bien.type) }}
+            </span>
+          </td>
+
+          <!-- Localisation -->
+          <td data-label="Localisation">
+            <div class="location-cell">
+              <span>{{ bien.ville || 'N/A' }}</span>
+              <small *ngIf="bien.quartier">{{ bien.quartier }}</small>
+            </div>
+          </td>
+
+          <!-- Superficie -->
+          <td data-label="Superficie" class="col-superficie">
+            <span class="surface-value">
+              {{ bien.superficie | number:'1.0-2' }} m²
+            </span>
+          </td>
+
+          <!-- Unités -->
+          <td data-label="Unités" class="col-unites">
+            <span class="unit-badge">
+              <i class="pi pi-home"></i>
+              {{ bien.nombreUnites ?? 0 }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+          <td data-label="Actions" class="col-actions">
+            <div class="actions-group">
+
+              <button
+                *ngIf="canManageBiens"
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text p-button-warning action-button"
+                aria-label="Modifier le bien"
+                pTooltip="Modifier"
+                tooltipPosition="top"
+                (click)="ouvrirModalModification(bien)">
+              </button>
+
+              <a
+                pButton
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info action-button"
+                aria-label="Voir la fiche détaillée"
+                pTooltip="Voir la fiche"
+                tooltipPosition="top"
+                [routerLink]="['/biens/fiche', bien.id]">
+              </a>
+
+              <button
+                *ngIf="canManageBiens"
+                pButton
+                type="button"
+                icon="pi pi-archive"
+                class="p-button-rounded p-button-text p-button-danger action-button"
+                aria-label="Archiver le bien"
+                pTooltip="Archiver"
+                tooltipPosition="top"
+                (click)="supprimerBien(bien)">
+              </button>
+
+            </div>
+          </td>
+
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <div class="empty-icon">
+                <i class="pi pi-building"></i>
+              </div>
+              <strong>Aucun bien immobilier trouvé</strong>
+              <p>
+                Modifiez votre recherche ou ajoutez un nouveau bien.
+              </p>
+              <button
+                *ngIf="canManageBiens && biens.length === 0"
+                pButton
+                type="button"
+                label="Ajouter un bien"
+                icon="pi pi-plus"
+                class="empty-action"
+                (click)="ouvrirModalAjout()">
+              </button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </section>
 </div>
 
-
+<!-- Modale d'ajout et de modification -->
 <p-dialog
   *ngIf="canManageBiens"
   [(visible)]="displayModal"
-
-  [header]="
-    isEditMode
-      ? 'Modifier le bien'
-      : 'Ajouter un nouveau bien'
-  "
-
+  [header]="isEditMode ? 'Modifier le bien immobilier' : 'Nouveau bien immobilier'"
   [modal]="true"
-
-  [style]="{
-    width: '650px',
-    maxWidth: 'calc(100vw - 2rem)'
-  }"
-
-  [breakpoints]="{
-    '960px': '80vw',
-    '600px': '95vw'
-  }"
-
+  [style]="{ width: 'min(44rem, 96vw)' }"
+  [breakpoints]="{ '768px': '96vw' }"
   [draggable]="false"
   [resizable]="false"
   [closable]="true"
   [closeOnEscape]="true"
   [dismissableMask]="false"
   appendTo="body"
-
   styleClass="bien-dialog">
-
 
   <form
     [formGroup]="bienForm"
     (ngSubmit)="sauvegarder()"
     class="bien-form">
 
-
-    <!-- ========================================
-         LIGNE 1 : NOM + RÉFÉRENCE
-         ======================================== -->
-
-    <div class="form-row">
-      <!-- RÉFÉRENCE -->
-      <div class="field">
-
-        <label for="reference">
-          Référence
-        </label>
-
-        <input
-          id="reference"
-          type="text"
-          pInputText
-          formControlName="reference"
-          maxlength="50"
-          placeholder="Ex : MGI-DLA-001" />
-
-        <small
-          *ngIf="
-            bienForm.get('reference')?.invalid &&
-            bienForm.get('reference')?.touched
-          "
-          class="p-error form-error">
-
-          La référence est obligatoire.
-
-        </small>
-
+    <div class="form-section-heading">
+      <i class="pi pi-building"></i>
+      <div>
+        <h3>Informations générales</h3>
+        <p>Renseignez les caractéristiques du bien immobilier.</p>
       </div>
-      <!-- NOM -->
-      <div class="field">
-
-        <label for="nom">
-          Nom du bien
-        </label>
-
-        <input
-          id="nom"
-          type="text"
-          pInputText
-          formControlName="nom"
-          maxlength="150"
-          placeholder="Ex : Immeuble Marion" />
-
-        <small class="text-secondary">
-          Nom utilisé pour identifier facilement le bien.
-        </small>
-
-        <small
-          *ngIf="
-            bienForm.get('nom')?.invalid &&
-            bienForm.get('nom')?.touched
-          "
-          class="p-error form-error">
-
-          Le nom du bien est obligatoire.
-
-        </small>
-
-      </div>
-
-
-
-
     </div>
 
+    <div class="form-grid">
 
-    <!-- ========================================
-         LIGNE 2 : TYPE + VILLE
-         ======================================== -->
-
-    <div class="form-row">
-
-      <!-- TYPE -->
       <div class="field">
+        <label for="reference">Référence <span>*</span></label>
+        <input
+          id="reference"
+          pInputText
+          type="text"
+          formControlName="reference"
+          maxlength="50"
+          placeholder="Ex. : MGI-DLA-001" />
+        <small
+          *ngIf="bienForm.get('reference')?.hasError('required') && bienForm.get('reference')?.touched"
+          class="form-error">
+          La référence est obligatoire.
+        </small>
+        <small
+          *ngIf="bienForm.get('reference')?.hasError('maxlength') && bienForm.get('reference')?.touched"
+          class="form-error">
+          La référence ne peut pas dépasser 50 caractères.
+        </small>
+      </div>
 
-        <label for="type">
-          Type de bien
-        </label>
+      <div class="field">
+        <label for="nom">Nom du bien <span>*</span></label>
+        <input
+          id="nom"
+          pInputText
+          type="text"
+          formControlName="nom"
+          maxlength="150"
+          placeholder="Ex. : Immeuble Marion" />
+        <small class="field-hint">
+          Le nom utilisé pour identifier facilement la propriété.
+        </small>
+        <small
+          *ngIf="bienForm.get('nom')?.invalid && bienForm.get('nom')?.touched"
+          class="form-error">
+          Le nom est obligatoire et ne doit pas dépasser 150 caractères.
+        </small>
+      </div>
 
+      <div class="field">
+        <label for="type">Type de bien <span>*</span></label>
         <p-select
           inputId="type"
           [options]="bienService.typesBien"
@@ -535,120 +419,111 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Sélectionner un type"
-          styleClass="w-full bien-select"
+          styleClass="w-full"
           appendTo="body">
         </p-select>
-
+        <small
+          *ngIf="bienForm.get('type')?.invalid && bienForm.get('type')?.touched"
+          class="form-error">
+          Sélectionnez un type de bien.
+        </small>
       </div>
 
-
-      <!-- VILLE -->
       <div class="field">
-
-        <label for="ville">
-          Ville
-        </label>
-
-        <input
-          id="ville"
-          type="text"
-          pInputText
-          formControlName="ville"
-          maxlength="100"
-          placeholder="Ex : Douala, Yaoundé..." />
-
-      </div>
-
-    </div>
-
-
-    <!-- ========================================
-         LIGNE 3 : QUARTIER + SUPERFICIE
-         ======================================== -->
-
-    <div class="form-row">
-
-      <!-- QUARTIER -->
-      <div class="field">
-
-        <label for="quartier">
-          Quartier
-        </label>
-
-        <input
-          id="quartier"
-          type="text"
-          pInputText
-          formControlName="quartier"
-          maxlength="100"
-          placeholder="Ex : Bonapriso, Bastos..." />
-
-      </div>
-
-
-      <!-- SUPERFICIE -->
-      <div class="field">
-
-        <label for="superficie">
-          Superficie (m²)
-        </label>
-
+        <label for="superficie">Superficie (m²) <span>*</span></label>
         <input
           id="superficie"
-          type="number"
           pInputText
+          type="number"
           formControlName="superficie"
           min="1"
-          placeholder="Ex : 250" />
-
+          step="0.01"
+          placeholder="Ex. : 250" />
+        <small
+          *ngIf="bienForm.get('superficie')?.invalid && bienForm.get('superficie')?.touched"
+          class="form-error">
+          La superficie doit être supérieure à zéro.
+        </small>
       </div>
 
     </div>
 
+    <div class="form-section-heading location-heading">
+      <i class="pi pi-map-marker"></i>
+      <div>
+        <h3>Localisation</h3>
+        <p>Indiquez où se trouve le bien.</p>
+      </div>
+    </div>
 
-    <!-- ========================================
-         ADRESSE
-         ======================================== -->
+    <div class="form-grid">
 
-    <div class="field field-full">
+      <div class="field">
+        <label for="ville">Ville <span>*</span></label>
+        <input
+          id="ville"
+          pInputText
+          type="text"
+          formControlName="ville"
+          maxlength="100"
+          placeholder="Ex. : Douala, Yaoundé..." />
+        <small
+          *ngIf="bienForm.get('ville')?.invalid && bienForm.get('ville')?.touched"
+          class="form-error">
+          La ville est obligatoire.
+        </small>
+      </div>
 
-      <label for="adresse">
-        Adresse exacte
-      </label>
+      <div class="field">
+        <label for="quartier">Quartier</label>
+        <input
+          id="quartier"
+          pInputText
+          type="text"
+          formControlName="quartier"
+          maxlength="100"
+          placeholder="Ex. : Bonapriso, Bastos..." />
+        <small
+          *ngIf="bienForm.get('quartier')?.hasError('maxlength') && bienForm.get('quartier')?.touched"
+          class="form-error">
+          Le quartier ne peut pas dépasser 100 caractères.
+        </small>
+      </div>
 
-      <input
-        id="adresse"
-        type="text"
-        pInputText
-        formControlName="adresse"
-        maxlength="250"
-        placeholder="Rue, immeuble..." />
+      <div class="field field-full">
+        <label for="adresse">Adresse exacte <span>*</span></label>
+        <input
+          id="adresse"
+          pInputText
+          type="text"
+          formControlName="adresse"
+          maxlength="250"
+          placeholder="Rue, numéro, immeuble..." />
+        <small
+          *ngIf="bienForm.get('adresse')?.invalid && bienForm.get('adresse')?.touched"
+          class="form-error">
+          L'adresse est obligatoire.
+        </small>
+      </div>
 
     </div>
 
-
-    <!-- ========================================
-         PHOTOS EXISTANTES
-         ======================================== -->
-
+    <!-- Photos existantes -->
     <div
-      *ngIf="
-        isEditMode &&
-        photosExistantes.length > 0
-      "
-      class="field field-full">
+      *ngIf="isEditMode && photosExistantes.length > 0"
+      class="photo-section">
 
-      <label>
-        Photos actuelles
-      </label>
+      <div class="form-section-heading">
+        <i class="pi pi-images"></i>
+        <div>
+          <h3>Photos actuelles</h3>
+          <p>Supprimez les photos que vous ne souhaitez pas conserver.</p>
+        </div>
+      </div>
 
       <div class="photos-grid">
-
         <div
-          *ngFor="
-            let photo of photosExistantes;
-            let i = index
-          "
+          *ngFor="let photo of photosExistantes; let i = index"
           class="photo-preview-item">
 
           <img
@@ -660,68 +535,44 @@
             pButton
             type="button"
             icon="pi pi-times"
-            class="p-button-rounded p-button-danger p-button-sm photo-remove-button"
+            class="photo-remove-button"
             aria-label="Supprimer cette photo"
-            pTooltip="Supprimer"
+            pTooltip="Supprimer cette photo"
             tooltipPosition="top"
             (click)="supprimerPhotoExistante(i)">
           </button>
-
         </div>
+      </div>
+    </div>
 
+    <!-- Nouvelles photos -->
+    <div class="photo-section">
+      <div class="form-section-heading">
+        <i class="pi pi-camera"></i>
+        <div>
+          <h3>Photos du bien</h3>
+          <p>Ajoutez des images pour illustrer la propriété.</p>
+        </div>
       </div>
 
-    </div>
-
-
-    <!-- ========================================
-         AJOUT DE NOUVELLES PHOTOS
-         ======================================== -->
-
-    <div class="field field-full">
-
-      <label for="fichiers">
-        Photos du bien
+      <label for="fichiers" class="upload-area">
+        <i class="pi pi-cloud-upload"></i>
+        <strong>Choisir des photos</strong>
+        <span>JPG, JPEG, PNG ou WEBP · 10 Mo maximum par fichier</span>
+        <input
+          id="fichiers"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          multiple
+          (change)="selectionnerPhotos($event)" />
       </label>
 
-      <input
-        id="fichiers"
-        type="file"
-        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-        multiple
-        class="photo-file-input"
-        (change)="selectionnerPhotos($event)" />
-
-      <small class="text-secondary">
-
-        Formats acceptés : JPG, JPEG, PNG et WEBP.
-        Taille maximale : 10 Mo par photo.
-        Maximum : {{ maxPhotos }} photos par bien.
-
-      </small>
-
-    </div>
-
-
-    <!-- ========================================
-         PRÉVISUALISATION NOUVELLES PHOTOS
-         ======================================== -->
-
-    <div
-      *ngIf="apercusPhotos.length > 0"
-      class="field field-full">
-
-      <label>
-        Nouvelles photos
-      </label>
-
-      <div class="photos-grid">
+      <div
+        *ngIf="apercusPhotos.length > 0"
+        class="photos-grid new-photos-grid">
 
         <div
-          *ngFor="
-            let apercu of apercusPhotos;
-            let i = index
-          "
+          *ngFor="let apercu of apercusPhotos; let i = index"
           class="photo-preview-item">
 
           <img
@@ -733,68 +584,44 @@
             pButton
             type="button"
             icon="pi pi-times"
-            class="p-button-rounded p-button-danger p-button-sm photo-remove-button"
-            aria-label="Supprimer cette nouvelle photo"
-            pTooltip="Supprimer"
+            class="photo-remove-button"
+            aria-label="Retirer cette photo"
+            pTooltip="Retirer cette photo"
             tooltipPosition="top"
             (click)="supprimerNouvellePhoto(i)">
           </button>
-
         </div>
-
       </div>
 
+      <div class="photo-counter">
+        <i class="pi pi-images"></i>
+        <span>
+          {{ photosExistantes.length + fichiersSelectionnes.length }}
+          / {{ maxPhotos }} photos sélectionnées
+        </span>
+      </div>
     </div>
 
-
-    <!-- ========================================
-         COMPTEUR PHOTOS
-         ======================================== -->
-
-    <div class="photo-counter">
-
-      <i class="pi pi-images"></i>
-
-      <span>
-        {{
-          photosExistantes.length +
-          fichiersSelectionnes.length
-        }}
-        / {{ maxPhotos }} photos
-      </span>
-
-    </div>
-
-
-    <!-- ========================================
-         ACTIONS
-         ======================================== -->
-
+    <!-- Actions -->
     <div class="form-actions">
-
       <button
         pButton
         type="button"
         label="Annuler"
-        class="p-button-text p-button-secondary"
+        icon="pi pi-times"
+        class="cancel-button"
         (click)="displayModal = false">
       </button>
 
       <button
         pButton
         type="submit"
-        [label]="
-          isEditMode
-            ? 'Modifier'
-            : 'Créer'
-        "
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer le bien'"
         icon="pi pi-check"
-        class="p-button-success"
+        class="save-button"
         [disabled]="bienForm.invalid">
       </button>
-
     </div>
 
   </form>
-
 </p-dialog>

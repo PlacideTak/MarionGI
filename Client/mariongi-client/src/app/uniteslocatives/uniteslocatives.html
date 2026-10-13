@@ -15,367 +15,385 @@
 </p-confirmDialog>
 
 
-<div class="card">
 
-  <!-- ==========================================================
-       EN-TÊTE
-       ========================================================== -->
+<p-toast
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
 
-  <div class="page-header mb-4">
+<p-confirmDialog
+  [style]="{ width: '30rem' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
 
-    <div>
+<div class="unites-page">
 
-      <h2>
-        Gestion des Unités Locatives
-      </h2>
+  <!-- EN-TÊTE -->
+  <div class="page-header">
 
-      <p class="text-secondary">
-        Gestion des unités locatives de vos biens immobiliers
-      </p>
+    <div class="page-heading">
+      <div class="page-icon">
+        <i class="pi pi-th-large"></i>
+      </div>
 
+      <div>
+        <h2>Unités locatives</h2>
+        <p>
+          Gérez les logements, leurs loyers et leur disponibilité.
+        </p>
+      </div>
     </div>
 
     <button
       *ngIf="canManageUnites"
       pButton
       type="button"
-      label="Nouvelle Unité"
+      label="Nouvelle unité"
       icon="pi pi-plus"
-      class="p-button-success btn-new"
+      class="p-button-success"
       (click)="ouvrirModalAjout()">
     </button>
 
   </div>
 
+  <!-- INDICATEURS -->
+  <div class="summary-grid">
 
-  <!-- ==========================================================
-       TABLEAU
-       ========================================================== -->
+    <div class="summary-card">
+      <div class="summary-icon summary-icon--blue">
+        <i class="pi pi-th-large"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Total des unités</span>
+        <strong class="summary-value">
+          {{ nombreUnitesTotal }}
+        </strong>
+        <small>Unités locatives accessibles</small>
+      </div>
+    </div>
 
-  <p-table
-    #dt
-    styleClass="table-responsive-stack"
-    dataKey="id"
-    [value]="unites"
-    [loading]="chargement"
-    [paginator]="true"
-    [rows]="10"
-    [globalFilterFields]="[
-      'reference',
-      'bienReference',
-      'bienVille',
-      'bienAdresse'
-    ]">
+    <div class="summary-card">
+      <div class="summary-icon summary-icon--green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Disponibles</span>
+        <strong class="summary-value">
+          {{ nombreUnitesDisponibles }}
+        </strong>
+        <small>Logements disponibles à la location</small>
+      </div>
+    </div>
 
-    <!-- RECHERCHE -->
-    <ng-template pTemplate="caption">
+    <div class="summary-card">
+      <div class="summary-icon summary-icon--orange">
+        <i class="pi pi-users"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Occupées</span>
+        <strong class="summary-value">
+          {{ nombreUnitesOccupees }}
+        </strong>
+        <small>Selon le statut de l’unité</small>
+      </div>
+    </div>
 
-      <div class="table-search">
+    <div class="summary-card">
+      <div class="summary-icon summary-icon--purple">
+        <i class="pi pi-wallet"></i>
+      </div>
+      <div class="summary-content">
+        <span class="summary-label">Loyers mensuels cumulés</span>
+        <strong class="summary-value summary-value--money">
+          {{ loyerMensuelTotal | number:'1.0-0' }}
+        </strong>
+        <small>FCFA · loyers configurés</small>
+      </div>
+    </div>
 
-        <i class="pi pi-search"></i>
+  </div>
 
-        <input
-          pInputText
-          type="text"
-          class="w-full"
-          (input)="
-            dt.filterGlobal(
-              $any($event.target).value,
-              'contains'
-            )
-          "
-          placeholder="Rechercher une unité..." />
+  <!-- TABLEAU -->
+  <section class="units-panel">
 
+    <div class="panel-heading">
+      <div>
+        <h3>Liste des unités locatives</h3>
+        <p>Recherchez une unité ou filtrez les résultats.</p>
       </div>
 
-    </ng-template>
+      <span class="results-count">
+        {{ unites.length }} unité(s)
+      </span>
+    </div>
 
+    <p-table
+      #dt
+      styleClass="table-responsive-stack"
+      dataKey="id"
+      [value]="unites"
+      [loading]="chargement"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [globalFilterFields]="[
+        'reference',
+        'bienReference',
+        'bienVille',
+        'bienAdresse'
+      ]">
 
-    <!-- EN-TÊTE -->
-    <ng-template pTemplate="header">
+      <!-- RECHERCHE ET FILTRES -->
+      <ng-template pTemplate="caption">
 
-      <tr>
+        <div class="units-toolbar">
 
-        <th pSortableColumn="reference">
-          Référence
-          <p-sortIcon field="reference"></p-sortIcon>
-        </th>
-
-        <th class="hide-tablet">
-          Type
-        </th>
-
-        <th pSortableColumn="bienReference">
-          Bien immobilier
-          <p-sortIcon field="bienReference"></p-sortIcon>
-        </th>
-
-        <th
-          pSortableColumn="superficie"
-          class="hide-tablet">
-
-          Superficie
-
-          <p-sortIcon field="superficie"></p-sortIcon>
-
-        </th>
-
-        <th pSortableColumn="loyer">
-
-          Loyer
-
-          <p-sortIcon field="loyer"></p-sortIcon>
-
-        </th>
-
-        <th>
-          Statut
-        </th>
-
-        <th class="hide-tablet">
-          Contrats
-        </th>
-
-        <th class="col-payment">
-          Paiement
-        </th>
-
-        <th class="col-actions">
-          Actions
-        </th>
-
-      </tr>
-
-    </ng-template>
-
-
-    <!-- CORPS -->
-    <ng-template
-      pTemplate="body"
-      let-unite>
-
-      <tr>
-
-        <!-- RÉFÉRENCE -->
-        <td data-label="Référence">
-
-          <strong>
-            {{ unite.reference || 'N/A' }}
-          </strong>
-
-        </td>
-
-
-        <!-- TYPE -->
-        <td
-          data-label="Type"
-          class="hide-tablet">
-
-          {{
-            uniteService.getTypeLibelle(
-              unite.type
-            )
-          }}
-
-        </td>
-
-
-        <!-- BIEN -->
-        <td data-label="Bien immobilier">
-
-          <div class="location-cell">
-
-            <strong>
-              {{ unite.bienReference || 'N/A' }}
-            </strong>
-
-            <small *ngIf="unite.bienVille">
-              {{ unite.bienVille }}
-            </small>
-
+          <div class="search-field">
+            <i class="pi pi-search"></i>
+            <input
+              pInputText
+              type="text"
+              [(ngModel)]="rechercheUnite"
+              (input)="appliquerRecherche(dt)"
+              placeholder="Référence, bien, ville..."
+              aria-label="Rechercher une unité locative" />
           </div>
 
-        </td>
+          <div class="filter-field">
+            <p-select
+              [options]="uniteService.typesUniteLocative"
+              [(ngModel)]="typeFiltre"
+              (onChange)="appliquerFiltreType(dt)"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Tous les types"
+              [showClear]="true"
+              styleClass="w-full"
+              appendTo="body">
+            </p-select>
+          </div>
 
-
-        <!-- SUPERFICIE -->
-        <td
-          data-label="Superficie"
-          class="nowrap hide-tablet">
-
-          {{ unite.superficie | number:'1.0-2' }}
-          m²
-
-        </td>
-
-
-        <!-- LOYER -->
-        <td data-label="Loyer">
-
-          <strong>
-            {{ unite.loyer | number:'1.0-0' }}
-          </strong>
-
-          <span class="text-secondary">
-            FCFA
-          </span>
-
-        </td>
-
-
-        <!-- STATUT -->
-        <td data-label="Statut">
-
-          <p-tag
-            [value]="
-              uniteService.getStatutLibelle(
-                unite.statut
-              )
-            "
-            [severity]="
-              uniteService.getStatutSeverity(
-                unite.statut
-              )
-            ">
-          </p-tag>
-
-        </td>
-
-
-        <!-- CONTRATS -->
-        <td
-          data-label="Contrats"
-          class="hide-tablet">
-
-          <span class="unit-count">
-
-            <i class="pi pi-file"></i>
-
-            {{ unite.nombreContrats ?? 0 }}
-
-          </span>
-
-        </td>
-
-
-        <!-- PAIEMENT -->
-        <td
-          data-label="Paiement"
-          class="col-payment">
+          <div class="filter-field">
+            <p-select
+              [options]="uniteService.statutsUnite"
+              [(ngModel)]="statutFiltre"
+              (onChange)="appliquerFiltreStatut(dt)"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Tous les statuts"
+              [showClear]="true"
+              styleClass="w-full"
+              appendTo="body">
+            </p-select>
+          </div>
 
           <button
-            *ngIf="
-              unite.aContratActif &&
-              canAccessPaiement
-            "
             pButton
             type="button"
-            label="Payer"
-            icon="pi pi-credit-card"
-            class="p-button-sm p-button-success"
-            pTooltip="Effectuer un paiement"
-            tooltipPosition="top"
-            (click)="ouvrirPaiement(unite)">
+            icon="pi pi-filter-slash"
+            label="Réinitialiser"
+            class="p-button-outlined p-button-secondary reset-filters"
+            (click)="reinitialiserFiltres(dt)">
           </button>
 
-          <span
-            *ngIf="
-              !unite.aContratActif ||
-              !canAccessPaiement
-            "
-            class="text-secondary">
+        </div>
 
-            —
+      </ng-template>
 
-          </span>
+      <!-- COLONNES -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th pSortableColumn="reference">
+            Unité
+            <p-sortIcon field="reference"></p-sortIcon>
+          </th>
 
-        </td>
+          <th class="hide-tablet">
+            Type
+          </th>
 
+          <th pSortableColumn="bienReference">
+            Bien immobilier
+            <p-sortIcon field="bienReference"></p-sortIcon>
+          </th>
 
-        <!-- ACTIONS -->
-        <td
-          data-label="Actions"
-          class="col-actions">
+          <th class="hide-tablet" pSortableColumn="superficie">
+            Superficie
+            <p-sortIcon field="superficie"></p-sortIcon>
+          </th>
 
-          <div class="actions-group">
+          <th pSortableColumn="loyer">
+            Loyer mensuel
+            <p-sortIcon field="loyer"></p-sortIcon>
+          </th>
 
-            <!-- MODIFIER -->
+          <th>
+            Statut
+          </th>
+
+          <th class="hide-tablet">
+            Contrats
+          </th>
+
+          <th>
+            Paiement
+          </th>
+
+          <th class="col-actions">
+            Actions
+          </th>
+        </tr>
+      </ng-template>
+
+      <!-- LIGNES -->
+      <ng-template pTemplate="body" let-unite>
+        <tr>
+
+          <td data-label="Unité">
+            <div class="unit-reference-cell">
+              <span class="unit-reference-icon">
+                <i class="pi pi-home"></i>
+              </span>
+              <div>
+                <strong>{{ unite.reference || 'N/A' }}</strong>
+                <small>
+                  {{ uniteService.getTypeLibelle(unite.type) }}
+                </small>
+              </div>
+            </div>
+          </td>
+
+          <td data-label="Type" class="hide-tablet">
+            {{ uniteService.getTypeLibelle(unite.type) }}
+          </td>
+
+          <td data-label="Bien immobilier">
+            <div class="location-cell">
+              <strong>{{ unite.bienReference || 'N/A' }}</strong>
+              <small *ngIf="unite.bienVille">
+                <i class="pi pi-map-marker"></i>
+                {{ unite.bienVille }}
+              </small>
+            </div>
+          </td>
+
+          <td data-label="Superficie" class="hide-tablet">
+            <span class="surface-value">
+              {{ unite.superficie | number:'1.0-2' }} m²
+            </span>
+          </td>
+
+          <td data-label="Loyer mensuel">
+            <div class="rent-cell">
+              <strong>{{ unite.loyer | number:'1.0-0' }}</strong>
+              <small>FCFA / mois</small>
+            </div>
+          </td>
+
+          <td data-label="Statut">
+            <p-tag
+              [value]="uniteService.getStatutLibelle(unite.statut)"
+              [severity]="uniteService.getStatutSeverity(unite.statut)">
+            </p-tag>
+          </td>
+
+          <td data-label="Contrats" class="hide-tablet">
+            <span class="unit-contract-count">
+              <i class="pi pi-file"></i>
+              {{ unite.nombreContrats ?? 0 }}
+            </span>
+          </td>
+
+          <td data-label="Paiement">
             <button
-              *ngIf="canManageUnites"
+              *ngIf="unite.aContratActif && canAccessPaiement"
               pButton
               type="button"
-              icon="pi pi-pencil"
-              class="p-button-rounded p-button-text p-button-warning"
-              aria-label="Modifier"
-              pTooltip="Modifier"
+              label="Payer"
+              icon="pi pi-credit-card"
+              class="p-button-sm p-button-success payment-button"
+              pTooltip="Effectuer un paiement"
               tooltipPosition="top"
-              (click)="ouvrirModalModification(unite)">
+              (click)="ouvrirPaiement(unite)">
             </button>
 
+            <span
+              *ngIf="!unite.aContratActif || !canAccessPaiement"
+              class="no-payment">
+              —
+            </span>
+          </td>
 
-            <!-- DÉTAIL -->
-            <button
-              pButton
-              type="button"
-              icon="pi pi-eye"
-              class="p-button-rounded p-button-text p-button-info"
-              aria-label="Voir le détail"
-              pTooltip="Voir le détail"
-              tooltipPosition="top"
-              (click)="ouvrirDetail(unite)">
-            </button>
+          <td data-label="Actions" class="col-actions">
+            <div class="actions-group">
 
+              <button
+                *ngIf="canManageUnites"
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                class="p-button-rounded p-button-text p-button-warning"
+                aria-label="Modifier l'unité"
+                pTooltip="Modifier"
+                tooltipPosition="top"
+                (click)="ouvrirModalModification(unite)">
+              </button>
 
-            <!-- ARCHIVER -->
-            <button
-              *ngIf="canManageUnites"
-              pButton
-              type="button"
-              icon="pi pi-trash"
-              class="p-button-rounded p-button-text p-button-danger"
-              aria-label="Archiver"
-              pTooltip="Archiver"
-              tooltipPosition="top"
-              (click)="supprimerUnite(unite)">
-            </button>
+              <button
+                pButton
+                type="button"
+                icon="pi pi-eye"
+                class="p-button-rounded p-button-text p-button-info"
+                aria-label="Voir le détail"
+                pTooltip="Voir le détail"
+                tooltipPosition="top"
+                (click)="ouvrirDetail(unite)">
+              </button>
 
-          </div>
+              <button
+                *ngIf="canManageUnites"
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                class="p-button-rounded p-button-text p-button-danger"
+                aria-label="Archiver l'unité"
+                pTooltip="Archiver"
+                tooltipPosition="top"
+                (click)="supprimerUnite(unite)">
+              </button>
 
-        </td>
+            </div>
+          </td>
 
-      </tr>
+        </tr>
+      </ng-template>
 
-    </ng-template>
+      <!-- AUCUN RÉSULTAT -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <strong>Aucune unité trouvée</strong>
+              <span>
+                Modifiez les filtres ou réinitialisez la recherche.
+              </span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
 
+    </p-table>
 
-    <!-- AUCUN RÉSULTAT -->
-    <ng-template pTemplate="emptymessage">
-
-      <tr>
-
-        <td
-          colspan="9"
-          class="text-center p-4">
-
-          <div class="empty-state">
-
-            <i class="pi pi-home"></i>
-
-            <p>
-              Aucune unité locative trouvée.
-            </p>
-
-          </div>
-
-        </td>
-
-      </tr>
-
-    </ng-template>
-
-  </p-table>
+  </section>
 
 </div>
+
 
 
 <!-- ==========================================================

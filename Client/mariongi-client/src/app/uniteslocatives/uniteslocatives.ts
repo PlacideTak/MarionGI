@@ -2224,4 +2224,74 @@ export class UnitesLocatives
       b => b.id === bienId
     );
   }
+
+  
+  // ============================================================
+  // INDICATEURS DU TABLEAU DE BORD
+  // ============================================================
+
+  get nombreUnitesTotal(): number {
+    return this.unites.length;
+  }
+
+  get nombreUnitesDisponibles(): number {
+    return this.unites.filter(unite =>
+      this.getStatutLibelle(unite.statut)
+        .toLocaleLowerCase()
+        .includes('disponible')
+    ).length;
+  }
+
+  get nombreUnitesOccupees(): number {
+    return this.unites.filter(unite =>
+      this.getStatutLibelle(unite.statut)
+        .toLocaleLowerCase()
+        .includes('occup')
+    ).length;
+  }
+
+  get loyerMensuelTotal(): number {
+    return this.unites.reduce(
+      (total, unite) => total + (unite.loyer ?? 0),
+      0
+    );
+  }
+
+  // ============================================================
+  // FILTRES
+  // ============================================================
+
+  rechercheUnite = '';
+  typeFiltre: TypeUniteLocative | null = null;
+  statutFiltre: StatutBien | null = null;
+
+  appliquerRecherche(table: any): void {
+    table.filterGlobal(this.rechercheUnite.trim(), 'contains');
+  }
+
+  appliquerFiltreType(table: any): void {
+    if (this.typeFiltre === null) {
+      table.filter(null, 'type', 'equals');
+      return;
+    }
+
+    table.filter(this.typeFiltre, 'type', 'equals');
+  }
+
+  appliquerFiltreStatut(table: any): void {
+    if (this.statutFiltre === null) {
+      table.filter(null, 'statut', 'equals');
+      return;
+    }
+
+    table.filter(this.statutFiltre, 'statut', 'equals');
+  }
+
+  reinitialiserFiltres(table: any): void {
+    this.rechercheUnite = '';
+    this.typeFiltre = null;
+    this.statutFiltre = null;
+    table.clear();
+  }
+
 }

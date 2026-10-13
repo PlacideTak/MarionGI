@@ -23357,3 +23357,37 @@ ORDER BY [b0].[Reference], [u].[Reference]
 2026-10-12 15:46:05.854 -04:00 [INF] Executed action MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api) in 142.5329ms
 2026-10-12 15:46:05.859 -04:00 [INF] Executed endpoint 'MarionGI.Api.Controllers.UnitesLocativesController.GetUnites (MarionGI.Api)'
 2026-10-12 15:46:05.862 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/UnitesLocatives - 200 null application/json; charset=utf-8 175.4296ms
+2026-10-12 16:09:04.545 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - null null
+2026-10-12 16:09:04.592 -04:00 [INF] CORS policy execution successful.
+2026-10-12 16:09:04.599 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/configuration/session-timeout - 204 null null 55.8179ms
+2026-10-12 16:09:04.736 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - null null
+2026-10-12 16:09:04.736 -04:00 [INF] Request starting HTTP/2 OPTIONS https://localhost:7232/api/Tickets - null null
+2026-10-12 16:09:04.764 -04:00 [INF] CORS policy execution successful.
+2026-10-12 16:09:04.775 -04:00 [INF] CORS policy execution successful.
+2026-10-12 16:09:04.787 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/Tickets - 204 null null 50.6131ms
+2026-10-12 16:09:04.782 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/UnitesLocatives - null null
+2026-10-12 16:09:04.776 -04:00 [INF] Request finished HTTP/2 OPTIONS https://localhost:7232/api/UnitesLocatives - 204 null null 40.1356ms
+2026-10-12 16:09:04.795 -04:00 [INF] Request starting HTTP/2 GET https://localhost:7232/api/Tickets - null null
+2026-10-12 16:09:04.830 -04:00 [INF] CORS policy execution successful.
+2026-10-12 16:09:04.831 -04:00 [INF] CORS policy execution successful.
+2026-10-12 16:09:04.980 -04:00 [INF] Failed to validate the token.
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '2026-10-12 8:02:55 PM', Current time (UTC): '2026-10-12 8:09:04 PM'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+2026-10-12 16:09:04.986 -04:00 [INF] Failed to validate the token.
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '2026-10-12 8:02:55 PM', Current time (UTC): '2026-10-12 8:09:04 PM'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+2026-10-12 16:09:05.273 -04:00 [INF] Bearer was not authenticated. Failure message: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '2026-10-12 8:02:55 PM', Current time (UTC): '2026-10-12 8:09:04 PM'.
+2026-10-12 16:09:05.274 -04:00 [INF] Bearer was not authenticated. Failure message: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '2026-10-12 8:02:55 PM', Current time (UTC): '2026-10-12 8:09:04 PM'.
+2026-10-12 16:09:05.481 -04:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-10-12 16:09:05.481 -04:00 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (Administrateur|Gestionnaire|Agent|Locataire)
+2026-10-12 16:09:05.578 -04:00 [INF] AuthenticationScheme: Bearer was challenged.
+2026-10-12 16:09:05.578 -04:00 [INF] AuthenticationScheme: Bearer was challenged.
+2026-10-12 16:09:05.581 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/Tickets - 401 0 null 785.6328ms
+2026-10-12 16:09:05.581 -04:00 [INF] Request finished HTTP/2 GET https://localhost:7232/api/UnitesLocatives - 401 0 null 799.2399ms

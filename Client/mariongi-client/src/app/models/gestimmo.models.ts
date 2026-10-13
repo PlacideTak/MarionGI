@@ -1349,7 +1349,7 @@ export interface TicketIncidentDto extends BaseEntity {
 // ============================================================
 
 export interface TicketIncidentDetailDto extends TicketIncidentDto {
-  photos: TicketPhotoDto[];
+  photos?: TicketPhotoDto[] | null;
   intervenants: TicketIntervenantDto[];
 }
 

@@ -5,7 +5,6 @@
 <div class="tickets-page">
 
   <div class="tickets-header">
-
     <div>
 
       <h1>Gestion des incidents</h1>
@@ -13,8 +12,6 @@
       <p>Suivi des tickets, interventions et validations de devis.</p>
 
     </div>
-
-
 
     <button
 
@@ -31,8 +28,6 @@
     </button>
 
   </div>
-
-
 
   <div class="tickets-stats">
 
@@ -88,8 +83,6 @@
 
   </div>
 
-
-
   <section class="tickets-panel">
 
     <div class="tickets-filters">
@@ -107,8 +100,6 @@
         placeholder="Rechercher un ticket, une unité, un locataire..."
 
         aria-label="Rechercher un ticket">
-
-
 
       <p-select
 
@@ -128,8 +119,6 @@
 
       </p-select>
 
-
-
       <p-select
 
         [options]="prioritesOptions"
@@ -147,8 +136,6 @@
         [showClear]="true">
 
       </p-select>
-
-
 
       <p-select
 
@@ -168,8 +155,6 @@
 
       </p-select>
 
-
-
       <button
 
         pButton
@@ -185,8 +170,6 @@
         (click)="chargerTickets()">
 
       </button>
-
-
 
       <button
 
@@ -207,8 +190,6 @@
       </button>
 
     </div>
-
-
 
     <p-table
 
@@ -231,8 +212,6 @@
       currentPageReportTemplate="{first} à {last} sur {totalRecords} tickets"
 
       [showCurrentPageReport]="true">
-
-
 
       <ng-template pTemplate="header">
 
@@ -957,19 +936,12 @@
 <!-- Détail du ticket -->
 
 <p-dialog
-
   [(visible)]="modalDetailVisible"
-
   [modal]="true"
-
   [draggable]="false"
-
   [resizable]="false"
-
-  [style]="ticket-form-dialog"
-
+  [style]="{ width: 'min(56rem, 96vw)' }"
   [breakpoints]="{ '768px': '96vw' }"
-
   header="Détail du ticket">
 
 
@@ -1070,7 +1042,7 @@
 
         <span class="detail-label">Coût total</span>
 
-        <strong>{{ (ticket.coutTotal ?? 0) | number:'1.2-2' }}</strong>
+        <strong>{{ ticket.coutTotal | number:'1.2-2' }}</strong>
 
       </div>
 

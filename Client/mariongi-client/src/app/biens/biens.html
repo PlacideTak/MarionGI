@@ -450,7 +450,33 @@
          ======================================== -->
 
     <div class="form-row">
+      <!-- RÉFÉRENCE -->
+      <div class="field">
 
+        <label for="reference">
+          Référence
+        </label>
+
+        <input
+          id="reference"
+          type="text"
+          pInputText
+          formControlName="reference"
+          maxlength="50"
+          placeholder="Ex : MGI-DLA-001" />
+
+        <small
+          *ngIf="
+            bienForm.get('reference')?.invalid &&
+            bienForm.get('reference')?.touched
+          "
+          class="p-error form-error">
+
+          La référence est obligatoire.
+
+        </small>
+
+      </div>
       <!-- NOM -->
       <div class="field">
 
@@ -484,33 +510,7 @@
       </div>
 
 
-      <!-- RÉFÉRENCE -->
-      <div class="field">
 
-        <label for="reference">
-          Référence
-        </label>
-
-        <input
-          id="reference"
-          type="text"
-          pInputText
-          formControlName="reference"
-          maxlength="50"
-          placeholder="Ex : MGI-DLA-001" />
-
-        <small
-          *ngIf="
-            bienForm.get('reference')?.invalid &&
-            bienForm.get('reference')?.touched
-          "
-          class="p-error form-error">
-
-          La référence est obligatoire.
-
-        </small>
-
-      </div>
 
     </div>
 

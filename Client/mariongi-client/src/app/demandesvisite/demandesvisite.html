@@ -91,9 +91,9 @@
             <div class="bien-unite-cell">
 
               <span class="bien-name">
-                {{ demande.uniteLocative?.bienImmobilier?.nom
-                   || demande.uniteLocative?.bienImmobilier?.reference
-                   || 'N/A' }}
+                {{ demande.bien?.nom 
+                  ?? demande.uniteLocative?.bienReference
+                  ?? 'N/A-' }} -
               </span>
 
               <span

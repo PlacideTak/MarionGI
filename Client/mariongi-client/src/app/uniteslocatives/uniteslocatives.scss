@@ -1,1786 +1,1851 @@
-/* ==========================================================
-   MODALE UNITÉ LOCATIVE
-   ========================================================== */
 
-.unite-dialog {
+$border: #e2e8f0;
+$text: #334155;
+$text-soft: #64748b;
+$bg-soft: #f8fafc;
+$success: #2e7d5b;
+$success-hover: #246348;
+$error: #dc2626;
+$primary-soft: #eff6ff;
 
-  .p-dialog-content {
-    padding: 0 !important;
-    overflow-x: hidden;
-  }
+/* =========================================================
+   BASE
+   ========================================================= */
 
-  .p-dialog-header {
-    padding: 1rem 1.25rem;
-  }
-}
-
-
-/* ==========================================================
-   FORMULAIRE UNITÉ
-   ========================================================== */
-
-.unite-form {
-
-  width: 100%;
-  padding: 1.15rem 1.25rem 1.25rem;
-  box-sizing: border-box;
-}
-
-
-/* ==========================================================
-   GRILLE PRINCIPALE
-   Référence + Type + Bien
-   ========================================================== */
-
-.unite-form .form-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 1fr);
-
-  gap: 0.85rem 1.1rem;
-
-  width: 100%;
-}
-
-
-/* ==========================================================
-   GRILLE 3 COLONNES
-   Superficie + Loyer + Statut
-   ========================================================== */
-
-.unite-form .form-grid-three {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
-  gap: 0.85rem 1.1rem;
-
-  width: 100%;
-
-  margin-top: 0.85rem;
-}
-
-
-/* ==========================================================
-   CHAMP PLEINE LARGEUR
-   ========================================================== */
-
-.unite-form .field-full {
-  grid-column: 1 / -1;
-}
-
-
-/* ==========================================================
-   CHAMPS
-   ========================================================== */
-
-.unite-form .field {
-
-  display: flex;
-  flex-direction: column;
-
-  width: 100%;
+:host {
+  display: block;
   min-width: 0;
-
-  margin: 0;
-  padding: 0;
-
+  color: $text;
   box-sizing: border-box;
 }
 
-
-/* ==========================================================
-   LABELS
-   ========================================================== */
-
-.unite-form .field label,
-.unite-form .photo-section > label {
-
-  display: block;
-
-  margin: 0 0 0.4rem;
-
-  font-size: 0.88rem;
-  font-weight: 600;
-
-  color: var(--text-color);
-}
-
-
-/* ==========================================================
-   INPUT TEXTE
-   ========================================================== */
-
-.unite-form input[pInputText] {
-
-  width: 100%;
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
-
-
-/* ==========================================================
-   PRIME NG SELECT
-   ========================================================== */
-
-.unite-form .p-select {
-
-  width: 100%;
-  box-sizing: border-box;
-}
-
-
-/* ==========================================================
-   PRIME NG INPUT NUMBER
-   ========================================================== */
-
-.unite-form .p-inputnumber {
-
-  display: block;
-
-  width: 100%;
-  box-sizing: border-box;
-}
-
-
-.unite-form .p-inputnumber-input {
-
-  width: 100%;
-  box-sizing: border-box;
-}
-
-
-/* ==========================================================
-   ERREURS DE VALIDATION
-   ========================================================== */
-
-.unite-form .p-error {
-
-  display: block;
-
-  margin-top: 0.3rem;
-
-  color: #dc2626 !important;
-
-  font-size: 0.8rem;
-  font-weight: 500;
-
-  line-height: 1.3;
-}
-
-
-/* ==========================================================
-   BIEN SÉLECTIONNÉ
-   ========================================================== */
-
-.unite-form .selected-property-info {
-
-  display: flex;
-
-  align-items: flex-start;
-
-  gap: 0.7rem;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  margin-top: 1rem;
-
-  padding: 0.75rem 0.9rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-form .selected-property-info > i {
-
-  flex-shrink: 0;
-
-  margin-top: 0.1rem;
-
-  font-size: 1.15rem;
-}
-
-
-.unite-form .selected-property-info > div {
-
-  display: flex;
-
-  flex-direction: column;
-
-  min-width: 0;
-
-  gap: 0.15rem;
-}
-
-
-.unite-form .selected-property-info strong {
-  font-weight: 600;
-}
-
-
-.unite-form .selected-property-info small {
-
-  color: var(--text-color-secondary);
-
-  line-height: 1.4;
-}
-
-
-/* ==========================================================
-   OPTIONS DU BIEN
-   ========================================================== */
-
-.unite-form .bien-option {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0.1rem;
-
-  min-width: 0;
-}
-
-
-.unite-form .bien-option small {
-
-  color: var(--text-color-secondary);
-
-  line-height: 1.3;
-}
-
-
-/* ==========================================================
-   SECTIONS PHOTOS
-   ========================================================== */
-
-.unite-form .photo-section {
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  margin-top: 1rem;
-}
-
-
-.unite-form .photo-section > small {
-
-  display: block;
-
-  margin-top: 0.4rem;
-
-  line-height: 1.4;
-}
-
-
-/* ==========================================================
-   INPUT FICHIER
-   ========================================================== */
-
-.unite-form .photo-file-input {
-
-  display: block;
-
-  width: 100%;
-
-  box-sizing: border-box;
-
-  padding: 0.55rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 6px;
-
-  background: var(--surface-ground);
-
-  cursor: pointer;
-}
-
-
-/* ==========================================================
-   PHOTOS
-   ========================================================== */
-
-.unite-form .photos-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(auto-fill, minmax(100px, 1fr));
-
-  gap: 0.65rem;
-
-  width: 100%;
-
-  margin-top: 0.65rem;
-}
-
-
-.unite-form .photo-preview-item {
-
-  position: relative;
-
-  width: 100%;
-
-  aspect-ratio: 1 / 1;
-
-  overflow: hidden;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-form .photo-preview {
-
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-}
-
-
-/* ==========================================================
-   BOUTON SUPPRESSION PHOTO
-   ========================================================== */
-
-.unite-form .photo-remove-button {
-
-  position: absolute;
-
-  top: 0.3rem;
-  right: 0.3rem;
-
-  z-index: 2;
-
-  width: 2rem !important;
-  height: 2rem !important;
-
-  padding: 0 !important;
-}
-
-
-/* ==========================================================
-   COMPTEUR PHOTOS
-   ========================================================== */
-
-.unite-form .photo-counter {
-
-  display: flex;
-
-  align-items: center;
-  justify-content: flex-end;
-
-  gap: 0.45rem;
-
-  width: 100%;
-
-  margin-top: 0.65rem;
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.82rem;
-}
-
-
-/* ==========================================================
-   ACTIONS FORMULAIRE
-   ========================================================== */
-
-.unite-form .form-actions {
-
-  display: flex;
-
-  align-items: center;
-  justify-content: flex-end;
-
-  gap: 0.7rem;
-
-  width: 100%;
-
-  margin-top: 1.25rem;
-  padding-top: 0.85rem;
-
-  border-top: 1px solid var(--surface-border);
-}
-
-
-.unite-form .form-actions button {
-  flex-shrink: 0;
-}
-
-
-/* ==========================================================
-   MODALE DÉTAIL
-   ========================================================== */
-
-.unite-detail-dialog {
-
-  .p-dialog-header {
-    padding: 1rem 1.25rem;
-  }
-
-  .p-dialog-content {
-    padding: 0 !important;
-    overflow-x: hidden;
-  }
-}
-
-
-.unite-detail {
-
-  width: 100%;
-
-  padding: 1.15rem 1.25rem 1.25rem;
-
-  box-sizing: border-box;
-}
-
-
-/* ==========================================================
-   EN-TÊTE DÉTAIL
-   ========================================================== */
-
-.unite-detail .detail-header {
-
-  display: flex;
-
-  justify-content: space-between;
-  align-items: flex-start;
-
-  gap: 1rem;
-
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.85rem;
-
-  border-bottom: 1px solid var(--surface-border);
-}
-
-
-.unite-detail .detail-title {
-  min-width: 0;
-}
-
-
-.unite-detail .detail-reference {
-
-  display: block;
-
-  margin-bottom: 0.2rem;
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.82rem;
-}
-
-
-.unite-detail h3 {
-
-  margin: 0;
-
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-
-/* ==========================================================
-   GRILLE DES CARACTÉRISTIQUES
-   ========================================================== */
-
-.unite-detail .detail-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 0.85rem;
-
-  margin-bottom: 1.25rem;
-}
-
-
-.unite-detail .detail-item {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0.35rem;
-
-  padding: 0.8rem 0.9rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-detail .detail-label {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.4rem;
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.82rem;
-}
-
-
-.unite-detail .detail-item strong {
-  font-size: 0.95rem;
-}
-
-
-/* ==========================================================
-   SECTIONS DÉTAIL
-   ========================================================== */
-
-.unite-detail .detail-section {
-  margin-top: 1.25rem;
-}
-
-
-.unite-detail .detail-section h4 {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.45rem;
-
-  margin: 0 0 0.65rem;
-
-  font-size: 0.98rem;
-  font-weight: 600;
-}
-
-
-/* ==========================================================
-   BIEN IMMOBILIER
-   ========================================================== */
-
-.unite-detail .property-detail {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0.25rem;
-
-  padding: 0.85rem 0.9rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-detail .property-detail span {
-  color: var(--text-color-secondary);
-}
-
-
-/* ==========================================================
-   PHOTOS DÉTAIL
-   ========================================================== */
-
-.unite-detail .photos-grid {
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(4, minmax(0, 1fr));
-
-  gap: 0.65rem;
-
-  width: 100%;
-}
-
-
-.unite-detail .photo-preview-item {
-
-  position: relative;
-
-  width: 100%;
-
-  aspect-ratio: 1 / 1;
-
-  overflow: hidden;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-detail .photo-preview {
-
-  display: block;
-
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
-}
-
-
-/* ==========================================================
-   CONTRATS
-   ========================================================== */
-
-.unite-detail .contracts-list {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0.45rem;
-}
-
-
-.unite-detail .contract-item {
-
-  display: flex;
-
-  justify-content: space-between;
-  align-items: center;
-
-  gap: 0.85rem;
-
-  padding: 0.7rem 0.9rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-ground);
-}
-
-
-.unite-detail .contract-item > div {
-
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 0.15rem;
-}
-
-
-.unite-detail .contract-item span {
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.82rem;
-}
-
-
-/* ==========================================================
-   AUCUN CONTRAT
-   ========================================================== */
-
-.unite-detail .empty-detail {
-
-  display: flex;
-
-  justify-content: center;
-  align-items: center;
-
-  gap: 0.45rem;
-
-  margin-top: 1.25rem;
-
-  padding: 0.85rem;
-
-  color: var(--text-color-secondary);
-
-  border: 1px dashed var(--surface-border);
-
-  border-radius: 8px;
-}
-
-
-/* ==========================================================
-   MODALE PAIEMENT
-   ========================================================== */
-
-.paiement-dialog {
-
-  width: 520px;
-  max-width: 95vw;
-
-  position: relative;
-
-  z-index: 12001 !important;
-
-  border-radius: 10px;
-
-  overflow: hidden;
-
-  .p-dialog-header {
-    padding: 0.8rem 1.1rem;
-  }
-
-  .p-dialog-content {
-    padding: 0 !important;
-    overflow-x: hidden;
-  }
-}
-
-
-/* ==========================================================
-   MASQUE DE LA MODALE PAIEMENT
-   ========================================================== */
-
-.paiement-dialog-mask {
-
-  position: fixed !important;
-
-  inset: 0 !important;
-
-  width: 100vw !important;
-  height: 100vh !important;
-
-  background: rgba(0, 0, 0, 0.45) !important;
-
-  z-index: 12000 !important;
-
-  pointer-events: auto !important;
-}
-
-
-/* ==========================================================
-   FORMULAIRE PAIEMENT
-   ========================================================== */
-
-.paiement-form {
-
-  width: 100%;
-
-  padding: 0.85rem 1.1rem 1rem;
-
-  box-sizing: border-box;
-}
-
-
-/* ==========================================================
-   RÉSUMÉ DU CONTRAT
-   ========================================================== */
-
-.paiement-contract-card {
-
-  width: 100%;
-
-  margin: 0 0 0.85rem;
-
-  padding: 0.3rem 0;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 8px;
-
-  background: var(--surface-card);
-
-  box-sizing: border-box;
-
-  overflow: hidden;
-}
-
-
-/* ----------------------------------------------------------
-   Ligne du résumé
-   ---------------------------------------------------------- */
-
-.paiement-contract-row {
-
-  display: grid;
-
-  grid-template-columns:
-    75px
-    minmax(0, 1fr);
-
-  align-items: center;
-
-  min-height: 32px;
-
-  padding: 0.28rem 0.75rem;
-
-  box-sizing: border-box;
-}
-
-
-/* ----------------------------------------------------------
-   Séparateur
-   ---------------------------------------------------------- */
-
-.paiement-contract-row + .paiement-contract-row {
-
-  border-top: 1px solid color-mix(
-    in srgb,
-    var(--surface-border) 55%,
-    transparent
-  );
-}
-
-
-/* ----------------------------------------------------------
-   Libellé
-   ---------------------------------------------------------- */
-
-.paiement-contract-label {
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.72rem;
-
-  font-weight: 600;
-
-  white-space: nowrap;
-}
-
-
-/* ----------------------------------------------------------
-   Valeur
-   ---------------------------------------------------------- */
-
-.paiement-contract-value {
-
-  min-width: 0;
-
-  color: var(--text-color);
-
-  font-size: 0.78rem;
-
-  font-weight: 600;
-
-  line-height: 1.25;
-
-  overflow-wrap: anywhere;
-}
-
-
-/* ----------------------------------------------------------
-   Montant
-   ---------------------------------------------------------- */
-
-.paiement-contract-value--amount {
-
-  font-size: 0.82rem;
-
-  font-weight: 700;
-}
-
-
-/* ----------------------------------------------------------
-   Période
-   ---------------------------------------------------------- */
-
-.paiement-contract-value--period {
-
-  white-space: nowrap;
-}
-
-
-/* ==========================================================
-   TITRE DE SECTION
-   ========================================================== */
-
-.paiement-section-title {
-
-  display: flex;
-
-  align-items: center;
-
-  gap: 0.4rem;
-
-  margin: 0 0 0.65rem;
-
-  color: var(--text-color);
-
-  font-size: 0.8rem;
-
-  font-weight: 700;
-}
-
-
-.paiement-section-title i {
-
-  color: var(--primary-color);
-
-  font-size: 0.82rem;
-}
-
-
-/* ==========================================================
-   CHAMPS PAIEMENT
-   ========================================================== */
-
-.paiement-field {
-
-  width: 100%;
-
-  margin: 0 0 0.8rem;
-
-  box-sizing: border-box;
-}
-
-
-.paiement-field label {
-
-  display: block;
-
-  margin: 0 0 0.35rem;
-
-  color: var(--text-color);
-
-  font-size: 0.76rem;
-
-  font-weight: 600;
-}
-
-
-.paiement-field small {
-
-  display: block;
-
-  margin-top: 0.25rem;
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.7rem;
-
-  line-height: 1.3;
-}
-
-
-/*
- * On ne modifie pas la structure interne de PrimeNG.
- * Les composants restent simplement à 100 % de la largeur.
- */
-
-.paiement-field .w-full {
-
-  width: 100% !important;
-}
-
-
-/* ==========================================================
-   MESSAGE ESPÈCES
-   ========================================================== */
-
-.paiement-info {
-
-  display: flex;
-
-  align-items: flex-start;
-
-  gap: 0.55rem;
-
-  margin: 0 0 0.8rem;
-
-  padding: 0.65rem 0.75rem;
-
-  border: 1px solid var(--surface-border);
-
-  border-radius: 7px;
-
-  background: var(--surface-ground);
-
-  color: var(--text-color-secondary);
-
-  font-size: 0.73rem;
-
-  line-height: 1.4;
-}
-
-
-.paiement-info i {
-
-  flex: 0 0 auto;
-
-  color: var(--primary-color);
-
-  font-size: 0.8rem;
-}
-
-
-/* ==========================================================
-   ACTIONS PAIEMENT
-   ========================================================== */
-
-.paiement-actions {
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: flex-end;
-
-  gap: 0.6rem;
-
-  width: 100%;
-
-  margin-top: 0.9rem;
-
-  padding-top: 0.75rem;
-
-  border-top: 1px solid var(--surface-border);
-
-  box-sizing: border-box;
-}
-
-
-.paiement-actions p-button {
-
-  flex: 0 0 auto;
-}
-
-
-/* ==========================================================
-   RESPONSIVE UNITÉ
-   ========================================================== */
-
-@media (max-width: 900px) {
-
-  .unite-form .form-grid-three {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-}
-
-
-@media (max-width: 600px) {
-
-  .unite-form {
-
-    padding: 1rem;
-  }
-
-  .unite-form .form-grid,
-  .unite-form .form-grid-three {
-
-    grid-template-columns: 1fr;
-
-    gap: 0.75rem;
-  }
-
-  .unite-form .form-grid-three {
-
-    margin-top: 0.75rem;
-  }
-
-  .unite-form .field-full {
-
-    grid-column: auto;
-  }
-
-
-  /* Détail */
-
-  .unite-detail {
-
-    padding: 1rem;
-  }
-
-  .unite-detail .detail-grid {
-
-    grid-template-columns: 1fr;
-
-    gap: 0.7rem;
-  }
-
-  .unite-detail .photos-grid {
-
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-  }
-
-
-  /* Paiement */
-
-  .paiement-dialog {
-
-    width: 95vw !important;
-    max-width: 95vw !important;
-  }
-
-  .paiement-form {
-
-    padding: 0.8rem 0.9rem 0.9rem;
-  }
-
-  .paiement-contract-row {
-
-    grid-template-columns:
-      68px
-      minmax(0, 1fr);
-
-    min-height: 31px;
-
-    padding: 0.28rem 0.6rem;
-  }
-
-  .paiement-contract-label {
-
-    font-size: 0.7rem;
-  }
-
-  .paiement-contract-value {
-
-    font-size: 0.76rem;
-  }
-
-  .paiement-contract-value--amount {
-
-    font-size: 0.8rem;
-  }
-
-  .paiement-contract-value--period {
-
-    white-space: normal;
-  }
-
-  .paiement-actions {
-
-    gap: 0.5rem;
-  }
-}
-
-
-@media (max-width: 400px) {
-
-  .unite-form {
-
-    padding: 0.85rem;
-  }
-
-  .unite-detail {
-
-    padding: 0.85rem;
-  }
-
-  .unite-detail .photos-grid {
-
-    grid-template-columns: 1fr 1fr;
-
-    gap: 0.5rem;
-  }
-
-  .paiement-form {
-
-    padding: 0.75rem;
-  }
-
-  .paiement-actions {
-
-    flex-direction: column-reverse;
-
-    align-items: stretch;
-  }
-
-  .paiement-actions p-button {
-
-    width: 100%;
-  }
-}
-
-/* ==========================================================
-   PAGE UNITÉS LOCATIVES
-   ========================================================== */
 
 .unites-page {
-  --units-border: #e2e8f0;
-  --units-text: #334155;
-  --units-muted: #64748b;
-  --units-bg: #f8fafc;
-
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
   min-width: 0;
-  color: var(--units-text);
+  padding: 1.5rem;
 }
 
-/* ==========================================================
+/* =========================================================
    EN-TÊTE
-   ========================================================== */
+   ========================================================= */
 
-.unites-page .page-header {
+.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
-.unites-page .page-heading {
+.page-heading {
   display: flex;
   align-items: center;
   gap: 0.9rem;
   min-width: 0;
+
+  h2 {
+    margin: 0;
+    color: $text;
+    font-size: 1.55rem;
+    font-weight: 750;
+    line-height: 1.25;
+  }
+
+  p {
+    margin: 0.4rem 0 0;
+    color: $text-soft;
+    font-size: 0.88rem;
+    line-height: 1.5;
+  }
 }
 
-.unites-page .page-icon {
+.page-heading-text {
+  min-width: 0;
+}
+
+.page-icon {
   display: flex;
+  flex: 0 0 2.8rem;
   align-items: center;
   justify-content: center;
-  flex: 0 0 3rem;
-  width: 3rem;
-  height: 3rem;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: #eff6ff;
-  color: #2563eb;
-  font-size: 1.3rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 10px;
+  background: #eaf4ee;
+  color: $success;
+  font-size: 1.2rem;
 }
 
-.unites-page .page-heading h2 {
-  margin: 0;
-  color: var(--units-text);
-  font-size: 1.35rem;
-  font-weight: 700;
-  line-height: 1.4;
+:host ::ng-deep .btn-new {
+  min-height: 2.6rem;
+  padding: 0.65rem 1rem;
+  border-color: $success;
+  border-radius: 8px;
+  background: $success;
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $success-hover;
+    background: $success-hover;
+  }
 }
 
-.unites-page .page-heading p {
-  margin: 0.25rem 0 0;
-  color: var(--units-muted);
-  font-size: 0.88rem;
-  line-height: 1.5;
-}
+/* =========================================================
+   CARTES DE SYNTHÈSE
+   ========================================================= */
 
-.unites-page .page-header > button {
-  flex-shrink: 0;
-}
-
-/* ==========================================================
-   CARTES RÉCAPITULATIVES
-   ========================================================== */
-
-.unites-page .summary-grid {
+.summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
-}
-
-.unites-page .summary-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.85rem;
   min-width: 0;
-  padding: 1.1rem;
-  border: 1px solid var(--units-border);
-  border-radius: 12px;
-  background: var(--surface-card, #fff);
-  box-shadow: 0 2px 5px rgb(15 23 42 / 3%);
 }
 
-.unites-page .summary-icon {
+.summary-card {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.85rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid $border;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.025);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.045);
+  }
+}
+
+.summary-icon {
+  display: flex;
   flex: 0 0 2.65rem;
+  align-items: center;
+  justify-content: center;
   width: 2.65rem;
   height: 2.65rem;
   border-radius: 10px;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
 }
 
-.unites-page .summary-icon--blue {
-  background: #eff6ff;
+.summary-icon--blue {
   color: #2563eb;
+  background: #eff6ff;
 }
 
-.unites-page .summary-icon--green {
-  background: #ecfdf5;
-  color: #15803d;
+.summary-icon--green {
+  color: #0f766e;
+  background: #f0fdfa;
 }
 
-.unites-page .summary-icon--orange {
-  background: #fff7ed;
-  color: #c2410c;
+.summary-icon--orange {
+  color: #b45309;
+  background: #fffbeb;
 }
 
-.unites-page .summary-icon--purple {
-  background: #f5f3ff;
+.summary-icon--purple {
   color: #7c3aed;
+  background: #f5f3ff;
 }
 
-.unites-page .summary-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-
-.unites-page .summary-label {
-  color: var(--units-muted);
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.unites-page .summary-value {
-  color: var(--units-text);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.3;
-  overflow-wrap: anywhere;
-}
-
-.unites-page .summary-value--money {
-  font-size: clamp(1rem, 1.4vw, 1.35rem);
-}
-
-.unites-page .summary-content small {
-  color: var(--units-muted);
-  font-size: 0.72rem;
-  line-height: 1.4;
-}
-
-/* ==========================================================
-   PANNEAU DU TABLEAU
-   ========================================================== */
-
-.unites-page .units-panel {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--units-border);
-  border-radius: 12px;
-  background: var(--surface-card, #fff);
-  box-shadow: 0 2px 5px rgb(15 23 42 / 3%);
-}
-
-.unites-page .panel-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1.15rem 1.25rem;
-  border-bottom: 1px solid var(--units-border);
-}
-
-.unites-page .panel-heading h3 {
-  margin: 0;
-  color: var(--units-text);
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.unites-page .panel-heading p {
-  margin: 0.3rem 0 0;
-  color: var(--units-muted);
-  font-size: 0.82rem;
-}
-
-.unites-page .results-count {
-  flex-shrink: 0;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid var(--units-border);
-  border-radius: 20px;
-  background: var(--units-bg);
-  color: var(--units-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* ==========================================================
-   BARRE DE RECHERCHE ET FILTRES
-   ========================================================== */
-
-.unites-page .units-toolbar {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.6fr)
-    repeat(2, minmax(155px, 1fr)) auto;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 0.9rem 1rem;
-  border-bottom: 1px solid var(--units-border);
-  background: var(--surface-card, #fff);
-}
-
-.unites-page .search-field {
-  position: relative;
-  min-width: 0;
-}
-
-.unites-page .search-field > i {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 0.8rem;
-  transform: translateY(-50%);
-  color: #94a3b8;
-  font-size: 0.9rem;
-  pointer-events: none;
-}
-
-.unites-page .search-field input {
-  width: 100%;
-  min-width: 0;
-  height: 2.65rem;
-  padding-left: 2.3rem;
-  border-color: var(--units-border);
-  border-radius: 7px;
-  box-sizing: border-box;
-  font-size: 0.83rem;
-}
-
-.unites-page .filter-field {
-  min-width: 0;
-}
-
-.unites-page .filter-field .p-select {
-  width: 100%;
-  min-height: 2.65rem;
-  border-color: var(--units-border);
-  border-radius: 7px;
-}
-
-.unites-page .reset-filters {
-  min-height: 2.65rem;
-  white-space: nowrap;
-  font-size: 0.8rem;
-}
-
-/* ==========================================================
-   TABLEAU
-   ========================================================== */
-
-.unites-page .p-datatable {
-  min-width: 0;
-}
-
-.unites-page .p-datatable-table {
-  width: 100%;
-}
-
-.unites-page .p-datatable-thead > tr > th {
-  padding: 0.85rem 0.8rem;
-  border-color: var(--units-border);
-  background: var(--units-bg);
-  color: #475569;
-  font-size: 0.76rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.unites-page .p-datatable-tbody > tr > td {
-  padding: 0.85rem 0.8rem;
-  border-color: #edf0f4;
-  color: var(--units-text);
-  font-size: 0.82rem;
-  vertical-align: middle;
-}
-
-.unites-page .p-datatable-tbody > tr {
-  transition: background-color 0.15s ease;
-}
-
-.unites-page .p-datatable-tbody > tr:hover {
-  background: #f8fafc;
-}
-
-.unites-page .p-paginator {
-  padding: 0.7rem;
-  border-top: 1px solid var(--units-border);
-  background: var(--surface-card, #fff);
-}
-
-/* ==========================================================
-   CELLULE UNITÉ
-   ========================================================== */
-
-.unites-page .unit-reference-cell {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  min-width: 0;
-}
-
-.unites-page .unit-reference-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 2.2rem;
-  width: 2.2rem;
-  height: 2.2rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #64748b;
-}
-
-.unites-page .unit-reference-cell > div {
+.summary-content {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
   min-width: 0;
 }
 
-.unites-page .unit-reference-cell strong,
-.unites-page .location-cell strong {
+.summary-label {
+  color: $text-soft;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.summary-value {
+  color: $text;
+  font-size: 1.45rem;
+  font-weight: 750;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
-  font-weight: 650;
 }
 
-.unites-page .unit-reference-cell small {
-  color: var(--units-muted);
-  font-size: 0.74rem;
+.summary-value--money {
+  font-size: clamp(1rem, 1.4vw, 1.4rem);
 }
 
-.unites-page .location-cell {
+.summary-description {
+  color: #94a3b8;
+  font-size: 0.69rem;
+  line-height: 1.4;
+}
+
+/* =========================================================
+   PANNEAU ET EN-TÊTE DU TABLEAU
+   ========================================================= */
+
+.units-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.035);
+}
+
+.panel-heading {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border-bottom: 1px solid $border;
+
+  h3 {
+    margin: 0;
+    color: $text;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: $text-soft;
+    font-size: 0.81rem;
+    line-height: 1.45;
+  }
+}
+
+.results-count {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid $border;
+  border-radius: 20px;
+  background: $bg-soft;
+  color: $text-soft;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+/* =========================================================
+   RECHERCHE ET FILTRES
+   ========================================================= */
+
+.units-toolbar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.5fr) repeat(2, minmax(10rem, 1fr)) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid $border;
+  background: #fff;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  min-height: 2.5rem;
+  padding: 0 0.7rem;
+  border: 1px solid $border;
+  border-radius: 7px;
+  background: #fff;
+
+  > i {
+    flex: 0 0 auto;
+    color: $text-soft;
+    font-size: 0.85rem;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    padding: 0.6rem 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: $text;
+    font-size: 0.82rem;
+    box-shadow: none;
+
+    &:focus {
+      box-shadow: none;
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+
+  &:focus-within {
+    border-color: $success;
+    box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.08);
+  }
+}
+
+.filter-field {
   min-width: 0;
 }
 
-.unites-page .location-cell small {
+:host ::ng-deep {
+  .filter-field .p-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    border-color: $border;
+    border-radius: 7px;
+    box-shadow: none;
+
+    .p-select-label {
+      min-width: 0;
+      padding: 0.6rem 0.7rem;
+      font-size: 0.8rem;
+    }
+
+    &.p-focus {
+      border-color: $success;
+      box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.08);
+    }
+  }
+
+  .reset-filters {
+    min-height: 2.5rem;
+    padding: 0.55rem 0.75rem;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+}
+
+/* =========================================================
+   TABLEAU PRIME NG
+   ========================================================= */
+
+:host ::ng-deep .unites-table {
+  min-width: 0;
+
+  .p-datatable-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .p-datatable-thead > tr > th {
+    padding: 0.8rem 0.75rem;
+    border-bottom: 1px solid $border;
+    background: $bg-soft;
+    color: $text-soft;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .p-datatable-tbody > tr > td {
+    padding: 0.8rem 0.75rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: $text;
+    font-size: 0.81rem;
+    vertical-align: middle;
+  }
+
+  .p-datatable-tbody > tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  .p-datatable-tbody > tr {
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: #fbfdff;
+    }
+  }
+
+  .p-sortable-column-icon {
+    font-size: 0.7rem;
+  }
+
+  .p-paginator {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.2rem;
+    padding: 0.7rem 1rem;
+    border-top: 1px solid $border;
+    background: #fff;
+    color: $text-soft;
+    font-size: 0.78rem;
+  }
+
+  .p-paginator .p-paginator-page,
+  .p-paginator .p-paginator-next,
+  .p-paginator .p-paginator-prev,
+  .p-paginator .p-paginator-first,
+  .p-paginator .p-paginator-last {
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 7px;
+  }
+
+  .p-paginator .p-paginator-page.p-paginator-page-selected {
+    background: #eaf4ee;
+    color: $success;
+  }
+}
+
+/* =========================================================
+   CELLULES DU TABLEAU
+   ========================================================= */
+
+.unit-reference-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  strong {
+    color: $text;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+
+  small {
+    color: $text-soft;
+    font-size: 0.72rem;
+    overflow-wrap: anywhere;
+  }
+}
+
+.unit-reference-icon {
+  display: flex;
+  flex: 0 0 2rem;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 7px;
+  background: #f0fdf4;
+  color: $success;
+}
+
+.location-cell,
+.rent-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+
+  strong {
+    color: $text;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+  }
+
+  small {
+    color: $text-soft;
+    font-size: 0.72rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+}
+
+.location-cell small {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: var(--units-muted);
-  font-size: 0.75rem;
 }
 
-.unites-page .surface-value {
+.surface-value {
   white-space: nowrap;
-  color: #475569;
+  font-variant-numeric: tabular-nums;
 }
 
-.unites-page .rent-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  white-space: nowrap;
+.rent-cell strong {
+  color: $success;
+  font-variant-numeric: tabular-nums;
 }
 
-.unites-page .rent-cell strong {
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.unites-page .rent-cell small {
-  color: var(--units-muted);
-  font-size: 0.7rem;
-}
-
-.unites-page .unit-contract-count {
+.unit-contract-count {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  color: #475569;
+  color: $text-soft;
+  font-size: 0.8rem;
+
+  i {
+    color: #94a3b8;
+  }
 }
 
-.unites-page .unit-contract-count i {
-  color: #64748b;
-}
-
-.unites-page .payment-button {
-  white-space: nowrap;
-}
-
-.unites-page .no-payment {
+.no-payment {
   color: #94a3b8;
 }
 
-.unites-page .actions-group {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.05rem;
+.col-actions {
+  min-width: 8rem;
+  text-align: center;
   white-space: nowrap;
 }
 
-/* ==========================================================
-   ÉTAT VIDE
-   ========================================================== */
+.actions-group {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
 
-.unites-page .empty-state {
+.payment-button {
+  white-space: nowrap;
+}
+
+.hide-tablet {
+  /* La visibilité est gérée par les media queries. */
+}
+
+/* =========================================================
+   ÉTAT VIDE
+   ========================================================= */
+
+.empty-state {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
   padding: 2.5rem 1rem;
-  color: var(--units-muted);
   text-align: center;
+
+  > i {
+    margin-bottom: 0.25rem;
+    color: #94a3b8;
+    font-size: 1.8rem;
+  }
+
+  > strong {
+    color: $text;
+    font-size: 0.92rem;
+  }
+
+  > span {
+    max-width: 25rem;
+    color: $text-soft;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
 }
 
-.unites-page .empty-state > i {
-  margin-bottom: 0.25rem;
-  color: #94a3b8;
-  font-size: 2rem;
+/* =========================================================
+   MODALES PRIME NG
+   ========================================================= */
+
+:host ::ng-deep {
+  .unite-dialog,
+  .unite-detail-dialog,
+  .paiement-dialog {
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+    overflow: hidden;
+    border-radius: 12px;
+
+    .p-dialog-header {
+      padding: 0.9rem 1.1rem;
+      border-bottom: 1px solid $border;
+      color: $text;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .p-dialog-content {
+      min-width: 0;
+      padding: 0.9rem 1.1rem 1rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+  }
+
+  .unite-dialog {
+    width: 700px;
+  }
+
+  .unite-detail-dialog {
+    width: 760px;
+  }
+
+  .paiement-dialog {
+    width: 520px;
+  }
 }
 
-.unites-page .empty-state strong {
-  color: var(--units-text);
-  font-size: 0.9rem;
+/* =========================================================
+   FORMULAIRE AJOUT / MODIFICATION
+   ========================================================= */
+
+.unite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  color: $text;
 }
 
-.unites-page .empty-state span {
+.unite-form .form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid $border;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.unite-form .form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid $border;
+  color: $text;
+  font-size: 0.88rem;
+  font-weight: 700;
+
+  i {
+    flex: 0 0 auto;
+    color: $success;
+    font-size: 0.95rem;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem 0.8rem;
+  min-width: 0;
+}
+
+/*
+ * Les deux lignes compactes :
+ * 1. Superficie / Nombre de pièces / Étage
+ * 2. Loyer / Charges mensuelles / Caution
+ */
+.unite-form .form-grid-three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem 0.8rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.unite-form .form-grid-three > .field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.unite-form .form-grid-three .field-full {
+  grid-column: 1 / -1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
+
+  label {
+    color: $text;
+    font-size: 0.77rem;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  input[pInputText],
+  input[type='date'],
+  textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.4rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid $border;
+    border-radius: 7px;
+    background: #fff;
+    color: $text;
+    font-size: 0.82rem;
+    box-shadow: none;
+
+    &:focus {
+      border-color: $success;
+      box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.1);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+}
+
+.field-full {
+  grid-column: 1 / -1;
+}
+
+/* Inputs numériques et listes déroulantes */
+:host ::ng-deep .unite-form {
+  .p-inputnumber {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .p-inputnumber-input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.5rem;
+    border-color: $border;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    box-shadow: none;
+  }
+
+  .p-inputnumber-input:enabled:focus {
+    border-color: $success;
+    box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.1);
+  }
+
+  .p-select {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 2.35rem;
+    border-color: $border;
+    border-radius: 7px;
+    box-shadow: none;
+  }
+
+  .p-select .p-select-label {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    min-height: 2.35rem;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+
+  .p-select.p-focus {
+    border-color: $success;
+    box-shadow: 0 0 0 3px rgba(46, 125, 91, 0.1);
+  }
+}
+
+.field-hint {
+  color: $text-soft;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.form-error,
+:host ::ng-deep .unite-form .p-error {
+  display: block;
+  margin-top: 0.05rem;
+  color: $error !important;
+  font-size: 0.71rem;
+  font-weight: 500;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   PHOTOS DU FORMULAIRE
+   ========================================================= */
+
+.unite-form .photo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.unite-form .photos-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.unite-form .photo-preview-item {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: $bg-soft;
+}
+
+.unite-form .photo-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+:host ::ng-deep .photo-remove-button {
+  position: absolute;
+  top: 0.3rem;
+  right: 0.3rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.92);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+
+  &:hover {
+    background: #b91c1c;
+  }
+
+  .p-button-icon {
+    font-size: 0.7rem;
+  }
+}
+
+.unite-form .photo-upload-zone {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 6.5rem;
+  padding: 0.75rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 9px;
+  background: $bg-soft;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+
+  > i {
+    color: $success;
+    font-size: 1.35rem;
+  }
+
+  > strong {
+    color: $text;
+    font-size: 0.82rem;
+  }
+
+  > span,
+  > small {
+    color: $text-soft;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  .photo-file-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0.35rem;
+    border: 0;
+    color: $text-soft;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  &:hover,
+  &:focus-within {
+    border-color: $success;
+    background: #f1f8f5;
+  }
+}
+
+.photo-counter {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: $text-soft;
+  font-size: 0.76rem;
+
+  i {
+    color: $success;
+  }
+}
+
+/* =========================================================
+   ACTIONS DU FORMULAIRE
+   ========================================================= */
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid $border;
+}
+
+:host ::ng-deep {
+  .cancel-button,
+  .save-button {
+    min-height: 2.45rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.81rem;
+    font-weight: 600;
+  }
+
+  .cancel-button {
+    border: 1px solid $border;
+    background: #fff;
+    color: $text-soft;
+
+    &:hover {
+      background: $bg-soft;
+      color: $text;
+    }
+  }
+
+  .save-button {
+    border-color: $success;
+    background: $success;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      border-color: $success-hover;
+      background: $success-hover;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+  }
+}
+
+/* =========================================================
+   MODALE DÉTAIL
+   ========================================================= */
+
+.unite-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid $border;
+}
+
+.detail-title {
+  min-width: 0;
+
+  h3 {
+    margin: 0.3rem 0 0;
+    color: $text;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+}
+
+.detail-reference {
+  color: $success;
+  font-size: 0.8rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: #fff;
+
+  > strong {
+    color: $text;
+    font-size: 0.85rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+}
+
+.detail-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: $text-soft;
+  font-size: 0.75rem;
+  line-height: 1.4;
+
+  i {
+    color: $success;
+  }
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  min-width: 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid $border;
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: $text;
+    font-size: 0.88rem;
+    font-weight: 700;
+
+    i {
+      color: $success;
+    }
+  }
+}
+
+.fiscal-detail-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.property-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: $bg-soft;
+
+  strong {
+    color: $text;
+    font-size: 0.83rem;
+  }
+
+  span {
+    color: $text-soft;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+}
+
+.text-secondary {
+  color: $text-soft;
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+
+/* Photos dans la modale de détail */
+.unite-detail .photos-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.unite-detail .photo-preview-item {
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: $bg-soft;
+}
+
+.unite-detail .photo-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Contrats dans la modale de détail */
+.contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.contract-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid $border;
+  border-radius: 8px;
+  background: #fff;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  strong {
+    color: $text;
+    font-size: 0.8rem;
+    overflow-wrap: anywhere;
+  }
+
+  span,
+  small {
+    color: $text-soft;
+    font-size: 0.73rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+}
+
+.contract-item-amount {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.empty-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem;
+  border: 1px dashed $border;
+  border-radius: 8px;
+  color: $text-soft;
+  font-size: 0.8rem;
+
+  i {
+    color: #94a3b8;
+  }
+}
+
+/* =========================================================
+   MODALE PAIEMENT
+   ========================================================= */
+
+.paiement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.paiement-intro {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid $border;
+
+  > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  strong {
+    color: $text;
+    font-size: 0.9rem;
+  }
+
+  span {
+    color: $text-soft;
+    font-size: 0.77rem;
+    line-height: 1.4;
+  }
+}
+
+.paiement-intro-icon {
+  display: flex;
+  flex: 0 0 2.5rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9px;
+  background: #eaf4ee;
+  color: $success;
+  font-size: 1.05rem;
+}
+
+.paiement-contract-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.75rem;
+  border: 1px solid $border;
+  border-radius: 9px;
+  background: $bg-soft;
+}
+
+.paiement-contract-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.4rem 0;
+
+  & + & {
+    border-top: 1px solid #e9eef4;
+  }
+}
+
+.paiement-contract-label {
+  flex: 0 0 auto;
+  color: $text-soft;
+  font-size: 0.76rem;
+}
+
+.paiement-contract-value {
+  min-width: 0;
+  color: $text;
+  font-size: 0.78rem;
+  font-weight: 650;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.paiement-contract-value--amount {
+  color: $success;
+  font-weight: 750;
+}
+
+.paiement-contract-value--period {
+  max-width: 65%;
+}
+
+.paiement-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $text;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  i {
+    color: $success;
+  }
+}
+
+.paiement-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  label {
+    color: $text;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  small {
+    color: $text-soft;
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+
+  > input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid $border;
+    border-radius: 7px;
+    font-size: 0.82rem;
+  }
+}
+
+:host ::ng-deep .paiement-form {
+  .p-select,
+  .p-inputnumber {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .p-select {
+    min-height: 2.5rem;
+    border-color: $border;
+    border-radius: 7px;
+  }
+
+  .p-select .p-select-label {
+    min-width: 0;
+    padding: 0.6rem 0.7rem;
+    font-size: 0.82rem;
+    overflow-wrap: anywhere;
+  }
+
+  .p-inputnumber-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.6rem 0.7rem;
+    border-color: $border;
+    border-radius: 7px;
+    font-size: 0.82rem;
+  }
+}
+
+.paiement-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.77rem;
+  line-height: 1.5;
+
+  i {
+    flex: 0 0 auto;
+    margin-top: 0.1rem;
+  }
+}
+
+.paiement-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid $border;
+}
+
+:host ::ng-deep .paiement-actions .p-button {
+  min-height: 2.45rem;
+  border-radius: 7px;
   font-size: 0.8rem;
 }
 
-/* ==========================================================
-   RESPONSIVE
-   ========================================================== */
+/* =========================================================
+   RESPONSIVE : TABLETTES
+   ========================================================= */
 
-@media (max-width: 1200px) {
-  .unites-page .summary-grid {
+@media (max-width: 1100px) {
+  .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .unites-page .units-toolbar {
+  .units-toolbar {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .unites-page .search-field {
+  .search-field {
     grid-column: 1 / -1;
-  }
-
-  .unites-page .reset-filters {
-    justify-content: center;
   }
 }
 
 @media (max-width: 768px) {
   .unites-page {
     gap: 1rem;
-  }
-
-  .unites-page .page-header {
-    align-items: flex-start;
-  }
-
-  .unites-page .page-heading h2 {
-    font-size: 1.15rem;
-  }
-
-  .unites-page .page-heading p {
-    font-size: 0.8rem;
-  }
-
-  .unites-page .page-header > button {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .unites-page .summary-grid {
-    gap: 0.7rem;
-  }
-
-  .unites-page .summary-card {
-    gap: 0.6rem;
-    padding: 0.85rem;
-  }
-
-  .unites-page .summary-icon {
-    flex-basis: 2.2rem;
-    width: 2.2rem;
-    height: 2.2rem;
-    font-size: 0.95rem;
-  }
-
-  .unites-page .summary-value {
-    font-size: 1.25rem;
-  }
-
-  .unites-page .summary-value--money {
-    font-size: 1rem;
-  }
-
-  .unites-page .panel-heading {
-    align-items: flex-start;
     padding: 1rem;
   }
 
-  .unites-page .units-toolbar {
-    padding: 0.75rem;
-    gap: 0.6rem;
+  .page-heading h2 {
+    font-size: 1.35rem;
+  }
+
+  .summary-grid {
+    gap: 0.75rem;
+  }
+
+  .summary-card {
+    gap: 0.65rem;
+    padding: 0.85rem;
+  }
+
+  .summary-icon {
+    flex-basis: 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  .summary-value {
+    font-size: 1.25rem;
+  }
+
+  .summary-value--money {
+    font-size: 1rem;
+  }
+
+  .panel-heading {
+    padding: 1rem;
+  }
+
+  :host ::ng-deep .unites-table {
+    .p-datatable-thead > tr > th,
+    .p-datatable-tbody > tr > td {
+      padding: 0.65rem;
+    }
+  }
+
+  .unite-form .photos-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
-  .unites-page .summary-grid {
-    grid-template-columns: 1fr 1fr;
+/* =========================================================
+   RESPONSIVE : PETITS ÉCRANS
+   ========================================================= */
+
+@media (max-width: 560px) {
+  .unites-page {
+    padding: 0.75rem;
   }
 
-  .unites-page .summary-card {
+  .page-header {
+    align-items: stretch;
     flex-direction: column;
-    gap: 0.55rem;
   }
 
-  .unites-page .summary-content {
-    width: 100%;
+  .page-heading {
+    align-items: flex-start;
   }
 
-  .unites-page .summary-label {
-    font-size: 0.74rem;
+  .page-heading h2 {
+    font-size: 1.25rem;
   }
 
-  .unites-page .summary-content small {
-    font-size: 0.68rem;
-  }
-
-  .unites-page .units-toolbar {
-    grid-template-columns: 1fr;
-  }
-
-  .unites-page .search-field {
-    grid-column: auto;
-  }
-
-  .unites-page .reset-filters {
+  :host ::ng-deep .btn-new {
     width: 100%;
     justify-content: center;
   }
 
-  .unites-page .panel-heading h3 {
-    font-size: 0.9rem;
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
   }
 
-  .unites-page .results-count {
+  .summary-card {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .summary-icon {
+    flex-basis: 2.15rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    font-size: 0.95rem;
+  }
+
+  .summary-label {
     font-size: 0.7rem;
   }
 
-  /* Affichage des lignes sous forme de cartes sur mobile.
-     Le tableau utilise déjà la classe responsive-stack. */
-
-  .unites-page .table-responsive-stack .hide-tablet {
-    display: none !important;
+  .summary-value {
+    font-size: 1.15rem;
   }
 
-  .unites-page .actions-group {
-    justify-content: flex-start;
+  .summary-value--money {
+    font-size: 0.95rem;
+  }
+
+  .summary-description {
+    font-size: 0.65rem;
+  }
+
+  .panel-heading {
+    align-items: flex-start;
+  }
+
+  .units-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.75rem;
+  }
+
+  .search-field {
+    grid-column: auto;
+  }
+
+  :host ::ng-deep .reset-filters {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .field-full {
+    grid-column: auto;
+  }
+
+  .unite-form .photos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .unite-detail .photos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .contract-item {
+    align-items: flex-start;
+  }
+
+  .contract-item-amount {
+    max-width: 45%;
+  }
+
+  .paiement-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  :host ::ng-deep .paiement-actions .p-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  :host ::ng-deep {
+    .unite-dialog,
+    .unite-detail-dialog,
+    .paiement-dialog {
+      width: calc(100vw - 1rem) !important;
+      max-width: calc(100vw - 1rem);
+      max-height: calc(100dvh - 1rem);
+
+      .p-dialog-header {
+        padding: 0.75rem 0.85rem;
+        font-size: 0.93rem;
+      }
+
+      .p-dialog-content {
+        padding: 0.75rem 0.85rem;
+      }
+    }
+  }
+
+  .unite-form .form-section {
+    padding: 0.65rem;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  :host ::ng-deep {
+    .form-actions .cancel-button,
+    .form-actions .save-button {
+      width: 100%;
+      justify-content: center;
+    }
   }
 }
 
+/* =========================================================
+   RESPONSIVE : MODALE COMPACTE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  :host ::ng-deep .unite-dialog {
+    width: 96vw !important;
+    max-width: 96vw;
+    max-height: calc(100dvh - 1rem);
+
+    .p-dialog-header {
+      padding: 0.75rem 0.85rem;
+    }
+
+    .p-dialog-content {
+      padding: 0.75rem 0.85rem;
+    }
+  }
+}
+
+/*
+ * Sur les écrans moyens, les deux groupes de trois champs
+ * restent sur une seule ligne.
+ *
+ * Sur un téléphone étroit, la grille passe à une colonne
+ * pour préserver la lisibilité et éviter le débordement.
+ */
+@media (max-width: 480px) {
+  .unite-form .form-grid-three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .unite-form .form-grid-three .field-full {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 360px) {
+  .summary-card {
+    padding: 0.6rem;
+  }
+
+  .summary-value {
+    font-size: 1.05rem;
+  }
+
+  .summary-value--money {
+    font-size: 0.85rem;
+  }
+
+  .page-heading {
+    gap: 0.6rem;
+  }
+
+  .page-icon {
+    flex-basis: 2.35rem;
+    width: 2.35rem;
+    height: 2.35rem;
+  }
+
+  .panel-heading {
+    flex-direction: column;
+  }
+
+  .unite-form .photos-grid,
+  .unite-detail .photos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* ==========================================================
+   SÉLECTION ET PRÉVISUALISATION DES PHOTOS
+   ========================================================== */
+
+.photo-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 1.5rem 1rem;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+  text-align: center;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.photo-upload-zone:hover {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.photo-upload-icon {
+  color: #16a34a;
+  font-size: 2rem;
+}
+
+.photo-upload-title {
+  margin: 0;
+  color: #334155;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.photo-upload-description {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.photo-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.photo-upload-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.65rem 1rem;
+  border-radius: 7px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.photo-upload-button:hover {
+  background: #15803d;
+}
+
+.photo-upload-button:focus-within {
+  outline: 2px solid #16a34a;
+  outline-offset: 3px;
+}
+
+.photo-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.photo-selection-count {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+.photo-preview-item {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.photo-preview {
+  display: block;
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
+
+.photo-preview-badge {
+  position: absolute;
+  bottom: 0.4rem;
+  left: 0.4rem;
+  max-width: calc(100% - 2.8rem);
+  padding: 0.2rem 0.4rem;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgb(15 23 42 / 78%);
+  color: #fff;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.photo-remove-button {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.photo-counter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.photo-counter i {
+  color: #16a34a;
+}
+
+@media (max-width: 480px) {
+  .photo-upload-zone {
+    padding: 1.1rem 0.65rem;
+  }
+
+  .photos-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .photo-preview {
+    height: 90px;
+  }
+}

@@ -339,13 +339,14 @@
   </section>
 </div>
 
+
 <!-- Modale d'ajout et de modification -->
 <p-dialog
   *ngIf="canManageBiens"
   [(visible)]="displayModal"
   [header]="isEditMode ? 'Modifier le bien immobilier' : 'Nouveau bien immobilier'"
   [modal]="true"
-  [style]="{ width: 'min(44rem, 96vw)' }"
+  [style]="{ width: 'min(52rem, 96vw)' }"
   [breakpoints]="{ '768px': '96vw' }"
   [draggable]="false"
   [resizable]="false"
@@ -360,11 +361,15 @@
     (ngSubmit)="sauvegarder()"
     class="bien-form">
 
+    <!-- ================================================== -->
+    <!-- 1. INFORMATIONS GÉNÉRALES -->
+    <!-- ================================================== -->
+
     <div class="form-section-heading">
       <i class="pi pi-building"></i>
       <div>
         <h3>Informations générales</h3>
-        <p>Renseignez les caractéristiques du bien immobilier.</p>
+        <p>Identifiez la propriété et renseignez ses caractéristiques principales.</p>
       </div>
     </div>
 
@@ -380,14 +385,9 @@
           maxlength="50"
           placeholder="Ex. : MGI-DLA-001" />
         <small
-          *ngIf="bienForm.get('reference')?.hasError('required') && bienForm.get('reference')?.touched"
+          *ngIf="bienForm.get('reference')?.invalid && bienForm.get('reference')?.touched"
           class="form-error">
-          La référence est obligatoire.
-        </small>
-        <small
-          *ngIf="bienForm.get('reference')?.hasError('maxlength') && bienForm.get('reference')?.touched"
-          class="form-error">
-          La référence ne peut pas dépasser 50 caractères.
+          La référence est obligatoire et ne doit pas dépasser 50 caractères.
         </small>
       </div>
 
@@ -401,7 +401,7 @@
           maxlength="150"
           placeholder="Ex. : Immeuble Marion" />
         <small class="field-hint">
-          Le nom utilisé pour identifier facilement la propriété.
+          Nom usuel permettant d'identifier la propriété.
         </small>
         <small
           *ngIf="bienForm.get('nom')?.invalid && bienForm.get('nom')?.touched"
@@ -437,22 +437,53 @@
           type="number"
           formControlName="superficie"
           min="1"
+          max="1000000"
           step="0.01"
           placeholder="Ex. : 250" />
         <small
           *ngIf="bienForm.get('superficie')?.invalid && bienForm.get('superficie')?.touched"
           class="form-error">
-          La superficie doit être supérieure à zéro.
+          La superficie doit être comprise entre 1 et 1 000 000 m².
         </small>
       </div>
 
+      <div class="field">
+        <label for="anneeConstruction">Année de construction</label>
+        <input
+          id="anneeConstruction"
+          pInputText
+          type="number"
+          formControlName="anneeConstruction"
+          min="1"
+          max="9999"
+          step="1"
+          placeholder="Ex. : 2018" />
+      </div>
+
+      <div class="field">
+        <label for="nombreEtages">Nombre d'étages</label>
+        <input
+          id="nombreEtages"
+          pInputText
+          type="number"
+          formControlName="nombreEtages"
+          min="0"
+          max="1000"
+          step="1"
+          placeholder="Ex. : 4" />
+      </div>
+
     </div>
+
+    <!-- ================================================== -->
+    <!-- 2. LOCALISATION -->
+    <!-- ================================================== -->
 
     <div class="form-section-heading location-heading">
       <i class="pi pi-map-marker"></i>
       <div>
         <h3>Localisation</h3>
-        <p>Indiquez où se trouve le bien.</p>
+        <p>Précisez l'emplacement géographique de la propriété.</p>
       </div>
     </div>
 
@@ -483,11 +514,6 @@
           formControlName="quartier"
           maxlength="100"
           placeholder="Ex. : Bonapriso, Bastos..." />
-        <small
-          *ngIf="bienForm.get('quartier')?.hasError('maxlength') && bienForm.get('quartier')?.touched"
-          class="form-error">
-          Le quartier ne peut pas dépasser 100 caractères.
-        </small>
       </div>
 
       <div class="field field-full">
@@ -498,17 +524,189 @@
           type="text"
           formControlName="adresse"
           maxlength="250"
-          placeholder="Rue, numéro, immeuble..." />
+          placeholder="Rue, numéro, repère..." />
         <small
           *ngIf="bienForm.get('adresse')?.invalid && bienForm.get('adresse')?.touched"
           class="form-error">
-          L'adresse est obligatoire.
+          L'adresse est obligatoire et ne doit pas dépasser 250 caractères.
         </small>
+      </div>
+
+      <div class="field">
+        <label for="region">Région</label>
+        <input
+          id="region"
+          pInputText
+          type="text"
+          formControlName="region"
+          placeholder="Ex. : Littoral, Centre..." />
+      </div>
+
+      <div class="field">
+        <label for="departement">Département</label>
+        <input
+          id="departement"
+          pInputText
+          type="text"
+          formControlName="departement"
+          placeholder="Nom du département" />
+      </div>
+
+      <div class="field">
+        <label for="arrondissement">Arrondissement</label>
+        <input
+          id="arrondissement"
+          pInputText
+          type="text"
+          formControlName="arrondissement"
+          placeholder="Nom de l'arrondissement" />
       </div>
 
     </div>
 
-    <!-- Photos existantes -->
+    <!-- ================================================== -->
+    <!-- 3. CADASTRE ET FONCIER -->
+    <!-- ================================================== -->
+
+    <div class="form-section-heading cadastral-heading">
+      <i class="pi pi-file"></i>
+      <div>
+        <h3>Cadastre et informations foncières</h3>
+        <p>Enregistrez les références administratives et cadastrales disponibles.</p>
+      </div>
+    </div>
+
+    <div class="form-grid">
+
+      <div class="field">
+        <label for="numeroTitreFoncier">Numéro du titre foncier</label>
+        <input
+          id="numeroTitreFoncier"
+          pInputText
+          type="text"
+          formControlName="numeroTitreFoncier"
+          placeholder="Numéro du titre foncier" />
+      </div>
+
+      <div class="field">
+        <label for="numeroLot">Numéro de lot</label>
+        <input
+          id="numeroLot"
+          pInputText
+          type="text"
+          formControlName="numeroLot"
+          placeholder="Numéro du lot" />
+      </div>
+
+      <div class="field">
+        <label for="numeroParcelle">Numéro de parcelle</label>
+        <input
+          id="numeroParcelle"
+          pInputText
+          type="text"
+          formControlName="numeroParcelle"
+          placeholder="Numéro de parcelle" />
+      </div>
+
+      <div class="field">
+        <label for="referenceCadastrale">Référence cadastrale</label>
+        <input
+          id="referenceCadastrale"
+          pInputText
+          type="text"
+          formControlName="referenceCadastrale"
+          placeholder="Référence cadastrale" />
+      </div>
+
+      <div class="form-field">
+        <label for="statutFoncier">Statut foncier </label>
+
+        <p-select
+          inputId="statutFoncier"
+          formControlName="statutFoncier"
+          [options]="statutsFonciers"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un statut"
+          appendTo="body"
+          styleClass="w-full">
+        </p-select>
+      </div>
+
+    </div>
+
+    <!-- ================================================== -->
+    <!-- 4. INFORMATIONS FINANCIÈRES -->
+    <!-- ================================================== -->
+
+    <div class="form-section-heading financial-heading">
+      <i class="pi pi-wallet"></i>
+      <div>
+        <h3>Informations financières</h3>
+        <p>Renseignez les valeurs et les dates utiles au suivi patrimonial et fiscal.</p>
+      </div>
+    </div>
+
+    <div class="form-grid">
+
+      <div class="field">
+        <label for="valeurAcquisition">Valeur d'acquisition</label>
+        <input
+          id="valeurAcquisition"
+          pInputText
+          type="number"
+          formControlName="valeurAcquisition"
+          min="0"
+          step="0.01"
+          placeholder="Ex. : 45000000" />
+        <small
+          *ngIf="bienForm.get('valeurAcquisition')?.invalid && bienForm.get('valeurAcquisition')?.touched"
+          class="form-error">
+          La valeur d'acquisition doit être positive ou nulle.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="dateAcquisition">Date d'acquisition</label>
+        <input
+          id="dateAcquisition"
+          pInputText
+          type="date"
+          formControlName="dateAcquisition" />
+      </div>
+
+      <div class="field">
+        <label for="valeurEstimee">Valeur estimée actuelle</label>
+        <input
+          id="valeurEstimee"
+          pInputText
+          type="number"
+          formControlName="valeurEstimee"
+          min="0"
+          step="0.01"
+          placeholder="Ex. : 60000000" />
+        <small
+          *ngIf="bienForm.get('valeurEstimee')?.invalid && bienForm.get('valeurEstimee')?.touched"
+          class="form-error">
+          La valeur estimée doit être positive ou nulle.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="dateDerniereEvaluation">Date de la dernière évaluation</label>
+        <input
+          id="dateDerniereEvaluation"
+          pInputText
+          type="date"
+          formControlName="dateDerniereEvaluation" />
+      </div>
+
+    </div>
+
+    <!-- ================================================== -->
+    <!-- 5. PHOTOS EXISTANTES -->
+    <!-- ================================================== -->
+
     <div
       *ngIf="isEditMode && photosExistantes.length > 0"
       class="photo-section">
@@ -517,7 +715,7 @@
         <i class="pi pi-images"></i>
         <div>
           <h3>Photos actuelles</h3>
-          <p>Supprimez les photos que vous ne souhaitez pas conserver.</p>
+          <p>Les photos retirées ici ne seront pas conservées après l'enregistrement.</p>
         </div>
       </div>
 
@@ -536,7 +734,7 @@
             type="button"
             icon="pi pi-times"
             class="photo-remove-button"
-            aria-label="Supprimer cette photo"
+            [attr.aria-label]="'Supprimer la photo ' + (i + 1)"
             pTooltip="Supprimer cette photo"
             tooltipPosition="top"
             (click)="supprimerPhotoExistante(i)">
@@ -545,7 +743,10 @@
       </div>
     </div>
 
-    <!-- Nouvelles photos -->
+    <!-- ================================================== -->
+    <!-- 6. AJOUT DE PHOTOS -->
+    <!-- ================================================== -->
+
     <div class="photo-section">
       <div class="form-section-heading">
         <i class="pi pi-camera"></i>
@@ -585,7 +786,7 @@
             type="button"
             icon="pi pi-times"
             class="photo-remove-button"
-            aria-label="Retirer cette photo"
+            [attr.aria-label]="'Retirer la nouvelle photo ' + (i + 1)"
             pTooltip="Retirer cette photo"
             tooltipPosition="top"
             (click)="supprimerNouvellePhoto(i)">
@@ -602,7 +803,10 @@
       </div>
     </div>
 
-    <!-- Actions -->
+    <!-- ================================================== -->
+    <!-- ACTIONS -->
+    <!-- ================================================== -->
+
     <div class="form-actions">
       <button
         pButton

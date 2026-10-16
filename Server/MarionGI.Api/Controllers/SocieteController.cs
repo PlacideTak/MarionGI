@@ -21,135 +21,25 @@ public class SocietesController : ControllerBase
     }
 
     // ============================================================
-    // GET : api/Societes
-    //
-    // ADMINISTRATEUR :
-    // Toutes les sociétés non supprimées.
-    //
-    // GESTIONNAIRE :
-    // Uniquement sa société.
-    //
-    // AGENT / LOCATAIRE :
-    // Aucun accès.
+    // GET : Liste des propriétaires
+    // GET /api/Societes
+    // GET /api/Societes?typePersonne=PersonnePhysique
     // ============================================================
 
     [HttpGet]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
-    public async Task<IActionResult> GetSocietes()
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
+    public async Task<IActionResult> GetSocietes(
+        [FromQuery] TypePersonne? typePersonne,
+        [FromQuery] bool? actif)
     {
-        // --------------------------------------------------------
-        // ADMINISTRATEUR
-        // --------------------------------------------------------
+        var query = _context.Societes
+            .AsNoTracking()
+            .Where(s => !s.EstSupprime);
 
-        if (User.IsInRole(nameof(RoleUtilisateur.Administrateur)))
-        {
-            var societes =
-                await _context.Societes
-                    .AsNoTracking()
-                    .Where(s => !s.EstSupprime)
-                    .OrderBy(s => s.Nom)
-                    .Select(s => new
-                    {
-                        s.Id,
-                        s.Nom,
-                        s.NumeroEntreprise,
-                        s.Adresse,
-                        s.Ville,
-                        s.CodePostal,
-                        s.Telephone,
-                        s.Email,
-                        s.Actif,
-
-                        NombreUtilisateurs =
-                            s.Utilisateurs
-                                .Count(u => !u.EstSupprime),
-
-                        NombreBiens =
-                            s.BiensImmobiliers
-                                .Count(b => !b.EstSupprime)
-                    })
-                    .ToListAsync();
-
-            return Ok(societes);
-        }
-
-        // --------------------------------------------------------
-        // GESTIONNAIRE
-        // --------------------------------------------------------
-
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync();
-
-        if (!societeId.HasValue ||
-            societeId.Value == Guid.Empty)
-        {
-            return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
-        }
-
-        var societe =
-            await _context.Societes
-                .AsNoTracking()
-                .Where(s =>
-                    s.Id == societeId.Value &&
-                    !s.EstSupprime)
-                .Select(s => new
-                {
-                    s.Id,
-                    s.Nom,
-                    s.NumeroEntreprise,
-                    s.Adresse,
-                    s.Ville,
-                    s.CodePostal,
-                    s.Telephone,
-                    s.Email,
-                    s.Actif,
-
-                    NombreUtilisateurs =
-                        s.Utilisateurs
-                            .Count(u => !u.EstSupprime),
-
-                    NombreBiens =
-                        s.BiensImmobiliers
-                            .Count(b => !b.EstSupprime)
-                })
-                .FirstOrDefaultAsync();
-
-        if (societe == null)
-        {
-            return NotFound("Société introuvable.");
-        }
-
-        return Ok(societe);
-    }
-
-    // ============================================================
-    // GET : api/Societes/{id}
-    //
-    // ADMINISTRATEUR :
-    // Peut consulter n'importe quelle société.
-    //
-    // GESTIONNAIRE :
-    // Peut consulter uniquement sa société.
-    // ============================================================
-
-    [HttpGet("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
-    public async Task<IActionResult> GetById(Guid id)
-    {
-        if (id == Guid.Empty)
-        {
-            return BadRequest(
-                "L'identifiant de la société est invalide.");
-        }
-
-        // --------------------------------------------------------
-        // GESTIONNAIRE
-        // --------------------------------------------------------
+        // Un administrateur peut consulter tous les propriétaires.
+        // Un gestionnaire ne consulte que son propre compte.
 
         if (User.IsInRole(nameof(RoleUtilisateur.Gestionnaire)))
         {
@@ -159,8 +49,100 @@ public class SocietesController : ControllerBase
             if (!societeId.HasValue ||
                 societeId.Value == Guid.Empty)
             {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
+                return Unauthorized(new
+                {
+                    message =
+                        "Impossible de déterminer le compte propriétaire de l'utilisateur connecté."
+                });
+            }
+
+            query = query.Where(s => s.Id == societeId.Value);
+        }
+
+        if (typePersonne.HasValue)
+        {
+            query = query.Where(
+                s => s.TypePersonne == typePersonne.Value);
+        }
+
+        if (actif.HasValue)
+        {
+            query = query.Where(
+                s => s.Actif == actif.Value);
+        }
+
+        var resultats = await query
+            .OrderBy(s => s.Nom)
+            .Select(s => new SocieteDto
+            {
+                Id = s.Id,
+                TypePersonne = s.TypePersonne,
+                Nom = s.Nom,
+                Prenom = s.Prenom,
+                FormeJuridique = s.FormeJuridique,
+                NumeroEntreprise = s.NumeroEntreprise,
+                NumeroContribuable = s.NumeroContribuable,
+                Adresse = s.Adresse,
+                AdresseFiscale = s.AdresseFiscale,
+                Ville = s.Ville,
+                Region = s.Region,
+                Departement = s.Departement,
+                CodePostal = s.CodePostal,
+                Pays = s.Pays,
+                CentreImpots = s.CentreImpots,
+                ActivitePrincipale = s.ActivitePrincipale,
+                Telephone = s.Telephone,
+                Email = s.Email,
+                Actif = s.Actif,
+                DateCreation = s.DateCreation,
+
+                NombreUtilisateurs = s.Utilisateurs.Count(
+                    u => !u.EstSupprime),
+
+                NombreBiens = s.BiensImmobiliers.Count(
+                    b => !b.EstSupprime),
+
+                NombreDeclarationsFiscales =
+                    s.DeclarationsFiscales.Count(
+                        d => !d.EstSupprime)
+            })
+            .ToListAsync();
+
+        return Ok(resultats);
+    }
+
+    // ============================================================
+    // GET : Détail d'un propriétaire
+    // GET /api/Societes/{id}
+    // ============================================================
+
+    [HttpGet("{id:guid}")]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
+    public async Task<IActionResult> GetById(Guid id)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequest(new
+            {
+                message = "L'identifiant du propriétaire est invalide."
+            });
+        }
+
+        if (User.IsInRole(nameof(RoleUtilisateur.Gestionnaire)))
+        {
+            var societeId =
+                await GetSocieteIdUtilisateurConnecteAsync();
+
+            if (!societeId.HasValue ||
+                societeId.Value == Guid.Empty)
+            {
+                return Unauthorized(new
+                {
+                    message =
+                        "Impossible de déterminer le compte propriétaire de l'utilisateur connecté."
+                });
             }
 
             if (id != societeId.Value)
@@ -169,125 +151,115 @@ public class SocietesController : ControllerBase
             }
         }
 
-        // --------------------------------------------------------
-        // ADMINISTRATEUR :
-        // accès à toutes les sociétés non supprimées
-        // --------------------------------------------------------
+        var societe = await _context.Societes
+            .AsNoTracking()
+            .Where(s => s.Id == id && !s.EstSupprime)
+            .Select(s => new SocieteDto
+            {
+                Id = s.Id,
+                TypePersonne = s.TypePersonne,
+                Nom = s.Nom,
+                Prenom = s.Prenom,
+                FormeJuridique = s.FormeJuridique,
+                NumeroEntreprise = s.NumeroEntreprise,
+                NumeroContribuable = s.NumeroContribuable,
+                Adresse = s.Adresse,
+                AdresseFiscale = s.AdresseFiscale,
+                Ville = s.Ville,
+                Region = s.Region,
+                Departement = s.Departement,
+                CodePostal = s.CodePostal,
+                Pays = s.Pays,
+                CentreImpots = s.CentreImpots,
+                ActivitePrincipale = s.ActivitePrincipale,
+                Telephone = s.Telephone,
+                Email = s.Email,
+                Actif = s.Actif,
+                DateCreation = s.DateCreation,
 
-        var societe =
-            await _context.Societes
-                .AsNoTracking()
-                .Where(s =>
-                    s.Id == id &&
-                    !s.EstSupprime)
-                .Select(s => new
-                {
-                    s.Id,
-                    s.Nom,
-                    s.NumeroEntreprise,
-                    s.Adresse,
-                    s.Ville,
-                    s.CodePostal,
-                    s.Telephone,
-                    s.Email,
-                    s.Actif,
+                NombreUtilisateurs = s.Utilisateurs.Count(
+                    u => !u.EstSupprime),
 
-                    NombreUtilisateurs =
-                        s.Utilisateurs
-                            .Count(u => !u.EstSupprime),
+                NombreBiens = s.BiensImmobiliers.Count(
+                    b => !b.EstSupprime),
 
-                    NombreBiens =
-                        s.BiensImmobiliers
-                            .Count(b => !b.EstSupprime)
-                })
-                .FirstOrDefaultAsync();
+                NombreDeclarationsFiscales =
+                    s.DeclarationsFiscales.Count(
+                        d => !d.EstSupprime)
+            })
+            .FirstOrDefaultAsync();
 
         if (societe == null)
         {
-            return NotFound("Société introuvable.");
+            return NotFound(new
+            {
+                message = "Le propriétaire est introuvable."
+            });
         }
 
         return Ok(societe);
     }
 
     // ============================================================
-    // POST : api/Societes
-    //
-    // ADMINISTRATEUR UNIQUEMENT
+    // POST : Créer un propriétaire
+    // Administrateur uniquement
     // ============================================================
 
     [HttpPost]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur))]
     public async Task<IActionResult> CreerSociete(
         [FromBody] CreerSocieteRequest request)
     {
-        if (request == null)
+        var erreur = Valider(request);
+
+        if (erreur != null)
         {
-            return BadRequest(
-                "Les données de la société sont obligatoires.");
+            return BadRequest(new { message = erreur });
         }
 
-        if (string.IsNullOrWhiteSpace(request.Nom))
+        var erreurIdentifiants =
+            await VerifierIdentifiantsExistantsAsync(
+                request.NumeroEntreprise,
+                request.NumeroContribuable);
+
+        if (erreurIdentifiants != null)
         {
-            return BadRequest(
-                "Le nom de la société est obligatoire.");
+            return Conflict(new { message = erreurIdentifiants });
         }
-
-        var nom = request.Nom.Trim();
-
-        // --------------------------------------------------------
-        // Vérification unicité du nom
-        // --------------------------------------------------------
-
-        var nomExiste =
-            await _context.Societes
-                .AsNoTracking()
-                .AnyAsync(s =>
-                    !s.EstSupprime &&
-                    s.Nom.ToLower() == nom.ToLower());
-
-        if (nomExiste)
-        {
-            return Conflict(
-                "Une société portant ce nom existe déjà.");
-        }
-
-        // --------------------------------------------------------
-        // Création
-        // --------------------------------------------------------
 
         var societe = new Societe
         {
-            Id = Guid.NewGuid(),
-
-            Nom = nom,
+            TypePersonne = request.TypePersonne,
+            Nom = request.Nom.Trim(),
+            Prenom = NormaliserTexte(request.Prenom),
+            FormeJuridique = request.FormeJuridique,
 
             NumeroEntreprise =
-                request.NumeroEntreprise?.Trim(),
+                NormaliserTexte(request.NumeroEntreprise),
 
-            Adresse =
-                request.Adresse?.Trim(),
+            NumeroContribuable =
+                NormaliserTexte(request.NumeroContribuable),
 
-            Ville =
-                request.Ville?.Trim(),
+            Adresse = NormaliserTexte(request.Adresse),
+            AdresseFiscale = NormaliserTexte(request.AdresseFiscale),
+            Ville = NormaliserTexte(request.Ville),
+            Region = NormaliserTexte(request.Region),
+            Departement = NormaliserTexte(request.Departement),
+            CodePostal = NormaliserTexte(request.CodePostal),
+            Pays = NormaliserTexte(request.Pays) ?? "Cameroun",
+            CentreImpots = NormaliserTexte(request.CentreImpots),
 
-            CodePostal =
-                request.CodePostal?.Trim(),
+            ActivitePrincipale =
+                NormaliserTexte(request.ActivitePrincipale),
 
-            Telephone =
-                request.Telephone?.Trim(),
+            Telephone = NormaliserTexte(request.Telephone),
 
-            Email =
-                request.Email?
-                    .Trim()
-                    .ToLowerInvariant(),
+            Email = string.IsNullOrWhiteSpace(request.Email)
+                ? null
+                : request.Email.Trim().ToLowerInvariant(),
 
-            Actif = true,
-
-            DateCreation = DateTime.UtcNow,
-
-            EstSupprime = false
+            Actif = request.Actif
         };
 
         _context.Societes.Add(societe);
@@ -297,63 +269,37 @@ public class SocietesController : ControllerBase
         return CreatedAtAction(
             nameof(GetById),
             new { id = societe.Id },
-            new
-            {
-                societe.Id,
-                societe.Nom,
-                societe.NumeroEntreprise,
-                societe.Adresse,
-                societe.Ville,
-                societe.CodePostal,
-                societe.Telephone,
-                societe.Email,
-                societe.Actif,
-
-                NombreUtilisateurs = 0,
-                NombreBiens = 0
-            });
+            VersDto(societe));
     }
 
     // ============================================================
-    // PUT : api/Societes/{id}
-    //
-    // ADMINISTRATEUR :
-    // Peut modifier n'importe quelle société.
-    //
-    // GESTIONNAIRE :
-    // Peut modifier uniquement sa société.
+    // PUT : Modifier un propriétaire
+    // Administrateur : tous les propriétaires
+    // Gestionnaire : son propre compte
     // ============================================================
 
     [HttpPut("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> ModifierSociete(
         Guid id,
         [FromBody] ModifierSocieteRequest request)
     {
         if (id == Guid.Empty)
         {
-            return BadRequest(
-                "L'identifiant de la société est invalide.");
+            return BadRequest(new
+            {
+                message = "L'identifiant du propriétaire est invalide."
+            });
         }
 
-        if (request == null)
+        var erreur = Valider(request);
+
+        if (erreur != null)
         {
-            return BadRequest(
-                "Les données de modification sont obligatoires.");
+            return BadRequest(new { message = erreur });
         }
-
-        if (string.IsNullOrWhiteSpace(request.Nom))
-        {
-            return BadRequest(
-                "Le nom de la société est obligatoire.");
-        }
-
-        // --------------------------------------------------------
-        // GESTIONNAIRE :
-        // uniquement sa société
-        // --------------------------------------------------------
 
         if (User.IsInRole(nameof(RoleUtilisateur.Gestionnaire)))
         {
@@ -363,8 +309,11 @@ public class SocietesController : ControllerBase
             if (!societeId.HasValue ||
                 societeId.Value == Guid.Empty)
             {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
+                return Unauthorized(new
+                {
+                    message =
+                        "Impossible de déterminer le compte propriétaire de l'utilisateur connecté."
+                });
             }
 
             if (id != societeId.Value)
@@ -373,109 +322,86 @@ public class SocietesController : ControllerBase
             }
         }
 
-        // --------------------------------------------------------
-        // Recherche société
-        // --------------------------------------------------------
-
-        var societe =
-            await _context.Societes
-                .FirstOrDefaultAsync(s =>
-                    s.Id == id &&
-                    !s.EstSupprime);
+        var societe = await _context.Societes
+            .FirstOrDefaultAsync(
+                s => s.Id == id && !s.EstSupprime);
 
         if (societe == null)
         {
-            return NotFound("Société introuvable.");
+            return NotFound(new
+            {
+                message = "Le propriétaire est introuvable."
+            });
         }
 
-        var nom = request.Nom.Trim();
+        var erreurIdentifiants =
+            await VerifierIdentifiantsExistantsAsync(
+                request.NumeroEntreprise,
+                request.NumeroContribuable,
+                id);
 
-        // --------------------------------------------------------
-        // Unicité du nom
-        // --------------------------------------------------------
-
-        var nomExiste =
-            await _context.Societes
-                .AsNoTracking()
-                .AnyAsync(s =>
-                    s.Id != id &&
-                    !s.EstSupprime &&
-                    s.Nom.ToLower() == nom.ToLower());
-
-        if (nomExiste)
+        if (erreurIdentifiants != null)
         {
-            return Conflict(
-                "Une autre société utilise déjà ce nom.");
+            return Conflict(new { message = erreurIdentifiants });
         }
 
-        // --------------------------------------------------------
-        // Mise à jour
-        // --------------------------------------------------------
-
-        societe.Nom = nom;
+        societe.TypePersonne = request.TypePersonne;
+        societe.Nom = request.Nom.Trim();
+        societe.Prenom = NormaliserTexte(request.Prenom);
+        societe.FormeJuridique = request.FormeJuridique;
 
         societe.NumeroEntreprise =
-            request.NumeroEntreprise?.Trim();
+            NormaliserTexte(request.NumeroEntreprise);
 
-        societe.Adresse =
-            request.Adresse?.Trim();
+        societe.NumeroContribuable =
+            NormaliserTexte(request.NumeroContribuable);
 
-        societe.Ville =
-            request.Ville?.Trim();
+        societe.Adresse = NormaliserTexte(request.Adresse);
+        societe.AdresseFiscale =
+            NormaliserTexte(request.AdresseFiscale);
 
-        societe.CodePostal =
-            request.CodePostal?.Trim();
+        societe.Ville = NormaliserTexte(request.Ville);
+        societe.Region = NormaliserTexte(request.Region);
+        societe.Departement = NormaliserTexte(request.Departement);
+        societe.CodePostal = NormaliserTexte(request.CodePostal);
+        societe.Pays = NormaliserTexte(request.Pays) ?? "Cameroun";
+        societe.CentreImpots = NormaliserTexte(request.CentreImpots);
 
-        societe.Telephone =
-            request.Telephone?.Trim();
+        societe.ActivitePrincipale =
+            NormaliserTexte(request.ActivitePrincipale);
 
-        societe.Email =
-            request.Email?
-                .Trim()
-                .ToLowerInvariant();
+        societe.Telephone = NormaliserTexte(request.Telephone);
+
+        societe.Email = string.IsNullOrWhiteSpace(request.Email)
+            ? null
+            : request.Email.Trim().ToLowerInvariant();
+
+        // Actif est géré séparément par l'endpoint de statut.
 
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(VersDto(societe));
     }
 
     // ============================================================
-    // PATCH : api/Societes/{id}/statut
-    //
-    // ADMINISTRATEUR :
-    // Peut activer/désactiver n'importe quelle société.
-    //
-    // GESTIONNAIRE :
-    // Peut modifier le statut de sa société.
+    // PATCH : Modifier le statut
     // ============================================================
 
     [HttpPatch("{id:guid}/statut")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> ModifierStatut(
         Guid id,
         [FromBody] ModifierStatutSocieteRequest request)
     {
         if (id == Guid.Empty)
         {
-            return BadRequest(
-                "L'identifiant de la société est invalide.");
+            return BadRequest(new
+            {
+                message = "L'identifiant du propriétaire est invalide."
+            });
         }
-
-        if (request == null)
-        {
-            return BadRequest(
-                "Les données de statut sont obligatoires.");
-        }
-
-        // --------------------------------------------------------
-        // GESTIONNAIRE :
-        // uniquement sa société
-        // --------------------------------------------------------
-
-        var utilisateurId =
-            GetCurrentUserId();
 
         if (User.IsInRole(nameof(RoleUtilisateur.Gestionnaire)))
         {
@@ -485,61 +411,57 @@ public class SocietesController : ControllerBase
             if (!societeId.HasValue ||
                 societeId.Value == Guid.Empty)
             {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
+                return Unauthorized(new
+                {
+                    message =
+                        "Impossible de déterminer le compte propriétaire de l'utilisateur connecté."
+                });
             }
 
             if (id != societeId.Value)
             {
                 return Forbid();
             }
+
+            // Un gestionnaire ne peut pas désactiver son propre
+            // compte propriétaire et ainsi contourner ses accès.
+            if (!request.Actif)
+            {
+                return Forbid();
+            }
         }
 
-        // --------------------------------------------------------
-        // Recherche société
-        // --------------------------------------------------------
-
-        var societe =
-            await _context.Societes
-                .FirstOrDefaultAsync(s =>
-                    s.Id == id &&
-                    !s.EstSupprime);
+        var societe = await _context.Societes
+            .FirstOrDefaultAsync(
+                s => s.Id == id && !s.EstSupprime);
 
         if (societe == null)
         {
-            return NotFound("Société introuvable.");
+            return NotFound(new
+            {
+                message = "Le propriétaire est introuvable."
+            });
         }
-
-        // --------------------------------------------------------
-        // Désactivation
-        // --------------------------------------------------------
 
         if (!request.Actif)
         {
-            // Un gestionnaire ne doit pas être bloqué par
-            // son propre compte actif.
-            //
-            // On vérifie donc les AUTRES utilisateurs actifs.
             var utilisateursActifs =
                 await _context.Utilisateurs
                     .AsNoTracking()
                     .AnyAsync(u =>
                         u.SocieteId == id &&
                         u.Statut &&
-                        !u.EstSupprime &&
-                        (!utilisateurId.HasValue ||
-                         u.Id != utilisateurId.Value));
+                        !u.EstSupprime);
 
             if (utilisateursActifs)
             {
-                return Conflict(
-                    "La société ne peut pas être désactivée tant qu'elle possède d'autres utilisateurs actifs.");
+                return Conflict(new
+                {
+                    message =
+                        "Le propriétaire ne peut pas être désactivé tant qu'il possède des utilisateurs actifs."
+                });
             }
         }
-
-        // --------------------------------------------------------
-        // Changement de statut
-        // --------------------------------------------------------
 
         societe.Actif = request.Actif;
 
@@ -547,49 +469,43 @@ public class SocietesController : ControllerBase
 
         return Ok(new
         {
-            Message = request.Actif
-                ? "Société activée avec succès."
-                : "Société désactivée avec succès.",
-
+            Message = societe.Actif
+                ? "Compte propriétaire activé avec succès."
+                : "Compte propriétaire désactivé avec succès.",
             societe.Id,
             societe.Actif
         });
     }
 
     // ============================================================
-    // DELETE : api/Societes/{id}
-    //
-    // ADMINISTRATEUR UNIQUEMENT
-    //
-    // Suppression logique.
+    // DELETE : Suppression logique
+    // Administrateur uniquement
     // ============================================================
 
     [HttpDelete("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur))]
-    public async Task<IActionResult> SupprimerSociete(
-        Guid id)
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur))]
+    public async Task<IActionResult> SupprimerSociete(Guid id)
     {
         if (id == Guid.Empty)
         {
-            return BadRequest(
-                "L'identifiant de la société est invalide.");
+            return BadRequest(new
+            {
+                message = "L'identifiant du propriétaire est invalide."
+            });
         }
 
-        var societe =
-            await _context.Societes
-                .FirstOrDefaultAsync(s =>
-                    s.Id == id &&
-                    !s.EstSupprime);
+        var societe = await _context.Societes
+            .FirstOrDefaultAsync(
+                s => s.Id == id && !s.EstSupprime);
 
         if (societe == null)
         {
-            return NotFound("Société introuvable.");
+            return NotFound(new
+            {
+                message = "Le propriétaire est introuvable."
+            });
         }
-
-        // --------------------------------------------------------
-        // Utilisateurs actifs
-        // --------------------------------------------------------
 
         var utilisateursActifs =
             await _context.Utilisateurs
@@ -601,30 +517,44 @@ public class SocietesController : ControllerBase
 
         if (utilisateursActifs)
         {
-            return Conflict(
-                "Cette société ne peut pas être supprimée car elle possède encore des utilisateurs actifs.");
+            return Conflict(new
+            {
+                message =
+                    "Ce propriétaire ne peut pas être supprimé car il possède encore des utilisateurs actifs."
+            });
         }
 
-        // --------------------------------------------------------
-        // Biens immobiliers actifs
-        // --------------------------------------------------------
-
-        var biensActifs =
+        var biensExistants =
             await _context.BiensImmobiliers
                 .AsNoTracking()
                 .AnyAsync(b =>
                     b.SocieteId == id &&
                     !b.EstSupprime);
 
-        if (biensActifs)
+        if (biensExistants)
         {
-            return Conflict(
-                "Cette société ne peut pas être supprimée car elle possède encore des biens immobiliers.");
+            return Conflict(new
+            {
+                message =
+                    "Ce propriétaire possède encore des biens immobiliers. Archivez ou réaffectez ces biens avant de supprimer son compte."
+            });
         }
 
-        // --------------------------------------------------------
-        // Suppression logique
-        // --------------------------------------------------------
+        var declarationsExistantes =
+            await _context.DeclarationsFiscales
+                .AsNoTracking()
+                .AnyAsync(d =>
+                    d.SocieteId == id &&
+                    !d.EstSupprime);
+
+        if (declarationsExistantes)
+        {
+            return Conflict(new
+            {
+                message =
+                    "Ce propriétaire possède un historique de déclarations fiscales. Désactivez son compte plutôt que de le supprimer."
+            });
+        }
 
         societe.EstSupprime = true;
         societe.Actif = false;
@@ -632,23 +562,186 @@ public class SocietesController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        return Ok(new
+        return NoContent();
+    }
+
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    private static string? Valider(
+        CreerSocieteRequest request)
+    {
+        if (!Enum.IsDefined(
+                typeof(TypePersonne),
+                request.TypePersonne))
         {
-            Message = "Société supprimée avec succès."
-        });
+            return "Le type de personne est invalide.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Nom))
+        {
+            return "Le nom ou la dénomination du propriétaire est obligatoire.";
+        }
+
+        if (request.Nom.Trim().Length > 200)
+        {
+            return "Le nom ne peut pas dépasser 200 caractères.";
+        }
+
+        if (request.TypePersonne == TypePersonne.PersonnePhysique &&
+            string.IsNullOrWhiteSpace(request.Prenom))
+        {
+            return "Le prénom est obligatoire pour une personne physique.";
+        }
+
+        if (request.Prenom?.Trim().Length > 150)
+        {
+            return "Le prénom ne peut pas dépasser 150 caractères.";
+        }
+
+        if (request.TypePersonne == TypePersonne.PersonnePhysique &&
+            request.FormeJuridique.HasValue)
+        {
+            return "Une personne physique ne doit pas avoir de forme juridique de personne morale.";
+        }
+
+        if (request.TypePersonne == TypePersonne.PersonneMorale &&
+            !request.FormeJuridique.HasValue)
+        {
+            return "La forme juridique est obligatoire pour une personne morale.";
+        }
+
+        if (request.FormeJuridique.HasValue &&
+            !Enum.IsDefined(
+                typeof(FormeJuridique),
+                request.FormeJuridique.Value))
+        {
+            return "La forme juridique sélectionnée est invalide.";
+        }
+
+        if (request.NumeroEntreprise?.Trim().Length > 100)
+        {
+            return "Le numéro d'entreprise ne peut pas dépasser 100 caractères.";
+        }
+
+        if (request.NumeroContribuable?.Trim().Length > 100)
+        {
+            return "Le numéro de contribuable ne peut pas dépasser 100 caractères.";
+        }
+
+        if (request.Adresse?.Trim().Length > 300 ||
+            request.AdresseFiscale?.Trim().Length > 300)
+        {
+            return "Une adresse ne peut pas dépasser 300 caractères.";
+        }
+
+        if (request.Ville?.Trim().Length > 100 ||
+            request.Region?.Trim().Length > 100 ||
+            request.Departement?.Trim().Length > 100)
+        {
+            return "La ville, la région ou le département ne peut pas dépasser 100 caractères.";
+        }
+
+        if (request.CodePostal?.Trim().Length > 20)
+        {
+            return "Le code postal ne peut pas dépasser 20 caractères.";
+        }
+
+        if (request.Pays?.Trim().Length > 100)
+        {
+            return "Le pays ne peut pas dépasser 100 caractères.";
+        }
+
+        if (request.CentreImpots?.Trim().Length > 200)
+        {
+            return "Le centre des impôts ne peut pas dépasser 200 caractères.";
+        }
+
+        if (request.ActivitePrincipale?.Trim().Length > 200)
+        {
+            return "L'activité principale ne peut pas dépasser 200 caractères.";
+        }
+
+        if (request.Telephone?.Trim().Length > 30)
+        {
+            return "Le téléphone ne peut pas dépasser 30 caractères.";
+        }
+
+        if (request.Email?.Trim().Length > 254)
+        {
+            return "L'adresse courriel ne peut pas dépasser 254 caractères.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Email) &&
+            !System.Net.Mail.MailAddress.TryCreate(
+                request.Email.Trim(),
+                out _))
+        {
+            return "L'adresse courriel est invalide.";
+        }
+
+        return null;
+    }
+
+    // ============================================================
+    // VÉRIFICATION DES IDENTIFIANTS
+    // ============================================================
+
+    private async Task<string?> VerifierIdentifiantsExistantsAsync(
+        string? numeroEntreprise,
+        string? numeroContribuable,
+        Guid? idExclu = null)
+    {
+        var query = _context.Societes
+            .AsNoTracking()
+            .Where(s => !s.EstSupprime);
+
+        if (idExclu.HasValue)
+        {
+            query = query.Where(s => s.Id != idExclu.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(numeroEntreprise))
+        {
+            var numero = numeroEntreprise.Trim();
+
+            var existe = await query.AnyAsync(s =>
+                s.NumeroEntreprise != null &&
+                s.NumeroEntreprise == numero);
+
+            if (existe)
+            {
+                return "Ce numéro d'entreprise est déjà associé à un autre propriétaire.";
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(numeroContribuable))
+        {
+            var numero = numeroContribuable.Trim();
+
+            var existe = await query.AnyAsync(s =>
+                s.NumeroContribuable != null &&
+                s.NumeroContribuable == numero);
+
+            if (existe)
+            {
+                return "Ce numéro de contribuable est déjà associé à un autre propriétaire.";
+            }
+        }
+
+        return null;
     }
 
     // ============================================================
     // RÉCUPÉRER LA SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
     // ============================================================
 
-    private async Task<Guid?>
-        GetSocieteIdUtilisateurConnecteAsync()
+    private async Task<Guid?> GetSocieteIdUtilisateurConnecteAsync()
     {
-        var currentUserId =
-            GetCurrentUserId();
+        var utilisateurId = GetCurrentUserId();
 
-        if (!currentUserId.HasValue)
+        if (!utilisateurId.HasValue)
         {
             return null;
         }
@@ -656,7 +749,7 @@ public class SocietesController : ControllerBase
         return await _context.Utilisateurs
             .AsNoTracking()
             .Where(u =>
-                u.Id == currentUserId.Value &&
+                u.Id == utilisateurId.Value &&
                 !u.EstSupprime &&
                 u.Statut &&
                 u.SocieteId != Guid.Empty)
@@ -664,94 +757,177 @@ public class SocietesController : ControllerBase
             .FirstOrDefaultAsync();
     }
 
-    // ============================================================
-    // RÉCUPÉRER L'ID DE L'UTILISATEUR CONNECTÉ
-    // ============================================================
-
     private Guid? GetCurrentUserId()
     {
-        // --------------------------------------------------------
-        // Claim standard ASP.NET Core
-        // --------------------------------------------------------
-
-        var userId =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier);
-
-        if (Guid.TryParse(
-                userId,
-                out var id))
+        var claims = new[]
         {
-            return id;
-        }
+            ClaimTypes.NameIdentifier,
+            "sub",
+            "Id"
+        };
 
-        // --------------------------------------------------------
-        // JWT : sub
-        // --------------------------------------------------------
-
-        userId =
-            User.FindFirstValue("sub");
-
-        if (Guid.TryParse(
-                userId,
-                out id))
+        foreach (var claim in claims)
         {
-            return id;
-        }
+            var valeur = User.FindFirstValue(claim);
 
-        // --------------------------------------------------------
-        // Fallback éventuel : Id
-        // --------------------------------------------------------
-
-        userId =
-            User.FindFirstValue("Id");
-
-        if (Guid.TryParse(
-                userId,
-                out id))
-        {
-            return id;
+            if (Guid.TryParse(valeur, out var id))
+            {
+                return id;
+            }
         }
 
         return null;
     }
+
+    private static string? NormaliserTexte(string? valeur)
+    {
+        return string.IsNullOrWhiteSpace(valeur)
+            ? null
+            : valeur.Trim();
+    }
+
+    // ============================================================
+    // MAPPING DTO
+    // ============================================================
+
+    private static SocieteDto VersDto(Societe societe)
+    {
+        return new SocieteDto
+        {
+            Id = societe.Id,
+            TypePersonne = societe.TypePersonne,
+            Nom = societe.Nom,
+            Prenom = societe.Prenom,
+            FormeJuridique = societe.FormeJuridique,
+            NumeroEntreprise = societe.NumeroEntreprise,
+            NumeroContribuable = societe.NumeroContribuable,
+            Adresse = societe.Adresse,
+            AdresseFiscale = societe.AdresseFiscale,
+            Ville = societe.Ville,
+            Region = societe.Region,
+            Departement = societe.Departement,
+            CodePostal = societe.CodePostal,
+            Pays = societe.Pays,
+            CentreImpots = societe.CentreImpots,
+            ActivitePrincipale = societe.ActivitePrincipale,
+            Telephone = societe.Telephone,
+            Email = societe.Email,
+            Actif = societe.Actif,
+            DateCreation = societe.DateCreation
+        };
+    }
 }
 
+// ============================================================
+// DTO DE RÉPONSE
+// ============================================================
 
-// ==================================================================
-// DTO : CRÉATION
-// ==================================================================
+public class SocieteDto
+{
+    public Guid Id { get; set; }
 
-public record CreerSocieteRequest(
-    string Nom,
-    string? NumeroEntreprise,
-    string? Adresse,
-    string? Ville,
-    string? CodePostal,
-    string? Telephone,
-    string? Email
-);
+    public TypePersonne TypePersonne { get; set; }
 
+    public string Nom { get; set; } = string.Empty;
 
-// ==================================================================
-// DTO : MODIFICATION
-// ==================================================================
+    public string? Prenom { get; set; }
 
-public record ModifierSocieteRequest(
-    string Nom,
-    string? NumeroEntreprise,
-    string? Adresse,
-    string? Ville,
-    string? CodePostal,
-    string? Telephone,
-    string? Email
-);
+    public FormeJuridique? FormeJuridique { get; set; }
 
+    public string? NumeroEntreprise { get; set; }
 
-// ==================================================================
-// DTO : STATUT
-// ==================================================================
+    public string? NumeroContribuable { get; set; }
 
-public record ModifierStatutSocieteRequest(
-    bool Actif
-);
+    public string? Adresse { get; set; }
+
+    public string? AdresseFiscale { get; set; }
+
+    public string? Ville { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? Departement { get; set; }
+
+    public string? CodePostal { get; set; }
+
+    public string? Pays { get; set; }
+
+    public string? CentreImpots { get; set; }
+
+    public string? ActivitePrincipale { get; set; }
+
+    public string? Telephone { get; set; }
+
+    public string? Email { get; set; }
+
+    public bool Actif { get; set; }
+
+    public DateTime DateCreation { get; set; }
+
+    public int NombreUtilisateurs { get; set; }
+
+    public int NombreBiens { get; set; }
+
+    public int NombreDeclarationsFiscales { get; set; }
+}
+
+// ============================================================
+// DTO DE CRÉATION
+// ============================================================
+
+public class CreerSocieteRequest
+{
+    public TypePersonne TypePersonne { get; set; }
+        = TypePersonne.PersonneMorale;
+
+    public string Nom { get; set; } = string.Empty;
+
+    public string? Prenom { get; set; }
+
+    public FormeJuridique? FormeJuridique { get; set; }
+
+    public string? NumeroEntreprise { get; set; }
+
+    public string? NumeroContribuable { get; set; }
+
+    public string? Adresse { get; set; }
+
+    public string? AdresseFiscale { get; set; }
+
+    public string? Ville { get; set; }
+
+    public string? Region { get; set; }
+
+    public string? Departement { get; set; }
+
+    public string? CodePostal { get; set; }
+
+    public string? Pays { get; set; } = "Cameroun";
+
+    public string? CentreImpots { get; set; }
+
+    public string? ActivitePrincipale { get; set; }
+
+    public string? Telephone { get; set; }
+
+    public string? Email { get; set; }
+
+    public bool Actif { get; set; } = true;
+}
+
+// ============================================================
+// DTO DE MODIFICATION
+// ============================================================
+
+public class ModifierSocieteRequest : CreerSocieteRequest
+{
+}
+
+// ============================================================
+// DTO DE MODIFICATION DU STATUT
+// ============================================================
+
+public class ModifierStatutSocieteRequest
+{
+    public bool Actif { get; set; }
+}

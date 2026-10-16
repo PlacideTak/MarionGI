@@ -2,65 +2,38 @@
 
 <div class="gestimmo-layout">
 
-  <!-- ========================================================= -->
   <!-- EN-TÊTE -->
-  <!-- ========================================================= -->
-
   <div class="page-header">
-
     <div>
-      <h2>Gestion des sociétés</h2>
-
+      <h2>Gestion des propriétaires</h2>
       <p class="page-description">
-        Gestion des sociétés enregistrées dans MarionGI.
+        Gestion des particuliers et des personnes morales enregistrés dans MarionGI.
       </p>
     </div>
 
     <button
       pButton
       type="button"
-      label="Nouvelle société"
+      label="Nouveau propriétaire"
       icon="pi pi-plus"
       class="p-button-success btn-new"
       [disabled]="isLoading()"
       (click)="ouvrirModalAjout()">
     </button>
-
   </div>
 
-
-  <!-- ========================================================= -->
-  <!-- MESSAGE ERREUR -->
-  <!-- ========================================================= -->
-
+  <!-- MESSAGES -->
   @if (errorMessage()) {
-
-    <div class="message-box error-message">
-
+    <div class="message-box error-message" role="alert">
       <i class="pi pi-exclamation-circle"></i>
-
-      <span>
-        {{ errorMessage() }}
-      </span>
-
+      <span>{{ errorMessage() }}</span>
     </div>
-
   }
 
-
-  <!-- ========================================================= -->
-  <!-- MESSAGE SUCCÈS -->
-  <!-- ========================================================= -->
-
   @if (successMessage()) {
-
-    <div class="message-box success-message">
-
+    <div class="message-box success-message" role="status">
       <i class="pi pi-check-circle"></i>
-
-      <span>
-        {{ successMessage() }}
-      </span>
+      <span>{{ successMessage() }}</span>
 
       <button
         type="button"
@@ -69,45 +42,24 @@
         aria-label="Fermer">
         <i class="pi pi-times"></i>
       </button>
-
     </div>
-
   }
 
-
-  <!-- ========================================================= -->
   <!-- CHARGEMENT -->
-  <!-- ========================================================= -->
-
   @if (isLoading() && societes().length === 0) {
-
     <p-card>
-
       <div class="loading-box">
-
         <i class="pi pi-spin pi-spinner"></i>
-
-        <span>
-          Chargement des sociétés...
-        </span>
-
+        <span>Chargement des propriétaires...</span>
       </div>
-
     </p-card>
-
   }
 
-
-  <!-- ========================================================= -->
   <!-- TABLEAU -->
-  <!-- ========================================================= -->
-
   @if (!isLoading() || societes().length > 0) {
-
     <p-card>
-
       <ng-template pTemplate="title">
-        Sociétés
+        Propriétaires immobiliers
       </ng-template>
 
       <p-table
@@ -116,181 +68,108 @@
         [loading]="isLoading()"
         responsiveLayout="scroll">
 
-        <!-- HEADER -->
-
         <ng-template pTemplate="header">
-
           <tr>
-
-            <th>
-              Société
-            </th>
-
-            <th class="hide-tablet">
-              Ville
-            </th>
-
-            <th class="hide-tablet">
-              Téléphone
-            </th>
-
-            <th>
-              Utilisateurs
-            </th>
-
-            <th>
-              Biens
-            </th>
-
-            <th>
-              Statut
-            </th>
-
-            <th class="col-actions">
-              Actions
-            </th>
-
+            <th>Propriétaire</th>
+            <th>Type</th>
+            <th class="hide-tablet">Ville</th>
+            <th class="hide-tablet">Téléphone</th>
+            <th>Biens</th>
+            <th class="hide-tablet">Déclarations fiscales</th>
+            <th>Statut</th>
+            <th class="col-actions">Actions</th>
           </tr>
-
         </ng-template>
 
-
-        <!-- BODY -->
-
-        <ng-template
-          pTemplate="body"
-          let-societe>
-
+        <ng-template pTemplate="body" let-societe>
           <tr>
-
-            <td data-label="Société">
-
+            <td data-label="Propriétaire">
               <div class="societe-name">
+                <strong>{{ getNomAffiche(societe) }}</strong>
 
-                <strong>
-                  {{ societe.nom }}
-                </strong>
-
-                @if (societe.numeroEntreprise) {
-
+                @if (societe.typePersonne === TypePersonne.PersonneMorale) {
                   <small>
-                    {{ societe.numeroEntreprise }}
+                    {{ getFormeJuridiqueLabel(societe.formeJuridique) }}
                   </small>
-
                 }
 
+                @if (societe.numeroContribuable) {
+                  <small>
+                    N° contribuable : {{ societe.numeroContribuable }}
+                  </small>
+                } @else if (societe.numeroEntreprise) {
+                  <small>
+                    N° entreprise : {{ societe.numeroEntreprise }}
+                  </small>
+                }
               </div>
-
             </td>
 
-
-            <td
-              data-label="Ville"
-              class="hide-tablet">
-
-              {{ societe.ville || 'Non renseignée' }}
-
-            </td>
-
-
-            <td
-              data-label="Téléphone"
-              class="hide-tablet">
-
-              {{ societe.telephone || 'Non renseigné' }}
-
-            </td>
-
-
-            <td data-label="Utilisateurs">
-
-              <span class="count-value">
-
-                <i class="pi pi-users"></i>
-
-                {{ societe.nombreUtilisateurs }}
-
-              </span>
-
-            </td>
-
-
-            <td data-label="Biens">
-
-              <span class="count-value">
-
-                <i class="pi pi-building"></i>
-
-                {{ societe.nombreBiens }}
-
-              </span>
-
-            </td>
-
-
-            <td data-label="Statut">
-
+            <td data-label="Type">
               <p-tag
-                [value]="societe.actif ? 'Actif' : 'Inactif'"
+                [value]="getTypePersonneLabel(societe.typePersonne)"
                 [severity]="
-                  societe.actif
-                    ? 'success'
-                    : 'danger'
+                  societe.typePersonne === TypePersonne.PersonnePhysique
+                    ? 'info'
+                    : 'contrast'
                 ">
               </p-tag>
-
             </td>
 
+            <td data-label="Ville" class="hide-tablet">
+              {{ societe.ville || 'Non renseignée' }}
+            </td>
 
-            <td class="col-actions">
+            <td data-label="Téléphone" class="hide-tablet">
+              {{ societe.telephone || 'Non renseigné' }}
+            </td>
 
+            <td data-label="Biens">
+              <span class="count-value">
+                <i class="pi pi-building"></i>
+                {{ societe.nombreBiens }}
+              </span>
+            </td>
+
+            <td data-label="Déclarations fiscales" class="hide-tablet">
+              <span class="count-value">
+                <i class="pi pi-file"></i>
+                {{ societe.nombreDeclarationsFiscales }}
+              </span>
+            </td>
+
+            <td data-label="Statut">
+              <p-tag
+                [value]="societe.actif ? 'Actif' : 'Inactif'"
+                [severity]="societe.actif ? 'success' : 'danger'">
+              </p-tag>
+            </td>
+
+            <td data-label="Actions" class="col-actions">
               <div class="actions-group">
-
-                <!-- MODIFIER -->
-
                 <button
                   type="button"
                   class="action-btn edit-btn"
                   title="Modifier"
                   aria-label="Modifier"
                   (click)="ouvrirModalModification(societe)">
-
                   <i class="pi pi-pencil"></i>
-
                 </button>
-
-
-                <!-- STATUT -->
 
                 <button
                   type="button"
                   class="action-btn"
                   [class.lock-btn]="societe.actif"
                   [class.unlock-btn]="!societe.actif"
-                  [title]="
-                    societe.actif
-                      ? 'Désactiver'
-                      : 'Activer'
-                  "
-                  [attr.aria-label]="
-                    societe.actif
-                      ? 'Désactiver'
-                      : 'Activer'
-                  "
+                  [title]="societe.actif ? 'Désactiver' : 'Activer'"
+                  [attr.aria-label]="societe.actif ? 'Désactiver' : 'Activer'"
                   (click)="basculerStatut(societe)">
-
                   <i
-                    [class]="
-                      societe.actif
-                        ? 'pi pi-lock'
-                        : 'pi pi-lock-open'
-                    ">
+                    [class]="societe.actif
+                      ? 'pi pi-lock'
+                      : 'pi pi-lock-open'">
                   </i>
-
                 </button>
-
-
-                <!-- SUPPRIMER -->
 
                 <button
                   type="button"
@@ -298,225 +177,296 @@
                   title="Supprimer"
                   aria-label="Supprimer"
                   (click)="supprimerSociete(societe)">
-
                   <i class="pi pi-trash"></i>
-
                 </button>
-
               </div>
-
             </td>
-
           </tr>
-
         </ng-template>
 
-
-        <!-- AUCUNE SOCIÉTÉ -->
-
         <ng-template pTemplate="emptymessage">
-
           <tr>
-
-            <td
-              colspan="7"
-              class="empty-table">
-
-              <i class="pi pi-building"></i>
-
-              <span>
-                Aucune société trouvée.
-              </span>
-
+            <td colspan="8" class="empty-table">
+              <i class="pi pi-users"></i>
+              <span>Aucun propriétaire trouvé.</span>
             </td>
-
           </tr>
-
         </ng-template>
 
       </p-table>
-
     </p-card>
-
   }
 
-
-  <!-- ========================================================= -->
-  <!-- MODALE -->
-  <!-- ========================================================= -->
-
-  <p-dialog
-    [header]="
-      isEditMode()
-        ? 'Modifier la société'
-        : 'Nouvelle société'
-    "
-    [(visible)]="displayModal"
-    [modal]="true"
-    [style]="{ width: '600px' }"
-    [breakpoints]="{
-      '768px': '90vw',
-      '480px': '95vw'
-    }"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="societe-dialog">
-
-    <form
-      [formGroup]="societeForm"
-      (ngSubmit)="enregistrerSociete()"
-      class="societe-form">
-
-
-      <!-- NOM -->
-
-      <div class="field">
-
-        <label for="nom">
-          Nom *
-        </label>
-
-        <input
-          id="nom"
-          pInputText
-          formControlName="nom"
-          placeholder="Nom de la société" />
-
-      </div>
-
-
-      <!-- NUMÉRO -->
-
-      <div class="field">
-
-        <label for="numeroEntreprise">
-          N° entreprise
-        </label>
-
-        <input
-          id="numeroEntreprise"
-          pInputText
-          formControlName="numeroEntreprise"
-          placeholder="Numéro d'entreprise" />
-
-      </div>
-
-
-      <!-- ADRESSE -->
-
-      <div class="field">
-
-        <label for="adresse">
-          Adresse
-        </label>
-
-        <input
-          id="adresse"
-          pInputText
-          formControlName="adresse"
-          placeholder="Adresse" />
-
-      </div>
-
-
-      <!-- VILLE -->
-
-      <div class="field">
-
-        <label for="ville">
-          Ville
-        </label>
-
-        <input
-          id="ville"
-          pInputText
-          formControlName="ville"
-          placeholder="Ville" />
-
-      </div>
-
-
-      <!-- CODE POSTAL -->
-
-      <div class="field">
-
-        <label for="codePostal">
-          Code postal
-        </label>
-
-        <input
-          id="codePostal"
-          pInputText
-          formControlName="codePostal"
-          placeholder="Code postal" />
-
-      </div>
-
-
-      <!-- TELEPHONE -->
-
-      <div class="field">
-
-        <label for="telephone">
-          Téléphone
-        </label>
-
-        <input
-          id="telephone"
-          pInputText
-          formControlName="telephone"
-          type="tel"
-          placeholder="Téléphone" />
-
-      </div>
-
-
-      <!-- EMAIL -->
-
-      <div class="field">
-
-        <label for="email">
-          Email
-        </label>
-
-        <input
-          id="email"
-          pInputText
-          formControlName="email"
-          type="email"
-          placeholder="Adresse courriel" />
-
-      </div>
-
-
-      <!-- ACTIONS -->
-
-      <div class="form-actions">
-
-        <button
-          pButton
-          label="Annuler"
-          type="button"
-          class="p-button-text"
-          (click)="fermerModal()">
-        </button>
-
-        <button
-          pButton
-          [label]="
-            isEditMode()
-              ? 'Enregistrer'
-              : 'Créer'
-          "
-          type="submit"
-          [disabled]="societeForm.invalid || isLoading()"
-          class="p-button-success">
-        </button>
-
-      </div>
-
-    </form>
-
-  </p-dialog>
-
 </div>
+
+
+<!-- MODALE DE CRÉATION / MODIFICATION -->
+<p-dialog
+  [header]="isEditMode() ? 'Modifier le propriétaire' : 'Nouveau propriétaire'"
+  [visible]="displayModal()"
+  (visibleChange)="displayModal.set($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!isLoading()"
+  [closeOnEscape]="!isLoading()"
+  [style]="{ width: 'min(48rem, 96vw)' }"
+  [breakpoints]="{
+    '768px': '95vw',
+    '480px': '98vw'
+  }"
+  styleClass="societe-dialog"
+  (onHide)="fermerModal()">
+
+  <form
+    [formGroup]="societeForm"
+    (ngSubmit)="enregistrerSociete()"
+    class="societe-form">
+
+    <!-- SECTION 1 : IDENTITÉ -->
+    <section class="form-section">
+      <div class="section-heading">
+        <span class="section-icon">
+          <i class="pi pi-user"></i>
+        </span>
+        <div>
+          <h3>Identité du propriétaire</h3>
+          <p>Informations permettant d'identifier le propriétaire.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="typePersonne">Type de propriétaire *</label>
+          <select id="typePersonne" formControlName="typePersonne">
+            <option [ngValue]="null" disabled>Sélectionner un type</option>
+            @for (type of typesPersonne; track type.value) {
+              <option [ngValue]="type.value">{{ type.label }}</option>
+            }
+          </select>
+
+          @if (
+            societeForm.get('typePersonne')?.touched &&
+            societeForm.get('typePersonne')?.invalid
+          ) {
+            <small class="p-error">Sélectionnez un type.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label for="nom">
+            {{ estPersonnePhysique ? 'Nom *' : 'Raison sociale *' }}
+          </label>
+          <input
+            id="nom"
+            pInputText
+            formControlName="nom"
+            [attr.autocomplete]="estPersonnePhysique ? 'family-name' : 'organization'"
+            [placeholder]="estPersonnePhysique ? 'Nom de famille' : 'Nom de la société'"/>
+
+          @if (
+            societeForm.get('nom')?.touched &&
+            societeForm.get('nom')?.invalid
+          ) {
+            <small class="p-error">Ce champ est obligatoire.</small>
+          }
+        </div>
+
+        @if (estPersonnePhysique) {
+          <div class="field">
+            <label for="prenom">Prénom *</label>
+            <input
+              id="prenom"
+              pInputText
+              formControlName="prenom"
+              autocomplete="given-name"
+              placeholder="Prénom(s)"/>
+
+            @if (
+              societeForm.get('prenom')?.touched &&
+              societeForm.get('prenom')?.invalid
+            ) {
+              <small class="p-error">Le prénom est obligatoire.</small>
+            }
+          </div>
+        }
+
+        @if (estPersonneMorale) {
+          <div class="field">
+            <label for="formeJuridique">Forme juridique</label>
+            <select id="formeJuridique" formControlName="formeJuridique">
+              <option [ngValue]="null">Sélectionner une forme juridique</option>
+              @for (forme of formesJuridiques; track forme.value) {
+                <option [ngValue]="forme.value">{{ forme.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="numeroEntreprise">Numéro d'entreprise</label>
+            <input
+              id="numeroEntreprise"
+              pInputText
+              formControlName="numeroEntreprise"
+              placeholder="Numéro d'entreprise"/>
+          </div>
+        }
+
+        <div class="field field-full">
+          <label for="numeroContribuable">Numéro de contribuable</label>
+          <input
+            id="numeroContribuable"
+            pInputText
+            formControlName="numeroContribuable"
+            placeholder="Identifiant fiscal du propriétaire"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2 : COORDONNÉES -->
+    <section class="form-section">
+      <div class="section-heading">
+        <span class="section-icon">
+          <i class="pi pi-map-marker"></i>
+        </span>
+        <div>
+          <h3>Coordonnées</h3>
+          <p>Informations de contact et adresse du propriétaire.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field">
+          <label for="telephone">Téléphone</label>
+          <input
+            id="telephone"
+            pInputText
+            type="tel"
+            formControlName="telephone"
+            autocomplete="tel"
+            placeholder="+237 6XX XX XX XX"/>
+        </div>
+
+        <div class="field">
+          <label for="email">Courriel</label>
+          <input
+            id="email"
+            pInputText
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="nom@exemple.com"/>
+
+          @if (
+            societeForm.get('email')?.touched &&
+            societeForm.get('email')?.invalid
+          ) {
+            <small class="p-error">L'adresse courriel est invalide.</small>
+          }
+        </div>
+
+        <div class="field field-full">
+          <label for="adresse">Adresse du propriétaire</label>
+          <input
+            id="adresse"
+            pInputText
+            formControlName="adresse"
+            autocomplete="street-address"
+            placeholder="Rue, quartier, repère ou boîte postale"/>
+        </div>
+
+        <div class="field field-full">
+          <label for="adresseFiscale">Adresse fiscale</label>
+          <input
+            id="adresseFiscale"
+            pInputText
+            formControlName="adresseFiscale"
+            placeholder="À renseigner si différente de l'adresse principale"/>
+        </div>
+
+        <div class="field">
+          <label for="ville">Ville</label>
+          <input id="ville" pInputText formControlName="ville" autocomplete="address-level2" placeholder="Ex. : Douala"/>
+        </div>
+
+        <div class="field">
+          <label for="region">Région</label>
+          <input id="region" pInputText formControlName="region" placeholder="Ex. : Littoral"/>
+        </div>
+
+        <div class="field">
+          <label for="departement">Département</label>
+          <input id="departement" pInputText formControlName="departement" placeholder="Département"/>
+        </div>
+
+        <div class="field">
+          <label for="codePostal">Code postal</label>
+          <input id="codePostal" pInputText formControlName="codePostal" placeholder="Code postal, si applicable"/>
+        </div>
+
+        <div class="field">
+          <label for="pays">Pays</label>
+          <input id="pays" pInputText formControlName="pays" autocomplete="country-name" placeholder="Cameroun"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3 : FISCALITÉ ET ACTIVITÉ -->
+    <section class="form-section">
+      <div class="section-heading">
+        <span class="section-icon">
+          <i class="pi pi-file"></i>
+        </span>
+        <div>
+          <h3>Fiscalité et activité</h3>
+          <p>Informations utiles au suivi administratif et fiscal.</p>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="centreImpots">Centre des impôts</label>
+          <input
+            id="centreImpots"
+            pInputText
+            formControlName="centreImpots"
+            placeholder="Centre des impôts compétent"/>
+        </div>
+
+        <div class="field">
+          <label for="activitePrincipale">Activité principale</label>
+          <input
+            id="activitePrincipale"
+            pInputText
+            formControlName="activitePrincipale"
+            placeholder="Ex. : Gestion immobilière"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIONS -->
+    <div class="form-actions">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-text"
+        [disabled]="isLoading()"
+        (click)="displayModal.set(false)">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode() ? 'Enregistrer les modifications' : 'Créer le propriétaire'"
+        [icon]="isLoading() ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+        class="p-button-success"
+        [disabled]="isLoading()">
+      </button>
+    </div>
+
+  </form>
+</p-dialog>

@@ -1,0 +1,565 @@
+<p-toast position="top-right"></p-toast>
+
+<p-confirmDialog></p-confirmDialog>
+
+<div class="charges-page">
+  <div class="page-header">
+    <div>
+      <h1>Charges immobilières</h1>
+      <p class="page-subtitle">
+        Consultez, enregistrez et suivez les dépenses liées à vos biens immobiliers.
+      </p>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      label="Nouvelle charge"
+      icon="pi pi-plus"
+      class="btn-primary"
+      (click)="ouvrirCreation()">
+    </button>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--green">
+        <i class="pi pi-wallet"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Nombre de charges</span>
+        <strong class="stat-value">{{ totalCharges }}</strong>
+        <span class="stat-description">Charges correspondant aux filtres</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--blue">
+        <i class="pi pi-money-bill"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Montant total TTC</span>
+        <strong class="stat-value">{{ formaterMontant(montantTotalTTC) }}</strong>
+        <span class="stat-description">Total des dépenses affichées</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--orange">
+        <i class="pi pi-calculator"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Charges déductibles</span>
+        <strong class="stat-value">{{ formaterMontant(montantTotalDeductible) }}</strong>
+        <span class="stat-description">Montant TTC marqué déductible</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--purple">
+        <i class="pi pi-building"></i>
+      </div>
+      <div class="stat-content">
+        <span class="stat-label">Biens concernés</span>
+        <strong class="stat-value">{{ nombreBiensConcernes }}</strong>
+        <span class="stat-description">Biens ayant au moins une charge</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste et filtres -->
+  <section class="content-card">
+    <div class="section-heading">
+      <div>
+        <h2>Liste des charges</h2>
+        <p>Filtrez les dépenses par bien, unité, catégorie ou période.</p>
+      </div>
+    </div>
+
+    <div class="filters-grid">
+      <div class="field">
+        <label for="recherche">Recherche</label>
+        <span class="search-control">
+          <i class="pi pi-search"></i>
+          <input
+            id="recherche"
+            pInputText
+            type="text"
+            [(ngModel)]="recherche"
+            (ngModelChange)="rechercherLocalement()"
+            placeholder="Description, facture, bien..."
+            class="w-full" />
+        </span>
+      </div>
+
+      <div class="field">
+        <label for="filtreBien">Bien immobilier</label>
+        <p-select
+          inputId="filtreBien"
+          [options]="biensOptions"
+          [(ngModel)]="filtreBienId"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les biens"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="field">
+        <label for="filtreType">Type de charge</label>
+        <p-select
+          inputId="filtreType"
+          [options]="typesCharges"
+          [(ngModel)]="filtreTypeCharge"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Tous les types"
+          [showClear]="true"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="field">
+        <label for="dateDebut">Date de début</label>
+        <input
+          id="dateDebut"
+          pInputText
+          type="date"
+          [(ngModel)]="filtreDateDebut"
+          class="w-full" />
+      </div>
+
+      <div class="field">
+        <label for="dateFin">Date de fin</label>
+        <input
+          id="dateFin"
+          pInputText
+          type="date"
+          [(ngModel)]="filtreDateFin"
+          class="w-full" />
+      </div>
+
+      <div class="filter-actions">
+        <button
+          pButton
+          type="button"
+          label="Filtrer"
+          icon="pi pi-filter"
+          class="btn-primary"
+          (click)="appliquerFiltres()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Réinitialiser"
+          icon="pi pi-refresh"
+          class="p-button-outlined btn-reset"
+          (click)="reinitialiserFiltres()">
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <p-table
+        [value]="chargesFiltrees"
+        [loading]="chargement"
+        dataKey="id"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} à {last} sur {totalRecords} charges"
+        [rowHover]="true"
+        responsiveLayout="scroll"
+        styleClass="charges-table">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th pSortableColumn="dateDepense">
+              Date
+              <p-sortIcon field="dateDepense"></p-sortIcon>
+            </th>
+            <th pSortableColumn="nomBienImmobilier">
+              Bien immobilier
+              <p-sortIcon field="nomBienImmobilier"></p-sortIcon>
+            </th>
+            <th>Unité locative</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th class="text-right" pSortableColumn="montantTTC">
+              Montant TTC
+              <p-sortIcon field="montantTTC"></p-sortIcon>
+            </th>
+            <th>Déductible</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-charge>
+          <tr>
+            <td class="date-cell">
+              {{ formaterDate(charge.dateDepense) }}
+            </td>
+
+            <td>
+              <div class="property-cell">
+                <span class="property-name">{{ charge.nomBienImmobilier }}</span>
+                <small *ngIf="charge.referenceFacture">
+                  Facture : {{ charge.referenceFacture }}
+                </small>
+              </div>
+            </td>
+
+            <td>
+              <span class="unit-reference">
+                {{ charge.referenceUnite || 'Bien entier' }}
+              </span>
+            </td>
+
+            <td>
+              <p-tag
+                [value]="getTypeChargeLibelle(charge.typeCharge)"
+                [severity]="getTypeChargeSeverity(charge.typeCharge)">
+              </p-tag>
+            </td>
+
+            <td>
+              <span class="description-cell" [title]="charge.description">
+                {{ charge.description }}
+              </span>
+            </td>
+
+            <td class="text-right amount-cell">
+              {{ formaterMontant(charge.montantTTC) }}
+            </td>
+
+            <td>
+              <span
+                class="deductibility"
+                [class.deductibility--yes]="charge.estDeductibleFiscalement"
+                [class.deductibility--no]="!charge.estDeductibleFiscalement">
+                <i
+                  class="pi"
+                  [ngClass]="charge.estDeductibleFiscalement ? 'pi-check-circle' : 'pi-times-circle'">
+                </i>
+                {{ charge.estDeductibleFiscalement ? 'Oui' : 'Non' }}
+              </span>
+            </td>
+
+            <td>
+              <div class="row-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text action-edit"
+                  aria-label="Modifier la charge"
+                  pTooltip="Modifier"
+                  (click)="ouvrirModification(charge)">
+                </button>
+
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text action-delete"
+                  aria-label="Supprimer la charge"
+                  pTooltip="Supprimer"
+                  (click)="confirmerSuppression(charge)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <h3>Aucune charge trouvée</h3>
+                <p>
+                  Aucune dépense ne correspond aux critères sélectionnés.
+                  Vous pouvez modifier les filtres ou créer une charge.
+                </p>
+                <button
+                  pButton
+                  type="button"
+                  label="Ajouter une charge"
+                  icon="pi pi-plus"
+                  class="btn-primary"
+                  (click)="ouvrirCreation()">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<!-- Formulaire modal -->
+<p-dialog
+  [(visible)]="displayModal"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!enregistrement"
+  [closeOnEscape]="!enregistrement"
+  [style]="{ width: 'min(52rem, 96vw)' }"
+  [breakpoints]="{ '768px': '96vw' }"
+  [header]="isEditMode ? 'Modifier une charge' : 'Nouvelle charge'"
+  styleClass="charge-dialog"
+  appendTo="body">
+
+  <form [formGroup]="chargeForm" (ngSubmit)="enregistrer()" novalidate>
+    <div class="dialog-intro">
+      <p>
+        Renseignez les informations de la dépense. Les champs marqués
+        d’un astérisque sont obligatoires.
+      </p>
+    </div>
+
+    <div class="form-grid">
+      <div class="field field--full">
+        <label for="bienImmobilierId">Bien immobilier <span class="required">*</span></label>
+        <p-select
+          inputId="bienImmobilierId"
+          formControlName="bienImmobilierId"
+          [options]="biensOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un bien"
+          [loading]="chargementBiens"
+          [filter]="true"
+          filterPlaceholder="Rechercher un bien"
+          styleClass="w-full"
+          appendTo="body"
+          (onChange)="onBienChange($event.value)">
+        </p-select>
+        <small class="error-message" *ngIf="champInvalide('bienImmobilierId')">
+          Le bien immobilier est obligatoire.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="uniteLocativeId">Unité locative</label>
+        <p-select
+          inputId="uniteLocativeId"
+          formControlName="uniteLocativeId"
+          [options]="unitesOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Bien entier (facultatif)"
+          [showClear]="true"
+          [disabled]="!f['bienImmobilierId'].value"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+        <small class="field-hint">
+          Laisser vide si la dépense concerne le bien entier.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="dateDepense">Date de la dépense <span class="required">*</span></label>
+        <input
+          id="dateDepense"
+          pInputText
+          type="date"
+          formControlName="dateDepense"
+          class="w-full" />
+        <small class="error-message" *ngIf="champInvalide('dateDepense')">
+          La date de la dépense est obligatoire.
+        </small>
+      </div>
+
+      <div class="field field--full">
+        <label for="typeCharge">Type de charge <span class="required">*</span></label>
+        <p-select
+          inputId="typeCharge"
+          formControlName="typeCharge"
+          [options]="typesCharges"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un type"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+        <small class="error-message" *ngIf="champInvalide('typeCharge')">
+          Le type de charge est obligatoire.
+        </small>
+      </div>
+
+      <div class="field field--full">
+        <label for="description">Description <span class="required">*</span></label>
+        <textarea
+          id="description"
+          pInputText
+          formControlName="description"
+          rows="3"
+          maxlength="2000"
+          placeholder="Ex. : Réparation d'une fuite d'eau dans la cuisine"
+          class="description-input">
+        </textarea>
+        <div class="field-footer">
+          <small class="error-message" *ngIf="champInvalide('description')">
+            <span *ngIf="f['description'].errors?.['required']">
+              La description est obligatoire.
+            </span>
+            <span *ngIf="f['description'].errors?.['maxlength']">
+              La description ne peut pas dépasser 2 000 caractères.
+            </span>
+          </small>
+          <small class="character-count">
+            {{ f['description'].value?.length || 0 }}/2000
+          </small>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="montantTTC">Montant TTC <span class="required">*</span></label>
+        <div class="amount-input">
+          <input
+            id="montantTTC"
+            pInputText
+            type="number"
+            min="0.01"
+            step="1"
+            formControlName="montantTTC"
+            placeholder="0"
+            class="w-full" />
+          <span>FCFA</span>
+        </div>
+        <small class="error-message" *ngIf="champInvalide('montantTTC')">
+          Saisissez un montant TTC supérieur à zéro.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="referenceFacture">Référence de facture</label>
+        <input
+          id="referenceFacture"
+          pInputText
+          type="text"
+          maxlength="100"
+          formControlName="referenceFacture"
+          placeholder="Ex. : FAC-2026-001"
+          class="w-full" />
+        <small class="error-message" *ngIf="champInvalide('referenceFacture')">
+          La référence ne peut pas dépasser 100 caractères.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="montantHT">Montant HT</label>
+        <div class="amount-input">
+          <input
+            id="montantHT"
+            pInputText
+            type="number"
+            min="0"
+            step="1"
+            formControlName="montantHT"
+            placeholder="Facultatif"
+            class="w-full" />
+          <span>FCFA</span>
+        </div>
+        <small class="error-message" *ngIf="champInvalide('montantHT')">
+          Le montant HT ne peut pas être négatif.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="montantTVA">Montant TVA</label>
+        <div class="amount-input">
+          <input
+            id="montantTVA"
+            pInputText
+            type="number"
+            min="0"
+            step="1"
+            formControlName="montantTVA"
+            placeholder="Facultatif"
+            class="w-full" />
+          <span>FCFA</span>
+        </div>
+        <small class="error-message" *ngIf="champInvalide('montantTVA')">
+          Le montant TVA ne peut pas être négatif.
+        </small>
+      </div>
+
+      <div class="field field--full deductibility-field">
+        <label>Déductibilité fiscale</label>
+        <div class="deductibility-options">
+          <label class="radio-option">
+            <input
+              type="radio"
+              [value]="true"
+              formControlName="estDeductibleFiscalement" />
+            <span>
+              <i class="pi pi-check-circle"></i>
+              Charge déductible
+            </span>
+          </label>
+
+          <label class="radio-option">
+            <input
+              type="radio"
+              [value]="false"
+              formControlName="estDeductibleFiscalement" />
+            <span>
+              <i class="pi pi-times-circle"></i>
+              Charge non déductible
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field field--full" *ngIf="justificationRequise">
+        <label for="justificationNonDeductibilite">
+          Justification de la non-déductibilité <span class="required">*</span>
+        </label>
+        <textarea
+          id="justificationNonDeductibilite"
+          pInputText
+          formControlName="justificationNonDeductibilite"
+          rows="2"
+          maxlength="1000"
+          placeholder="Expliquez pourquoi cette charge n'est pas déductible."
+          class="description-input">
+        </textarea>
+        <small class="error-message" *ngIf="champInvalide('justificationNonDeductibilite')">
+          Une justification est obligatoire pour une charge non déductible.
+        </small>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-outlined btn-cancel"
+        [disabled]="enregistrement"
+        (click)="fermerModal()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Enregistrer la charge'"
+        [icon]="enregistrement ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+        class="btn-primary"
+        [disabled]="enregistrement">
+      </button>
+    </div>
+  </form>
+</p-dialog>

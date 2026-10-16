@@ -1,301 +1,457 @@
 <div class="fiche-page">
 
-  <!-- =========================================================
-       RETOUR
-       ========================================================= -->
-  <div class="mb-4">
+  <!-- Barre de navigation -->
+  <div class="fiche-toolbar">
     <button
       pButton
+      type="button"
       label="Retour à la liste"
       icon="pi pi-arrow-left"
-      class="p-button-text p-button-secondary font-bold"
+      class="p-button-text p-button-secondary"
       (click)="allerVersListe()">
     </button>
   </div>
 
-
-  <!-- =========================================================
-       CHARGEMENT
-       ========================================================= -->
+  <!-- Chargement -->
   <div
-    *ngIf="chargementEnCours || !bien"
-    class="loading-box">
+    *ngIf="chargementEnCours"
+    class="loading-box"
+    role="status"
+    aria-live="polite">
 
+    <i class="pi pi-spin pi-spinner loading-icon" aria-hidden="true"></i>
     <p>Chargement des informations du bien...</p>
-
   </div>
 
-
-  <!-- =========================================================
-       FICHE DU BIEN
-       ========================================================= -->
+  <!-- Erreur -->
   <div
-    *ngIf="!chargementEnCours && bien"
+    *ngIf="!chargementEnCours && erreurChargement"
+    class="state-card error-card"
+    role="alert">
+
+    <i class="pi pi-exclamation-circle state-icon" aria-hidden="true"></i>
+    <h2>Impossible d’afficher ce bien</h2>
+    <p>{{ messageErreur }}</p>
+
+    <div class="state-actions">
+      <button
+        pButton
+        type="button"
+        label="Réessayer"
+        icon="pi pi-refresh"
+        class="p-button-outlined"
+        (click)="rechargerBien()"
+        [disabled]="!bienId">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        label="Retour à la liste"
+        icon="pi pi-arrow-left"
+        class="p-button-secondary"
+        (click)="allerVersListe()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Fiche immobilière -->
+  <article
+    *ngIf="!chargementEnCours && !erreurChargement && bien"
     class="fiche-card">
 
-    <!-- =======================================================
-         EN-TÊTE
-         ======================================================= -->
-    <div class="fiche-header">
+    <!-- En-tête principal -->
+    <header class="fiche-header fiche-header-modern">
 
-      <div>
-        <h2>{{ bien.nom }}</h2>
+      <div class="fiche-title">
+        <span class="fiche-eyebrow">
+          <i class="pi pi-building" aria-hidden="true"></i>
+          PATRIMOINE IMMOBILIER
+        </span>
 
-        <p class="text-secondary">
-          {{ bien.reference }}
-        </p>
+        <h1>{{ bien.nom }}</h1>
+
+        <div class="fiche-subtitle">
+          <span>
+            <i class="pi pi-hashtag" aria-hidden="true"></i>
+            {{ bien.reference || 'Référence non renseignée' }}
+          </span>
+
+          <span *ngIf="bien.adresse || bien.ville">
+            <i class="pi pi-map-marker" aria-hidden="true"></i>
+            {{ bien.adresse }}
+            <ng-container *ngIf="bien.adresse && bien.ville">, </ng-container>
+            {{ bien.ville }}
+          </span>
+        </div>
       </div>
 
-    </div>
+      <button
+        *ngIf="peutGererBien"
+        pButton
+        type="button"
+        label="Modifier le bien"
+        icon="pi pi-pencil"
+        class="p-button-outlined header-edit-button"
+        (click)="modifierBien()">
+      </button>
 
+    </header>
 
     <div class="fiche-body">
 
-      <!-- =====================================================
-           LIGNE 1 : PHOTO + INFORMATIONS
-           ===================================================== -->
-      <div class="fiche-row fiche-row-top">
+      <!-- Indicateurs synthétiques -->
+      <section class="fiche-summary" aria-label="Résumé du bien">
 
-        <!-- ===================================================
-             PHOTO
-             =================================================== -->
+        <div class="summary-item">
+          <div class="summary-icon">
+            <i class="pi pi-expand" aria-hidden="true"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Superficie</span>
+            <strong>
+              <ng-container *ngIf="bien.superficie != null; else superficieVide">
+                {{ bien.superficie | number:'1.0-2' }} m²
+              </ng-container>
+              <ng-template #superficieVide>Non renseignée</ng-template>
+            </strong>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-icon">
+            <i class="pi pi-home" aria-hidden="true"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Unités locatives</span>
+            <strong>{{ unitesLocatives.length }}</strong>
+          </div>
+        </div>
+
+        <div class="summary-item">
+          <div class="summary-icon">
+            <i class="pi pi-wallet" aria-hidden="true"></i>
+          </div>
+          <div class="summary-content">
+            <span class="summary-label">Valeur estimée</span>
+            <strong>
+              <ng-container *ngIf="bien.valeurEstimee != null; else valeurVide">
+                {{ bien.valeurEstimee | number:'1.0-2' }} FCFA
+              </ng-container>
+              <ng-template #valeurVide>Non renseignée</ng-template>
+            </strong>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Présentation générale -->
+      <section class="fiche-row fiche-row-top">
+
+        <!-- Galerie compacte -->
         <div class="fiche-col fiche-col-photo">
+          <section class="fiche-block photo-block">
 
-          <div class="fiche-block photo-block">
+            <div class="section-heading">
+              <h2>Galerie photos</h2>
+              <span class="section-count">{{ photos.length }}</span>
+            </div>
 
             <div class="fiche-photo-main">
 
-              <!-- Photo principale -->
               <img
-                *ngIf="bien.photos && bien.photos.length > 0"
-                [src]="bienService.getPhotoUrl(
-                  bien.photos[photoActiveIndex]
-                )"
-                [alt]="'Photo de ' + bien.nom" />
+                *ngIf="photos.length > 0"
+                [src]="bienService.getPhotoUrl(photos[photoActiveIndex])"
+                [alt]="'Photo de ' + bien.nom"
+                (error)="$any($event.target).style.visibility = 'hidden'">
 
-              <!-- Aucune photo -->
-              <span
-                *ngIf="!bien.photos || bien.photos.length === 0"
-                class="no-photo">
-
-                [ Aucune photo ]
-
-              </span>
+              <div *ngIf="photos.length === 0" class="no-photo">
+                <i class="pi pi-image" aria-hidden="true"></i>
+                <span>Aucune photo disponible</span>
+              </div>
 
             </div>
 
-
-            <!-- =================================================
-                 MINIATURES
-                 ================================================= -->
             <div
-              *ngIf="bien.photos && bien.photos.length > 1"
-              class="fiche-thumbs">
+              *ngIf="photos.length > 1"
+              class="fiche-thumbs"
+              aria-label="Choisir une photo">
 
-              <img
-                *ngFor="
-                  let photo of bien.photos;
-                  let i = index
-                "
-                [src]="bienService.getPhotoUrl(photo)"
+              <button
+                *ngFor="let photo of photos; let i = index"
+                type="button"
+                class="thumbnail-button"
                 [class.active]="i === photoActiveIndex"
-                (click)="photoActiveIndex = i"
-                alt="Miniature" />
+                [attr.aria-label]="'Afficher la photo ' + (i + 1)"
+                [attr.aria-pressed]="i === photoActiveIndex"
+                (click)="selectionnerPhoto(i)">
+
+                <img
+                  [src]="bienService.getPhotoUrl(photo)"
+                  [alt]="'Miniature ' + (i + 1)">
+              </button>
 
             </div>
-
-          </div>
-
+          </section>
         </div>
 
-
-        <!-- ===================================================
-             INFORMATIONS DU BIEN
-             =================================================== -->
+        <!-- Informations essentielles -->
         <div class="fiche-col fiche-col-info">
+          <section class="fiche-block">
 
-          <div class="fiche-block">
+            <div class="section-heading">
+              <h2>Informations générales</h2>
+            </div>
 
-            <h3>
-              Informations du bien
-            </h3>
+            <dl class="fiche-details-list fiche-details-grid">
 
-            <ul class="fiche-list">
+              <div class="detail-item">
+                <dt>Type de bien</dt>
+                <dd>{{ bienService.getTypeLibelle(bien.type) }}</dd>
+              </div>
 
-              <li>
-                <strong>Nom :</strong>
-                {{ bien.nom }}
-              </li>
+              <div class="detail-item">
+                <dt>Société gestionnaire</dt>
+                <dd>{{ bien.societeNom || 'Non renseignée' }}</dd>
+              </div>
 
-              <li>
-                <strong>Référence :</strong>
-                {{ bien.reference }}
-              </li>
+              <div class="detail-item">
+                <dt>Ville</dt>
+                <dd>{{ bien.ville || 'Non renseignée' }}</dd>
+              </div>
 
-              <li>
-                <strong>Type :</strong>
-                {{ bienService.getTypeLibelle(bien.type) }}
-              </li>
+              <div class="detail-item">
+                <dt>Région</dt>
+                <dd>{{ bien.region || 'Non renseignée' }}</dd>
+              </div>
 
-              <li>
-                <strong>Adresse :</strong>
-                {{ bien.adresse }}
-              </li>
+              <div class="detail-item">
+                <dt>Département</dt>
+                <dd>{{ bien.departement || 'Non renseigné' }}</dd>
+              </div>
 
-              <li>
-                <strong>Ville :</strong>
-                {{ bien.ville }}
-              </li>
+              <div class="detail-item">
+                <dt>Arrondissement</dt>
+                <dd>{{ bien.arrondissement || 'Non renseigné' }}</dd>
+              </div>
 
-              <li *ngIf="bien.quartier">
-                <strong>Quartier :</strong>
-                {{ bien.quartier }}
-              </li>
+              <div class="detail-item">
+                <dt>Quartier</dt>
+                <dd>{{ bien.quartier || 'Non renseigné' }}</dd>
+              </div>
 
-              <li>
-                <strong>Superficie :</strong>
-                {{ bien.superficie | number:'1.0-2' }} m²
-              </li>
+            </dl>
+          </section>
+        </div>
 
-              <!-- Nombre réel d'unités chargées -->
-              <li>
-                <strong>Nombre d'unités :</strong>
-                {{ bien.unitesLocatives.length }}
-              </li>
+      </section>
 
-              <li>
-                <strong>Société :</strong>
-                {{ bien.societeNom || 'N/A' }}
-              </li>
+      <!-- Foncier et cadastre -->
+      <section class="fiche-block fiche-section">
 
-            </ul>
-
+        <div class="section-heading">
+          <div class="section-heading-icon">
+            <i class="pi pi-map" aria-hidden="true"></i>
           </div>
 
+          <div>
+            <h2>Informations foncières et cadastrales</h2>
+            <p class="section-description">
+              Identification juridique et cadastrale du bien immobilier.
+            </p>
+          </div>
         </div>
 
-      </div>
+        <dl class="fiche-details-list fiche-details-grid">
 
+          <div class="detail-item">
+            <dt>Statut foncier</dt>
+            <dd>{{ getStatutFoncierLibelle(bien.statutFoncier) }}</dd>
+          </div>
 
-      <!-- =====================================================
-           LIGNE 2 : UNITÉS LOCATIVES
-           ===================================================== -->
-      <div class="fiche-block">
+          <div class="detail-item">
+            <dt>Titre foncier</dt>
+            <dd>{{ bien.numeroTitreFoncier || 'Non renseigné' }}</dd>
+          </div>
 
-        <!-- En-tête -->
-        <div
-          class="flex justify-content-between align-items-center mb-3">
+          <div class="detail-item">
+            <dt>Référence cadastrale</dt>
+            <dd>{{ bien.referenceCadastrale || 'Non renseignée' }}</dd>
+          </div>
 
-          <h3 class="m-0">
-            Unités locatives
-          </h3>
+          <div class="detail-item">
+            <dt>Numéro de lot</dt>
+            <dd>{{ bien.numeroLot || 'Non renseigné' }}</dd>
+          </div>
 
-          <span class="text-secondary">
-            {{ bien.unitesLocatives.length }} unité(s)
-          </span>
+          <div class="detail-item">
+            <dt>Numéro de parcelle</dt>
+            <dd>{{ bien.numeroParcelle || 'Non renseigné' }}</dd>
+          </div>
+
+        </dl>
+      </section>
+
+      <!-- Construction et valorisation -->
+      <section class="fiche-block fiche-section">
+
+        <div class="section-heading">
+          <div class="section-heading-icon">
+            <i class="pi pi-chart-line" aria-hidden="true"></i>
+          </div>
+
+          <div>
+            <h2>Construction et valorisation</h2>
+            <p class="section-description">
+              Caractéristiques du bâtiment et informations financières.
+            </p>
+          </div>
+        </div>
+
+        <dl class="fiche-details-list fiche-details-grid">
+
+          <div class="detail-item">
+            <dt>Année de construction</dt>
+            <dd>{{ bien.anneeConstruction || 'Non renseignée' }}</dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Nombre d’étages</dt>
+            <dd>{{ bien.nombreEtages ?? 'Non renseigné' }}</dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Valeur d’acquisition</dt>
+            <dd>
+              <ng-container *ngIf="bien.valeurAcquisition != null; else acquisitionVide">
+                {{ bien.valeurAcquisition | number:'1.0-2' }} FCFA
+              </ng-container>
+              <ng-template #acquisitionVide>Non renseignée</ng-template>
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Date d’acquisition</dt>
+            <dd>
+              {{ bien.dateAcquisition
+                ? (bien.dateAcquisition | date:'dd/MM/yyyy')
+                : 'Non renseignée' }}
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Valeur estimée</dt>
+            <dd>
+              <ng-container *ngIf="bien.valeurEstimee != null; else estimationVide">
+                {{ bien.valeurEstimee | number:'1.0-2' }} FCFA
+              </ng-container>
+              <ng-template #estimationVide>Non renseignée</ng-template>
+            </dd>
+          </div>
+
+          <div class="detail-item">
+            <dt>Dernière évaluation</dt>
+            <dd>
+              {{ bien.dateDerniereEvaluation
+                ? (bien.dateDerniereEvaluation | date:'dd/MM/yyyy')
+                : 'Non renseignée' }}
+            </dd>
+          </div>
+
+        </dl>
+      </section>
+
+      <!-- Unités locatives -->
+      <section class="fiche-block fiche-section">
+
+        <div class="section-heading section-heading-between">
+          <div>
+            <h2>Unités locatives</h2>
+            <p class="section-description">
+              Appartements, studios et autres espaces rattachés à ce bien.
+            </p>
+          </div>
+
+          <span class="section-count">{{ unitesLocatives.length }}</span>
+        </div>
+
+        <!-- Aucune unité -->
+        <div *ngIf="unitesLocatives.length === 0" class="empty-state">
+
+          <i class="pi pi-home empty-state-icon" aria-hidden="true"></i>
+
+          <h3>Aucune unité locative</h3>
+          <p>Ce bien ne possède pas encore d’unité locative enregistrée.</p>
+
+          <button
+            *ngIf="peutGererBien"
+            pButton
+            type="button"
+            label="Gérer les unités"
+            icon="pi pi-plus"
+            class="p-button-outlined"
+            (click)="gererUnites()">
+          </button>
 
         </div>
 
-
-        <!-- ===================================================
-             AUCUNE UNITÉ
-             =================================================== -->
+        <!-- Liste des unités -->
         <div
-          *ngIf="bien.unitesLocatives.length === 0"
-          class="empty-text">
-
-          <p>
-            Aucune unité locative n'est associée à ce bien.
-          </p>
-
-        </div>
-
-
-        <!-- ===================================================
-             LISTE DES UNITÉS
-             =================================================== -->
-        <div
-          *ngIf="bien.unitesLocatives.length > 0"
+          *ngIf="unitesLocatives.length > 0"
           class="unites-grid">
 
-          <div
-            *ngFor="let unite of bien.unitesLocatives"
+          <article
+            *ngFor="let unite of unitesLocatives"
             class="unite-card">
 
-            <!-- Référence -->
             <div class="unite-header">
+              <div class="unite-icon">
+                <i class="pi pi-home" aria-hidden="true"></i>
+              </div>
 
-              <strong>
-                {{ unite.reference }}
-              </strong>
-
+              <div class="unite-title">
+                <span class="label">Référence de l’unité</span>
+                <strong>{{ unite.reference }}</strong>
+              </div>
             </div>
 
-
-            <!-- Informations -->
             <div class="unite-body">
 
-              <div>
-                <span class="label">
-                  Loyer :
-                </span>
+              <div class="unite-info">
+                <span class="label">Loyer</span>
+                <strong>{{ unite.loyer | number:'1.0-2' }} FCFA</strong>
+              </div>
 
-                <strong>
-                  {{ unite.loyer | number }} FCFA
+              <div class="unite-info">
+                <span class="label">Statut</span>
+                <strong class="unite-statut">
+                  {{ bienService.getStatutUniteLibelle(unite.statut) }}
                 </strong>
               </div>
 
-
-          <div>
-            <span class="label">Statut :</span>
-            <span class="font-bold">
-              {{ bienService.getStatutUniteLibelle(unite.statut) }}
-            </span>
-          </div>
-
             </div>
 
-          </div>
-
+          </article>
         </div>
 
-      </div>
+        <div
+          *ngIf="unitesLocatives.length > 0 && peutGererBien"
+          class="unites-footer">
 
-
-      <!-- =====================================================
-           ACTIONS
-           ===================================================== -->
-      <div class="fiche-block">
-
-        <div class="actions-row">
-
-          <!-- Modifier -->
           <button
-            *ngIf="!isLocataire"
             pButton
-            label="Modifier le bien"
-            icon="pi pi-pencil"
-            class="p-button-outlined p-button-success"
-            (click)="modifierBien()">
-          </button>
-
-
-          <!-- Gérer les unités -->
-          <button
-            *ngIf="!isLocataire"
-            pButton
-            label="Gérer les unités"
-            icon="pi pi-building"
+            type="button"
+            label="Gérer les unités locatives"
+            icon="pi pi-arrow-right"
+            iconPos="right"
             class="p-button-outlined p-button-secondary"
             (click)="gererUnites()">
           </button>
 
         </div>
 
-      </div>
+      </section>
 
     </div>
-
-  </div>
-
+  </article>
 </div>

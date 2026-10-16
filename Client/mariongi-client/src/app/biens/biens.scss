@@ -667,6 +667,52 @@ $primary-soft: #eff6ff;
   }
 }
 
+
+/* =========================================================
+   SECTIONS CADASTRALE ET FINANCIÈRE
+   ========================================================= */
+
+.cadastral-heading {
+  margin-top: 0.2rem;
+
+  > i {
+    background: #fff7ed;
+    color: #c2410c;
+  }
+}
+
+.financial-heading {
+  margin-top: 0.2rem;
+
+  > i {
+    background: #f5f3ff;
+    color: #7c3aed;
+  }
+}
+
+/* Champs de date : conserver une largeur uniforme */
+.bien-form input[type='date'] {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Éviter les débordements dans les petites fenêtres */
+@media (max-width: 560px) {
+  .bien-form {
+    min-width: 0;
+  }
+
+  .bien-form .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bien-form .field-full {
+    grid-column: auto;
+  }
+}
+
+
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

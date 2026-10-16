@@ -20,14 +20,17 @@ public class RegimesFiscauxController : ControllerBase
 
     // ========================================================
     // GET : Liste des régimes fiscaux
+    //
     // GET /api/RegimesFiscaux
     // GET /api/RegimesFiscaux?estActif=true
+    // GET /api/RegimesFiscaux?dateReference=2026-01-01
     // ========================================================
 
     [HttpGet]
     [Authorize(Policy = "RegimesFiscaux.Read")]
     public async Task<ActionResult<IEnumerable<RegimeFiscalDto>>> ObtenirTous(
-        [FromQuery] bool? estActif)
+        [FromQuery] bool? estActif,
+        [FromQuery] DateTime? dateReference)
     {
         var query = _context.RegimesFiscaux
             .AsNoTracking()
@@ -37,6 +40,17 @@ public class RegimesFiscauxController : ControllerBase
         {
             query = query.Where(
                 r => r.EstActif == estActif.Value);
+        }
+
+        if (dateReference.HasValue)
+        {
+            var date = dateReference.Value.Date;
+
+            query = query.Where(r =>
+                (!r.DateDebutValidite.HasValue ||
+                 r.DateDebutValidite.Value <= date) &&
+                (!r.DateFinValidite.HasValue ||
+                 r.DateFinValidite.Value >= date));
         }
 
         var regimes = await query
@@ -49,7 +63,6 @@ public class RegimesFiscauxController : ControllerBase
 
     // ========================================================
     // GET : Détail d'un régime fiscal
-    // GET /api/RegimesFiscaux/{id}
     // ========================================================
 
     [HttpGet("{id:guid}")]
@@ -91,10 +104,7 @@ public class RegimesFiscauxController : ControllerBase
 
         var code = request.Code.Trim();
 
-        var codeExiste = await _context.RegimesFiscaux
-            .AnyAsync(r =>
-                !r.EstSupprime &&
-                r.Code.ToUpper() == code.ToUpper());
+        var codeExiste = await CodeExisteAsync(code);
 
         if (codeExiste)
         {
@@ -109,6 +119,10 @@ public class RegimesFiscauxController : ControllerBase
             Code = code,
             Libelle = request.Libelle.Trim(),
             Description = request.Description.Trim(),
+            DateDebutValidite = request.DateDebutValidite,
+            DateFinValidite = request.DateFinValidite,
+            ReferenceLegale = NormaliserTexte(request.ReferenceLegale),
+            DateDerniereVerification = request.DateDerniereVerification,
             EstActif = request.EstActif
         };
 
@@ -153,11 +167,7 @@ public class RegimesFiscauxController : ControllerBase
 
         var code = request.Code.Trim();
 
-        var codeExiste = await _context.RegimesFiscaux
-            .AnyAsync(r =>
-                !r.EstSupprime &&
-                r.Id != id &&
-                r.Code.ToUpper() == code.ToUpper());
+        var codeExiste = await CodeExisteAsync(code, id);
 
         if (codeExiste)
         {
@@ -170,6 +180,10 @@ public class RegimesFiscauxController : ControllerBase
         regime.Code = code;
         regime.Libelle = request.Libelle.Trim();
         regime.Description = request.Description.Trim();
+        regime.DateDebutValidite = request.DateDebutValidite;
+        regime.DateFinValidite = request.DateFinValidite;
+        regime.ReferenceLegale = NormaliserTexte(request.ReferenceLegale);
+        regime.DateDerniereVerification = request.DateDerniereVerification;
         regime.EstActif = request.EstActif;
 
         await _context.SaveChangesAsync();
@@ -197,6 +211,24 @@ public class RegimesFiscauxController : ControllerBase
             });
         }
 
+        // Un régime utilisé par des paramètres fiscaux ne doit pas
+        // être supprimé logiquement, afin de préserver la cohérence
+        // et l'historique des règles qui lui sont associées.
+
+        var possedeParametres = await _context.ParametresFiscaux
+            .AnyAsync(p =>
+                !p.EstSupprime &&
+                p.RegimeFiscalId == id);
+
+        if (possedeParametres)
+        {
+            return Conflict(new
+            {
+                message =
+                    "Ce régime fiscal est associé à des paramètres fiscaux. Désactivez-le plutôt que de le supprimer."
+            });
+        }
+
         regime.EstSupprime = true;
         regime.DateSuppression = DateTime.UtcNow;
 
@@ -206,7 +238,7 @@ public class RegimesFiscauxController : ControllerBase
     }
 
     // ========================================================
-    // VALIDATION
+    // VALIDATION DES DONNÉES
     // ========================================================
 
     private static string? Valider(
@@ -242,7 +274,73 @@ public class RegimesFiscauxController : ControllerBase
             return "La description ne peut pas dépasser 1000 caractères.";
         }
 
+        if (request.DateDebutValidite.HasValue &&
+            request.DateDebutValidite.Value == default)
+        {
+            return "La date de début de validité est invalide.";
+        }
+
+        if (request.DateFinValidite.HasValue &&
+            request.DateFinValidite.Value == default)
+        {
+            return "La date de fin de validité est invalide.";
+        }
+
+        if (request.DateDebutValidite.HasValue &&
+            request.DateFinValidite.HasValue &&
+            request.DateFinValidite.Value.Date <
+            request.DateDebutValidite.Value.Date)
+        {
+            return "La date de fin doit être supérieure ou égale à la date de début.";
+        }
+
+        if (request.DateDerniereVerification.HasValue &&
+            request.DateDerniereVerification.Value == default)
+        {
+            return "La date de dernière vérification est invalide.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ReferenceLegale) &&
+            request.ReferenceLegale.Trim().Length > 1000)
+        {
+            return "La référence légale ne peut pas dépasser 1000 caractères.";
+        }
+
         return null;
+    }
+
+    // ========================================================
+    // VÉRIFICATION DE L'UNICITÉ DU CODE
+    // ========================================================
+
+    private async Task<bool> CodeExisteAsync(
+        string code,
+        Guid? idExclu = null)
+    {
+        var codeNormalise = code.Trim().ToUpper();
+
+        var query = _context.RegimesFiscaux
+            .Where(r =>
+                !r.EstSupprime &&
+                r.Code.ToUpper() == codeNormalise);
+
+        if (idExclu.HasValue)
+        {
+            query = query.Where(r => r.Id != idExclu.Value);
+        }
+
+        return await query.AnyAsync();
+    }
+
+    // ========================================================
+    // OUTILS
+    // ========================================================
+
+    private static string? NormaliserTexte(string? valeur)
+    {
+        return string.IsNullOrWhiteSpace(valeur)
+            ? null
+            : valeur.Trim();
     }
 
     // ========================================================
@@ -257,6 +355,10 @@ public class RegimesFiscauxController : ControllerBase
             Code = regime.Code,
             Libelle = regime.Libelle,
             Description = regime.Description,
+            DateDebutValidite = regime.DateDebutValidite,
+            DateFinValidite = regime.DateFinValidite,
+            ReferenceLegale = regime.ReferenceLegale,
+            DateDerniereVerification = regime.DateDerniereVerification,
             EstActif = regime.EstActif,
             DateCreation = regime.DateCreation
         };
@@ -270,10 +372,23 @@ public class RegimesFiscauxController : ControllerBase
 public class RegimeFiscalDto
 {
     public Guid Id { get; set; }
+
     public string Code { get; set; } = string.Empty;
+
     public string Libelle { get; set; } = string.Empty;
+
     public string Description { get; set; } = string.Empty;
+
+    public DateTime? DateDebutValidite { get; set; }
+
+    public DateTime? DateFinValidite { get; set; }
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime? DateDerniereVerification { get; set; }
+
     public bool EstActif { get; set; }
+
     public DateTime DateCreation { get; set; }
 }
 
@@ -284,8 +399,19 @@ public class RegimeFiscalDto
 public class CreerRegimeFiscalRequest
 {
     public string Code { get; set; } = string.Empty;
+
     public string Libelle { get; set; } = string.Empty;
+
     public string Description { get; set; } = string.Empty;
+
+    public DateTime? DateDebutValidite { get; set; }
+
+    public DateTime? DateFinValidite { get; set; }
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime? DateDerniereVerification { get; set; }
+
     public bool EstActif { get; set; } = true;
 }
 

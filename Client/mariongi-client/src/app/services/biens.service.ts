@@ -177,165 +177,84 @@ export class BiensService {
   }
 
 
-  // ==========================================================
-  // POST : CRÉER UN BIEN
-  //
-  // POST /api/BienImmobilier
-  //
-  // multipart/form-data
-  // ==========================================================
-
-  createBien(
-    request: CreerBienRequest
-  ): Observable<BienDto> {
-
-    const formData = new FormData();
-
-    formData.append(
-      'Reference',
-      request.reference
-    );
-
-    formData.append(
-      'Nom',
-      request.nom
-    );
-
-    formData.append(
-      'Type',
-      request.type.toString()
-    );
-
-    formData.append(
-      'Adresse',
-      request.adresse
-    );
-
-    formData.append(
-      'Ville',
-      request.ville
-    );
-
-    if (request.quartier) {
-      formData.append(
-        'Quartier',
-        request.quartier
-      );
-    }
-
-    formData.append(
-      'Superficie',
-      request.superficie.toString()
-    );
-
-
-    // ========================================================
-    // PHOTOS
-    // ========================================================
-
-    request.fichiers?.forEach(
-      fichier => {
-        formData.append(
-          'Fichiers',
-          fichier,
-          fichier.name
-        );
-      }
-    );
-
-    return this.http.post<BienDto>(
-      this.apiUrl,
-      formData
-    );
+  
+private ajouterChamp(
+  formData: FormData,
+  nom: string,
+  valeur: string | number | null | undefined
+): void {
+  if (valeur !== null && valeur !== undefined && valeur !== '') {
+    formData.append(nom, String(valeur));
   }
+}
 
+private construireFormData(
+  request: CreerBienRequest | ModifierBienRequest,
+  photosExistantes?: string[]
+): FormData {
+  const formData = new FormData();
 
-  // ==========================================================
-  // PUT : MODIFIER UN BIEN
-  //
-  // PUT /api/BienImmobilier/{id}
-  //
-  // multipart/form-data
-  // ==========================================================
+  this.ajouterChamp(formData, 'Reference', request.reference);
+  this.ajouterChamp(formData, 'Nom', request.nom);
+  this.ajouterChamp(formData, 'Type', request.type);
+  this.ajouterChamp(formData, 'Adresse', request.adresse);
+  this.ajouterChamp(formData, 'Ville', request.ville);
+  this.ajouterChamp(formData, 'Quartier', request.quartier);
+  this.ajouterChamp(formData, 'Region', request.region);
+  this.ajouterChamp(formData, 'Departement', request.departement);
+  this.ajouterChamp(formData, 'Arrondissement', request.arrondissement);
 
-  updateBien(
-    id: string,
-    request: ModifierBienRequest
-  ): Observable<void> {
+  this.ajouterChamp(formData, 'Superficie', request.superficie);
+  this.ajouterChamp(formData, 'AnneeConstruction', request.anneeConstruction);
+  this.ajouterChamp(formData, 'NombreEtages', request.nombreEtages);
 
-    const formData = new FormData();
+  this.ajouterChamp(
+    formData, 'NumeroTitreFoncier', request.numeroTitreFoncier
+  );
+  this.ajouterChamp(formData, 'NumeroLot', request.numeroLot);
+  this.ajouterChamp(formData, 'NumeroParcelle', request.numeroParcelle);
+  this.ajouterChamp(
+    formData, 'ReferenceCadastrale', request.referenceCadastrale
+  );
 
-    formData.append(
-      'Reference',
-      request.reference
-    );
+  this.ajouterChamp(
+    formData, 'ValeurAcquisition', request.valeurAcquisition
+  );
+  this.ajouterChamp(formData, 'DateAcquisition', request.dateAcquisition);
+  this.ajouterChamp(formData, 'ValeurEstimee', request.valeurEstimee);
+  this.ajouterChamp(
+    formData, 'DateDerniereEvaluation', request.dateDerniereEvaluation
+  );
+  this.ajouterChamp(formData, 'StatutFoncier', request.statutFoncier);
 
-    formData.append(
-      'Nom',
-      request.nom
-    );
+  photosExistantes?.forEach(photo => {
+    formData.append('PhotosExistantes', photo);
+  });
 
-    formData.append(
-      'Type',
-      request.type.toString()
-    );
+  request.fichiers?.forEach(fichier => {
+    formData.append('Fichiers', fichier, fichier.name);
+  });
 
-    formData.append(
-      'Adresse',
-      request.adresse
-    );
+  return formData;
+}
 
-    formData.append(
-      'Ville',
-      request.ville
-    );
+createBien(request: CreerBienRequest): Observable<BienDto> {
+  const formData = this.construireFormData(request);
 
-    if (request.quartier) {
-      formData.append(
-        'Quartier',
-        request.quartier
-      );
-    }
+  return this.http.post<BienDto>(this.apiUrl, formData);
+}
 
-    formData.append(
-      'Superficie',
-      request.superficie.toString()
-    );
+updateBien(
+  id: string,
+  request: ModifierBienRequest
+): Observable<unknown> {
+  const formData = this.construireFormData(
+    request,
+    request.photosExistantes
+  );
 
-
-    // ========================================================
-    // PHOTOS EXISTANTES
-    // ========================================================
-
-    request.photosExistantes?.forEach(
-      photo => {
-        formData.append(
-          'PhotosExistantes',
-          photo
-        );
-      }
-    );
-
-
-    // ========================================================
-    // NOUVELLES PHOTOS
-    // ========================================================
-
-    request.fichiers?.forEach(
-      fichier => {
-        formData.append(
-          'Fichiers',
-          fichier,
-          fichier.name
-        );
-      }
-    );
-
-    return this.http.put<void>(
-      `${this.apiUrl}/${id}`,
-      formData
-    );
-  }
+  return this.http.put<unknown>(`${this.apiUrl}/${id}`, formData);
+}
 
 
   // ==========================================================

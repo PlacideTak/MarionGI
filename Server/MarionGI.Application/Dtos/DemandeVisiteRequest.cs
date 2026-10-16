@@ -11,13 +11,17 @@ public class DemandeVisiteRequest
     public Guid? AgentId { get; set; }
 
     public string NomProspect { get; set; } = string.Empty;
+    public string EmailProspect { get; set; } = string.Empty;
 
     public string TelephoneProspect { get; set; } = string.Empty;
+
+    public DateTime? DateConfirmee { get; set; }
 
     public DateTime DateSouhaitee { get; set; }
 
     public string? Observations { get; set; }
-
+    public string? CommentaireInterne { get; set; }
+    
     public StatutDemandeVisite Statut { get; set; }
         = StatutDemandeVisite.EnAttente;
 }

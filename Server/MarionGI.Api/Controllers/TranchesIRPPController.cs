@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Entities;
+﻿using MarionGI.Domain.Entities;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,9 +26,19 @@ public class TranchesIRPPController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = "Administrateur,Gestionnaire")]
-    public async Task<ActionResult<IEnumerable<TrancheIRPPDto>>> ObtenirToutes(
-        [FromQuery] int? anneeFiscale)
+    public async Task<ActionResult<IEnumerable<TrancheIRPPDto>>>
+        ObtenirToutes([FromQuery] int? anneeFiscale)
     {
+        if (anneeFiscale.HasValue &&
+            (anneeFiscale.Value < 2000 ||
+             anneeFiscale.Value > 2100))
+        {
+            return BadRequest(new
+            {
+                message = "L'année fiscale doit être comprise entre 2000 et 2100."
+            });
+        }
+
         var query = _context.TranchesIRPP
             .AsNoTracking()
             .Where(t => !t.EstSupprime);
@@ -42,6 +51,7 @@ public class TranchesIRPPController : ControllerBase
 
         var tranches = await query
             .OrderBy(t => t.AnneeFiscale)
+            .ThenBy(t => t.DateDebutValidite)
             .ThenBy(t => t.OrdreTranche)
             .Select(t => VersDto(t))
             .ToListAsync();
@@ -57,13 +67,14 @@ public class TranchesIRPPController : ControllerBase
 
     [HttpGet("{id:guid}")]
     [Authorize(Roles = "Administrateur,Gestionnaire")]
-    public async Task<ActionResult<TrancheIRPPDto>> ObtenirParId(
-        Guid id)
+    public async Task<ActionResult<TrancheIRPPDto>>
+        ObtenirParId(Guid id)
     {
         var tranche = await _context.TranchesIRPP
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                t => t.Id == id && !t.EstSupprime);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                !t.EstSupprime);
 
         if (tranche == null)
         {
@@ -98,7 +109,9 @@ public class TranchesIRPPController : ControllerBase
             request.AnneeFiscale,
             request.SeuilMin,
             request.SeuilMax,
-            request.OrdreTranche);
+            request.OrdreTranche,
+            request.DateDebutValidite,
+            request.DateFinValidite);
 
         if (conflit != null)
         {
@@ -112,7 +125,10 @@ public class TranchesIRPPController : ControllerBase
             SeuilMax = request.SeuilMax,
             Taux = request.Taux,
             OrdreTranche = request.OrdreTranche,
-            Description = Nettoyer(request.Description)
+            Description = Nettoyer(request.Description),
+            ReferenceLegale = Nettoyer(request.ReferenceLegale),
+            DateDebutValidite = request.DateDebutValidite,
+            DateFinValidite = request.DateFinValidite
         };
 
         _context.TranchesIRPP.Add(tranche);
@@ -138,8 +154,9 @@ public class TranchesIRPPController : ControllerBase
         [FromBody] ModifierTrancheIRPPRequest request)
     {
         var tranche = await _context.TranchesIRPP
-            .FirstOrDefaultAsync(
-                t => t.Id == id && !t.EstSupprime);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                !t.EstSupprime);
 
         if (tranche == null)
         {
@@ -161,6 +178,8 @@ public class TranchesIRPPController : ControllerBase
             request.SeuilMin,
             request.SeuilMax,
             request.OrdreTranche,
+            request.DateDebutValidite,
+            request.DateFinValidite,
             id);
 
         if (conflit != null)
@@ -174,6 +193,9 @@ public class TranchesIRPPController : ControllerBase
         tranche.Taux = request.Taux;
         tranche.OrdreTranche = request.OrdreTranche;
         tranche.Description = Nettoyer(request.Description);
+        tranche.ReferenceLegale = Nettoyer(request.ReferenceLegale);
+        tranche.DateDebutValidite = request.DateDebutValidite;
+        tranche.DateFinValidite = request.DateFinValidite;
 
         await _context.SaveChangesAsync();
 
@@ -191,8 +213,9 @@ public class TranchesIRPPController : ControllerBase
     public async Task<IActionResult> Supprimer(Guid id)
     {
         var tranche = await _context.TranchesIRPP
-            .FirstOrDefaultAsync(
-                t => t.Id == id && !t.EstSupprime);
+            .FirstOrDefaultAsync(t =>
+                t.Id == id &&
+                !t.EstSupprime);
 
         if (tranche == null)
         {
@@ -201,6 +224,10 @@ public class TranchesIRPPController : ControllerBase
                 message = "La tranche IRPP demandée est introuvable."
             });
         }
+
+        // La suppression logique conserve l'enregistrement
+        // pour la traçabilité. Vérifier séparément les éventuelles
+        // dépendances vers les calculs fiscaux avant suppression.
 
         tranche.EstSupprime = true;
         tranche.DateSuppression = DateTime.UtcNow;
@@ -211,7 +238,7 @@ public class TranchesIRPPController : ControllerBase
     }
 
     // ========================================================
-    // VALIDATION
+    // VALIDATION DES DONNÉES
     // ========================================================
 
     private static string? Valider(
@@ -228,14 +255,15 @@ public class TranchesIRPPController : ControllerBase
             return "Le seuil minimum ne peut pas être négatif.";
         }
 
-        if (request.SeuilMax <= request.SeuilMin)
+        if (request.SeuilMax.HasValue &&
+            request.SeuilMax.Value <= request.SeuilMin)
         {
-            return "Le seuil maximum doit être supérieur au seuil minimum.";
+            return "Le seuil maximum doit être strictement supérieur au seuil minimum.";
         }
 
-        if (request.Taux < 0 || request.Taux > 100)
+        if (request.Taux < 0 || request.Taux > 1)
         {
-            return "Le taux doit être compris entre 0 et 100.";
+            return "Le taux doit être compris entre 0 et 1 (0 % à 100 %).";
         }
 
         if (request.OrdreTranche <= 0)
@@ -253,18 +281,50 @@ public class TranchesIRPPController : ControllerBase
             return "La description ne peut pas dépasser 500 caractères.";
         }
 
+        if (request.ReferenceLegale?.Length > 500)
+        {
+            return "La référence légale ne peut pas dépasser 500 caractères.";
+        }
+
+        if (request.DateDebutValidite == default)
+        {
+            return "La date de début de validité est obligatoire.";
+        }
+
+        if (request.DateDebutValidite.Year < 2000 ||
+            request.DateDebutValidite.Year > 2100)
+        {
+            return "La date de début de validité est invalide.";
+        }
+
+        if (request.DateFinValidite.HasValue)
+        {
+            if (request.DateFinValidite.Value == default)
+            {
+                return "La date de fin de validité est invalide.";
+            }
+
+            if (request.DateFinValidite.Value <
+                request.DateDebutValidite)
+            {
+                return "La date de fin doit être postérieure ou égale à la date de début.";
+            }
+        }
+
         return null;
     }
 
     // ========================================================
-    // DÉTECTION DES DOUBLONS ET DES CHEVAUCHEMENTS
+    // DÉTECTION DES CONFLITS
     // ========================================================
 
     private async Task<string?> VerifierConflits(
         int anneeFiscale,
         decimal seuilMin,
-        decimal seuilMax,
+        decimal? seuilMax,
         int ordreTranche,
+        DateTime dateDebutValidite,
+        DateTime? dateFinValidite,
         Guid? idExclu = null)
     {
         var query = _context.TranchesIRPP
@@ -277,30 +337,49 @@ public class TranchesIRPPController : ControllerBase
             query = query.Where(t => t.Id != idExclu.Value);
         }
 
-        var ordreExiste = await query.AnyAsync(
-            t => t.OrdreTranche == ordreTranche);
+        // Charger les règles existantes pour vérifier les conflits
+        // en tenant compte des dates et des seuils.
+        var existantes = await query.ToListAsync();
 
-        if (ordreExiste)
+        foreach (var existante in existantes)
         {
-            return "Une tranche utilise déjà cet ordre pour cette année fiscale.";
-        }
+            // Deux périodes de validité se chevauchent si chacune
+            // commence avant la fin de l'autre période.
+            var periodesSeChevauchent =
+                (!dateFinValidite.HasValue ||
+                 existante.DateDebutValidite <= dateFinValidite.Value) &&
+                (!existante.DateFinValidite.HasValue ||
+                 existante.DateFinValidite.Value >= dateDebutValidite);
 
-        // Les bornes sont considérées comme inclusives.
-        // Deux intervalles qui se touchent sont donc en conflit.
-        var seuilsChevauchent = await query.AnyAsync(t =>
-            t.SeuilMin <= seuilMax &&
-            t.SeuilMax >= seuilMin);
+            if (!periodesSeChevauchent)
+            {
+                continue;
+            }
 
-        if (seuilsChevauchent)
-        {
-            return "Les seuils chevauchent une autre tranche de cette année fiscale.";
+            if (existante.OrdreTranche == ordreTranche)
+            {
+                return "Une tranche utilise déjà cet ordre pour une période de validité qui se chevauche.";
+            }
+
+            // Deux intervalles de revenus se chevauchent si leurs
+            // bornes se recoupent. Null signifie sans plafond.
+            var seuilsSeChevauchent =
+                (!seuilMax.HasValue ||
+                 existante.SeuilMin < seuilMax.Value) &&
+                (!existante.SeuilMax.HasValue ||
+                 existante.SeuilMax.Value > seuilMin);
+
+            if (seuilsSeChevauchent)
+            {
+                return "Les seuils chevauchent une autre tranche pendant une période de validité commune.";
+            }
         }
 
         return null;
     }
 
     // ========================================================
-    // MAPPING
+    // MAPPING ENTITÉ VERS DTO
     // ========================================================
 
     private static TrancheIRPPDto VersDto(TrancheIRPP tranche)
@@ -313,14 +392,24 @@ public class TranchesIRPPController : ControllerBase
             SeuilMax = tranche.SeuilMax,
             Taux = tranche.Taux,
             OrdreTranche = tranche.OrdreTranche,
-            Description = tranche.Description,
+            Description = tranche.Description ?? string.Empty,
+            ReferenceLegale = tranche.ReferenceLegale,
+            DateDebutValidite = tranche.DateDebutValidite,
+            DateFinValidite = tranche.DateFinValidite,
+            DateDerniereVerification = tranche.DateDerniereVerification,
             DateCreation = tranche.DateCreation
         };
     }
 
-    private static string Nettoyer(string valeur)
+    // ========================================================
+    // UTILITAIRE
+    // ========================================================
+
+    private static string? Nettoyer(string? valeur)
     {
-        return valeur.Trim();
+        return string.IsNullOrWhiteSpace(valeur)
+            ? null
+            : valeur.Trim();
     }
 }
 
@@ -331,12 +420,27 @@ public class TranchesIRPPController : ControllerBase
 public class TrancheIRPPDto
 {
     public Guid Id { get; set; }
+
     public int AnneeFiscale { get; set; }
+
     public decimal SeuilMin { get; set; }
+
     public decimal? SeuilMax { get; set; }
+
     public decimal Taux { get; set; }
+
     public int OrdreTranche { get; set; }
+
     public string Description { get; set; } = string.Empty;
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime DateDebutValidite { get; set; }
+
+    public DateTime? DateFinValidite { get; set; }
+
+    public DateTime? DateDerniereVerification { get; set; }
+
     public DateTime DateCreation { get; set; }
 }
 
@@ -347,11 +451,23 @@ public class TrancheIRPPDto
 public class CreerTrancheIRPPRequest
 {
     public int AnneeFiscale { get; set; }
+
     public decimal SeuilMin { get; set; }
-    public decimal SeuilMax { get; set; }
+
+    public decimal? SeuilMax { get; set; }
+
+    // 0.10 représente un taux de 10 %.
     public decimal Taux { get; set; }
+
     public int OrdreTranche { get; set; }
+
     public string Description { get; set; } = string.Empty;
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime DateDebutValidite { get; set; }
+
+    public DateTime? DateFinValidite { get; set; }
 }
 
 // ============================================================

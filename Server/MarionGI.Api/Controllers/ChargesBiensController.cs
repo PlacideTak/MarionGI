@@ -1,4 +1,5 @@
-﻿using MarionGI.Domain.Entities;
+﻿
+using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
@@ -21,7 +22,7 @@ public class ChargesBiensController : ControllerBase
 
     // ============================================================
     // GET : api/ChargesBiens
-    // Filtres facultatifs : bien, unité, type et période
+    // Filtres : bien, unité, type et période
     // ============================================================
     [HttpGet]
     [Authorize(Policy = "Charges.Read")]
@@ -44,7 +45,7 @@ public class ChargesBiensController : ControllerBase
         {
             return BadRequest(new
             {
-                message = "La date de début doit précéder la date de fin."
+                message = "La date de début doit précéder ou être égale à la date de fin."
             });
         }
 
@@ -52,8 +53,8 @@ public class ChargesBiensController : ControllerBase
             .AsNoTracking()
             .Where(c =>
                 !c.EstSupprime &&
-                c.BienImmobilier.SocieteId == societeId.Value &&
-                !c.BienImmobilier.EstSupprime);
+                !c.BienImmobilier.EstSupprime &&
+                c.BienImmobilier.SocieteId == societeId.Value);
 
         if (bienImmobilierId.HasValue)
         {
@@ -69,6 +70,14 @@ public class ChargesBiensController : ControllerBase
 
         if (typeCharge.HasValue)
         {
+            if (!Enum.IsDefined(typeof(TypeCharge), typeCharge.Value))
+            {
+                return BadRequest(new
+                {
+                    message = "Le type de charge est invalide."
+                });
+            }
+
             query = query.Where(c =>
                 c.TypeCharge == typeCharge.Value);
         }
@@ -90,6 +99,7 @@ public class ChargesBiensController : ControllerBase
             .Select(c => new ChargeBienListeDto
             {
                 Id = c.Id,
+
                 BienImmobilierId = c.BienImmobilierId,
                 NomBienImmobilier = c.BienImmobilier.Nom,
 
@@ -99,15 +109,32 @@ public class ChargesBiensController : ControllerBase
                     : null,
 
                 DateDepense = c.DateDepense,
+                DateFacture = c.DateFacture,
+                DatePaiement = c.DatePaiement,
+
                 TypeCharge = c.TypeCharge,
                 Description = c.Description,
+
+                NomFournisseur = c.NomFournisseur,
+                NumeroContribuableFournisseur =
+                    c.NumeroContribuableFournisseur,
+
                 MontantTTC = c.MontantTTC,
                 MontantHT = c.MontantHT,
                 MontantTVA = c.MontantTVA,
+
                 ReferenceFacture = c.ReferenceFacture,
-                EstDeductibleFiscalement = c.EstDeductibleFiscalement,
+                CheminJustificatif = c.CheminJustificatif,
+
+                EstDeductibleFiscalement =
+                    c.EstDeductibleFiscalement,
+
                 JustificationNonDeductibilite =
                     c.JustificationNonDeductibilite,
+
+                DateValidationFiscale = c.DateValidationFiscale,
+                Observations = c.Observations,
+
                 DateCreation = c.DateCreation
             })
             .ToListAsync(cancellationToken);
@@ -134,11 +161,12 @@ public class ChargesBiensController : ControllerBase
             .Where(c =>
                 c.Id == id &&
                 !c.EstSupprime &&
-                c.BienImmobilier.SocieteId == societeId.Value &&
-                !c.BienImmobilier.EstSupprime)
+                !c.BienImmobilier.EstSupprime &&
+                c.BienImmobilier.SocieteId == societeId.Value)
             .Select(c => new ChargeBienListeDto
             {
                 Id = c.Id,
+
                 BienImmobilierId = c.BienImmobilierId,
                 NomBienImmobilier = c.BienImmobilier.Nom,
 
@@ -148,15 +176,32 @@ public class ChargesBiensController : ControllerBase
                     : null,
 
                 DateDepense = c.DateDepense,
+                DateFacture = c.DateFacture,
+                DatePaiement = c.DatePaiement,
+
                 TypeCharge = c.TypeCharge,
                 Description = c.Description,
+
+                NomFournisseur = c.NomFournisseur,
+                NumeroContribuableFournisseur =
+                    c.NumeroContribuableFournisseur,
+
                 MontantTTC = c.MontantTTC,
                 MontantHT = c.MontantHT,
                 MontantTVA = c.MontantTVA,
+
                 ReferenceFacture = c.ReferenceFacture,
-                EstDeductibleFiscalement = c.EstDeductibleFiscalement,
+                CheminJustificatif = c.CheminJustificatif,
+
+                EstDeductibleFiscalement =
+                    c.EstDeductibleFiscalement,
+
                 JustificationNonDeductibilite =
                     c.JustificationNonDeductibilite,
+
+                DateValidationFiscale = c.DateValidationFiscale,
+                Observations = c.Observations,
+
                 DateCreation = c.DateCreation
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -174,7 +219,6 @@ public class ChargesBiensController : ControllerBase
 
     // ============================================================
     // POST : api/ChargesBiens
-    // Administrateur / Gestionnaire selon la policy
     // ============================================================
     [HttpPost]
     [Authorize(Policy = "Charges.Create")]
@@ -196,12 +240,15 @@ public class ChargesBiensController : ControllerBase
             request.MontantTVA,
             request.ReferenceFacture,
             request.EstDeductibleFiscalement,
-            request.JustificationNonDeductibilite);
+            request.JustificationNonDeductibilite,
+            request.NomFournisseur,
+            request.NumeroContribuableFournisseur,
+            request.CheminJustificatif,
+            request.Observations);
 
         if (erreur != null)
             return BadRequest(new { message = erreur });
 
-        // L'immeuble doit appartenir à la société connectée.
         var bienExiste = await _context.BiensImmobiliers
             .AsNoTracking()
             .AnyAsync(b =>
@@ -218,7 +265,6 @@ public class ChargesBiensController : ControllerBase
             });
         }
 
-        // Si une unité est fournie, elle doit appartenir à cet immeuble.
         if (request.UniteLocativeId.HasValue)
         {
             var uniteValide = await _context.UnitesLocatives
@@ -242,19 +288,39 @@ public class ChargesBiensController : ControllerBase
         var charge = new ChargeBien
         {
             Id = Guid.NewGuid(),
+
             BienImmobilierId = request.BienImmobilierId,
             UniteLocativeId = request.UniteLocativeId,
+
             DateDepense = request.DateDepense,
+            DateFacture = request.DateFacture,
+            DatePaiement = request.DatePaiement,
+
             TypeCharge = request.TypeCharge,
             Description = request.Description.Trim(),
+
+            NomFournisseur = NettoyerTexte(request.NomFournisseur),
+            NumeroContribuableFournisseur =
+                NettoyerTexte(request.NumeroContribuableFournisseur),
+
             MontantTTC = request.MontantTTC,
             MontantHT = request.MontantHT,
             MontantTVA = request.MontantTVA,
+
             ReferenceFacture = NettoyerTexte(request.ReferenceFacture),
+            CheminJustificatif = NettoyerTexte(request.CheminJustificatif),
+
             EstDeductibleFiscalement =
                 request.EstDeductibleFiscalement,
+
             JustificationNonDeductibilite =
                 NettoyerTexte(request.JustificationNonDeductibilite),
+
+            // La validation fiscale est gérée séparément.
+            DateValidationFiscale = null,
+
+            Observations = NettoyerTexte(request.Observations),
+
             DateCreation = DateTime.UtcNow,
             EstSupprime = false
         };
@@ -302,7 +368,11 @@ public class ChargesBiensController : ControllerBase
             request.MontantTVA,
             request.ReferenceFacture,
             request.EstDeductibleFiscalement,
-            request.JustificationNonDeductibilite);
+            request.JustificationNonDeductibilite,
+            request.NomFournisseur,
+            request.NumeroContribuableFournisseur,
+            request.CheminJustificatif,
+            request.Observations);
 
         if (erreur != null)
             return BadRequest(new { message = erreur });
@@ -311,8 +381,8 @@ public class ChargesBiensController : ControllerBase
             .FirstOrDefaultAsync(c =>
                 c.Id == id &&
                 !c.EstSupprime &&
-                c.BienImmobilier.SocieteId == societeId.Value &&
-                !c.BienImmobilier.EstSupprime,
+                !c.BienImmobilier.EstSupprime &&
+                c.BienImmobilier.SocieteId == societeId.Value,
                 cancellationToken);
 
         if (charge == null)
@@ -361,17 +431,36 @@ public class ChargesBiensController : ControllerBase
 
         charge.BienImmobilierId = request.BienImmobilierId;
         charge.UniteLocativeId = request.UniteLocativeId;
+
         charge.DateDepense = request.DateDepense;
+        charge.DateFacture = request.DateFacture;
+        charge.DatePaiement = request.DatePaiement;
+
         charge.TypeCharge = request.TypeCharge;
         charge.Description = request.Description.Trim();
+
+        charge.NomFournisseur = NettoyerTexte(request.NomFournisseur);
+        charge.NumeroContribuableFournisseur =
+            NettoyerTexte(request.NumeroContribuableFournisseur);
+
         charge.MontantTTC = request.MontantTTC;
         charge.MontantHT = request.MontantHT;
         charge.MontantTVA = request.MontantTVA;
+
         charge.ReferenceFacture = NettoyerTexte(request.ReferenceFacture);
+        charge.CheminJustificatif = NettoyerTexte(request.CheminJustificatif);
+
         charge.EstDeductibleFiscalement =
             request.EstDeductibleFiscalement;
+
         charge.JustificationNonDeductibilite =
             NettoyerTexte(request.JustificationNonDeductibilite);
+
+        charge.Observations = NettoyerTexte(request.Observations);
+
+        // Les données ayant été modifiées, une nouvelle validation
+        // fiscale sera nécessaire si ce mécanisme est utilisé.
+        charge.DateValidationFiscale = null;
 
         await _context.SaveChangesAsync(cancellationToken);
 
@@ -406,6 +495,7 @@ public class ChargesBiensController : ControllerBase
             .FirstOrDefaultAsync(c =>
                 c.Id == id &&
                 !c.EstSupprime &&
+                !c.BienImmobilier.EstSupprime &&
                 c.BienImmobilier.SocieteId == societeId.Value,
                 cancellationToken);
 
@@ -429,7 +519,7 @@ public class ChargesBiensController : ControllerBase
     }
 
     // ============================================================
-    // VALIDATION
+    // VALIDATION DES DONNÉES
     // ============================================================
     private static string? ValiderCharge(
         DateTime dateDepense,
@@ -440,7 +530,11 @@ public class ChargesBiensController : ControllerBase
         decimal? montantTVA,
         string? referenceFacture,
         bool estDeductibleFiscalement,
-        string? justificationNonDeductibilite)
+        string? justificationNonDeductibilite,
+        string? nomFournisseur,
+        string? numeroContribuableFournisseur,
+        string? cheminJustificatif,
+        string? observations)
     {
         if (dateDepense == default)
             return "La date de dépense est obligatoire.";
@@ -470,17 +564,23 @@ public class ChargesBiensController : ControllerBase
             return "Le montant HT et la TVA ne peuvent pas dépasser le montant TTC.";
         }
 
-        if (!string.IsNullOrWhiteSpace(referenceFacture) &&
-            referenceFacture.Trim().Length > 100)
-        {
+        if (DepasseLongueur(referenceFacture, 100))
             return "La référence de facture ne doit pas dépasser 100 caractères.";
-        }
 
-        if (!string.IsNullOrWhiteSpace(justificationNonDeductibilite) &&
-            justificationNonDeductibilite.Trim().Length > 1000)
-        {
+        if (DepasseLongueur(justificationNonDeductibilite, 1000))
             return "La justification ne doit pas dépasser 1000 caractères.";
-        }
+
+        if (DepasseLongueur(nomFournisseur, 200))
+            return "Le nom du fournisseur ne doit pas dépasser 200 caractères.";
+
+        if (DepasseLongueur(numeroContribuableFournisseur, 100))
+            return "Le numéro de contribuable du fournisseur ne doit pas dépasser 100 caractères.";
+
+        if (DepasseLongueur(cheminJustificatif, 500))
+            return "Le chemin du justificatif ne doit pas dépasser 500 caractères.";
+
+        if (DepasseLongueur(observations, 2000))
+            return "Les observations ne doivent pas dépasser 2000 caractères.";
 
         if (!estDeductibleFiscalement &&
             string.IsNullOrWhiteSpace(justificationNonDeductibilite))
@@ -489,6 +589,12 @@ public class ChargesBiensController : ControllerBase
         }
 
         return null;
+    }
+
+    private static bool DepasseLongueur(string? valeur, int longueurMax)
+    {
+        return !string.IsNullOrWhiteSpace(valeur) &&
+               valeur.Trim().Length > longueurMax;
     }
 
     // ============================================================
@@ -512,7 +618,7 @@ public class ChargesBiensController : ControllerBase
 }
 
 // ============================================================
-// DTOs
+// DTO DE CONSULTATION
 // ============================================================
 public class ChargeBienListeDto
 {
@@ -525,38 +631,65 @@ public class ChargeBienListeDto
     public string? ReferenceUnite { get; set; }
 
     public DateTime DateDepense { get; set; }
+    public DateTime? DateFacture { get; set; }
+    public DateTime? DatePaiement { get; set; }
+
     public TypeCharge TypeCharge { get; set; }
     public string Description { get; set; } = string.Empty;
+
+    public string? NomFournisseur { get; set; }
+    public string? NumeroContribuableFournisseur { get; set; }
 
     public decimal MontantTTC { get; set; }
     public decimal? MontantHT { get; set; }
     public decimal? MontantTVA { get; set; }
 
     public string? ReferenceFacture { get; set; }
+    public string? CheminJustificatif { get; set; }
+
     public bool EstDeductibleFiscalement { get; set; }
     public string? JustificationNonDeductibilite { get; set; }
+
+    public DateTime? DateValidationFiscale { get; set; }
+    public string? Observations { get; set; }
 
     public DateTime DateCreation { get; set; }
 }
 
+// ============================================================
+// DTO DE CRÉATION
+// ============================================================
 public class CreerChargeBienRequest
 {
     public Guid BienImmobilierId { get; set; }
     public Guid? UniteLocativeId { get; set; }
 
     public DateTime DateDepense { get; set; }
+    public DateTime? DateFacture { get; set; }
+    public DateTime? DatePaiement { get; set; }
+
     public TypeCharge TypeCharge { get; set; }
     public string Description { get; set; } = string.Empty;
+
+    public string? NomFournisseur { get; set; }
+    public string? NumeroContribuableFournisseur { get; set; }
 
     public decimal MontantTTC { get; set; }
     public decimal? MontantHT { get; set; }
     public decimal? MontantTVA { get; set; }
 
     public string? ReferenceFacture { get; set; }
+    public string? CheminJustificatif { get; set; }
+
     public bool EstDeductibleFiscalement { get; set; }
     public string? JustificationNonDeductibilite { get; set; }
+
+    public string? Observations { get; set; }
 }
 
+// ============================================================
+// DTO DE MODIFICATION
+// ============================================================
 public class ModifierChargeBienRequest : CreerChargeBienRequest
 {
 }

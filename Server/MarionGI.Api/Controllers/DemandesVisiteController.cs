@@ -1,11 +1,12 @@
-﻿using MarionGI.Application.Dtos;
+﻿
+using System.Security.Claims;
+using MarionGI.Application.Dtos;
 using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
 
@@ -41,50 +42,17 @@ public class DemandesVisiteController : ControllerBase
         }
 
         var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible de déterminer la société de l'utilisateur connecté."
+                Message = "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
 
-        // ========================================================
-        // REQUÊTE DE BASE
-        // ========================================================
-        //
-        // Toujours :
-        // - demande non supprimée
-        // - unité non supprimée
-        // - bien non supprimé
-        // - bien appartenant à la société
-        //
-        // ========================================================
-
-        var query = _context.DemandesVisite
-            .AsNoTracking()
-            .Where(d =>
-                !d.EstSupprime &&
-                !d.UniteLocative.EstSupprime &&
-                !d.UniteLocative.BienImmobilier.EstSupprime &&
-                d.UniteLocative.BienImmobilier.SocieteId ==
-                    societeId.Value);
-
-        // ========================================================
-        // AGENT
-        // ========================================================
-        //
-        // Un Agent ne voit QUE ses propres demandes.
-        //
-        // Le filtre est appliqué AVANT le Select.
-        // Il est donc impossible de récupérer les données d'un
-        // autre agent.
-        //
-        // ========================================================
+        var query = ConstruireRequeteSociete(societeId.Value);
 
         if (IsAgent())
         {
@@ -92,134 +60,14 @@ public class DemandesVisiteController : ControllerBase
                 d => d.AgentId == utilisateurId.Value);
         }
 
-        // ========================================================
-        // PROJECTION
-        // ========================================================
+        var demandes = await query
+            .Include(d => d.UniteLocative)
+                .ThenInclude(u => u.BienImmobilier)
+            .Include(d => d.Agent)
+            .OrderByDescending(d => d.DateSouhaitee)
+            .ToListAsync(cancellationToken);
 
-        var demandes =
-            await query
-                .OrderByDescending(d => d.DateSouhaitee)
-                .Select(d => new
-                {
-                    d.Id,
-
-                    d.UniteLocativeId,
-
-                    // =================================================
-                    // UNITÉ LOCATIVE
-                    // =================================================
-
-                    UniteLocative = new
-                    {
-                        d.UniteLocative.Id,
-                        d.UniteLocative.Reference,
-                        d.UniteLocative.Type,
-                        d.UniteLocative.Superficie,
-                        d.UniteLocative.Loyer,
-                        d.UniteLocative.Statut,
-                        d.UniteLocative.Photos,
-                        d.UniteLocative.BienImmobilierId,
-
-                        BienReference =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Reference,
-
-                        BienAdresse =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Adresse,
-
-                        BienVille =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Ville,
-
-                        SocieteId =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .SocieteId
-                    },
-
-                    // =================================================
-                    // BIEN IMMOBILIER
-                    // =================================================
-
-                    BienId =
-                        d.UniteLocative.BienImmobilierId,
-
-                    Bien = new
-                    {
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Id,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Reference,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Nom,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Adresse,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Ville,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Quartier,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Superficie,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Type,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .SocieteId
-                    },
-
-                    // =================================================
-                    // AGENT
-                    // =================================================
-
-                    d.AgentId,
-
-                    Agent = d.Agent == null
-                        ? null
-                        : new
-                        {
-                            d.Agent.Id,
-                            d.Agent.Nom,
-                            d.Agent.Prenom,
-                            d.Agent.Telephone,
-                            d.Agent.Email,
-                            d.Agent.Role,
-                            d.Agent.Statut,
-                            d.Agent.SocieteId
-                        },
-
-                    // =================================================
-                    // DEMANDE
-                    // =================================================
-
-                    d.NomProspect,
-                    d.TelephoneProspect,
-                    d.DateSouhaitee,
-                    d.Observations,
-                    d.Statut
-                })
-                .ToListAsync(cancellationToken);
-
-        return Ok(demandes);
+        return Ok(demandes.Select(ProjeterDemande));
     }
 
     // ============================================================
@@ -236,8 +84,7 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "L'identifiant de la demande est invalide."
+                Message = "L'identifiant de la demande est invalide."
             });
         }
 
@@ -247,44 +94,23 @@ public class DemandesVisiteController : ControllerBase
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible d'identifier l'utilisateur connecté."
+                Message = "Impossible d'identifier l'utilisateur connecté."
             });
         }
 
         var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible de déterminer la société de l'utilisateur connecté."
+                Message = "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
 
-        // ========================================================
-        // REQUÊTE SÉCURISÉE
-        // ========================================================
-        //
-        // Le filtre Agent est appliqué directement dans SQL.
-        //
-        // Un Agent qui connaît l'ID d'une demande d'un autre
-        // agent ne pourra donc pas la récupérer.
-        //
-        // ========================================================
-
-        var query = _context.DemandesVisite
-            .AsNoTracking()
-            .Where(d =>
-                d.Id == id &&
-                !d.EstSupprime &&
-                !d.UniteLocative.EstSupprime &&
-                !d.UniteLocative.BienImmobilier.EstSupprime &&
-                d.UniteLocative.BienImmobilier.SocieteId ==
-                    societeId.Value);
+        var query = ConstruireRequeteSociete(societeId.Value)
+            .Where(d => d.Id == id);
 
         if (IsAgent())
         {
@@ -292,138 +118,21 @@ public class DemandesVisiteController : ControllerBase
                 d => d.AgentId == utilisateurId.Value);
         }
 
-        var demande =
-            await query
-                .Select(d => new
-                {
-                    d.Id,
-
-                    d.UniteLocativeId,
-
-                    // =================================================
-                    // UNITÉ
-                    // =================================================
-
-                    UniteLocative = new
-                    {
-                        d.UniteLocative.Id,
-                        d.UniteLocative.Reference,
-                        d.UniteLocative.Type,
-                        d.UniteLocative.Superficie,
-                        d.UniteLocative.Loyer,
-                        d.UniteLocative.Statut,
-                        d.UniteLocative.Photos,
-                        d.UniteLocative.BienImmobilierId,
-
-                        BienReference =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Reference,
-
-                        BienAdresse =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Adresse,
-
-                        BienVille =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .Ville,
-
-                        SocieteId =
-                            d.UniteLocative
-                                .BienImmobilier
-                                .SocieteId
-                    },
-
-                    // =================================================
-                    // BIEN
-                    // =================================================
-
-                    BienId =
-                        d.UniteLocative.BienImmobilierId,
-
-                    Bien = new
-                    {
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Id,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Reference,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Nom,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Adresse,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Ville,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Quartier,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Superficie,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .Type,
-
-                        d.UniteLocative
-                            .BienImmobilier
-                            .SocieteId
-                    },
-
-                    // =================================================
-                    // AGENT
-                    // =================================================
-
-                    d.AgentId,
-
-                    Agent = d.Agent == null
-                        ? null
-                        : new
-                        {
-                            d.Agent.Id,
-                            d.Agent.Nom,
-                            d.Agent.Prenom,
-                            d.Agent.Telephone,
-                            d.Agent.Email,
-                            d.Agent.Role,
-                            d.Agent.Statut,
-                            d.Agent.SocieteId
-                        },
-
-                    // =================================================
-                    // DEMANDE
-                    // =================================================
-
-                    d.NomProspect,
-                    d.TelephoneProspect,
-                    d.DateSouhaitee,
-                    d.Observations,
-                    d.Statut
-                })
-                .FirstOrDefaultAsync(cancellationToken);
+        var demande = await query
+            .Include(d => d.UniteLocative)
+                .ThenInclude(u => u.BienImmobilier)
+            .Include(d => d.Agent)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (demande == null)
         {
             return NotFound(new
             {
-                Message =
-                    $"La demande de visite {id} n'a pas été trouvée."
+                Message = $"La demande de visite {id} n'a pas été trouvée."
             });
         }
 
-        return Ok(demande);
+        return Ok(ProjeterDemande(demande));
     }
 
     // ============================================================
@@ -440,49 +149,15 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "Les données de la demande sont obligatoires."
+                Message = "Les données de la demande sont obligatoires."
             });
         }
 
-        // ========================================================
-        // VALIDATION
-        // ========================================================
+        var erreur = ValiderDemande(dto);
 
-        if (dto.UniteLocativeId == Guid.Empty)
+        if (erreur != null)
         {
-            return BadRequest(new
-            {
-                Message =
-                    "L'unité locative est obligatoire."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.NomProspect))
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "Le nom du prospect est obligatoire."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.TelephoneProspect))
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "Le téléphone du prospect est obligatoire."
-            });
-        }
-
-        if (dto.DateSouhaitee == default)
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "La date souhaitée est obligatoire."
-            });
+            return BadRequest(new { Message = erreur });
         }
 
         var utilisateurId = GetCurrentUserId();
@@ -491,155 +166,120 @@ public class DemandesVisiteController : ControllerBase
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible d'identifier l'utilisateur connecté."
+                Message = "Impossible d'identifier l'utilisateur connecté."
             });
         }
 
         var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible de déterminer la société de l'utilisateur connecté."
+                Message = "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
 
-        // ========================================================
-        // VÉRIFIER L'UNITÉ
-        // ========================================================
-
-        var unite =
-            await _context.UnitesLocatives
-                .AsNoTracking()
-                .Where(u =>
+        var uniteExiste = await _context.UnitesLocatives
+            .AsNoTracking()
+            .AnyAsync(
+                u =>
                     u.Id == dto.UniteLocativeId &&
                     !u.EstSupprime &&
                     !u.BienImmobilier.EstSupprime &&
-                    u.BienImmobilier.SocieteId ==
-                        societeId.Value)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.BienImmobilierId
-                })
-                .FirstOrDefaultAsync(cancellationToken);
+                    u.BienImmobilier.SocieteId == societeId.Value,
+                cancellationToken);
 
-        if (unite == null)
+        if (!uniteExiste)
         {
             return BadRequest(new
             {
-                Message =
-                    "L'unité locative est introuvable ou n'appartient pas à votre société."
+                Message = "L'unité locative est introuvable ou n'appartient pas à votre société."
             });
         }
 
-        // ========================================================
-        // AGENT
-        // ========================================================
-
         Guid? agentId = dto.AgentId;
 
-        // --------------------------------------------------------
-        // Si l'utilisateur est Agent :
-        // il est obligatoirement l'agent de la demande.
-        // --------------------------------------------------------
-
+        // Un agent ne peut pas créer une demande au nom d'un autre agent.
         if (IsAgent())
         {
             agentId = utilisateurId.Value;
         }
 
-        // --------------------------------------------------------
-        // Vérifier l'agent sélectionné
-        // --------------------------------------------------------
-
         if (agentId.HasValue)
         {
-            var agentExiste =
-                await _context.Utilisateurs
-                    .AsNoTracking()
-                    .AnyAsync(
-                        u =>
-                            u.Id == agentId.Value &&
-                            u.SocieteId == societeId.Value &&
-                            u.Role == RoleUtilisateur.Agent &&
-                            u.Statut &&
-                            !u.EstSupprime,
-                        cancellationToken);
+            var agentExiste = await _context.Utilisateurs
+                .AsNoTracking()
+                .AnyAsync(
+                    u =>
+                        u.Id == agentId.Value &&
+                        u.SocieteId == societeId.Value &&
+                        u.Role == RoleUtilisateur.Agent &&
+                        u.Statut &&
+                        !u.EstSupprime,
+                    cancellationToken);
 
             if (!agentExiste)
             {
                 return BadRequest(new
                 {
-                    Message =
-                        "L'agent sélectionné est invalide, inactif ou n'appartient pas à votre société."
+                    Message = "L'agent sélectionné est invalide, inactif ou n'appartient pas à votre société."
                 });
             }
         }
 
-        // ========================================================
-        // CRÉATION
-        // ========================================================
-
-        var nouvelleDemande = new DemandeVisite
+        var demande = new DemandeVisite
         {
             Id = Guid.NewGuid(),
+            UniteLocativeId = dto.UniteLocativeId,
+            AgentId = agentId,
 
-            UniteLocativeId =
-                dto.UniteLocativeId,
+            NomProspect = dto.NomProspect.Trim(),
+            TelephoneProspect = dto.TelephoneProspect.Trim(),
+            EmailProspect = NormaliserTexteOptionnel(dto.EmailProspect),
 
-            AgentId =
-                agentId,
+            DateSouhaitee = dto.DateSouhaitee,
+            DateConfirmee = dto.DateConfirmee,
 
-            NomProspect =
-                dto.NomProspect.Trim(),
+            Observations = NormaliserTexteOptionnel(dto.Observations),
 
-            TelephoneProspect =
-                dto.TelephoneProspect.Trim(),
+            // Le commentaire interne n'est pas fourni par un agent
+            // lors de la création.
+            CommentaireInterne = IsAgent()
+                ? null
+                : NormaliserTexteOptionnel(dto.CommentaireInterne),
 
-            DateSouhaitee =
-                dto.DateSouhaitee,
+            DateTraitement = null,
 
-            Observations =
-                string.IsNullOrWhiteSpace(dto.Observations)
-                    ? string.Empty
-                    : dto.Observations.Trim(),
+            // Le statut initial est contrôlé par le serveur.
+            Statut = StatutDemandeVisite.EnAttente,
 
-            // Le client ne décide pas du statut initial.
-            Statut =
-                StatutDemandeVisite.EnAttente,
-
-            DateCreation =
-                DateTime.UtcNow,
-
+            DateCreation = DateTime.UtcNow,
             EstSupprime = false
         };
 
-        _context.DemandesVisite.Add(nouvelleDemande);
+        _context.DemandesVisite.Add(demande);
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return CreatedAtAction(
             nameof(GetDemandeVisite),
+            new { id = demande.Id },
             new
             {
-                id = nouvelleDemande.Id
-            },
-            new
-            {
-                nouvelleDemande.Id,
-                nouvelleDemande.UniteLocativeId,
-                nouvelleDemande.AgentId,
-                nouvelleDemande.NomProspect,
-                nouvelleDemande.TelephoneProspect,
-                nouvelleDemande.DateSouhaitee,
-                nouvelleDemande.Observations,
-                nouvelleDemande.Statut
+                demande.Id,
+                demande.UniteLocativeId,
+                demande.AgentId,
+                demande.NomProspect,
+                demande.TelephoneProspect,
+                demande.EmailProspect,
+                demande.DateSouhaitee,
+                demande.DateConfirmee,
+                demande.Observations,
+                demande.CommentaireInterne,
+                demande.DateTraitement,
+                demande.Statut
             });
     }
 
@@ -658,8 +298,7 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "L'identifiant de la demande est invalide."
+                Message = "L'identifiant de la demande est invalide."
             });
         }
 
@@ -667,8 +306,7 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "Les données de la demande sont obligatoires."
+                Message = "Les données de la demande sont obligatoires."
             });
         }
 
@@ -676,45 +314,15 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "L'ID fourni ne correspond pas à la demande."
+                Message = "L'ID fourni ne correspond pas à la demande."
             });
         }
 
-        if (dto.UniteLocativeId == Guid.Empty)
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "L'unité locative est obligatoire."
-            });
-        }
+        var erreur = ValiderDemande(dto);
 
-        if (string.IsNullOrWhiteSpace(dto.NomProspect))
+        if (erreur != null)
         {
-            return BadRequest(new
-            {
-                Message =
-                    "Le nom du prospect est obligatoire."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(dto.TelephoneProspect))
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "Le téléphone du prospect est obligatoire."
-            });
-        }
-
-        if (dto.DateSouhaitee == default)
-        {
-            return BadRequest(new
-            {
-                Message =
-                    "La date souhaitée est obligatoire."
-            });
+            return BadRequest(new { Message = erreur });
         }
 
         var utilisateurId = GetCurrentUserId();
@@ -723,175 +331,127 @@ public class DemandesVisiteController : ControllerBase
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible d'identifier l'utilisateur connecté."
+                Message = "Impossible d'identifier l'utilisateur connecté."
             });
         }
 
         var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible de déterminer la société de l'utilisateur connecté."
+                Message = "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
 
-        // ========================================================
-        // RÉCUPÉRER LA DEMANDE DANS LA SOCIÉTÉ
-        // ========================================================
-
-        var demande =
-            await _context.DemandesVisite
-                .FirstOrDefaultAsync(
-                    d =>
-                        d.Id == id &&
-                        !d.EstSupprime &&
-                        !d.UniteLocative.EstSupprime &&
-                        !d.UniteLocative.BienImmobilier.EstSupprime &&
-                        d.UniteLocative.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
+        var demande = await ConstruireRequeteSociete(societeId.Value)
+            .FirstOrDefaultAsync(
+                d => d.Id == id,
+                cancellationToken);
 
         if (demande == null)
         {
             return NotFound(new
             {
-                Message =
-                    $"La demande de visite {id} n'a pas été trouvée."
+                Message = $"La demande de visite {id} n'a pas été trouvée."
             });
         }
 
-        // ========================================================
-        // AGENT
-        // ========================================================
+        var estAgent = IsAgent();
 
-        Guid? agentId = dto.AgentId;
-
-        if (IsAgent())
+        if (estAgent)
         {
-            // ----------------------------------------------------
-            // L'Agent ne peut modifier QUE ses propres demandes.
-            // ----------------------------------------------------
-
+            // Un agent ne peut modifier que ses propres demandes.
             if (demande.AgentId != utilisateurId.Value)
             {
                 return Forbid();
             }
-
-            // ----------------------------------------------------
-            // L'Agent ne peut pas transférer la demande à
-            // un autre agent.
-            // ----------------------------------------------------
-
-            agentId = utilisateurId.Value;
         }
 
-        // ========================================================
-        // VÉRIFIER L'UNITÉ
-        // ========================================================
-
-        var uniteExiste =
-            await _context.UnitesLocatives
-                .AsNoTracking()
-                .AnyAsync(
-                    u =>
-                        u.Id == dto.UniteLocativeId &&
-                        !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
+        var uniteExiste = await _context.UnitesLocatives
+            .AsNoTracking()
+            .AnyAsync(
+                u =>
+                    u.Id == dto.UniteLocativeId &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime &&
+                    u.BienImmobilier.SocieteId == societeId.Value,
+                cancellationToken);
 
         if (!uniteExiste)
         {
             return BadRequest(new
             {
-                Message =
-                    "L'unité locative est introuvable ou n'appartient pas à votre société."
+                Message = "L'unité locative est introuvable ou n'appartient pas à votre société."
             });
         }
 
-        // ========================================================
-        // VÉRIFIER L'AGENT
-        // ========================================================
+        Guid? agentId = dto.AgentId;
+
+        if (estAgent)
+        {
+            // L'agent ne peut pas réaffecter la demande.
+            agentId = utilisateurId.Value;
+        }
 
         if (agentId.HasValue)
         {
-            var agentExiste =
-                await _context.Utilisateurs
-                    .AsNoTracking()
-                    .AnyAsync(
-                        u =>
-                            u.Id == agentId.Value &&
-                            u.SocieteId == societeId.Value &&
-                            u.Role == RoleUtilisateur.Agent &&
-                            u.Statut &&
-                            !u.EstSupprime,
-                        cancellationToken);
+            var agentExiste = await _context.Utilisateurs
+                .AsNoTracking()
+                .AnyAsync(
+                    u =>
+                        u.Id == agentId.Value &&
+                        u.SocieteId == societeId.Value &&
+                        u.Role == RoleUtilisateur.Agent &&
+                        u.Statut &&
+                        !u.EstSupprime,
+                    cancellationToken);
 
             if (!agentExiste)
             {
                 return BadRequest(new
                 {
-                    Message =
-                        "L'agent sélectionné est invalide, inactif ou n'appartient pas à votre société."
+                    Message = "L'agent sélectionné est invalide, inactif ou n'appartient pas à votre société."
                 });
             }
         }
 
-        // ========================================================
-        // MISE À JOUR
-        // ========================================================
+        var ancienStatut = demande.Statut;
 
-        demande.UniteLocativeId =
-            dto.UniteLocativeId;
+        demande.UniteLocativeId = dto.UniteLocativeId;
+        demande.AgentId = agentId;
 
-        demande.AgentId =
-            agentId;
+        demande.NomProspect = dto.NomProspect.Trim();
+        demande.TelephoneProspect = dto.TelephoneProspect.Trim();
+        demande.EmailProspect = NormaliserTexteOptionnel(dto.EmailProspect);
 
-        demande.NomProspect =
-            dto.NomProspect.Trim();
+        demande.DateSouhaitee = dto.DateSouhaitee;
+        demande.DateConfirmee = dto.DateConfirmee;
+        demande.Observations = NormaliserTexteOptionnel(dto.Observations);
 
-        demande.TelephoneProspect =
-            dto.TelephoneProspect.Trim();
-
-        demande.DateSouhaitee =
-            dto.DateSouhaitee;
-
-        demande.Observations =
-            string.IsNullOrWhiteSpace(dto.Observations)
-                ? string.Empty
-                : dto.Observations.Trim();
-
-        // ========================================================
-        // STATUT
-        // ========================================================
-        //
-        // Un Agent ne peut pas modifier le statut.
-        //
-        // Admin/Gestionnaire peuvent le modifier.
-        //
-        // ========================================================
-
-        if (!IsAgent())
+        if (!estAgent)
         {
-            if (!Enum.IsDefined(
-                    typeof(StatutDemandeVisite),
-                    dto.Statut))
+            if (!Enum.IsDefined(typeof(StatutDemandeVisite), dto.Statut))
             {
                 return BadRequest(new
                 {
-                    Message =
-                        "Le statut de la demande est invalide."
+                    Message = "Le statut de la demande est invalide."
                 });
             }
 
+            demande.CommentaireInterne =
+                NormaliserTexteOptionnel(dto.CommentaireInterne);
+
             demande.Statut = dto.Statut;
+
+            // La date de traitement est enregistrée automatiquement
+            // lorsqu'un membre autorisé change le statut.
+            if (demande.Statut != ancienStatut)
+            {
+                demande.DateTraitement = DateTime.UtcNow;
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -913,61 +473,178 @@ public class DemandesVisiteController : ControllerBase
         {
             return BadRequest(new
             {
-                Message =
-                    "L'identifiant de la demande est invalide."
+                Message = "L'identifiant de la demande est invalide."
             });
         }
 
         var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
             return Unauthorized(new
             {
-                Message =
-                    "Impossible de déterminer la société de l'utilisateur connecté."
+                Message = "Impossible de déterminer la société de l'utilisateur connecté."
             });
         }
 
-        // ========================================================
-        // DEMANDE DE LA SOCIÉTÉ
-        // ========================================================
-
-        var demande =
-            await _context.DemandesVisite
-                .FirstOrDefaultAsync(
-                    d =>
-                        d.Id == id &&
-                        !d.EstSupprime &&
-                        !d.UniteLocative.EstSupprime &&
-                        !d.UniteLocative.BienImmobilier.EstSupprime &&
-                        d.UniteLocative.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
+        var demande = await ConstruireRequeteSociete(societeId.Value)
+            .FirstOrDefaultAsync(
+                d => d.Id == id,
+                cancellationToken);
 
         if (demande == null)
         {
             return NotFound(new
             {
-                Message =
-                    $"La demande de visite {id} n'a pas été trouvée."
+                Message = $"La demande de visite {id} n'a pas été trouvée."
             });
         }
 
-        // ========================================================
-        // SUPPRESSION LOGIQUE
-        // ========================================================
-
         demande.EstSupprime = true;
-
-        // Si ton entité possède bien DateSuppression.
         demande.DateSuppression = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return NoContent();
+    }
+
+    // ============================================================
+    // PROJECTION POUR LES RÉPONSES API
+    // ============================================================
+
+    private static object ProjeterDemande(DemandeVisite d)
+    {
+        return new
+        {
+            d.Id,
+            d.UniteLocativeId,
+
+            UniteLocative = new
+            {
+                d.UniteLocative.Id,
+                d.UniteLocative.Reference,
+                d.UniteLocative.Type,
+                d.UniteLocative.Superficie,
+                d.UniteLocative.Loyer,
+                d.UniteLocative.Statut,
+                d.UniteLocative.Photos,
+                d.UniteLocative.BienImmobilierId,
+
+                BienReference = d.UniteLocative.BienImmobilier.Reference,
+                BienAdresse = d.UniteLocative.BienImmobilier.Adresse,
+                BienVille = d.UniteLocative.BienImmobilier.Ville,
+                SocieteId = d.UniteLocative.BienImmobilier.SocieteId
+            },
+
+            BienId = d.UniteLocative.BienImmobilierId,
+
+            Bien = new
+            {
+                d.UniteLocative.BienImmobilier.Id,
+                d.UniteLocative.BienImmobilier.Reference,
+                d.UniteLocative.BienImmobilier.Nom,
+                d.UniteLocative.BienImmobilier.Adresse,
+                d.UniteLocative.BienImmobilier.Ville,
+                d.UniteLocative.BienImmobilier.Quartier,
+                d.UniteLocative.BienImmobilier.Superficie,
+                d.UniteLocative.BienImmobilier.Type,
+                d.UniteLocative.BienImmobilier.SocieteId
+            },
+
+            d.AgentId,
+
+            Agent = d.Agent == null
+                ? null
+                : new
+                {
+                    d.Agent.Id,
+                    d.Agent.Nom,
+                    d.Agent.Prenom,
+                    d.Agent.Telephone,
+                    d.Agent.Email,
+                    d.Agent.Role,
+                    d.Agent.Statut,
+                    d.Agent.SocieteId
+                },
+
+            d.NomProspect,
+            d.TelephoneProspect,
+            d.EmailProspect,
+            d.DateSouhaitee,
+            d.DateConfirmee,
+            d.Observations,
+            d.CommentaireInterne,
+            d.DateTraitement,
+            d.Statut,
+            d.DateCreation
+        };
+    }
+
+    // ============================================================
+    // REQUÊTE DE BASE : SOCIÉTÉ ET SUPPRESSIONS LOGIQUES
+    // ============================================================
+
+    private IQueryable<DemandeVisite> ConstruireRequeteSociete(
+        Guid societeId)
+    {
+        return _context.DemandesVisite
+            .Where(d =>
+                !d.EstSupprime &&
+                !d.UniteLocative.EstSupprime &&
+                !d.UniteLocative.BienImmobilier.EstSupprime &&
+                d.UniteLocative.BienImmobilier.SocieteId == societeId);
+    }
+
+    // ============================================================
+    // VALIDATION
+    // ============================================================
+
+    private static string? ValiderDemande(DemandeVisiteRequest dto)
+    {
+        if (dto.UniteLocativeId == Guid.Empty)
+        {
+            return "L'unité locative est obligatoire.";
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.NomProspect))
+        {
+            return "Le nom du prospect est obligatoire.";
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.TelephoneProspect))
+        {
+            return "Le téléphone du prospect est obligatoire.";
+        }
+
+        if (dto.DateSouhaitee == default)
+        {
+            return "La date souhaitée est obligatoire.";
+        }
+
+        if (dto.EmailProspect?.Length > 254)
+        {
+            return "L'adresse courriel du prospect ne doit pas dépasser 254 caractères.";
+        }
+
+        if (dto.NomProspect.Trim().Length > 200)
+        {
+            return "Le nom du prospect ne doit pas dépasser 200 caractères.";
+        }
+
+        if (dto.TelephoneProspect.Trim().Length > 50)
+        {
+            return "Le téléphone du prospect ne doit pas dépasser 50 caractères.";
+        }
+
+        return null;
+    }
+
+    private static string? NormaliserTexteOptionnel(string? valeur)
+    {
+        return string.IsNullOrWhiteSpace(valeur)
+            ? null
+            : valeur.Trim();
     }
 
     // ============================================================
@@ -981,21 +658,17 @@ public class DemandesVisiteController : ControllerBase
             ?? User.FindFirstValue("sub")
             ?? User.FindFirstValue("Id");
 
-        if (Guid.TryParse(userIdClaim, out var userId))
-        {
-            return userId;
-        }
-
-        return null;
+        return Guid.TryParse(userIdClaim, out var userId)
+            ? userId
+            : null;
     }
 
     // ============================================================
     // SOCIÉTÉ DE L'UTILISATEUR
     // ============================================================
 
-    private async Task<Guid?>
-        GetSocieteIdUtilisateurConnecteAsync(
-            CancellationToken cancellationToken)
+    private async Task<Guid?> GetSocieteIdUtilisateurConnecteAsync(
+        CancellationToken cancellationToken)
     {
         var userId = GetCurrentUserId();
 
@@ -1024,15 +697,9 @@ public class DemandesVisiteController : ControllerBase
             User.FindFirstValue(ClaimTypes.Role)
             ?? User.FindFirstValue("role");
 
-        return
-            string.Equals(
-                role,
-                nameof(RoleUtilisateur.Agent),
-                StringComparison.OrdinalIgnoreCase)
-            ||
-            string.Equals(
-                role,
-                "agent",
-                StringComparison.OrdinalIgnoreCase);
+        return string.Equals(
+            role,
+            nameof(RoleUtilisateur.Agent),
+            StringComparison.OrdinalIgnoreCase);
     }
 }

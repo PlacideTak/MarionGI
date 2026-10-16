@@ -1,10 +1,10 @@
-﻿using MarionGI.Domain.Entities;
+﻿using System.Security.Claims;
+using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
 
@@ -18,6 +18,9 @@ public class UnitesLocativesController : ControllerBase
 
     private const int NombreMaxPhotos = 20;
     private const long TailleMaxPhoto = 10 * 1024 * 1024;
+    private const int LongueurMaxMotifExoneration = 1000;
+
+    private const string PrefixPhotos = "/uploads/unites/";
 
     private static readonly HashSet<string> ExtensionsAutorisees =
         new(StringComparer.OrdinalIgnoreCase)
@@ -38,26 +41,19 @@ public class UnitesLocativesController : ControllerBase
 
     // ============================================================
     // GET : api/UnitesLocatives
-    //
-    // ADMINISTRATEUR / GESTIONNAIRE / AGENT
-    //     -> toutes les unités non supprimées de leur société
-    //
-    // LOCATAIRE
-    //     -> uniquement les unités pour lesquelles il possède
-    //        au moins un contrat non supprimé
     // ============================================================
 
     [HttpGet]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire) + "," +
-                nameof(RoleUtilisateur.Agent) + "," +
-                nameof(RoleUtilisateur.Locataire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Agent) + "," +
+        nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetUnites(
         CancellationToken cancellationToken)
     {
-        var utilisateur = await GetUtilisateurConnecteAsync(
-            cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
         if (utilisateur == null)
         {
@@ -72,21 +68,17 @@ public class UnitesLocativesController : ControllerBase
                     !u.EstSupprime &&
                     !u.BienImmobilier.EstSupprime);
 
-        // ========================================================
-        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
-        // ========================================================
-
-        if (EstGestionnaireOuAgent(utilisateur.Role))
+        if (EstPersonnel(utilisateur.Role))
         {
+            if (utilisateur.SocieteId == Guid.Empty)
+            {
+                return Forbid();
+            }
+
             query = query.Where(u =>
                 u.BienImmobilier.SocieteId ==
                 utilisateur.SocieteId);
         }
-
-        // ========================================================
-        // LOCATAIRE
-        // ========================================================
-
         else if (utilisateur.Role == RoleUtilisateur.Locataire)
         {
             query = query.Where(u =>
@@ -94,7 +86,6 @@ public class UnitesLocativesController : ControllerBase
                     !c.EstSupprime &&
                     c.LocataireId == utilisateur.Id));
         }
-
         else
         {
             return Forbid();
@@ -109,59 +100,48 @@ public class UnitesLocativesController : ControllerBase
                 u.Reference,
                 u.Type,
                 u.Superficie,
-                u.Loyer,
-                u.Statut,
-                u.Photos,
+                u.NombrePieces,
+                u.Etage,
 
+                u.Loyer,
+                u.ChargesLocativesMensuelles,
+                u.MontantCaution,
+                u.Statut,
+
+                u.DatePremiereMiseEnLocation,
+                u.DateDerniereRenovation,
+
+                u.EstExonereeFiscalement,
+                u.MotifExoneration,
+
+                u.Photos,
                 u.BienImmobilierId,
 
-                BienReference =
-                    u.BienImmobilier.Reference,
+                BienReference = u.BienImmobilier.Reference,
+                BienAdresse = u.BienImmobilier.Adresse,
+                BienVille = u.BienImmobilier.Ville,
+                BienQuartier = u.BienImmobilier.Quartier,
+                BienNom = u.BienImmobilier.Nom,
+                SocieteId = u.BienImmobilier.SocieteId,
+                SocieteNom = u.BienImmobilier.Societe.Nom,
 
-                BienAdresse =
-                    u.BienImmobilier.Adresse,
+                NombreContrats = u.Contrats.Count(c =>
+                    !c.EstSupprime &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    )),
 
-                BienVille =
-                    u.BienImmobilier.Ville,
-
-                BienQuartier =
-                    u.BienImmobilier.Quartier,
-
-                BienNom =
-                    u.BienImmobilier.Nom,
-
-                SocieteId =
-                    u.BienImmobilier.SocieteId,
-
-                SocieteNom =
-                    u.BienImmobilier.Societe.Nom,
-
-                NombreContrats =
-                    u.Contrats.Count(c =>
-                        !c.EstSupprime &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
-                        )),
-
-                AContratActif =
-                    u.Contrats.Any(c =>
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
-                        )),
+                AContratActif = u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    )),
 
                 NombreDemandesVisite =
-                    u.DemandesVisite.Count(d =>
-                        !d.EstSupprime)
+                    u.DemandesVisite.Count(d => !d.EstSupprime)
             })
             .ToListAsync(cancellationToken);
 
@@ -173,11 +153,11 @@ public class UnitesLocativesController : ControllerBase
     // ============================================================
 
     [HttpGet("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire) + "," +
-                nameof(RoleUtilisateur.Agent) + "," +
-                nameof(RoleUtilisateur.Locataire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Agent) + "," +
+        nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetById(
         Guid id,
         CancellationToken cancellationToken)
@@ -188,8 +168,8 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant de l'unité est invalide.");
         }
 
-        var utilisateur = await GetUtilisateurConnecteAsync(
-            cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
         if (utilisateur == null)
         {
@@ -205,21 +185,17 @@ public class UnitesLocativesController : ControllerBase
                     !u.EstSupprime &&
                     !u.BienImmobilier.EstSupprime);
 
-        // ========================================================
-        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
-        // ========================================================
-
-        if (EstGestionnaireOuAgent(utilisateur.Role))
+        if (EstPersonnel(utilisateur.Role))
         {
+            if (utilisateur.SocieteId == Guid.Empty)
+            {
+                return Forbid();
+            }
+
             query = query.Where(u =>
                 u.BienImmobilier.SocieteId ==
                 utilisateur.SocieteId);
         }
-
-        // ========================================================
-        // LOCATAIRE
-        // ========================================================
-
         else if (utilisateur.Role == RoleUtilisateur.Locataire)
         {
             query = query.Where(u =>
@@ -227,7 +203,6 @@ public class UnitesLocativesController : ControllerBase
                     !c.EstSupprime &&
                     c.LocataireId == utilisateur.Id));
         }
-
         else
         {
             return Forbid();
@@ -240,10 +215,21 @@ public class UnitesLocativesController : ControllerBase
                 u.Reference,
                 u.Type,
                 u.Superficie,
-                u.Loyer,
-                u.Statut,
-                u.Photos,
+                u.NombrePieces,
+                u.Etage,
 
+                u.Loyer,
+                u.ChargesLocativesMensuelles,
+                u.MontantCaution,
+                u.Statut,
+
+                u.DatePremiereMiseEnLocation,
+                u.DateDerniereRenovation,
+
+                u.EstExonereeFiscalement,
+                u.MotifExoneration,
+
+                u.Photos,
                 u.BienImmobilierId,
 
                 Bien = new
@@ -262,10 +248,8 @@ public class UnitesLocativesController : ControllerBase
                         !c.EstSupprime &&
                         (
                             utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
+                                RoleUtilisateur.Locataire ||
+                            c.LocataireId == utilisateur.Id
                         ))
                     .Select(c => new
                     {
@@ -278,28 +262,22 @@ public class UnitesLocativesController : ControllerBase
                     })
                     .ToList(),
 
-                AContratActif =
-                    u.Contrats.Any(c =>
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
-                        )),
+                AContratActif = u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    )),
 
                 NombreDemandesVisite =
-                    u.DemandesVisite.Count(d =>
-                        !d.EstSupprime)
+                    u.DemandesVisite.Count(d => !d.EstSupprime)
             })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (unite == null)
         {
-            return NotFound(
-                "Unité locative introuvable.");
+            return NotFound("Unité locative introuvable.");
         }
 
         return Ok(unite);
@@ -310,11 +288,11 @@ public class UnitesLocativesController : ControllerBase
     // ============================================================
 
     [HttpGet("bien/{bienImmobilierId:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire) + "," +
-                nameof(RoleUtilisateur.Agent) + "," +
-                nameof(RoleUtilisateur.Locataire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Agent) + "," +
+        nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> GetParBien(
         Guid bienImmobilierId,
         CancellationToken cancellationToken)
@@ -325,8 +303,8 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant du bien est invalide.");
         }
 
-        var utilisateur = await GetUtilisateurConnecteAsync(
-            cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
         if (utilisateur == null)
         {
@@ -334,23 +312,44 @@ public class UnitesLocativesController : ControllerBase
                 "Utilisateur introuvable ou inactif.");
         }
 
-        // ========================================================
-        // VERIFICATION DU BIEN
-        // ========================================================
-
-        var bienExiste = await _context.BiensImmobiliers
+        var bienQuery = _context.BiensImmobiliers
             .AsNoTracking()
-            .AnyAsync(
-                b =>
-                    b.Id == bienImmobilierId &&
-                    !b.EstSupprime &&
-                    b.SocieteId == utilisateur.SocieteId,
-                cancellationToken);
+            .Where(b =>
+                b.Id == bienImmobilierId &&
+                !b.EstSupprime);
+
+        if (EstPersonnel(utilisateur.Role))
+        {
+            if (utilisateur.SocieteId == Guid.Empty)
+            {
+                return Forbid();
+            }
+
+            bienQuery = bienQuery.Where(b =>
+                b.SocieteId == utilisateur.SocieteId);
+        }
+        else if (utilisateur.Role == RoleUtilisateur.Locataire)
+        {
+            // Le locataire ne peut accéder au bien que si
+            // celui-ci contient au moins une de ses unités.
+            bienQuery = bienQuery.Where(b =>
+                b.UnitesLocatives.Any(u =>
+                    !u.EstSupprime &&
+                    u.Contrats.Any(c =>
+                        !c.EstSupprime &&
+                        c.LocataireId == utilisateur.Id)));
+        }
+        else
+        {
+            return Forbid();
+        }
+
+        var bienExiste = await bienQuery.AnyAsync(cancellationToken);
 
         if (!bienExiste)
         {
             return NotFound(
-                "Bien immobilier introuvable.");
+                "Bien immobilier introuvable ou inaccessible.");
         }
 
         IQueryable<UniteLocative> query =
@@ -361,31 +360,12 @@ public class UnitesLocativesController : ControllerBase
                     !u.EstSupprime &&
                     !u.BienImmobilier.EstSupprime);
 
-        // ========================================================
-        // ADMINISTRATEUR / GESTIONNAIRE / AGENT
-        // ========================================================
-
-        if (EstGestionnaireOuAgent(utilisateur.Role))
-        {
-            // Le bien a déjà été vérifié comme appartenant
-            // à la société de l'utilisateur.
-        }
-
-        // ========================================================
-        // LOCATAIRE
-        // ========================================================
-
-        else if (utilisateur.Role == RoleUtilisateur.Locataire)
+        if (utilisateur.Role == RoleUtilisateur.Locataire)
         {
             query = query.Where(u =>
                 u.Contrats.Any(c =>
                     !c.EstSupprime &&
                     c.LocataireId == utilisateur.Id));
-        }
-
-        else
-        {
-            return Forbid();
         }
 
         var unites = await query
@@ -396,38 +376,40 @@ public class UnitesLocativesController : ControllerBase
                 u.Reference,
                 u.Type,
                 u.Superficie,
-                u.Loyer,
-                u.Statut,
-                u.Photos,
+                u.NombrePieces,
+                u.Etage,
 
+                u.Loyer,
+                u.ChargesLocativesMensuelles,
+                u.MontantCaution,
+                u.Statut,
+
+                u.DatePremiereMiseEnLocation,
+                u.DateDerniereRenovation,
+
+                u.EstExonereeFiscalement,
+                u.MotifExoneration,
+
+                u.Photos,
                 u.BienImmobilierId,
 
-                NombreContrats =
-                    u.Contrats.Count(c =>
-                        !c.EstSupprime &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
-                        )),
+                NombreContrats = u.Contrats.Count(c =>
+                    !c.EstSupprime &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    )),
 
-                AContratActif =
-                    u.Contrats.Any(c =>
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire
-                            ||
-                            c.LocataireId ==
-                                utilisateur.Id
-                        )),
+                AContratActif = u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    )),
 
                 NombreDemandesVisite =
-                    u.DemandesVisite.Count(d =>
-                        !d.EstSupprime)
+                    u.DemandesVisite.Count(d => !d.EstSupprime)
             })
             .ToListAsync(cancellationToken);
 
@@ -435,13 +417,13 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // POST
+    // POST : api/UnitesLocatives
     // ============================================================
 
     [HttpPost]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     [RequestSizeLimit(50_000_000)]
     public async Task<IActionResult> CreerUnite(
         [FromForm] CreerUniteLocativeRequest request,
@@ -453,26 +435,43 @@ public class UnitesLocativesController : ControllerBase
                 "Les données de l'unité sont obligatoires.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
+        }
+
+        if (!EstPersonnelAutoriseAModifier(utilisateur.Role))
+        {
+            return Forbid();
         }
 
         var validation = ValiderUnite(
             request.Reference,
             request.Type,
             request.Superficie,
+            request.NombrePieces,
             request.Loyer,
-            request.Statut);
+            request.ChargesLocativesMensuelles,
+            request.MontantCaution,
+            request.Statut,
+            request.DatePremiereMiseEnLocation,
+            request.DateDerniereRenovation,
+            request.EstExonereeFiscalement,
+            request.MotifExoneration);
 
         if (validation != null)
         {
             return BadRequest(validation);
+        }
+
+        if (utilisateur.SocieteId == Guid.Empty)
+        {
+            return BadRequest(
+                "Aucune société n'est associée à cet utilisateur.");
         }
 
         if (request.BienImmobilierId == Guid.Empty)
@@ -481,33 +480,28 @@ public class UnitesLocativesController : ControllerBase
                 "Le bien immobilier est obligatoire.");
         }
 
-        var bien = await _context.BiensImmobiliers
+        var bienExiste = await _context.BiensImmobiliers
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                b =>
+            .AnyAsync(b =>
                     b.Id == request.BienImmobilierId &&
-                    b.SocieteId == societeId.Value &&
+                    b.SocieteId == utilisateur.SocieteId &&
                     !b.EstSupprime,
                 cancellationToken);
 
-        if (bien == null)
+        if (!bienExiste)
         {
             return NotFound(
                 "Le bien immobilier est introuvable ou n'appartient pas à votre société.");
         }
 
-        var reference =
-            NormaliserReference(request.Reference);
+        var reference = NormaliserReference(request.Reference);
 
-        var referenceExiste =
-            await _context.UnitesLocatives
-                .AnyAsync(
-                    u =>
-                        u.BienImmobilierId ==
-                            request.BienImmobilierId &&
-                        u.Reference == reference &&
-                        !u.EstSupprime,
-                    cancellationToken);
+        var referenceExiste = await _context.UnitesLocatives
+            .AnyAsync(u =>
+                    u.BienImmobilierId == request.BienImmobilierId &&
+                    u.Reference == reference &&
+                    !u.EstSupprime,
+                cancellationToken);
 
         if (referenceExiste)
         {
@@ -521,8 +515,27 @@ public class UnitesLocativesController : ControllerBase
             Reference = reference,
             Type = request.Type,
             Superficie = request.Superficie,
+            NombrePieces = request.NombrePieces,
+            Etage = request.Etage,
+
             Loyer = request.Loyer,
+            ChargesLocativesMensuelles =
+                request.ChargesLocativesMensuelles,
+            MontantCaution = request.MontantCaution,
             Statut = request.Statut,
+
+            DatePremiereMiseEnLocation =
+                request.DatePremiereMiseEnLocation,
+            DateDerniereRenovation =
+                request.DateDerniereRenovation,
+
+            EstExonereeFiscalement =
+                request.EstExonereeFiscalement,
+            MotifExoneration =
+                NormaliserMotifExoneration(
+                    request.EstExonereeFiscalement,
+                    request.MotifExoneration),
+
             BienImmobilierId = request.BienImmobilierId,
             Photos = [],
             DateCreation = DateTime.UtcNow,
@@ -533,39 +546,27 @@ public class UnitesLocativesController : ControllerBase
 
         try
         {
-            if (request.Fichiers != null &&
-                request.Fichiers.Count > 0)
+            var resultatUpload = await EnregistrerPhotosAsync(
+                request.Fichiers,
+                [],
+                fichiersCrees,
+                cancellationToken);
+
+            if (!resultatUpload.Succes)
             {
-                var resultatUpload =
-                    await EnregistrerPhotosAsync(
-                        request.Fichiers,
-                        unite.Photos,
-                        fichiersCrees,
-                        cancellationToken);
-
-                if (!resultatUpload.Succes)
-                {
-                    SupprimerFichiersPhysiques(
-                        fichiersCrees);
-
-                    return BadRequest(
-                        resultatUpload.Message);
-                }
-
-                unite.Photos =
-                    resultatUpload.Photos;
+                SupprimerFichiersPhysiques(fichiersCrees);
+                return BadRequest(resultatUpload.Message);
             }
+
+            unite.Photos = resultatUpload.Photos;
 
             _context.UnitesLocatives.Add(unite);
 
-            await _context.SaveChangesAsync(
-                cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch
         {
-            SupprimerFichiersPhysiques(
-                fichiersCrees);
-
+            SupprimerFichiersPhysiques(fichiersCrees);
             throw;
         }
 
@@ -578,8 +579,16 @@ public class UnitesLocativesController : ControllerBase
                 unite.Reference,
                 unite.Type,
                 unite.Superficie,
+                unite.NombrePieces,
+                unite.Etage,
                 unite.Loyer,
+                unite.ChargesLocativesMensuelles,
+                unite.MontantCaution,
                 unite.Statut,
+                unite.DatePremiereMiseEnLocation,
+                unite.DateDerniereRenovation,
+                unite.EstExonereeFiscalement,
+                unite.MotifExoneration,
                 unite.BienImmobilierId,
                 unite.Photos,
                 AContratActif = false
@@ -587,13 +596,13 @@ public class UnitesLocativesController : ControllerBase
     }
 
     // ============================================================
-    // PUT
+    // PUT : api/UnitesLocatives/{id}
     // ============================================================
 
     [HttpPut("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     [RequestSizeLimit(50_000_000)]
     public async Task<IActionResult> ModifierUnite(
         Guid id,
@@ -612,43 +621,52 @@ public class UnitesLocativesController : ControllerBase
                 "Les données de l'unité sont obligatoires.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var unite =
-            await _context.UnitesLocatives
-                .FirstOrDefaultAsync(
-                    u =>
-                        u.Id == id &&
-                        !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
-
-        if (unite == null)
+        if (!EstPersonnelAutoriseAModifier(utilisateur.Role) ||
+            utilisateur.SocieteId == Guid.Empty)
         {
-            return NotFound(
-                "Unité locative introuvable.");
+            return Forbid();
         }
 
         var validation = ValiderUnite(
             request.Reference,
             request.Type,
             request.Superficie,
+            request.NombrePieces,
             request.Loyer,
-            request.Statut);
+            request.ChargesLocativesMensuelles,
+            request.MontantCaution,
+            request.Statut,
+            request.DatePremiereMiseEnLocation,
+            request.DateDerniereRenovation,
+            request.EstExonereeFiscalement,
+            request.MotifExoneration);
 
         if (validation != null)
         {
             return BadRequest(validation);
+        }
+
+        var unite = await _context.UnitesLocatives
+            .FirstOrDefaultAsync(u =>
+                    u.Id == id &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime &&
+                    u.BienImmobilier.SocieteId ==
+                        utilisateur.SocieteId,
+                cancellationToken);
+
+        if (unite == null)
+        {
+            return NotFound("Unité locative introuvable.");
         }
 
         if (request.BienImmobilierId == Guid.Empty)
@@ -657,15 +675,13 @@ public class UnitesLocativesController : ControllerBase
                 "Le bien immobilier est obligatoire.");
         }
 
-        var bienExiste =
-            await _context.BiensImmobiliers
-                .AsNoTracking()
-                .AnyAsync(
-                    b =>
-                        b.Id == request.BienImmobilierId &&
-                        b.SocieteId == societeId.Value &&
-                        !b.EstSupprime,
-                    cancellationToken);
+        var bienExiste = await _context.BiensImmobiliers
+            .AsNoTracking()
+            .AnyAsync(b =>
+                    b.Id == request.BienImmobilierId &&
+                    b.SocieteId == utilisateur.SocieteId &&
+                    !b.EstSupprime,
+                cancellationToken);
 
         if (!bienExiste)
         {
@@ -673,58 +689,20 @@ public class UnitesLocativesController : ControllerBase
                 "Le bien immobilier est introuvable ou n'appartient pas à votre société.");
         }
 
-        // ========================================================
-        // CONTRAT ACTIF
-        //
-        // Une unité louée ne doit pas être déplacée vers
-        // un autre bien.
-        // ========================================================
-
-        var contratActifExiste =
-            await _context.Contrats
-                .AsNoTracking()
-                .AnyAsync(
-                    c =>
-                        c.UniteLocativeId == id &&
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif,
-                    cancellationToken);
+        var contratActifExiste = await _context.Contrats
+            .AsNoTracking()
+            .AnyAsync(c =>
+                    c.UniteLocativeId == id &&
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif,
+                cancellationToken);
 
         if (contratActifExiste &&
-            unite.BienImmobilierId !=
-                request.BienImmobilierId)
+            unite.BienImmobilierId != request.BienImmobilierId)
         {
             return Conflict(
-                "Cette unité possède un contrat actif et ne peut pas être déplacée vers un autre bien immobilier.");
+                "Une unité possédant un contrat actif ne peut pas être déplacée vers un autre bien.");
         }
-
-        // ========================================================
-        // REFERENCE UNIQUE DANS LE BIEN
-        // ========================================================
-
-        var reference =
-            NormaliserReference(request.Reference);
-
-        var referenceExiste =
-            await _context.UnitesLocatives
-                .AnyAsync(
-                    u =>
-                        u.Id != id &&
-                        u.BienImmobilierId ==
-                            request.BienImmobilierId &&
-                        u.Reference == reference &&
-                        !u.EstSupprime,
-                    cancellationToken);
-
-        if (referenceExiste)
-        {
-            return Conflict(
-                "Une autre unité utilise déjà cette référence dans ce bien.");
-        }
-
-        // ========================================================
-        // COHERENCE CONTRAT ACTIF / STATUT UNITE
-        // ========================================================
 
         if (contratActifExiste &&
             request.Statut != StatutDisponibilite.Loue)
@@ -733,95 +711,133 @@ public class UnitesLocativesController : ControllerBase
                 "Une unité possédant un contrat actif doit conserver le statut Louée.");
         }
 
-        var anciennesPhotos =
-            unite.Photos?.ToList() ?? [];
+        var reference = NormaliserReference(request.Reference);
 
-        var photosFinales =
-            FiltrerPhotosUnite(
-                NettoyerPhotos(
-                    request.PhotosExistantes));
+        var referenceExiste = await _context.UnitesLocatives
+            .AnyAsync(u =>
+                    u.Id != id &&
+                    u.BienImmobilierId == request.BienImmobilierId &&
+                    u.Reference == reference &&
+                    !u.EstSupprime,
+                cancellationToken);
 
-        var fichiersCrees =
-            new List<string>();
+        if (referenceExiste)
+        {
+            return Conflict(
+                "Une autre unité utilise déjà cette référence dans ce bien.");
+        }
+
+        var anciennesPhotos = unite.Photos?.ToList() ?? [];
+
+        // Si PhotosExistantes est omis, conserver les photos actuelles.
+        // Si elle est fournie, seules les photos déjà associées à
+        // cette unité peuvent être conservées.
+        List<string> photosFinales;
+
+        if (request.PhotosExistantes == null)
+        {
+            photosFinales = anciennesPhotos.ToList();
+        }
+        else
+        {
+            var photosDemandees =
+                NettoyerPhotos(request.PhotosExistantes);
+
+            var photosNonAutorisees = photosDemandees
+                .Except(
+                    anciennesPhotos,
+                    StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (photosNonAutorisees.Count > 0)
+            {
+                return BadRequest(
+                    "La liste contient une ou plusieurs photos qui ne sont pas associées à cette unité.");
+            }
+
+            photosFinales = FiltrerPhotosUnite(photosDemandees);
+        }
+
+        if (photosFinales.Count > NombreMaxPhotos)
+        {
+            return BadRequest(
+                $"Une unité ne peut pas contenir plus de {NombreMaxPhotos} photos.");
+        }
+
+        var fichiersCrees = new List<string>();
 
         try
         {
-            if (request.Fichiers != null &&
-                request.Fichiers.Count > 0)
-            {
-                var resultatUpload =
-                    await EnregistrerPhotosAsync(
-                        request.Fichiers,
-                        photosFinales,
-                        fichiersCrees,
-                        cancellationToken);
-
-                if (!resultatUpload.Succes)
-                {
-                    SupprimerFichiersPhysiques(
-                        fichiersCrees);
-
-                    return BadRequest(
-                        resultatUpload.Message);
-                }
-
-                photosFinales =
-                    resultatUpload.Photos;
-            }
-
-            unite.Reference =
-                reference;
-
-            unite.Type =
-                request.Type;
-
-            unite.Superficie =
-                request.Superficie;
-
-            unite.Loyer =
-                request.Loyer;
-
-            unite.Statut =
-                request.Statut;
-
-            unite.BienImmobilierId =
-                request.BienImmobilierId;
-
-            unite.Photos =
-                photosFinales;
-
-            await _context.SaveChangesAsync(
+            var resultatUpload = await EnregistrerPhotosAsync(
+                request.Fichiers,
+                photosFinales,
+                fichiersCrees,
                 cancellationToken);
 
-            var photosSupprimees =
-                anciennesPhotos
-                    .Except(
-                        photosFinales,
-                        StringComparer.OrdinalIgnoreCase)
-                    .ToList();
+            if (!resultatUpload.Succes)
+            {
+                SupprimerFichiersPhysiques(fichiersCrees);
+                return BadRequest(resultatUpload.Message);
+            }
 
-            SupprimerFichiersPhysiques(
-                photosSupprimees);
+            photosFinales = resultatUpload.Photos;
+
+            unite.Reference = reference;
+            unite.Type = request.Type;
+            unite.Superficie = request.Superficie;
+            unite.NombrePieces = request.NombrePieces;
+            unite.Etage = request.Etage;
+
+            unite.Loyer = request.Loyer;
+            unite.ChargesLocativesMensuelles =
+                request.ChargesLocativesMensuelles;
+            unite.MontantCaution = request.MontantCaution;
+            unite.Statut = request.Statut;
+
+            unite.DatePremiereMiseEnLocation =
+                request.DatePremiereMiseEnLocation;
+            unite.DateDerniereRenovation =
+                request.DateDerniereRenovation;
+
+            unite.EstExonereeFiscalement =
+                request.EstExonereeFiscalement;
+            unite.MotifExoneration =
+                NormaliserMotifExoneration(
+                    request.EstExonereeFiscalement,
+                    request.MotifExoneration);
+
+            unite.BienImmobilierId = request.BienImmobilierId;
+            unite.Photos = photosFinales;
+
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch
         {
-            SupprimerFichiersPhysiques(
-                fichiersCrees);
-
+            SupprimerFichiersPhysiques(fichiersCrees);
             throw;
         }
+
+        // Les fichiers retirés ne sont supprimés qu'après
+        // l'enregistrement réussi de la modification.
+        var photosSupprimees = anciennesPhotos
+            .Except(
+                photosFinales,
+                StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        SupprimerFichiersPhysiques(photosSupprimees);
 
         return NoContent();
     }
 
     // ============================================================
-    // PATCH : STATUT
+    // PATCH : api/UnitesLocatives/{id}/statut
     // ============================================================
 
     [HttpPatch("{id:guid}/statut")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> ModifierStatut(
         Guid id,
         [FromBody] ModifierStatutUniteRequest request,
@@ -833,58 +849,49 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant de l'unité est invalide.");
         }
 
-        if (request == null)
-        {
-            return BadRequest(
-                "Les données du statut sont obligatoires.");
-        }
-
-        if (!Enum.IsDefined(request.Statut))
+        if (request == null ||
+            !Enum.IsDefined(request.Statut))
         {
             return BadRequest(
                 "Le statut de l'unité est invalide.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var unite =
-            await _context.UnitesLocatives
-                .FirstOrDefaultAsync(
-                    u =>
-                        u.Id == id &&
-                        !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
+        if (!EstPersonnelAutoriseAModifier(utilisateur.Role) ||
+            utilisateur.SocieteId == Guid.Empty)
+        {
+            return Forbid();
+        }
+
+        var unite = await _context.UnitesLocatives
+            .FirstOrDefaultAsync(u =>
+                    u.Id == id &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime &&
+                    u.BienImmobilier.SocieteId ==
+                        utilisateur.SocieteId,
+                cancellationToken);
 
         if (unite == null)
         {
-            return NotFound(
-                "Unité locative introuvable.");
+            return NotFound("Unité locative introuvable.");
         }
 
-        // ========================================================
-        // CONTRAT ACTIF
-        // ========================================================
-
-        var contratActifExiste =
-            await _context.Contrats
-                .AsNoTracking()
-                .AnyAsync(
-                    c =>
-                        c.UniteLocativeId == id &&
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif,
-                    cancellationToken);
+        var contratActifExiste = await _context.Contrats
+            .AsNoTracking()
+            .AnyAsync(c =>
+                    c.UniteLocativeId == id &&
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif,
+                cancellationToken);
 
         if (contratActifExiste &&
             request.Statut != StatutDisponibilite.Loue)
@@ -893,30 +900,26 @@ public class UnitesLocativesController : ControllerBase
                 "Cette unité possède un contrat actif et doit conserver le statut Louée.");
         }
 
-        unite.Statut =
-            request.Statut;
+        unite.Statut = request.Statut;
 
-        await _context.SaveChangesAsync(
-            cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new
         {
-            Message =
-                "Statut de l'unité modifié avec succès.",
-
+            Message = "Statut de l'unité modifié avec succès.",
             unite.Id,
             unite.Statut
         });
     }
 
     // ============================================================
-    // DELETE
+    // DELETE : suppression logique
     // ============================================================
 
     [HttpDelete("{id:guid}")]
-    [Authorize(
-        Roles = nameof(RoleUtilisateur.Administrateur) + "," +
-                nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> SupprimerUnite(
         Guid id,
         CancellationToken cancellationToken)
@@ -927,76 +930,70 @@ public class UnitesLocativesController : ControllerBase
                 "L'identifiant de l'unité est invalide.");
         }
 
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync(
-                cancellationToken);
+        var utilisateur =
+            await GetUtilisateurConnecteAsync(cancellationToken);
 
-        if (societeId == null)
+        if (utilisateur == null)
         {
             return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
+                "Utilisateur introuvable ou inactif.");
         }
 
-        var unite =
-            await _context.UnitesLocatives
-                .FirstOrDefaultAsync(
-                    u =>
-                        u.Id == id &&
-                        !u.EstSupprime &&
-                        !u.BienImmobilier.EstSupprime &&
-                        u.BienImmobilier.SocieteId ==
-                            societeId.Value,
-                    cancellationToken);
+        if (!EstPersonnelAutoriseAModifier(utilisateur.Role) ||
+            utilisateur.SocieteId == Guid.Empty)
+        {
+            return Forbid();
+        }
+
+        var unite = await _context.UnitesLocatives
+            .FirstOrDefaultAsync(u =>
+                    u.Id == id &&
+                    !u.EstSupprime &&
+                    !u.BienImmobilier.EstSupprime &&
+                    u.BienImmobilier.SocieteId ==
+                        utilisateur.SocieteId,
+                cancellationToken);
 
         if (unite == null)
         {
-            return NotFound(
-                "Unité locative introuvable.");
+            return NotFound("Unité locative introuvable.");
         }
 
-        var contratActifExiste =
-            await _context.Contrats
-                .AsNoTracking()
-                .AnyAsync(
-                    c =>
-                        c.UniteLocativeId == id &&
-                        !c.EstSupprime &&
-                        c.Statut == StatutContrat.Actif,
-                    cancellationToken);
+        var historiqueContratsExiste = await _context.Contrats
+            .AsNoTracking()
+            .AnyAsync(c =>
+                    c.UniteLocativeId == id &&
+                    !c.EstSupprime,
+                cancellationToken);
 
-        if (contratActifExiste)
+        if (historiqueContratsExiste)
         {
             return Conflict(
-                "Cette unité ne peut pas être supprimée car elle possède un contrat actif.");
+                "Cette unité possède un historique de contrats. Elle ne peut pas être supprimée afin de préserver l'historique locatif et fiscal.");
         }
-
-        var photos =
-            unite.Photos?.ToList() ?? [];
 
         unite.EstSupprime = true;
         unite.DateSuppression = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync(
-            cancellationToken);
-
-        SupprimerFichiersPhysiques(photos);
+        // Les photos sont conservées lors de la suppression logique.
+        // Cela évite de détruire des éléments potentiellement utiles
+        // à l'historique ou à un audit.
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new
         {
-            Message =
-                "Unité locative supprimée avec succès."
+            Message = "Unité locative supprimée logiquement avec succès."
         });
     }
 
     // ============================================================
-    // UTILISATEUR CONNECTE
+    // UTILISATEUR CONNECTÉ
     // ============================================================
 
     private async Task<UtilisateurConnecte?> GetUtilisateurConnecteAsync(
         CancellationToken cancellationToken)
     {
-        var currentUserId =
-            GetCurrentUserId();
+        var currentUserId = GetCurrentUserId();
 
         if (!currentUserId.HasValue)
         {
@@ -1015,40 +1012,15 @@ public class UnitesLocativesController : ControllerBase
                 SocieteId = u.SocieteId,
                 Role = u.Role
             })
-            .FirstOrDefaultAsync(
-                cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
     }
-
-    private async Task<Guid?>
-        GetSocieteIdUtilisateurConnecteAsync(
-            CancellationToken cancellationToken)
-    {
-        var utilisateur =
-            await GetUtilisateurConnecteAsync(
-                cancellationToken);
-
-        if (utilisateur == null ||
-            utilisateur.SocieteId == Guid.Empty)
-        {
-            return null;
-        }
-
-        return utilisateur.SocieteId;
-    }
-
-    // ============================================================
-    // UTILISATEUR CONNECTE
-    // ============================================================
 
     private Guid? GetCurrentUserId()
     {
         var claims = new[]
         {
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier),
-
+            User.FindFirstValue(ClaimTypes.NameIdentifier),
             User.FindFirstValue("sub"),
-
             User.FindFirstValue("Id")
         };
 
@@ -1063,62 +1035,63 @@ public class UnitesLocativesController : ControllerBase
         return null;
     }
 
-    // ============================================================
-    // ROLES
-    // ============================================================
-
-    private static bool EstGestionnaireOuAgent(
-        RoleUtilisateur role)
+    private static bool EstPersonnel(RoleUtilisateur role)
     {
         return role == RoleUtilisateur.Administrateur ||
                role == RoleUtilisateur.Gestionnaire ||
                role == RoleUtilisateur.Agent;
     }
 
-    // ============================================================
-    // UPLOAD
-    // ============================================================
-
-    private async Task<ResultatUploadPhotosUnite>
-        EnregistrerPhotosAsync(
-            IFormFileCollection fichiers,
-            List<string> photosExistantes,
-            List<string> fichiersCrees,
-            CancellationToken cancellationToken)
+    private static bool EstPersonnelAutoriseAModifier(
+        RoleUtilisateur role)
     {
-        var photos =
-            new List<string>(photosExistantes);
+        return role == RoleUtilisateur.Administrateur ||
+               role == RoleUtilisateur.Gestionnaire;
+    }
 
-        if (photos.Count + fichiers.Count >
-            NombreMaxPhotos)
+    // ============================================================
+    // UPLOAD DES PHOTOS
+    // ============================================================
+
+    private async Task<ResultatUploadPhotosUnite> EnregistrerPhotosAsync(
+        IFormFileCollection? fichiers,
+        List<string> photosExistantes,
+        List<string> fichiersCrees,
+        CancellationToken cancellationToken)
+    {
+        var photos = photosExistantes.ToList();
+
+        if (photos.Count > NombreMaxPhotos)
         {
             return ResultatUploadPhotosUnite.Echec(
-                $"Une unité locative ne peut pas contenir plus de {NombreMaxPhotos} photos.");
+                $"Une unité ne peut pas contenir plus de {NombreMaxPhotos} photos.");
         }
 
-        var dossierUploads =
-            GetDossierUploads();
-
-        Directory.CreateDirectory(
-            dossierUploads);
-
-        foreach (var fichier in fichiers)
+        if (fichiers == null || fichiers.Count == 0)
         {
-            if (fichier == null ||
-                fichier.Length <= 0)
-            {
-                continue;
-            }
+            return ResultatUploadPhotosUnite.SuccesResult(photos);
+        }
 
+        // Vérifier les limites avant d'écrire les fichiers.
+        var fichiersNonVides = fichiers
+            .Where(f => f != null && f.Length > 0)
+            .ToList();
+
+        if (photos.Count + fichiersNonVides.Count > NombreMaxPhotos)
+        {
+            return ResultatUploadPhotosUnite.Echec(
+                $"Une unité ne peut pas contenir plus de {NombreMaxPhotos} photos.");
+        }
+
+        foreach (var fichier in fichiersNonVides)
+        {
             if (fichier.Length > TailleMaxPhoto)
             {
                 return ResultatUploadPhotosUnite.Echec(
                     $"Le fichier '{fichier.FileName}' dépasse la taille maximale de 10 Mo.");
             }
 
-            var extension =
-                Path.GetExtension(
-                    fichier.FileName);
+            var extension = Path.GetExtension(fichier.FileName);
 
             if (string.IsNullOrWhiteSpace(extension) ||
                 !ExtensionsAutorisees.Contains(extension))
@@ -1126,164 +1099,116 @@ public class UnitesLocativesController : ControllerBase
                 return ResultatUploadPhotosUnite.Echec(
                     $"Le format du fichier '{fichier.FileName}' n'est pas autorisé. Formats acceptés : JPG, JPEG, PNG et WEBP.");
             }
+        }
 
-            if (photos.Count >= NombreMaxPhotos)
+        var dossierUploads = GetDossierUploads();
+        Directory.CreateDirectory(dossierUploads);
+
+        foreach (var fichier in fichiersNonVides)
+        {
+            var extension =
+                Path.GetExtension(fichier.FileName).ToLowerInvariant();
+
+            var nomFichier = $"{Guid.NewGuid():N}{extension}";
+            var cheminComplet = Path.Combine(dossierUploads, nomFichier);
+
+            try
             {
-                return ResultatUploadPhotosUnite.Echec(
-                    $"Une unité locative ne peut pas contenir plus de {NombreMaxPhotos} photos.");
-            }
-
-            var nomFichier =
-                $"{Guid.NewGuid():N}" +
-                extension.ToLowerInvariant();
-
-            var cheminComplet =
-                Path.Combine(
-                    dossierUploads,
-                    nomFichier);
-
-            await using var stream =
-                new FileStream(
+                await using var stream = new FileStream(
                     cheminComplet,
                     FileMode.CreateNew,
                     FileAccess.Write,
                     FileShare.None);
 
-            await fichier.CopyToAsync(
-                stream,
-                cancellationToken);
+                await fichier.CopyToAsync(stream, cancellationToken);
 
-            var cheminRelatif =
-                $"/uploads/unites/{nomFichier}";
+                var cheminRelatif = $"{PrefixPhotos}{nomFichier}";
 
-            photos.Add(cheminRelatif);
-            fichiersCrees.Add(cheminRelatif);
+                photos.Add(cheminRelatif);
+                fichiersCrees.Add(cheminRelatif);
+            }
+            catch
+            {
+                // Le nettoyage des fichiers déjà créés est effectué
+                // par l'appelant si l'opération échoue.
+                throw;
+            }
         }
 
-        return ResultatUploadPhotosUnite.SuccesResult(
-            photos);
+        return ResultatUploadPhotosUnite.SuccesResult(photos);
     }
-
-    // ============================================================
-    // DOSSIER UPLOAD
-    // ============================================================
 
     private string GetDossierUploads()
     {
-        var webRoot =
-            _environment.WebRootPath;
+        var webRoot = _environment.WebRootPath;
 
         if (string.IsNullOrWhiteSpace(webRoot))
         {
-            webRoot =
-                Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot");
+            webRoot = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot");
         }
 
-        return Path.Combine(
-            webRoot,
-            "uploads",
-            "unites");
+        return Path.Combine(webRoot, "uploads", "unites");
     }
 
-    // ============================================================
-    // SUPPRESSION PHYSIQUE
-    // ============================================================
-
-    private void SupprimerFichiersPhysiques(
-        IEnumerable<string> chemins)
+    private void SupprimerFichiersPhysiques(IEnumerable<string> chemins)
     {
         foreach (var chemin in chemins)
         {
             try
             {
-                var cheminComplet =
-                    GetCheminPhysique(chemin);
+                var cheminComplet = GetCheminPhysique(chemin);
 
-                if (cheminComplet == null)
+                if (cheminComplet != null &&
+                    System.IO.File.Exists(cheminComplet))
                 {
-                    continue;
-                }
-
-                if (System.IO.File.Exists(
-                        cheminComplet))
-                {
-                    System.IO.File.Delete(
-                        cheminComplet);
+                    System.IO.File.Delete(cheminComplet);
                 }
             }
             catch
             {
-                // Ne pas faire échouer la suppression logique
-                // à cause d'une erreur physique de fichier.
+                // Une erreur de nettoyage ne doit pas masquer
+                // l'erreur initiale de l'opération.
             }
         }
     }
 
-    // ============================================================
-    // CHEMIN PHYSIQUE
-    // ============================================================
-
-    private string? GetCheminPhysique(
-        string cheminRelatif)
+    private string? GetCheminPhysique(string cheminRelatif)
     {
-        if (string.IsNullOrWhiteSpace(
-                cheminRelatif))
-        {
-            return null;
-        }
-
-        const string prefix =
-            "/uploads/unites/";
-
-        if (!cheminRelatif.StartsWith(
-                prefix,
+        if (string.IsNullOrWhiteSpace(cheminRelatif) ||
+            !cheminRelatif.StartsWith(
+                PrefixPhotos,
                 StringComparison.OrdinalIgnoreCase))
         {
             return null;
         }
 
-        var nomFichier =
-            cheminRelatif[prefix.Length..];
+        var nomFichier = cheminRelatif[PrefixPhotos.Length..];
 
         if (string.IsNullOrWhiteSpace(nomFichier) ||
             nomFichier.Contains('/') ||
             nomFichier.Contains('\\') ||
-            nomFichier.Contains(".."))
+            nomFichier.Contains("..") ||
+            Path.GetFileName(nomFichier) != nomFichier)
         {
             return null;
         }
 
-        return Path.Combine(
-            GetDossierUploads(),
-            nomFichier);
+        return Path.Combine(GetDossierUploads(), nomFichier);
     }
-
-    // ============================================================
-    // FILTRER PHOTOS
-    // ============================================================
 
     private static List<string> FiltrerPhotosUnite(
         IEnumerable<string> photos)
     {
-        const string prefix =
-            "/uploads/unites/";
-
         return photos
-            .Where(p =>
-                !string.IsNullOrWhiteSpace(p))
-            .Select(p =>
-                p.Trim())
-            .Where(p =>
-                p.StartsWith(
-                    prefix,
-                    StringComparison.OrdinalIgnoreCase))
-            .Where(p =>
-                !p.Contains(".."))
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .Take(NombreMaxPhotos)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Where(p => p.StartsWith(
+                PrefixPhotos,
+                StringComparison.OrdinalIgnoreCase))
+            .Where(p => !p.Contains(".."))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
@@ -1296,28 +1221,30 @@ public class UnitesLocativesController : ControllerBase
         }
 
         return photos
-            .Where(p =>
-                !string.IsNullOrWhiteSpace(p))
-            .Select(p =>
-                p.Trim())
-            .Where(p =>
-                p.Length <= 500)
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .Take(NombreMaxPhotos)
+            .Where(p => !string.IsNullOrWhiteSpace(p))
+            .Select(p => p.Trim())
+            .Where(p => p.Length <= 500)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
     // ============================================================
-    // VALIDATION
+    // VALIDATION MÉTIER
     // ============================================================
 
     private static string? ValiderUnite(
         string? reference,
         TypeUniteLocative type,
         decimal superficie,
+        int? nombrePieces,
         decimal loyer,
-        StatutDisponibilite statut)
+        decimal? chargesLocativesMensuelles,
+        decimal? montantCaution,
+        StatutDisponibilite statut,
+        DateTime? datePremiereMiseEnLocation,
+        DateTime? dateDerniereRenovation,
+        bool estExonereeFiscalement,
+        string? motifExoneration)
     {
         if (string.IsNullOrWhiteSpace(reference))
         {
@@ -1334,14 +1261,14 @@ public class UnitesLocativesController : ControllerBase
             return "Le type de l'unité est invalide.";
         }
 
-        if (superficie <= 0)
+        if (superficie <= 0 || superficie > 1_000_000)
         {
-            return "La superficie doit être supérieure à zéro.";
+            return "La superficie doit être supérieure à zéro et ne pas dépasser 1 000 000.";
         }
 
-        if (superficie > 1_000_000)
+        if (nombrePieces.HasValue && nombrePieces.Value <= 0)
         {
-            return "La superficie fournie est trop élevée.";
+            return "Le nombre de pièces doit être supérieur à zéro.";
         }
 
         if (loyer < 0)
@@ -1349,29 +1276,68 @@ public class UnitesLocativesController : ControllerBase
             return "Le loyer ne peut pas être négatif.";
         }
 
+        if (chargesLocativesMensuelles.HasValue &&
+            chargesLocativesMensuelles.Value < 0)
+        {
+            return "Les charges locatives mensuelles ne peuvent pas être négatives.";
+        }
+
+        if (montantCaution.HasValue && montantCaution.Value < 0)
+        {
+            return "Le montant de la caution ne peut pas être négatif.";
+        }
+
         if (!Enum.IsDefined(statut))
         {
             return "Le statut de l'unité est invalide.";
         }
 
+        if (estExonereeFiscalement)
+        {
+            if (string.IsNullOrWhiteSpace(motifExoneration))
+            {
+                return "Un motif doit être renseigné lorsque l'unité est déclarée exonérée fiscalement.";
+            }
+
+            if (motifExoneration.Trim().Length >
+                LongueurMaxMotifExoneration)
+            {
+                return $"Le motif d'exonération ne peut pas dépasser {LongueurMaxMotifExoneration} caractères.";
+            }
+        }
+
+        if (!estExonereeFiscalement &&
+            !string.IsNullOrWhiteSpace(motifExoneration) &&
+            motifExoneration.Trim().Length >
+                LongueurMaxMotifExoneration)
+        {
+            return $"Le motif d'exonération ne peut pas dépasser {LongueurMaxMotifExoneration} caractères.";
+        }
+
         return null;
     }
 
-    // ============================================================
-    // NORMALISATION
-    // ============================================================
-
-    private static string NormaliserReference(
-        string reference)
+    private static string? NormaliserMotifExoneration(
+        bool estExonereeFiscalement,
+        string? motif)
     {
-        return reference
-            .Trim()
-            .ToUpperInvariant();
+        if (!estExonereeFiscalement ||
+            string.IsNullOrWhiteSpace(motif))
+        {
+            return null;
+        }
+
+        return motif.Trim();
+    }
+
+    private static string NormaliserReference(string reference)
+    {
+        return reference.Trim().ToUpperInvariant();
     }
 }
 
 // ==================================================================
-// DTO UTILISATEUR CONNECTE
+// DTO UTILISATEUR CONNECTÉ
 // ==================================================================
 
 internal sealed class UtilisateurConnecte
@@ -1384,7 +1350,7 @@ internal sealed class UtilisateurConnecte
 }
 
 // ==================================================================
-// DTO CREATION
+// DTO DE CRÉATION
 // ==================================================================
 
 public class CreerUniteLocativeRequest
@@ -1395,9 +1361,26 @@ public class CreerUniteLocativeRequest
 
     public decimal Superficie { get; set; }
 
+    public int? NombrePieces { get; set; }
+
+    public int? Etage { get; set; }
+
     public decimal Loyer { get; set; }
 
+    public decimal? ChargesLocativesMensuelles { get; set; }
+
+    public decimal? MontantCaution { get; set; }
+
     public StatutDisponibilite Statut { get; set; }
+        = StatutDisponibilite.Disponible;
+
+    public DateTime? DatePremiereMiseEnLocation { get; set; }
+
+    public DateTime? DateDerniereRenovation { get; set; }
+
+    public bool EstExonereeFiscalement { get; set; }
+
+    public string? MotifExoneration { get; set; }
 
     public Guid BienImmobilierId { get; set; }
 
@@ -1405,7 +1388,7 @@ public class CreerUniteLocativeRequest
 }
 
 // ==================================================================
-// DTO MODIFICATION
+// DTO DE MODIFICATION
 // ==================================================================
 
 public class ModifierUniteLocativeRequest
@@ -1416,9 +1399,25 @@ public class ModifierUniteLocativeRequest
 
     public decimal Superficie { get; set; }
 
+    public int? NombrePieces { get; set; }
+
+    public int? Etage { get; set; }
+
     public decimal Loyer { get; set; }
 
+    public decimal? ChargesLocativesMensuelles { get; set; }
+
+    public decimal? MontantCaution { get; set; }
+
     public StatutDisponibilite Statut { get; set; }
+
+    public DateTime? DatePremiereMiseEnLocation { get; set; }
+
+    public DateTime? DateDerniereRenovation { get; set; }
+
+    public bool EstExonereeFiscalement { get; set; }
+
+    public string? MotifExoneration { get; set; }
 
     public Guid BienImmobilierId { get; set; }
 
@@ -1428,14 +1427,14 @@ public class ModifierUniteLocativeRequest
 }
 
 // ==================================================================
-// DTO STATUT
+// DTO DE MODIFICATION DU STATUT
 // ==================================================================
 
 public record ModifierStatutUniteRequest(
     StatutDisponibilite Statut);
 
 // ==================================================================
-// RESULTAT UPLOAD
+// RÉSULTAT DE L'UPLOAD
 // ==================================================================
 
 public record ResultatUploadPhotosUnite(
@@ -1445,15 +1444,9 @@ public record ResultatUploadPhotosUnite(
 {
     public static ResultatUploadPhotosUnite SuccesResult(
         List<string> photos)
-        => new(
-            true,
-            null,
-            photos);
+        => new(true, null, photos);
 
     public static ResultatUploadPhotosUnite Echec(
         string message)
-        => new(
-            false,
-            message,
-            []);
+        => new(false, message, []);
 }

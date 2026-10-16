@@ -74,6 +74,14 @@ export const routes: Routes = [
           { 
             path: 'parametresfiscaux', 
             loadComponent: () => import('./parametresfiscaux/parametresfiscaux').then(m => m.ParametresFiscaux) 
+          },
+          { 
+            path: 'tranchesirpp', 
+            loadComponent: () => import('./trancheirpp/trancheirpp').then(m => m.TrancheIRPP) 
+          },
+          { 
+            path: 'chargesimmobilieres', 
+            loadComponent: () => import('./chargesimmobilieres/chargesimmobilieres').then(m => m.ChargesImmobilieres) 
           }
         ]
       }

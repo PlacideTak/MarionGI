@@ -4,20 +4,139 @@
        EN-TÊTE
        ============================================================ -->
 
-  <div class="page-header">
-
-    <h2>Gestion des utilisateurs et des rôles</h2>
-
-    <button
-      pButton
-      type="button"
-      label="+ Ajouter un utilisateur"
-      class="p-button-success btn-new"
-      (click)="ouvrirModalAjout()">
-    </button>
-
+<!-- En-tête -->
+<div class="page-header">
+  <div class="page-header__content">
+    <div>
+      <h1>Gestion des utilisateurs et des rôles</h1>
+      <p class="page-subtitle">
+        Gérez les comptes, les rôles et les accès à la plateforme MarionGI.
+      </p>
+    </div>
   </div>
 
+  <button
+    pButton
+    type="button"
+    label="Nouvel utilisateur"
+    icon="pi pi-plus"
+    (click)="ouvrirModalAjout()">
+  </button>
+</div>
+
+
+  <!-- ============================================================
+       STATISTIQUES DES UTILISATEURS
+       ============================================================ -->
+
+  <div class="utilisateurs-stats">
+
+    <!-- Total -->
+    <div class="user-stat-card stat-total">
+      <div class="user-stat-icon">
+        <i class="pi pi-users"></i>
+      </div>
+
+      <div class="user-stat-content">
+        <span class="user-stat-label">
+          Total des utilisateurs
+        </span>
+
+        <strong class="user-stat-value">
+          {{ totalUtilisateurs }}
+        </strong>
+
+        <span class="user-stat-description">
+          Tous les rôles confondus
+        </span>
+      </div>
+    </div>
+
+    <!-- Administrateurs -->
+    <div class="user-stat-card stat-admin">
+      <div class="user-stat-icon">
+        <i class="pi pi-shield"></i>
+      </div>
+
+      <div class="user-stat-content">
+        <span class="user-stat-label">
+          Administrateurs
+        </span>
+
+        <strong class="user-stat-value">
+          {{ nombreAdministrateurs }}
+        </strong>
+
+        <span class="user-stat-description">
+          Gestion de la plateforme
+        </span>
+      </div>
+    </div>
+
+    <!-- Gestionnaires -->
+    <div class="user-stat-card stat-gestionnaire">
+      <div class="user-stat-icon">
+        <i class="pi pi-briefcase"></i>
+      </div>
+
+      <div class="user-stat-content">
+        <span class="user-stat-label">
+          Gestionnaires
+        </span>
+
+        <strong class="user-stat-value">
+          {{ nombreGestionnaires }}
+        </strong>
+
+        <span class="user-stat-description">
+          Gestion immobilière
+        </span>
+      </div>
+    </div>
+
+    <!-- Agents -->
+    <div class="user-stat-card stat-agent">
+      <div class="user-stat-icon">
+        <i class="pi pi-id-card"></i>
+      </div>
+
+      <div class="user-stat-content">
+        <span class="user-stat-label">
+          Agents commerciaux
+        </span>
+
+        <strong class="user-stat-value">
+          {{ nombreAgents }}
+        </strong>
+
+        <span class="user-stat-description">
+          Suivi des activités
+        </span>
+      </div>
+    </div>
+
+    <!-- Locataires -->
+    <div class="user-stat-card stat-locataire">
+      <div class="user-stat-icon">
+        <i class="pi pi-home"></i>
+      </div>
+
+      <div class="user-stat-content">
+        <span class="user-stat-label">
+          Locataires
+        </span>
+
+        <strong class="user-stat-value">
+          {{ nombreLocataires }}
+        </strong>
+
+        <span class="user-stat-description">
+          Accès locataire
+        </span>
+      </div>
+    </div>
+
+  </div>
 
   <!-- ============================================================
        LISTE DES UTILISATEURS
@@ -82,7 +201,7 @@
 
             <span class="societe-name">
 
-              {{ user.societeNom || 'Non attribuée' }}
+              {{ user.nomSociete  || 'Non attribuée' }}
 
             </span>
 
@@ -317,22 +436,13 @@
        MODAL AJOUT / MODIFICATION
        ============================================================ -->
 
-  <p-dialog
-    [header]="
-      isEditMode()
-        ? 'Modifier l\'utilisateur'
-        : 'Ajouter un utilisateur'
-    "
-    [(visible)]="displayModal"
-    [modal]="true"
-    [style]="{ width: '550px' }"
-    [breakpoints]="{
-      '768px': '90vw',
-      '480px': '95vw'
-    }"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="user-dialog">
+<p-dialog
+  [header]="isEditMode() ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"
+  [visible]="displayModal()"
+  (visibleChange)="displayModal.set($event)"
+  [modal]="true"
+  [style]="{ width: '550px' }"
+>
 
 
     <form

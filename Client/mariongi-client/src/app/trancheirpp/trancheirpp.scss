@@ -1,0 +1,378 @@
+$border: #e2e8f0;
+$text: #334155;
+$text-muted: #64748b;
+$bg-soft: #f8fafc;
+$primary: #2563eb;
+$danger: #dc2626;
+$success: #15803d;
+
+:host {
+  display: block;
+  width: 100%;
+  color: $text;
+}
+
+.tranches-page {
+  padding: 1.5rem;
+  min-width: 0;
+}
+
+// ============================================================
+// EN-TÊTE
+// ============================================================
+
+.tranches-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0 0 0.4rem;
+    color: #0f172a;
+    font-size: 1.65rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0;
+    color: $text-muted;
+    font-size: 0.95rem;
+  }
+}
+
+// ============================================================
+// STATISTIQUES
+// ============================================================
+
+.tranches-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tranche-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  background: #fff;
+
+  span {
+    color: $text-muted;
+    font-size: 0.85rem;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 1.55rem;
+    font-weight: 700;
+  }
+}
+
+// ============================================================
+// PANNEAU PRINCIPAL
+// ============================================================
+
+.tranches-panel {
+  overflow: hidden;
+  border: 1px solid $border;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+// ============================================================
+// FILTRES
+// ============================================================
+
+.tranches-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid $border;
+  background: #fff;
+
+  > input[pInputText] {
+    flex: 1 1 15rem;
+    min-width: 12rem;
+  }
+
+  p-inputNumber {
+    flex: 0 1 11rem;
+    min-width: 9rem;
+  }
+
+  button {
+    flex-shrink: 0;
+  }
+}
+
+// ============================================================
+// TABLEAU
+// ============================================================
+
+:host ::ng-deep {
+  .p-datatable {
+    font-size: 0.9rem;
+  }
+
+  .p-datatable-thead > tr > th {
+    padding: 0.9rem 1rem;
+    color: #475569;
+    background: $bg-soft;
+    border-color: $border;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .p-datatable-tbody > tr > td {
+    padding: 0.85rem 1rem;
+    border-color: $border;
+    vertical-align: middle;
+  }
+
+  .p-datatable-tbody > tr:hover {
+    background: #f8fafc;
+  }
+
+  .p-paginator {
+    border-top: 1px solid $border;
+  }
+
+  .p-inputnumber,
+  .p-inputnumber-input {
+    width: 100%;
+  }
+}
+
+.annee-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 0.4rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ordre-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+  font-weight: 600;
+}
+
+.montant {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.taux-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 0.45rem;
+  background: #ecfdf5;
+  color: $success;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.description-cell {
+  min-width: 12rem;
+  max-width: 24rem;
+  overflow-wrap: anywhere;
+  color: #475569;
+}
+
+.actions-column {
+  width: 7rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.actions-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.empty-message {
+  padding: 2.5rem 1rem !important;
+  color: $text-muted;
+  text-align: center;
+
+  i {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-size: 1.8rem;
+  }
+}
+
+// ============================================================
+// FORMULAIRE MODAL
+// ============================================================
+
+.tranche-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.form-intro {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.6rem;
+  background: #eff6ff;
+  color: #1e40af;
+  font-size: 0.85rem;
+  line-height: 1.5;
+
+  i {
+    margin-top: 0.15rem;
+    font-size: 1rem;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+
+  label {
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+
+  input[pInputText],
+  textarea,
+  p-inputNumber {
+    width: 100%;
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 5rem;
+  }
+}
+
+.required {
+  color: $danger;
+}
+
+.field-hint {
+  color: $text-muted;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.field-error {
+  color: $danger;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.input-invalid {
+  border-color: $danger !important;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border;
+}
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@media (max-width: 768px) {
+  .tranches-page {
+    padding: 1rem;
+  }
+
+  .tranches-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    h1 {
+      font-size: 1.4rem;
+    }
+  }
+
+  .tranches-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .tranche-stat {
+    padding: 0.9rem 1rem;
+
+    strong {
+      font-size: 1.3rem;
+    }
+  }
+
+  .tranches-filters {
+    align-items: stretch;
+    flex-direction: column;
+
+    > input[pInputText],
+    p-inputNumber,
+    button {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .tranches-page {
+    padding: 0.75rem;
+  }
+
+  .description-cell {
+    min-width: 9rem;
+  }
+}

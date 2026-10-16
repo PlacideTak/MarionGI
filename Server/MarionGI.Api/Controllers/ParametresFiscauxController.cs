@@ -21,8 +21,6 @@ public class ParametresFiscauxController : ControllerBase
 
     // ========================================================
     // GET : Liste des paramètres fiscaux
-    // GET /api/ParametresFiscaux?anneeFiscale=2026
-    // GET /api/ParametresFiscaux?codeRegle=IRPP_TAUX
     // ========================================================
 
     [HttpGet]
@@ -30,7 +28,10 @@ public class ParametresFiscauxController : ControllerBase
     public async Task<ActionResult<IEnumerable<ParametreFiscalDto>>> ObtenirTous(
         [FromQuery] int? anneeFiscale,
         [FromQuery] string? codeRegle,
-        [FromQuery] DateTime? dateReference)
+        [FromQuery] DateTime? dateReference,
+        [FromQuery] TypeImpotFiscal? typeImpot,
+        [FromQuery] TypeParametreFiscal? typeParametre,
+        [FromQuery] Guid? regimeFiscalId)
     {
         var query = _context.ParametresFiscaux
             .AsNoTracking()
@@ -60,8 +61,27 @@ public class ParametresFiscauxController : ControllerBase
                  p.DateFinValidite.Value >= date));
         }
 
+        if (typeImpot.HasValue)
+        {
+            query = query.Where(
+                p => p.TypeImpot == typeImpot.Value);
+        }
+
+        if (typeParametre.HasValue)
+        {
+            query = query.Where(
+                p => p.TypeParametre == typeParametre.Value);
+        }
+
+        if (regimeFiscalId.HasValue)
+        {
+            query = query.Where(
+                p => p.RegimeFiscalId == regimeFiscalId.Value);
+        }
+
         var resultats = await query
             .OrderBy(p => p.AnneeFiscale)
+            .ThenBy(p => p.TypeImpot)
             .ThenBy(p => p.CodeRegle)
             .ThenBy(p => p.DateDebutValidite)
             .Select(p => VersDto(p))
@@ -71,8 +91,7 @@ public class ParametresFiscauxController : ControllerBase
     }
 
     // ========================================================
-    // GET : Détail d'un paramètre
-    // GET /api/ParametresFiscaux/{id}
+    // GET : Détail d'un paramètre fiscal
     // ========================================================
 
     [HttpGet("{id:guid}")]
@@ -112,9 +131,21 @@ public class ParametresFiscauxController : ControllerBase
             return BadRequest(new { message = erreur });
         }
 
+        var erreurRegime = await ValiderRegimeFiscal(
+            request.RegimeFiscalId);
+
+        if (erreurRegime != null)
+        {
+            return BadRequest(new { message = erreurRegime });
+        }
+
+        var codeRegle = request.CodeRegle.Trim();
+
         var conflit = await VerifierChevauchement(
             request.AnneeFiscale,
-            request.CodeRegle,
+            codeRegle,
+            request.TypeImpot,
+            request.RegimeFiscalId,
             request.DateDebutValidite,
             request.DateFinValidite);
 
@@ -122,19 +153,27 @@ public class ParametresFiscauxController : ControllerBase
         {
             return Conflict(new
             {
-                message = "Un paramètre portant ce code possède déjà une période de validité qui chevauche celle demandée pour cette année fiscale."
+                message =
+                    "Une règle fiscale portant ce code possède déjà une période de validité qui chevauche celle demandée pour cette année fiscale, ce type d'impôt et ce régime fiscal."
             });
         }
 
         var parametre = new ParametreFiscal
         {
             AnneeFiscale = request.AnneeFiscale,
-            CodeRegle = request.CodeRegle.Trim(),
+            CodeRegle = codeRegle,
+            TypeImpot = request.TypeImpot,
             Description = request.Description.Trim(),
             Valeur = request.Valeur,
             TypeParametre = request.TypeParametre,
             DateDebutValidite = request.DateDebutValidite,
-            DateFinValidite = request.DateFinValidite
+            DateFinValidite = request.DateFinValidite,
+            ReferenceLegale = NormaliserTexte(request.ReferenceLegale),
+            DateDerniereVerification =
+                request.DateDerniereVerification,
+            ConditionsApplication =
+                NormaliserTexte(request.ConditionsApplication),
+            RegimeFiscalId = request.RegimeFiscalId
         };
 
         _context.ParametresFiscaux.Add(parametre);
@@ -176,9 +215,21 @@ public class ParametresFiscauxController : ControllerBase
             return BadRequest(new { message = erreur });
         }
 
+        var erreurRegime = await ValiderRegimeFiscal(
+            request.RegimeFiscalId);
+
+        if (erreurRegime != null)
+        {
+            return BadRequest(new { message = erreurRegime });
+        }
+
+        var codeRegle = request.CodeRegle.Trim();
+
         var conflit = await VerifierChevauchement(
             request.AnneeFiscale,
-            request.CodeRegle,
+            codeRegle,
+            request.TypeImpot,
+            request.RegimeFiscalId,
             request.DateDebutValidite,
             request.DateFinValidite,
             id);
@@ -187,17 +238,26 @@ public class ParametresFiscauxController : ControllerBase
         {
             return Conflict(new
             {
-                message = "Un autre paramètre portant ce code possède déjà une période de validité qui chevauche celle demandée pour cette année fiscale."
+                message =
+                    "Une autre règle fiscale portant ce code possède déjà une période de validité qui chevauche celle demandée pour cette année fiscale, ce type d'impôt et ce régime fiscal."
             });
         }
 
         parametre.AnneeFiscale = request.AnneeFiscale;
-        parametre.CodeRegle = request.CodeRegle.Trim();
+        parametre.CodeRegle = codeRegle;
+        parametre.TypeImpot = request.TypeImpot;
         parametre.Description = request.Description.Trim();
         parametre.Valeur = request.Valeur;
         parametre.TypeParametre = request.TypeParametre;
         parametre.DateDebutValidite = request.DateDebutValidite;
         parametre.DateFinValidite = request.DateFinValidite;
+        parametre.ReferenceLegale =
+            NormaliserTexte(request.ReferenceLegale);
+        parametre.DateDerniereVerification =
+            request.DateDerniereVerification;
+        parametre.ConditionsApplication =
+            NormaliserTexte(request.ConditionsApplication);
+        parametre.RegimeFiscalId = request.RegimeFiscalId;
 
         await _context.SaveChangesAsync();
 
@@ -233,7 +293,7 @@ public class ParametresFiscauxController : ControllerBase
     }
 
     // ========================================================
-    // VALIDATION
+    // VALIDATION DES DONNÉES
     // ========================================================
 
     private static string? Valider(
@@ -271,6 +331,13 @@ public class ParametresFiscauxController : ControllerBase
         }
 
         if (!Enum.IsDefined(
+                typeof(TypeImpotFiscal),
+                request.TypeImpot))
+        {
+            return "Le type d'impôt est invalide.";
+        }
+
+        if (!Enum.IsDefined(
                 typeof(TypeParametreFiscal),
                 request.TypeParametre))
         {
@@ -289,6 +356,49 @@ public class ParametresFiscauxController : ControllerBase
             return "La date de fin doit être supérieure ou égale à la date de début.";
         }
 
+        if (request.DateDerniereVerification.HasValue &&
+            request.DateDerniereVerification.Value == default)
+        {
+            return "La date de dernière vérification est invalide.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ReferenceLegale) &&
+            request.ReferenceLegale.Trim().Length > 1000)
+        {
+            return "La référence légale ne peut pas dépasser 1000 caractères.";
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ConditionsApplication) &&
+            request.ConditionsApplication.Trim().Length > 2000)
+        {
+            return "Les conditions d'application ne peuvent pas dépasser 2000 caractères.";
+        }
+
+        return null;
+    }
+
+    // ========================================================
+    // VALIDATION DU RÉGIME FISCAL
+    // ========================================================
+
+    private async Task<string?> ValiderRegimeFiscal(
+        Guid? regimeFiscalId)
+    {
+        if (!regimeFiscalId.HasValue)
+        {
+            return null;
+        }
+
+        var regimeExiste = await _context.RegimesFiscaux
+            .AnyAsync(r =>
+                r.Id == regimeFiscalId.Value &&
+                !r.EstSupprime);
+
+        if (!regimeExiste)
+        {
+            return "Le régime fiscal sélectionné est introuvable ou supprimé.";
+        }
+
         return null;
     }
 
@@ -299,6 +409,8 @@ public class ParametresFiscauxController : ControllerBase
     private async Task<bool> VerifierChevauchement(
         int anneeFiscale,
         string codeRegle,
+        TypeImpotFiscal typeImpot,
+        Guid? regimeFiscalId,
         DateTime dateDebut,
         DateTime? dateFin,
         Guid? idExclu = null)
@@ -307,23 +419,38 @@ public class ParametresFiscauxController : ControllerBase
             .Where(p =>
                 !p.EstSupprime &&
                 p.AnneeFiscale == anneeFiscale &&
-                p.CodeRegle == codeRegle.Trim());
+                p.CodeRegle == codeRegle &&
+                p.TypeImpot == typeImpot &&
+                p.RegimeFiscalId == regimeFiscalId);
 
         if (idExclu.HasValue)
         {
             query = query.Where(p => p.Id != idExclu.Value);
         }
 
-        // Deux périodes se chevauchent lorsque :
-        // le début de l'une précède la fin de l'autre,
-        // et inversement.
-        // Une date de fin absente signifie une validité sans fin.
+        // Les périodes sont considérées comme inclusives :
+        // une date de fin égale à une date de début constitue
+        // donc un chevauchement.
+        //
+        // Une date de fin absente représente une validité
+        // sans date de fin.
 
         return await query.AnyAsync(p =>
             (!p.DateFinValidite.HasValue ||
              p.DateFinValidite.Value >= dateDebut) &&
             (!dateFin.HasValue ||
              p.DateDebutValidite <= dateFin.Value));
+    }
+
+    // ========================================================
+    // OUTILS
+    // ========================================================
+
+    private static string? NormaliserTexte(string? valeur)
+    {
+        return string.IsNullOrWhiteSpace(valeur)
+            ? null
+            : valeur.Trim();
     }
 
     // ========================================================
@@ -338,11 +465,17 @@ public class ParametresFiscauxController : ControllerBase
             Id = parametre.Id,
             AnneeFiscale = parametre.AnneeFiscale,
             CodeRegle = parametre.CodeRegle,
+            TypeImpot = parametre.TypeImpot,
             Description = parametre.Description,
             Valeur = parametre.Valeur,
             TypeParametre = parametre.TypeParametre,
             DateDebutValidite = parametre.DateDebutValidite,
             DateFinValidite = parametre.DateFinValidite,
+            ReferenceLegale = parametre.ReferenceLegale,
+            DateDerniereVerification =
+                parametre.DateDerniereVerification,
+            ConditionsApplication = parametre.ConditionsApplication,
+            RegimeFiscalId = parametre.RegimeFiscalId,
             DateCreation = parametre.DateCreation
         };
     }
@@ -355,13 +488,31 @@ public class ParametresFiscauxController : ControllerBase
 public class ParametreFiscalDto
 {
     public Guid Id { get; set; }
+
     public int AnneeFiscale { get; set; }
+
     public string CodeRegle { get; set; } = string.Empty;
+
+    public TypeImpotFiscal TypeImpot { get; set; }
+
     public string Description { get; set; } = string.Empty;
+
     public decimal Valeur { get; set; }
+
     public TypeParametreFiscal TypeParametre { get; set; }
+
     public DateTime DateDebutValidite { get; set; }
+
     public DateTime? DateFinValidite { get; set; }
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime? DateDerniereVerification { get; set; }
+
+    public string? ConditionsApplication { get; set; }
+
+    public Guid? RegimeFiscalId { get; set; }
+
     public DateTime DateCreation { get; set; }
 }
 
@@ -372,12 +523,28 @@ public class ParametreFiscalDto
 public class CreerParametreFiscalRequest
 {
     public int AnneeFiscale { get; set; }
+
     public string CodeRegle { get; set; } = string.Empty;
+
+    public TypeImpotFiscal TypeImpot { get; set; }
+
     public string Description { get; set; } = string.Empty;
+
     public decimal Valeur { get; set; }
+
     public TypeParametreFiscal TypeParametre { get; set; }
+
     public DateTime DateDebutValidite { get; set; }
+
     public DateTime? DateFinValidite { get; set; }
+
+    public string? ReferenceLegale { get; set; }
+
+    public DateTime? DateDerniereVerification { get; set; }
+
+    public string? ConditionsApplication { get; set; }
+
+    public Guid? RegimeFiscalId { get; set; }
 }
 
 // ============================================================

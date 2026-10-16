@@ -1,0 +1,507 @@
+<p-toast></p-toast>
+
+<p-confirmDialog></p-confirmDialog>
+
+<div class="tranches-page">
+
+  <!-- ====================================================== -->
+  <!-- EN-TÊTE -->
+  <!-- ====================================================== -->
+
+  <div class="tranches-header">
+    <div>
+      <h1>Tranches IRPP</h1>
+      <p>
+        Gestion des tranches d'imposition par année fiscale.
+      </p>
+    </div>
+
+    <button
+      *ngIf="canManageTranchesIRPP"
+      pButton
+      type="button"
+      label="Nouvelle tranche"
+      icon="pi pi-plus"
+      (click)="openNew()">
+    </button>
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- STATISTIQUES -->
+  <!-- ====================================================== -->
+
+  <div class="tranches-stats">
+
+    <div class="tranche-stat">
+      <span>Tranches affichées</span>
+      <strong>{{ tranchesFiltrees.length }}</strong>
+    </div>
+
+    <div class="tranche-stat">
+      <span>Années fiscales</span>
+      <strong>
+        {{
+          tranchesFiltrees.length > 0
+            ? (tranchesFiltrees | keyvalue).length
+            : 0
+        }}
+      </strong>
+    </div>
+
+    <div class="tranche-stat">
+      <span>Tranches sans plafond</span>
+      <strong>{{ compterSansPlafond() }}</strong>
+    </div>
+
+  </div>
+
+
+  <!-- ====================================================== -->
+  <!-- CONTENU -->
+  <!-- ====================================================== -->
+
+  <section class="tranches-panel">
+
+    <!-- FILTRES -->
+
+    <div class="tranches-filters">
+
+      <input
+        pInputText
+        type="text"
+        [(ngModel)]="recherche"
+        placeholder="Rechercher une tranche..."
+        aria-label="Rechercher une tranche">
+
+      <p-inputNumber
+        [(ngModel)]="filtreAnnee"
+        [ngModelOptions]="{ standalone: true }"
+        [useGrouping]="false"
+        [min]="2000"
+        [max]="9999"
+        placeholder="Année fiscale"
+        inputId="filtreAnnee">
+      </p-inputNumber>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-filter"
+        label="Filtrer"
+        severity="secondary"
+        (click)="chargerTranchesIRPP()">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-refresh"
+        label="Actualiser"
+        severity="secondary"
+        [outlined]="true"
+        (click)="chargerTranchesIRPP()">
+      </button>
+
+      <button
+        pButton
+        type="button"
+        icon="pi pi-filter-slash"
+        label="Réinitialiser"
+        severity="secondary"
+        [outlined]="true"
+        (click)="reinitialiserFiltres()">
+      </button>
+
+    </div>
+
+
+    <!-- TABLEAU -->
+
+    <p-table
+      [value]="tranchesFiltrees"
+      [loading]="loading"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords} tranche(s)"
+      responsiveLayout="scroll"
+      styleClass="p-datatable-sm">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Année</th>
+          <th>Ordre</th>
+          <th>Seuil minimal (FCFA)</th>
+          <th>Seuil maximal (FCFA)</th>
+          <th>Taux</th>
+          <th>Description</th>
+
+          <th
+            *ngIf="canManageTranchesIRPP"
+            class="actions-column">
+            Actions
+          </th>
+        </tr>
+      </ng-template>
+
+      <ng-template
+        pTemplate="body"
+        let-tranche>
+
+        <tr>
+          <td>
+            <span class="annee-badge">
+              {{ tranche.anneeFiscale }}
+            </span>
+          </td>
+
+          <td>
+            <span class="ordre-badge">
+              {{ tranche.ordreTranche }}
+            </span>
+          </td>
+
+          <!-- Seuil minimal -->
+          <td class="montant">
+            {{ tranche.seuilMin | number:'1.0-2':'fr-FR' }}
+          </td>
+
+          <!-- Seuil maximal -->
+          <td class="montant">
+            <ng-container
+              *ngIf="tranche.seuilMax !== null && tranche.seuilMax !== undefined; else sansPlafond">
+              {{ tranche.seuilMax | number:'1.0-2':'fr-FR' }}
+            </ng-container>
+
+            <ng-template #sansPlafond>
+              Sans plafond
+            </ng-template>
+          </td>
+
+          <td>
+            <span class="taux-badge">
+              {{ formaterTaux(tranche.taux) }}
+            </span>
+          </td>
+
+          <td class="description-cell">
+            {{ tranche.description || '—' }}
+          </td>
+
+          <td
+            *ngIf="canManageTranchesIRPP"
+            class="actions-column">
+
+            <div class="actions-group">
+              <button
+                pButton
+                type="button"
+                icon="pi pi-pencil"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                aria-label="Modifier la tranche"
+                pTooltip="Modifier"
+                (click)="editTrancheIRPP(tranche)">
+              </button>
+
+              <button
+                pButton
+                type="button"
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                aria-label="Supprimer la tranche"
+                pTooltip="Supprimer"
+                (click)="confirmerSuppression(tranche)">
+              </button>
+            </div>
+
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td
+            [attr.colspan]="canManageTranchesIRPP ? 7 : 6"
+            class="empty-message">
+
+            <i class="pi pi-inbox"></i>
+
+            <span>
+              Aucune tranche IRPP trouvée.
+            </span>
+
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+
+  </section>
+
+
+  <!-- ====================================================== -->
+  <!-- DIALOGUE DE CRÉATION / MODIFICATION -->
+  <!-- ====================================================== -->
+
+  <p-dialog
+    [(visible)]="trancheIRPPDialog"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="!saving"
+    [closeOnEscape]="!saving"
+    [style]="{ width: 'min(46rem, 96vw)' }"
+    [breakpoints]="{ '768px': '96vw' }"
+    [header]="
+      isEditMode
+        ? 'Modifier une tranche IRPP'
+        : 'Nouvelle tranche IRPP'
+    "
+    styleClass="tranche-dialog">
+
+    <form
+      [formGroup]="trancheIRPPForm"
+      (ngSubmit)="saveTrancheIRPP()"
+      class="tranche-form">
+
+      <div class="form-intro">
+        <i class="pi pi-info-circle"></i>
+
+        <span>
+          Les seuils sont exprimés dans la devise utilisée par
+          ton application. Le taux doit être saisi sous forme
+          décimale : 0,10 correspond à 10 %.
+        </span>
+      </div>
+
+
+      <!-- ANNÉE ET ORDRE -->
+
+      <div class="form-grid">
+
+        <div class="form-field">
+          <label for="anneeFiscale">
+            Année fiscale <span class="required">*</span>
+          </label>
+
+          <p-inputNumber
+            inputId="anneeFiscale"
+            formControlName="anneeFiscale"
+            [useGrouping]="false"
+            [min]="2000"
+            [max]="9999"
+            [invalid]="
+              trancheIRPPForm.get('anneeFiscale')?.invalid &&
+              trancheIRPPForm.get('anneeFiscale')?.touched
+            "
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small
+            class="field-error"
+            *ngIf="
+              trancheIRPPForm.get('anneeFiscale')?.touched &&
+              trancheIRPPForm.get('anneeFiscale')?.invalid
+            ">
+            Saisis une année fiscale valide.
+          </small>
+        </div>
+
+
+        <div class="form-field">
+          <label for="ordreTranche">
+            Ordre de la tranche <span class="required">*</span>
+          </label>
+
+          <p-inputNumber
+            inputId="ordreTranche"
+            formControlName="ordreTranche"
+            [useGrouping]="false"
+            [min]="1"
+            [max]="999"
+            [invalid]="
+              trancheIRPPForm.get('ordreTranche')?.invalid &&
+              trancheIRPPForm.get('ordreTranche')?.touched
+            "
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small
+            class="field-error"
+            *ngIf="
+              trancheIRPPForm.get('ordreTranche')?.touched &&
+              trancheIRPPForm.get('ordreTranche')?.invalid
+            ">
+            L'ordre doit être supérieur ou égal à 1.
+          </small>
+        </div>
+
+      </div>
+
+
+      <!-- SEUILS -->
+
+      <div class="form-grid">
+
+        <div class="form-field">
+          <label for="seuilMin">
+            Seuil minimal <span class="required">*</span>
+          </label>
+
+          <p-inputNumber
+            inputId="seuilMin"
+            formControlName="seuilMin"
+            mode="decimal"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            [invalid]="
+              trancheIRPPForm.get('seuilMin')?.invalid &&
+              trancheIRPPForm.get('seuilMin')?.touched
+            "
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small
+            class="field-error"
+            *ngIf="
+              trancheIRPPForm.get('seuilMin')?.touched &&
+              trancheIRPPForm.get('seuilMin')?.invalid
+            ">
+            Le seuil minimal doit être positif ou nul.
+          </small>
+        </div>
+
+
+        <div class="form-field">
+          <label for="seuilMax">
+            Seuil maximal
+          </label>
+
+          <p-inputNumber
+            inputId="seuilMax"
+            formControlName="seuilMax"
+            mode="decimal"
+            [min]="0"
+            [minFractionDigits]="0"
+            [maxFractionDigits]="2"
+            [showClear]="true"
+            styleClass="w-full">
+          </p-inputNumber>
+
+          <small class="field-hint">
+            Laisse vide pour une tranche sans plafond.
+          </small>
+        </div>
+
+      </div>
+
+
+      <!-- TAUX -->
+
+      <div class="form-field">
+        <label for="taux">
+          Taux d'imposition <span class="required">*</span>
+        </label>
+
+        <p-inputNumber
+          inputId="taux"
+          formControlName="taux"
+          mode="decimal"
+          [min]="0"
+          [max]="1"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="6"
+          [invalid]="
+            trancheIRPPForm.get('taux')?.invalid &&
+            trancheIRPPForm.get('taux')?.touched
+          "
+          styleClass="w-full">
+        </p-inputNumber>
+
+        <small class="field-hint">
+          Exemple : 0,10 pour 10 %, 0,15 pour 15 %.
+        </small>
+
+        <small
+          class="field-error"
+          *ngIf="
+            trancheIRPPForm.get('taux')?.touched &&
+            trancheIRPPForm.get('taux')?.invalid
+          ">
+          Le taux doit être compris entre 0 et 1.
+        </small>
+      </div>
+
+
+      <!-- DESCRIPTION -->
+
+      <div class="form-field">
+        <label for="description">
+          Description <span class="required">*</span>
+        </label>
+
+        <textarea
+          pTextarea
+          id="description"
+          formControlName="description"
+          rows="3"
+          maxlength="500"
+          [autoResize]="true"
+          placeholder="Description de la tranche d'imposition..."
+          class="w-full"
+          [class.input-invalid]="
+            trancheIRPPForm.get('description')?.invalid &&
+            trancheIRPPForm.get('description')?.touched
+          ">
+        </textarea>
+
+        <small
+          class="field-error"
+          *ngIf="
+            trancheIRPPForm.get('description')?.touched &&
+            trancheIRPPForm.get('description')?.invalid
+          ">
+          La description est obligatoire et limitée à 500 caractères.
+        </small>
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="dialog-actions">
+
+        <button
+          pButton
+          type="button"
+          label="Annuler"
+          icon="pi pi-times"
+          severity="secondary"
+          [outlined]="true"
+          [disabled]="saving"
+          (click)="fermerDialog()">
+        </button>
+
+        <button
+          pButton
+          type="submit"
+          [label]="isEditMode ? 'Enregistrer' : 'Créer la tranche'"
+          [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+          [loading]="saving"
+          [disabled]="saving">
+        </button>
+
+      </div>
+
+    </form>
+
+  </p-dialog>
+
+</div>

@@ -295,117 +295,119 @@ export class UnitesLocativesService {
   // CONSTRUCTION DU FORMDATA
   // ==========================================================
 
-  private creerFormData(
-    request:
-      CreerUniteLocativeRequest |
-      ModifierUniteLocativeRequest
-  ): FormData {
 
-    const formData = new FormData();
+private creerFormData(
+  request:
+    CreerUniteLocativeRequest |
+    ModifierUniteLocativeRequest
+): FormData {
 
-    // --------------------------------------------------------
-    // CHAMPS DE L'UNITÉ
-    // --------------------------------------------------------
+  const formData = new FormData();
 
-    formData.append(
-      'Reference',
-      request.reference
-    );
+  // --------------------------------------------------------
+  // CHAMPS OBLIGATOIRES
+  // --------------------------------------------------------
 
-    formData.append(
-      'Type',
-      request.type.toString()
-    );
+  formData.append('Reference', request.reference);
+  formData.append('Type', String(request.type));
+  formData.append('Superficie', String(request.superficie));
+  formData.append('Loyer', String(request.loyer));
+  formData.append('Statut', String(request.statut));
+  formData.append('BienImmobilierId', request.bienImmobilierId);
 
-    formData.append(
-      'Superficie',
-      request.superficie.toString()
-    );
+  // --------------------------------------------------------
+  // CHAMPS OPTIONNELS
+  // --------------------------------------------------------
 
-    formData.append(
-      'Loyer',
-      request.loyer.toString()
-    );
+  const champs = request as CreerUniteLocativeRequest & {
+    nombrePieces?: number | null;
+    etage?: number | null;
+    chargesLocativesMensuelles?: number | null;
+    montantCaution?: number | null;
+    datePremiereMiseEnLocation?: string | Date | null;
+    dateDerniereRenovation?: string | Date | null;
+    estExonereeFiscalement?: boolean;
+    motifExoneration?: string | null;
+  };
 
-    formData.append(
-      'Statut',
-      request.statut.toString()
-    );
-
-    formData.append(
-      'BienImmobilierId',
-      request.bienImmobilierId
-    );
-
-
-    // --------------------------------------------------------
-    // PHOTOS EXISTANTES
-    // --------------------------------------------------------
-    //
-    // Uniquement disponibles lors d'une modification.
-    //
-    // Le backend reçoit :
-    //
-    // public List<string>? PhotosExistantes { get; set; }
-    //
-    // On ajoute chaque photo individuellement afin que
-    // ASP.NET Core puisse reconstruire la List<string>.
-    // --------------------------------------------------------
-
-    if (
-      'photosExistantes' in request &&
-      request.photosExistantes
-    ) {
-
-      for (
-        const photo of request.photosExistantes
-      ) {
-
-        if (photo?.trim()) {
-
-          formData.append(
-            'PhotosExistantes',
-            photo
-          );
-        }
-      }
-    }
-
-
-    // --------------------------------------------------------
-    // NOUVELLES PHOTOS
-    // --------------------------------------------------------
-    //
-    // Le backend reçoit :
-    //
-    // public IFormFileCollection? Fichiers { get; set; }
-    //
-    // Chaque fichier est donc ajouté avec la clé
-    // "Fichiers".
-    // --------------------------------------------------------
-
-    if (
-      request.fichiers &&
-      request.fichiers.length > 0
-    ) {
-
-      for (
-        const fichier of request.fichiers
-      ) {
-
-        if (fichier) {
-
-          formData.append(
-            'Fichiers',
-            fichier,
-            fichier.name
-          );
-        }
-      }
-    }
-
-    return formData;
+  if (champs.nombrePieces != null) {
+    formData.append('NombrePieces', String(champs.nombrePieces));
   }
+
+  if (champs.etage != null) {
+    formData.append('Etage', String(champs.etage));
+  }
+
+  if (champs.chargesLocativesMensuelles != null) {
+    formData.append(
+      'ChargesLocativesMensuelles',
+      String(champs.chargesLocativesMensuelles)
+    );
+  }
+
+  if (champs.montantCaution != null) {
+    formData.append(
+      'MontantCaution',
+      String(champs.montantCaution)
+    );
+  }
+
+ if (champs.datePremiereMiseEnLocation) {
+  formData.append(
+    'DatePremiereMiseEnLocation',
+    String(champs.datePremiereMiseEnLocation).substring(0, 10)
+  );
+}
+
+if (champs.dateDerniereRenovation) {
+  formData.append(
+    'DateDerniereRenovation',
+    String(champs.dateDerniereRenovation).substring(0, 10)
+  );
+}
+
+  formData.append(
+    'EstExonereeFiscalement',
+    String(champs.estExonereeFiscalement ?? false)
+  );
+
+  if (champs.motifExoneration?.trim()) {
+    formData.append(
+      'MotifExoneration',
+      champs.motifExoneration.trim()
+    );
+  }
+
+  // --------------------------------------------------------
+  // PHOTOS EXISTANTES
+  // --------------------------------------------------------
+
+  if (
+    'photosExistantes' in request &&
+    request.photosExistantes
+  ) {
+    for (const photo of request.photosExistantes) {
+      if (photo?.trim()) {
+        formData.append('PhotosExistantes', photo);
+      }
+    }
+  }
+
+  // --------------------------------------------------------
+  // NOUVELLES PHOTOS
+  // --------------------------------------------------------
+
+  if (request.fichiers?.length) {
+    for (const fichier of request.fichiers) {
+      if (fichier) {
+        formData.append('Fichiers', fichier, fichier.name);
+      }
+    }
+  }
+
+  return formData;
+}
+
 
 
   // ==========================================================

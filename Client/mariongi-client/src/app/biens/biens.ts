@@ -41,14 +41,13 @@ import {
   TypeBien,
   ROLES,
   CreerBienRequest,
-  ModifierBienRequest
+  ModifierBienRequest,
+  StatutFoncier
 } from '../models/gestimmo.models';
-
 
 @Component({
   selector: 'app-biens',
   standalone: true,
-
   imports: [
     CommonModule,
     ReactiveFormsModule,
@@ -63,12 +62,10 @@ import {
     TagModule,
     TooltipModule
   ],
-
   providers: [
     MessageService,
     ConfirmationService
   ],
-
   templateUrl: './biens.html',
   styleUrls: ['./biens.scss']
 })
@@ -80,81 +77,68 @@ export class Biens implements OnInit {
 
   readonly bienService = inject(BiensService);
 
-  private readonly authService =
-    inject(AuthService);
+  private readonly authService = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
+  private readonly messageService = inject(MessageService);
+  private readonly confirmationService = inject(ConfirmationService);
+  private readonly route = inject(ActivatedRoute);
 
-  private readonly fb =
-    inject(FormBuilder);
+  // ============================================================
+  // STATUTS FONCIERS
+  // Les valeurs doivent correspondre à l'enum C#.
+  // ============================================================
 
-  private readonly messageService =
-    inject(MessageService);
-
-  private readonly confirmationService =
-    inject(ConfirmationService);
-
-  private readonly route =
-    inject(ActivatedRoute);
-
+  readonly statutsFonciers = [
+    {
+      label: 'Non renseigné',
+      value: StatutFoncier.NonRenseigne
+    },
+    {
+      label: 'Titre foncier disponible',
+      value: StatutFoncier.TitreFoncierDisponible
+    },
+    {
+      label: 'Demande en cours',
+      value: StatutFoncier.DemandeEnCours
+    },
+    {
+      label: 'Sans titre foncier',
+      value: StatutFoncier.SansTitreFoncier
+    },
+    {
+      label: 'Autre',
+      value: StatutFoncier.Autre
+    }
+  ];
 
   // ============================================================
   // DONNÉES
   // ============================================================
 
   biens: BienDto[] = [];
-
   chargement = false;
-
   userRole = '';
-
 
   // ============================================================
   // MODALE
   // ============================================================
 
   displayModal = false;
-
   isEditMode = false;
-
   selectedBienId: string | null = null;
-
   bienForm!: FormGroup;
-
 
   // ============================================================
   // PHOTOS
   // ============================================================
 
-  /**
-   * Nouvelles photos sélectionnées par l'utilisateur.
-   */
   fichiersSelectionnes: File[] = [];
-
-  /**
-   * Photos déjà enregistrées sur le serveur.
-   *
-   * En modification, seules les photos présentes dans cette liste
-   * seront conservées.
-   */
   photosExistantes: string[] = [];
-
-  /**
-   * Prévisualisations des nouvelles photos.
-   */
   apercusPhotos: string[] = [];
 
-  /**
-   * Nombre maximum de photos par bien.
-   */
   readonly maxPhotos = 20;
-
-  /**
-   * Taille maximale d'un fichier : 10 Mo.
-   */
   readonly maxTaillePhoto = 10 * 1024 * 1024;
 
-  /**
-   * Extensions autorisées.
-   */
   readonly extensionsPhotosAutorisees = [
     '.jpg',
     '.jpeg',
@@ -162,109 +146,135 @@ export class Biens implements OnInit {
     '.webp'
   ];
 
-
   // ============================================================
   // DROITS
   // ============================================================
 
   get canManageBiens(): boolean {
-
     return this.authService.hasRole([
       ROLES.Administrateur,
       ROLES.Gestionnaire
     ]);
   }
 
-
   // ============================================================
   // INITIALISATION
   // ============================================================
 
   ngOnInit(): void {
-
     this.userRole =
       this.authService.currentUser()?.role || '';
 
     this.initForm();
 
-    /*
-     * Vérifie si la page a été ouverte avec :
-     *
-     * /biens?edit=ID_DU_BIEN
-     *
-     * Dans ce cas, le bien correspondant sera automatiquement
-     * ouvert dans le popup de modification.
-     */
     this.route.queryParamMap.subscribe(params => {
-
-      const editId =
-        params.get('edit');
-
+      const editId = params.get('edit');
       this.chargerBiens(editId);
     });
   }
-
 
   // ============================================================
   // FORMULAIRE
   // ============================================================
 
   initForm(): void {
-
     this.bienForm = this.fb.group({
-
-      nom: [
-        '',
-        [
-          Validators.required,
-          Validators.maxLength(150)
-        ]
-      ],
-
-      reference: [
-        '',
-        [
-          Validators.required,
-          Validators.maxLength(50)
-        ]
-      ],
-
+      // Identification
+      nom: ['', [
+        Validators.required,
+        Validators.maxLength(150)
+      ]],
+      reference: ['', [
+        Validators.required,
+        Validators.maxLength(50)
+      ]],
       type: [
         TypeBien.Immeuble,
         Validators.required
       ],
 
-      adresse: [
-        '',
-        [
-          Validators.required,
-          Validators.maxLength(250)
-        ]
-      ],
-
-      ville: [
-        '',
-        [
-          Validators.required,
-          Validators.maxLength(100)
-        ]
-      ],
-
-      quartier: [
-        '',
+      // Localisation
+      adresse: ['', [
+        Validators.required,
+        Validators.maxLength(250)
+      ]],
+      ville: ['', [
+        Validators.required,
         Validators.maxLength(100)
-      ],
+      ]],
+      quartier: ['', Validators.maxLength(100)],
+      region: [''],
+      departement: [''],
+      arrondissement: [''],
 
-      superficie: [
-        0,
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
+      // Caractéristiques
+      superficie: [null, [
+        Validators.required,
+        Validators.min(1),
+        Validators.max(1000000)
+      ]],
+      anneeConstruction: [null, [
+        Validators.min(1),
+        Validators.max(9999)
+      ]],
+      nombreEtages: [null, [
+        Validators.min(0),
+        Validators.max(1000)
+      ]],
+
+      // Informations cadastrales
+      numeroTitreFoncier: [''],
+      numeroLot: [''],
+      numeroParcelle: [''],
+      referenceCadastrale: [''],
+
+      // Informations financières
+      valeurAcquisition: [null, Validators.min(0)],
+      dateAcquisition: [null],
+      valeurEstimee: [null, Validators.min(0)],
+      dateDerniereEvaluation: [null],
+
+      // Statut foncier
+      statutFoncier: [
+        StatutFoncier.NonRenseigne
       ]
     });
   }
 
+  private nombreOptionnel(
+    valeur: unknown
+  ): number | null {
+    if (
+      valeur === null ||
+      valeur === undefined ||
+      valeur === ''
+    ) {
+      return null;
+    }
+
+    const nombre = Number(valeur);
+
+    return Number.isFinite(nombre)
+      ? nombre
+      : null;
+  }
+
+  private texteOptionnel(
+    valeur: unknown
+  ): string | null {
+    if (
+      valeur === null ||
+      valeur === undefined
+    ) {
+      return null;
+    }
+
+    const texte = String(valeur).trim();
+
+    return texte.length > 0
+      ? texte
+      : null;
+  }
 
   // ============================================================
   // CHARGEMENT DES BIENS
@@ -273,98 +283,59 @@ export class Biens implements OnInit {
   chargerBiens(
     editId: string | null = null
   ): void {
-
     this.chargement = true;
 
-    this.bienService
-      .getBiens()
-      .subscribe({
+    this.bienService.getBiens().subscribe({
+      next: (data: BienDto[]) => {
+        this.biens = data ?? [];
+        this.chargement = false;
 
-        next: (data: BienDto[]) => {
-
-          this.biens = data ?? [];
-
-          this.chargement = false;
-
-
-          // ====================================================
-          // OUVERTURE AUTOMATIQUE DU POPUP DE MODIFICATION
-          // ====================================================
-
-          if (editId) {
-
-            const bien =
-              this.biens.find(
-                b => b.id === editId
-              );
-
-            if (bien) {
-
-              this.ouvrirModalModification(
-                bien
-              );
-
-              /*
-               * Supprime le paramètre "edit" de l'URL
-               * après ouverture du popup.
-               *
-               * Cela évite qu'un simple rafraîchissement
-               * de la page réouvre automatiquement le popup.
-               */
-              this.routerWithoutReload();
-
-            } else {
-
-              console.warn(
-                `Le bien ${editId} n'a pas été trouvé.`
-              );
-
-              this.messageService.add({
-
-                severity: 'warn',
-
-                summary: 'Bien introuvable',
-
-                detail:
-                  'Le bien demandé n’existe plus ou n’est pas accessible.'
-              });
-            }
-          }
-        },
-
-        error: (err) => {
-
-          console.error(
-            'Erreur chargement biens:',
-            err
+        if (editId) {
+          const bien = this.biens.find(
+            b => b.id === editId
           );
 
-          this.chargement = false;
+          if (bien) {
+            this.ouvrirModalModification(bien);
+            this.routerWithoutReload();
+          } else {
+            console.warn(
+              `Le bien ${editId} n'a pas été trouvé.`
+            );
 
-          this.messageService.add({
-
-            severity: 'error',
-
-            summary: 'Erreur',
-
-            detail:
-              'Impossible de charger la liste des biens.'
-          });
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'Bien introuvable',
+              detail:
+                'Le bien demandé n’existe plus ou n’est pas accessible.'
+            });
+          }
         }
-      });
+      },
+
+      error: (err) => {
+        console.error(
+          'Erreur chargement biens:',
+          err
+        );
+
+        this.chargement = false;
+
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail:
+            'Impossible de charger la liste des biens.'
+        });
+      }
+    });
   }
 
-
   // ============================================================
-  // NETTOYAGE DU PARAMÈTRE "edit"
+  // NETTOYAGE DU PARAMÈTRE EDIT
   // ============================================================
 
   private routerWithoutReload(): void {
-
-    /*
-     * On retire uniquement le paramètre "edit"
-     * sans recharger le composant.
-     */
     window.history.replaceState(
       {},
       '',
@@ -372,43 +343,51 @@ export class Biens implements OnInit {
     );
   }
 
-
   // ============================================================
   // AJOUT D'UN BIEN
   // ============================================================
 
   ouvrirModalAjout(): void {
-
     if (!this.canManageBiens) {
       return;
     }
 
     this.isEditMode = false;
-
     this.selectedBienId = null;
 
     this.reinitialiserPhotos();
 
     this.bienForm.reset({
-
       nom: '',
-
       reference: '',
-
       type: TypeBien.Immeuble,
 
       adresse: '',
-
       ville: '',
-
       quartier: '',
+      region: '',
+      departement: '',
+      arrondissement: '',
 
-      superficie: 0
+      superficie: null,
+      anneeConstruction: null,
+      nombreEtages: null,
+
+      numeroTitreFoncier: '',
+      numeroLot: '',
+      numeroParcelle: '',
+      referenceCadastrale: '',
+
+      valeurAcquisition: null,
+      dateAcquisition: null,
+      valeurEstimee: null,
+      dateDerniereEvaluation: null,
+
+      statutFoncier: StatutFoncier.NonRenseigne
     });
 
     this.displayModal = true;
   }
-
 
   // ============================================================
   // MODIFICATION D'UN BIEN
@@ -417,17 +396,14 @@ export class Biens implements OnInit {
   ouvrirModalModification(
     bien: BienDto
   ): void {
-
     if (!this.canManageBiens) {
       return;
     }
 
     this.isEditMode = true;
-
     this.selectedBienId = bien.id;
 
     this.fichiersSelectionnes = [];
-
     this.apercusPhotos = [];
 
     this.photosExistantes = [
@@ -435,53 +411,64 @@ export class Biens implements OnInit {
     ];
 
     this.bienForm.patchValue({
+      nom: bien.nom,
+      reference: bien.reference,
+      type: bien.type,
 
-      nom:
-        bien.nom,
+      adresse: bien.adresse,
+      ville: bien.ville,
+      quartier: bien.quartier ?? '',
+      region: bien.region ?? '',
+      departement: bien.departement ?? '',
+      arrondissement: bien.arrondissement ?? '',
 
-      reference:
-        bien.reference,
+      superficie: bien.superficie,
+      anneeConstruction:
+        bien.anneeConstruction ?? null,
+      nombreEtages:
+        bien.nombreEtages ?? null,
 
-      type:
-        bien.type,
+      numeroTitreFoncier:
+        bien.numeroTitreFoncier ?? '',
+      numeroLot: bien.numeroLot ?? '',
+      numeroParcelle: bien.numeroParcelle ?? '',
+      referenceCadastrale:
+        bien.referenceCadastrale ?? '',
 
-      adresse:
-        bien.adresse,
+      valeurAcquisition:
+        bien.valeurAcquisition ?? null,
+      dateAcquisition:
+        bien.dateAcquisition
+          ? bien.dateAcquisition.substring(0, 10)
+          : null,
 
-      ville:
-        bien.ville,
+      valeurEstimee:
+        bien.valeurEstimee ?? null,
+      dateDerniereEvaluation:
+        bien.dateDerniereEvaluation
+          ? bien.dateDerniereEvaluation.substring(0, 10)
+          : null,
 
-      quartier:
-        bien.quartier ?? '',
-
-      superficie:
-        bien.superficie
+      statutFoncier:
+        bien.statutFoncier ??
+        StatutFoncier.NonRenseigne
     });
 
     this.displayModal = true;
   }
 
-
   // ============================================================
   // SÉLECTION DES PHOTOS
   // ============================================================
 
-  selectionnerPhotos(
-    event: Event
-  ): void {
+  selectionnerPhotos(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
-    const input =
-      event.target as HTMLInputElement;
-
-    if (
-      !input.files ||
-      input.files.length === 0
-    ) {
+    if (!input.files || input.files.length === 0) {
       return;
     }
 
-    const fichiers =
-      Array.from(input.files);
+    const fichiers = Array.from(input.files);
 
     const nombreActuel =
       this.photosExistantes.length +
@@ -491,105 +478,61 @@ export class Biens implements OnInit {
       this.maxPhotos - nombreActuel;
 
     if (nombreDisponible <= 0) {
-
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Limite atteinte',
-
         detail:
           `Un bien ne peut pas contenir plus de ${this.maxPhotos} photos.`
       });
 
       input.value = '';
-
       return;
     }
 
     const fichiersAControler =
-      fichiers.slice(
-        0,
-        nombreDisponible
-      );
+      fichiers.slice(0, nombreDisponible);
 
-    if (
-      fichiers.length >
-      nombreDisponible
-    ) {
-
+    if (fichiers.length > nombreDisponible) {
       this.messageService.add({
-
         severity: 'warn',
-
-        summary:
-          'Certaines photos ignorées',
-
+        summary: 'Certaines photos ignorées',
         detail:
           `Vous pouvez encore ajouter seulement ${nombreDisponible} photo(s).`
       });
     }
 
-    for (
-      const fichier of fichiersAControler
-    ) {
-
+    for (const fichier of fichiersAControler) {
       const validation =
-        this.validerFichierPhoto(
-          fichier
-        );
+        this.validerFichierPhoto(fichier);
 
       if (!validation.valide) {
-
         this.messageService.add({
-
           severity: 'warn',
-
-          summary:
-            'Photo non valide',
-
-          detail:
-            validation.message
+          summary: 'Photo non valide',
+          detail: validation.message
         });
 
         continue;
       }
 
-      this.fichiersSelectionnes.push(
-        fichier
-      );
+      this.fichiersSelectionnes.push(fichier);
 
-      const reader =
-        new FileReader();
+      const reader = new FileReader();
 
       reader.onload = () => {
-
-        if (
-          typeof reader.result ===
-          'string'
-        ) {
-
-          this.apercusPhotos.push(
-            reader.result
-          );
+        if (typeof reader.result === 'string') {
+          this.apercusPhotos.push(reader.result);
         }
       };
 
-      reader.readAsDataURL(
-        fichier
-      );
+      reader.readAsDataURL(fichier);
     }
 
-    /*
-     * Permet de sélectionner à nouveau
-     * le même fichier.
-     */
     input.value = '';
   }
 
-
   // ============================================================
-  // VALIDATION D'UN FICHIER
+  // VALIDATION D'UN FICHIER PHOTO
   // ============================================================
 
   private validerFichierPhoto(
@@ -598,166 +541,104 @@ export class Biens implements OnInit {
     valide: boolean;
     message: string;
   } {
-
     if (fichier.size <= 0) {
-
       return {
-
         valide: false,
-
         message:
           `Le fichier "${fichier.name}" est vide.`
       };
     }
 
-    if (
-      fichier.size >
-      this.maxTaillePhoto
-    ) {
-
+    if (fichier.size > this.maxTaillePhoto) {
       return {
-
         valide: false,
-
         message:
           `La photo "${fichier.name}" dépasse la limite de 10 Mo.`
       };
     }
 
-    const nomFichier =
-      fichier.name.toLowerCase();
+    const nomFichier = fichier.name.toLowerCase();
 
-    const extension =
-      nomFichier.substring(
-        nomFichier.lastIndexOf('.')
-      );
+    const extension = nomFichier.substring(
+      nomFichier.lastIndexOf('.')
+    );
 
     if (
-      !this.extensionsPhotosAutorisees
-        .includes(extension)
+      !this.extensionsPhotosAutorisees.includes(extension)
     ) {
-
       return {
-
         valide: false,
-
         message:
           `Le format "${extension}" n'est pas autorisé.`
       };
     }
 
     return {
-
       valide: true,
-
       message: ''
     };
   }
-
 
   // ============================================================
   // SUPPRIMER UNE NOUVELLE PHOTO
   // ============================================================
 
-  supprimerNouvellePhoto(
-    index: number
-  ): void {
-
-    this.fichiersSelectionnes.splice(
-      index,
-      1
-    );
-
-    this.apercusPhotos.splice(
-      index,
-      1
-    );
+  supprimerNouvellePhoto(index: number): void {
+    this.fichiersSelectionnes.splice(index, 1);
+    this.apercusPhotos.splice(index, 1);
   }
-
 
   // ============================================================
   // SUPPRIMER UNE PHOTO EXISTANTE
   // ============================================================
 
-  supprimerPhotoExistante(
-    index: number
-  ): void {
-
-    this.photosExistantes.splice(
-      index,
-      1
-    );
+  supprimerPhotoExistante(index: number): void {
+    this.photosExistantes.splice(index, 1);
   }
-
 
   // ============================================================
   // URL D'UNE PHOTO
   // ============================================================
 
-  getPhotoUrl(
-    photo: string
-  ): string {
-
-    return this.bienService.getPhotoUrl(
-      photo
-    );
+  getPhotoUrl(photo: string): string {
+    return this.bienService.getPhotoUrl(photo);
   }
-
 
   // ============================================================
   // RÉINITIALISER LES PHOTOS
   // ============================================================
 
   private reinitialiserPhotos(): void {
-
     this.fichiersSelectionnes = [];
-
     this.photosExistantes = [];
-
     this.apercusPhotos = [];
   }
-
 
   // ============================================================
   // SAUVEGARDE
   // ============================================================
 
   sauvegarder(): void {
-
     if (!this.canManageBiens) {
       return;
     }
 
     if (this.bienForm.invalid) {
-
       this.bienForm.markAllAsTouched();
-
       return;
     }
 
-    const valeurs =
-      this.bienForm.getRawValue();
+    const valeurs = this.bienForm.getRawValue();
 
-
-    // ==========================================================
-    // CONTRÔLE DU NOMBRE TOTAL DE PHOTOS
-    // ==========================================================
-
+    // Contrôle du nombre total de photos
     const nombreTotalPhotos =
       this.photosExistantes.length +
       this.fichiersSelectionnes.length;
 
-    if (
-      nombreTotalPhotos >
-      this.maxPhotos
-    ) {
-
+    if (nombreTotalPhotos > this.maxPhotos) {
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Trop de photos',
-
         detail:
           `Un maximum de ${this.maxPhotos} photos est autorisé.`
       });
@@ -765,427 +646,238 @@ export class Biens implements OnInit {
       return;
     }
 
-
-    // ==========================================================
-    // CRÉATION
-    // ==========================================================
-
+    // Création du modèle commun
     const creation: CreerBienRequest = {
+      nom: String(valeurs.nom).trim(),
+      reference: String(valeurs.reference).trim(),
+      type: valeurs.type as TypeBien,
 
-      nom:
-        String(valeurs.nom).trim(),
+      adresse: String(valeurs.adresse).trim(),
+      ville: String(valeurs.ville).trim(),
+      quartier: this.texteOptionnel(valeurs.quartier),
+      region: this.texteOptionnel(valeurs.region),
+      departement: this.texteOptionnel(valeurs.departement),
+      arrondissement: this.texteOptionnel(valeurs.arrondissement),
 
-      reference:
-        String(valeurs.reference).trim(),
+      superficie: Number(valeurs.superficie),
+      anneeConstruction:
+        this.nombreOptionnel(valeurs.anneeConstruction),
+      nombreEtages:
+        this.nombreOptionnel(valeurs.nombreEtages),
 
-      type:
-        valeurs.type,
+      numeroTitreFoncier:
+        this.texteOptionnel(valeurs.numeroTitreFoncier),
+      numeroLot:
+        this.texteOptionnel(valeurs.numeroLot),
+      numeroParcelle:
+        this.texteOptionnel(valeurs.numeroParcelle),
+      referenceCadastrale:
+        this.texteOptionnel(valeurs.referenceCadastrale),
 
-      adresse:
-        String(valeurs.adresse).trim(),
+      valeurAcquisition:
+        this.nombreOptionnel(valeurs.valeurAcquisition),
+      dateAcquisition:
+        this.texteOptionnel(valeurs.dateAcquisition),
+      valeurEstimee:
+        this.nombreOptionnel(valeurs.valeurEstimee),
+      dateDerniereEvaluation:
+        this.texteOptionnel(valeurs.dateDerniereEvaluation),
 
-      ville:
-        String(valeurs.ville).trim(),
+      statutFoncier: Number(valeurs.statutFoncier),
 
-      quartier:
-        valeurs.quartier
-          ? String(
-              valeurs.quartier
-            ).trim()
-          : null,
-
-      superficie:
-        Number(
-          valeurs.superficie
-        ),
-
-      fichiers:
-        this.fichiersSelectionnes
+      fichiers: [...this.fichiersSelectionnes]
     };
 
-
-    // ==========================================================
-    // MODIFICATION
-    // ==========================================================
-
-    if (
-      this.isEditMode &&
-      this.selectedBienId
-    ) {
-
-      const modification:
-        ModifierBienRequest = {
-
-        nom:
-          creation.nom,
-
-        reference:
-          creation.reference,
-
-        type:
-          creation.type,
-
-        adresse:
-          creation.adresse,
-
-        ville:
-          creation.ville,
-
-        quartier:
-          creation.quartier,
-
-        superficie:
-          creation.superficie,
-
-        photosExistantes:
-          [
-            ...this.photosExistantes
-          ],
-
-        fichiers:
-          [
-            ...this.fichiersSelectionnes
-          ]
+    // Modification
+    if (this.isEditMode && this.selectedBienId) {
+      const modification: ModifierBienRequest = {
+        ...creation,
+        photosExistantes: [...this.photosExistantes],
+        fichiers: [...this.fichiersSelectionnes]
       };
 
-
       this.bienService
-        .updateBien(
-          this.selectedBienId,
-          modification
-        )
+        .updateBien(this.selectedBienId, modification)
         .subscribe({
-
           next: () => {
-
             this.messageService.add({
-
-              severity:
-                'success',
-
-              summary:
-                'Succès',
-
-              detail:
-                'Bien modifié avec succès.'
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Bien modifié avec succès.'
             });
 
             this.displayModal = false;
-
             this.reinitialiserPhotos();
-
             this.chargerBiens();
           },
 
           error: (err) => {
-
-            this.gererErreurSauvegarde(
-
-              err,
-
-              'Erreur lors de la modification.'
-            );
+            this.gererErreurSauvegarde(err);
           }
         });
 
       return;
     }
 
+    // Création
+    this.bienService.createBien(creation).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Bien créé avec succès.'
+        });
 
-    // ==========================================================
-    // CRÉATION
-    // ==========================================================
+        this.displayModal = false;
+        this.reinitialiserPhotos();
+        this.chargerBiens();
+      },
 
-    this.bienService
-      .createBien(
-        creation
-      )
-      .subscribe({
-
-        next: () => {
-
-          this.messageService.add({
-
-            severity:
-              'success',
-
-            summary:
-              'Succès',
-
-            detail:
-              'Bien créé avec succès.'
-          });
-
-          this.displayModal = false;
-
-          this.reinitialiserPhotos();
-
-          this.chargerBiens();
-        },
-
-        error: (err) => {
-
-          this.gererErreurSauvegarde(
-
-            err,
-
-            'Erreur lors de la création.'
-          );
-        }
-      });
+      error: (err) => {
+        this.gererErreurSauvegarde(err);
+      }
+    });
   }
-
 
   // ============================================================
   // GESTION DES ERREURS DE SAUVEGARDE
   // ============================================================
 
-  private gererErreurSauvegarde(
-    err: any,
-    messageDefaut: string
-  ): void {
-
+  private gererErreurSauvegarde(erreur: any): void {
     console.error(
-      'Erreur sauvegarde bien:',
-      err
+      'Erreur lors de la sauvegarde du bien :',
+      erreur
     );
 
-    const errorMessage =
-      typeof err.error === 'string'
-        ? err.error
-        : err.error?.message ||
-          err.error?.title ||
-          '';
+    console.error(
+      'Détails de validation :',
+      erreur?.error?.errors
+    );
 
-    const messageNormalise =
-      errorMessage.toLowerCase();
+    const erreursValidation = erreur?.error?.errors;
 
+    if (erreursValidation) {
+      const details = Object.entries(erreursValidation)
+        .map(([champ, messages]) => {
+          const listeMessages = Array.isArray(messages)
+            ? messages.join(', ')
+            : String(messages);
 
-    // ==========================================================
-    // RÉFÉRENCE OU NOM DÉJÀ UTILISÉ
-    // ==========================================================
-
-    if (
-      err.status === 409
-    ) {
-
-      if (
-        messageNormalise.includes(
-          'nom'
-        )
-      ) {
-
-        this.messageService.add({
-
-          severity:
-            'error',
-
-          summary:
-            'Nom déjà utilisé',
-
-          detail:
-            'Un bien possède déjà ce nom dans votre société. Veuillez en choisir un autre.'
-        });
-
-        return;
-      }
-
-      if (
-        messageNormalise.includes(
-          'référence'
-        ) ||
-        messageNormalise.includes(
-          'reference'
-        )
-      ) {
-
-        this.messageService.add({
-
-          severity:
-            'error',
-
-          summary:
-            'Référence existante',
-
-          detail:
-            'Un bien possède déjà cette référence. Veuillez en choisir une autre.'
-        });
-
-        return;
-      }
+          return `${champ} : ${listeMessages}`;
+        })
+        .join('\n');
 
       this.messageService.add({
-
-        severity:
-          'error',
-
-        summary:
-          'Doublon',
-
-        detail:
-          errorMessage ||
-          'Le nom ou la référence existe déjà pour cette société.'
+        severity: 'error',
+        summary: 'Erreur de validation',
+        detail: details,
+        life: 10000
       });
 
       return;
     }
 
-
     this.messageService.add({
-
-      severity:
-        'error',
-
-      summary:
-        'Erreur',
-
+      severity: 'error',
+      summary: 'Erreur',
       detail:
-        errorMessage ||
-        messageDefaut
+        erreur?.error?.detail ??
+        erreur?.error?.title ??
+        erreur?.message ??
+        'Une erreur est survenue lors de la sauvegarde du bien.',
+      life: 10000
     });
   }
-
 
   // ============================================================
   // SUPPRESSION / ARCHIVAGE
   // ============================================================
 
-  supprimerBien(
-    bien: BienDto
-  ): void {
-
+  supprimerBien(bien: BienDto): void {
     if (!this.canManageBiens) {
       return;
     }
 
     this.confirmationService.confirm({
-
       message:
         `Voulez-vous vraiment archiver le bien « ${bien.nom} » (${bien.reference}) ?`,
 
-      header:
-        'Confirmation de suppression',
-
-      icon:
-        'pi pi-exclamation-triangle',
-
-      acceptLabel:
-        'Oui',
-
-      rejectLabel:
-        'Non',
+      header: 'Confirmation de suppression',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Oui',
+      rejectLabel: 'Non',
 
       accept: () => {
+        this.bienService.deleteBien(bien.id).subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Bien archivé avec succès.'
+            });
 
-        this.bienService
-          .deleteBien(
-            bien.id
-          )
-          .subscribe({
+            this.chargerBiens();
+          },
 
-            next: () => {
+          error: (err) => {
+            console.error('Erreur suppression:', err);
 
-              this.messageService.add({
+            const message =
+              typeof err.error === 'string'
+                ? err.error
+                : err.error?.message ??
+                  err.error?.title ??
+                  'Erreur lors de la suppression.';
 
-                severity:
-                  'success',
-
-                summary:
-                  'Succès',
-
-                detail:
-                  'Bien archivé avec succès.'
-              });
-
-              this.chargerBiens();
-            },
-
-            error: (err) => {
-
-              console.error(
-                'Erreur suppression:',
-                err
-              );
-
-              const message =
-                typeof err.error ===
-                'string'
-                  ? err.error
-                  : err.error?.message ||
-                    err.error?.title ||
-                    'Erreur lors de la suppression.';
-
-              this.messageService.add({
-
-                severity:
-                  err.status === 409
-                    ? 'warn'
-                    : 'error',
-
-                summary:
-                  err.status === 409
-                    ? 'Suppression impossible'
-                    : 'Erreur',
-
-                detail:
-                  message
-              });
-            }
-          });
+            this.messageService.add({
+              severity: err.status === 409 ? 'warn' : 'error',
+              summary:
+                err.status === 409
+                  ? 'Suppression impossible'
+                  : 'Erreur',
+              detail: message
+            });
+          }
+        });
       }
     });
   }
 
-
-
-  
   // ============================================================
   // INDICATEURS DE SYNTHÈSE
   // ============================================================
 
-  /**
-   * Nombre total d'unités locatives associées aux biens chargés.
-   */
   get nombreUnitesTotal(): number {
     return this.biens.reduce(
-      (total, bien) => total + (bien.nombreUnites ?? 0),
+      (total, bien) =>
+        total + (bien.nombreUnites ?? 0),
       0
     );
   }
 
-  /**
-   * Nombre de villes distinctes représentées dans la liste.
-   */
   get nombreVilles(): number {
     const villes = this.biens
-      .map(bien => (bien.ville ?? '').trim().toLocaleLowerCase())
+      .map(bien =>
+        (bien.ville ?? '').trim().toLocaleLowerCase()
+      )
       .filter(ville => ville.length > 0);
 
     return new Set(villes).size;
   }
 
-  /**
-   * Nombre total de photos associées aux biens chargés.
-   */
   get nombrePhotosTotal(): number {
     return this.biens.reduce(
-      (total, bien) => total + (bien.photos?.length ?? 0),
+      (total, bien) =>
+        total + (bien.photos?.length ?? 0),
       0
     );
   }
 
-  
   // ============================================================
-  // LIBELLÉ TYPE
+  // LIBELLÉ DU TYPE
   // ============================================================
 
-  getTypeLibelle(
-    type: TypeBien
-  ): string {
-
-    return this.bienService
-      .getTypeLibelle(
-        type
-      );
+  getTypeLibelle(type: TypeBien): string {
+    return this.bienService.getTypeLibelle(type);
   }
 }

@@ -204,6 +204,32 @@ export class Paiements implements OnInit {
 
 
   // =========================================================
+  // STATISTIQUES DES PAIEMENTS
+  // =========================================================
+
+  get totalPaiements(): number {
+    return this.paiements.length;
+  }
+
+  get nombrePaiementsEnAttente(): number {
+    return this.paiements.filter(
+      p => p.statut === StatutTransaction.EnAttente
+    ).length;
+  }
+
+  get nombrePaiementsConfirmes(): number {
+    return this.paiements.filter(
+      p => p.statut === StatutTransaction.Confirme
+    ).length;
+  }
+
+  get nombrePaiementsEchoues(): number {
+    return this.paiements.filter(
+      p => p.statut === StatutTransaction.Echoue
+    ).length;
+  }
+
+  // =========================================================
   // CHARGER LES PAIEMENTS
   // =========================================================
 

@@ -89,295 +89,319 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     // ========================================================
-    // POLICIES GENERALES
+    // POLICIES GÉNÉRALES
     // ========================================================
 
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireRole("Administrateur"));
 
     options.AddPolicy("GestionnaireOrAdmin", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("PersonnelGestion", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
+
+
+    // ========================================================
+    // VALEURS FISCALES DES BIENS
+    // ========================================================
+
+    // Lecture : Administrateur et Gestionnaire
+    options.AddPolicy("ValeursFiscalesBiens.Read", policy =>
         policy.RequireRole(
             "Administrateur",
             "Gestionnaire"));
 
+    // Création : Administrateur et Gestionnaire
+    options.AddPolicy("ValeursFiscalesBiens.Create", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Modification : Administrateur et Gestionnaire
+    options.AddPolicy("ValeursFiscalesBiens.Update", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Suppression logique : Administrateur et Gestionnaire
+    options.AddPolicy("ValeursFiscalesBiens.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+
+    // ========================================================
+    // UTILISATEURS
+    // ========================================================
+
+    options.AddPolicy("Utilisateurs.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Utilisateurs.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Utilisateurs.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Utilisateurs.UpdateStatut", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Utilisateurs.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // ========================================================
+    // SOCIÉTÉS
+    // ========================================================
+
+    options.AddPolicy("Societes.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Societes.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("Societes.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("Societes.Delete", policy =>
+        policy.RequireRole("Administrateur"));
 
     // ========================================================
     // CONTRATS
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
-    // - Locataire (uniquement ses contrats côté contrôleur)
     options.AddPolicy("Contrats.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Locataire"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
 
-    // Création :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Contrats.Create", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Modification :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Contrats.Update", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Suppression :
-    // - Administrateur seulement
     options.AddPolicy("Contrats.Delete", policy =>
-        policy.RequireRole(
-            "Administrateur"));
-
+        policy.RequireRole("Administrateur"));
 
     // ========================================================
     // BIENS IMMOBILIERS
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
-    // - Agent
-    // - Locataire
-    //
-    // Le contrôleur doit limiter le Locataire à sa société /
-    // ses données autorisées.
     options.AddPolicy("Biens.Read", policy =>
         policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Agent",
-            "Locataire"));
+            "Administrateur", "Gestionnaire", "Agent", "Locataire"));
 
-    // Création
     options.AddPolicy("Biens.Create", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Modification
     options.AddPolicy("Biens.Update", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Suppression
     options.AddPolicy("Biens.Delete", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
-
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
     // ========================================================
-    // UNITES LOCATIVES
+    // UNITÉS LOCATIVES
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
-    // - Agent
-    // - Locataire
-    //
-    // IMPORTANT :
-    // Le contrôleur UnitesLocatives limite le Locataire
-    // uniquement à ses propres unités via ses contrats.
     options.AddPolicy("UnitesLocatives.Read", policy =>
         policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Agent",
-            "Locataire"));
+            "Administrateur", "Gestionnaire", "Agent", "Locataire"));
 
-    // Création :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("UnitesLocatives.Create", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Modification :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("UnitesLocatives.Update", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Suppression :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("UnitesLocatives.Delete", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
-
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
     // ========================================================
-    // TRANCHES IRPP
+    // PAIEMENTS
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
-    options.AddPolicy("TranchesIRPP.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+    // Le locataire ne doit accéder qu'à ses propres paiements
+    // et aux contrats dont il est titulaire.
+    options.AddPolicy("Paiements.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
 
-    // Création :
-    // - Administrateur seulement
-    options.AddPolicy("TranchesIRPP.Create", policy =>
-        policy.RequireRole(
-            "Administrateur"));
+    options.AddPolicy("Paiements.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
 
-    // Modification :
-    // - Administrateur seulement
-    options.AddPolicy("TranchesIRPP.Update", policy =>
-        policy.RequireRole(
-            "Administrateur"));
+    options.AddPolicy("Paiements.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Suppression :
-    // - Administrateur seulement
-    options.AddPolicy("TranchesIRPP.Delete", policy =>
-        policy.RequireRole(
-            "Administrateur"));
-
-
-
-    // ========================================================
-    // RÉGIMES FISCAUX
-    // ========================================================
-
-    // Lecture : Administrateur et Gestionnaire
-    options.AddPolicy("RegimesFiscaux.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
-
-    // Création : Administrateur seulement
-    options.AddPolicy("RegimesFiscaux.Create", policy =>
+    options.AddPolicy("Paiements.Delete", policy =>
         policy.RequireRole("Administrateur"));
 
-    // Modification : Administrateur seulement
-    options.AddPolicy("RegimesFiscaux.Update", policy =>
-        policy.RequireRole("Administrateur"));
+    // Initialisation d'un paiement en ligne.
+    options.AddPolicy("Paiements.Initier", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
 
-    // Suppression : Administrateur seulement
-    options.AddPolicy("RegimesFiscaux.Delete", policy =>
-        policy.RequireRole("Administrateur"));
-
-
-    // ========================================================
-    // PARAMÈTRES FISCAUX
-    // ========================================================
-
-    // Lecture : Administrateur et Gestionnaire
-    options.AddPolicy("ParametresFiscaux.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
-
-    // Création : Administrateur seulement
-    options.AddPolicy("ParametresFiscaux.Create", policy =>
-        policy.RequireRole("Administrateur"));
-
-    // Modification : Administrateur seulement
-    options.AddPolicy("ParametresFiscaux.Update", policy =>
-        policy.RequireRole("Administrateur"));
-
-    // Suppression : Administrateur seulement
-    options.AddPolicy("ParametresFiscaux.Delete", policy =>
-        policy.RequireRole("Administrateur"));
-
+    // Le webhook du fournisseur de paiement doit être sécurisé
+    // par vérification de signature, pas par un rôle utilisateur.
 
     // ========================================================
     // CHARGES IMMOBILIÈRES
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Charges.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Création :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Charges.Create", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Modification :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Charges.Update", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
-    // Suppression :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("Charges.Delete", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
+    // ========================================================
+    // PRESTATAIRES
+    // ========================================================
+
+    options.AddPolicy("Prestataires.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Prestataires.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Prestataires.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Prestataires.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // ========================================================
+    // TICKETS D'INCIDENT
+    // ========================================================
+
+    // La visibilité des tickets doit être limitée dans le contrôleur :
+    // locataire : ses tickets ;
+    // personnel : tickets de sa société.
+    options.AddPolicy("Tickets.Read", policy =>
+        policy.RequireRole(
+            "Administrateur", "Gestionnaire", "Agent", "Locataire"));
+
+    options.AddPolicy("Tickets.Create", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire", "Locataire"));
+
+    options.AddPolicy("Tickets.Update", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Tickets.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Tickets.AssignerIntervenant", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Tickets.ValiderDevis", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Tickets.Cloturer", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
 
     // ========================================================
     // DEMANDES DE VISITE
     // ========================================================
 
-    // Lecture :
-    // - Administrateur
-    // - Gestionnaire
-    // - Agent
     options.AddPolicy("DemandesVisite.Read", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Agent"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
 
-    // Création :
-    // - Administrateur
-    // - Gestionnaire
-    // - Agent
     options.AddPolicy("DemandesVisite.Create", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Agent"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
 
-    // Modification :
-    // - Administrateur
-    // - Gestionnaire
-    // - Agent
     options.AddPolicy("DemandesVisite.Update", policy =>
-        policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire",
-            "Agent"));
+        policy.RequireRole("Administrateur", "Gestionnaire", "Agent"));
 
-    // Suppression :
-    // - Administrateur
-    // - Gestionnaire
     options.AddPolicy("DemandesVisite.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // ========================================================
+    // TRANCHES IRPP
+    // ========================================================
+
+    options.AddPolicy("TranchesIRPP.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("TranchesIRPP.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("TranchesIRPP.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("TranchesIRPP.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // ========================================================
+    // RÉGIMES FISCAUX
+    // ========================================================
+
+    options.AddPolicy("RegimesFiscaux.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("RegimesFiscaux.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("RegimesFiscaux.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("RegimesFiscaux.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // ========================================================
+    // PARAMÈTRES FISCAUX
+    // ========================================================
+
+    options.AddPolicy("ParametresFiscaux.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("ParametresFiscaux.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("ParametresFiscaux.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("ParametresFiscaux.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+    // ========================================================
+    // RAPPORTS
+    // ========================================================
+
+    options.AddPolicy("Rapports.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("Rapports.Export", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // ========================================================
+    // NOTIFICATIONS
+    // ========================================================
+
+    options.AddPolicy("Notifications.Read", policy =>
         policy.RequireRole(
-            "Administrateur",
-            "Gestionnaire"));
+            "Administrateur", "Gestionnaire", "Agent", "Locataire"));
+
+    options.AddPolicy("Notifications.Update", policy =>
+        policy.RequireRole(
+            "Administrateur", "Gestionnaire", "Agent", "Locataire"));
+
+    options.AddPolicy("Notifications.Delete", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    // ========================================================
+    // JOURNAL D'AUDIT
+    // ========================================================
+
+    options.AddPolicy("JournalAudit.Read", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("JournalAudit.Export", policy =>
+        policy.RequireRole("Administrateur"));
 });
+
 
 // 7. Contrôleurs & CORS
 builder.Services.AddControllers()

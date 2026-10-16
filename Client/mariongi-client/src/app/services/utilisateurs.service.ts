@@ -1,3 +1,4 @@
+
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
@@ -6,7 +7,8 @@ import {
   UtilisateurDto,
   RoleUtilisateur,
   CreerUtilisateurRequest,
-  ModifierUtilisateurRequest
+  ModifierUtilisateurRequest,
+  ModifierStatutUtilisateurRequest
 } from '../models/gestimmo.models';
 
 import { environment } from '../../environments/environment.development';
@@ -15,123 +17,75 @@ import { environment } from '../../environments/environment.development';
   providedIn: 'root'
 })
 export class UtilisateursService {
-
   private readonly http = inject(HttpClient);
 
   private readonly apiUrl =
     `${environment.apiUrl}/Utilisateurs`;
 
-
-  // ============================================================
-  // GET : /api/Utilisateurs
-  // ============================================================
-
+  // GET : api/Utilisateurs
   getUtilisateurs(): Observable<UtilisateurDto[]> {
-
-    return this.http
-      .get<UtilisateurDto[]>(this.apiUrl)
-      .pipe(
-        map(data => Array.isArray(data) ? data : [])
-      );
-  }
-
-
-  // ============================================================
-  // GET : /api/Utilisateurs
-  // Filtre les locataires
-  // ============================================================
-
-  getLocataires(): Observable<UtilisateurDto[]> {
-
-    return this.getUtilisateurs().pipe(
-
-      map(utilisateurs => {
-
-        const liste = utilisateurs ?? [];
-
-        return liste.filter(u =>
-          u.role === RoleUtilisateur.Locataire ||
-          String(u.role).toLowerCase() === 'locataire' ||
-          u.role === 3
-        );
-
-      })
-
+    return this.http.get<UtilisateurDto[]>(this.apiUrl).pipe(
+      map(data => Array.isArray(data) ? data : [])
     );
   }
 
+  // Filtrage local des locataires parmi les utilisateurs visibles.
+  getLocataires(): Observable<UtilisateurDto[]> {
+    return this.getUtilisateurs().pipe(
+      map(utilisateurs =>
+        utilisateurs.filter(
+          utilisateur =>
+            utilisateur.role === RoleUtilisateur.Locataire
+        )
+      )
+    );
+  }
 
-  // ============================================================
-  // GET : /api/Utilisateurs/{id}
-  // ============================================================
-
-  getUtilisateurById(
-    id: string
-  ): Observable<UtilisateurDto> {
-
+  // GET : api/Utilisateurs/{id}
+  getUtilisateurById(id: string): Observable<UtilisateurDto> {
     return this.http.get<UtilisateurDto>(
       `${this.apiUrl}/${id}`
     );
   }
 
-
-  // ============================================================
-  // POST : /api/Utilisateurs
-  // ============================================================
-
+  // POST : api/Utilisateurs
   createUtilisateur(
     utilisateur: CreerUtilisateurRequest
   ): Observable<UtilisateurDto> {
-
     return this.http.post<UtilisateurDto>(
       this.apiUrl,
       utilisateur
     );
   }
 
-
-  // ============================================================
-  // PUT : /api/Utilisateurs/{id}
-  // ============================================================
-
+  // PUT : api/Utilisateurs/{id}
   updateUtilisateur(
     id: string,
     utilisateur: ModifierUtilisateurRequest
-  ): Observable<void> {
-
-    return this.http.put<void>(
+  ): Observable<UtilisateurDto> {
+    return this.http.put<UtilisateurDto>(
       `${this.apiUrl}/${id}`,
       utilisateur
     );
   }
 
-
-  // ============================================================
-  // PATCH : /api/Utilisateurs/{id}/statut
-  // ============================================================
-
+  // PATCH : api/Utilisateurs/{id}/statut
   updateStatut(
     id: string,
     statut: boolean
-  ): Observable<any> {
+  ): Observable<void> {
+    const request: ModifierStatutUtilisateurRequest = {
+      statut
+    };
 
-    return this.http.patch<any>(
+    return this.http.patch<void>(
       `${this.apiUrl}/${id}/statut`,
-      {
-        statut
-      }
+      request
     );
   }
 
-
-  // ============================================================
-  // DELETE : /api/Utilisateurs/{id}
-  // ============================================================
-
-  deleteUtilisateur(
-    id: string
-  ): Observable<void> {
-
+  // DELETE : api/Utilisateurs/{id}
+  deleteUtilisateur(id: string): Observable<void> {
     return this.http.delete<void>(
       `${this.apiUrl}/${id}`
     );

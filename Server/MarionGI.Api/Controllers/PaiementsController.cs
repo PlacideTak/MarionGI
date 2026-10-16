@@ -1,19 +1,17 @@
-﻿using MarionGI.Api.PaiementProvider;
-using MarionGI.Domain.Entities;
-using MarionGI.Domain.Enums;
-using MarionGI.Infrastructure.Pdf;
-using MarionGI.Persistence.Context;
-
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-
-using System.IO.Compression;
+﻿using System.IO.Compression;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using MarionGI.Api.PaiementProvider;
+using MarionGI.Domain.Entities;
+using MarionGI.Domain.Enums;
+using MarionGI.Infrastructure.Pdf;
+using MarionGI.Persistence.Context;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MarionGI.Api.Controllers;
 
@@ -35,82 +33,51 @@ public class PaiementsController : ControllerBase
 
     // ============================================================
     // 1. INITIER UN PAIEMENT MOBILE MONEY
-    //
-    // LOCATAIRE UNIQUEMENT
-    //
-    // Règles :
-    // - le contrat appartient au locataire
-    // - contrat actif
-    // - unité et bien non supprimés
-    // - le mois appartient à la période du contrat
-    // - un paiement EnAttente bloque une nouvelle tentative
-    // - un paiement Confirme bloque une nouvelle tentative
-    // - un paiement Echoue peut être recommencé
     // ============================================================
 
     [HttpPost("initier")]
     [Authorize(Roles = nameof(RoleUtilisateur.Locataire))]
     public async Task<IActionResult> InitierPaiement(
         [FromBody] InitierPaiementRequest request,
-        [FromServices] IPaiementProvider paiementProvider)
+        [FromServices] IPaiementProvider paiementProvider,
+        CancellationToken cancellationToken)
     {
         if (request == null)
         {
-            return BadRequest(
-                "Les données du paiement sont obligatoires.");
+            return BadRequest(new
+            {
+                Message = "Les données du paiement sont obligatoires."
+            });
         }
 
-        // --------------------------------------------------------
-        // Validation
-        // --------------------------------------------------------
-
-        if (request.ContratId == Guid.Empty)
+        if (request.ContratId == Guid.Empty ||
+            request.Montant <= 0 ||
+            string.IsNullOrWhiteSpace(request.Telephone))
         {
-            return BadRequest(
-                "Le contrat est obligatoire.");
+            return BadRequest(new
+            {
+                Message = "Le contrat, un montant positif et le téléphone sont obligatoires."
+            });
         }
 
-        if (request.Montant <= 0)
+        if (!Enum.IsDefined(typeof(ModePaiement), request.ModePaiement) ||
+            request.ModePaiement == ModePaiement.Especes)
         {
-            return BadRequest(
-                "Le montant du paiement doit être supérieur à zéro.");
+            return BadRequest(new
+            {
+                Message = "Le mode de paiement Mobile Money est invalide."
+            });
         }
-
-        if (string.IsNullOrWhiteSpace(request.Telephone))
-        {
-            return BadRequest(
-                "Le numéro de téléphone est obligatoire.");
-        }
-
-        if (!Enum.IsDefined(
-                typeof(ModePaiement),
-                request.ModePaiement))
-        {
-            return BadRequest(
-                "Le mode de paiement est invalide.");
-        }
-
-        if (request.ModePaiement == ModePaiement.Especes)
-        {
-            return BadRequest(
-                "Utilisez /api/Paiements/especes pour un paiement en espèces.");
-        }
-
-        // --------------------------------------------------------
-        // Utilisateur connecté
-        // --------------------------------------------------------
 
         var utilisateurId = GetCurrentUserId();
 
-        if (!utilisateurId.HasValue)
+        if (utilisateurId == null)
         {
-            return Unauthorized(
-                "Impossible d'identifier l'utilisateur connecté.");
+            return Unauthorized(new
+            {
+                Message = "Impossible d'identifier le locataire connecté."
+            });
         }
-
-        // --------------------------------------------------------
-        // Contrat du locataire connecté
-        // --------------------------------------------------------
 
         var contrat = await _context.Contrats
             .AsNoTracking()
@@ -121,480 +88,400 @@ public class PaiementsController : ControllerBase
                 c.Id == request.ContratId &&
                 c.LocataireId == utilisateurId.Value &&
                 !c.EstSupprime &&
-
-                c.UniteLocative != null &&
                 !c.UniteLocative.EstSupprime &&
-
-                c.UniteLocative.BienImmobilier != null &&
-                !c.UniteLocative.BienImmobilier.EstSupprime);
+                !c.UniteLocative.BienImmobilier.EstSupprime,
+                cancellationToken);
 
         if (contrat == null)
         {
-            return NotFound(
-                "Contrat introuvable ou vous n'êtes pas autorisé à y accéder.");
+            return NotFound(new
+            {
+                Message = "Contrat introuvable ou inaccessible."
+            });
         }
 
         if (contrat.Statut != StatutContrat.Actif)
         {
-            return BadRequest(
-                "Impossible d'effectuer un paiement pour un contrat qui n'est pas actif.");
-        }
-
-        // --------------------------------------------------------
-        // Normalisation du mois de loyer
-        // --------------------------------------------------------
-
-        var moisLoyer =
-            NormaliserMoisLoyer(request.MoisLoyer);
-
-        // --------------------------------------------------------
-        // Vérifier que le mois appartient au contrat
-        // --------------------------------------------------------
-
-        if (!MoisDansPeriodeContrat(
-                contrat,
-                moisLoyer))
-        {
-            return BadRequest(
-            $"Le loyer du mois de {moisLoyer:MM/yyyy} " +
-            $"ne peut pas être payé avec ce contrat. " +
-            $"Le contrat est valide du {contrat.DateDebut:dd/MM/yyyy} " +
-            $"au {contrat.DateFin:dd/MM/yyyy}.");
-        }
-
-        // --------------------------------------------------------
-        // Vérifier s'il existe déjà un paiement bloquant
-        //
-        // EnAttente  -> nouveau paiement interdit
-        // Confirme    -> nouveau paiement interdit
-        // Echoue      -> nouvelle tentative autorisée
-        // --------------------------------------------------------
-
-        var paiementExistant =
-            await GetPaiementBloquantAsync(
-                contrat.Id,
-                moisLoyer);
-
-        if (paiementExistant != null)
-        {
-            if (paiementExistant.StatutTransaction ==
-                StatutTransaction.EnAttente)
+            return BadRequest(new
             {
-                return Conflict(
-                    "Un paiement pour ce mois est déjà en cours de traitement.");
-            }
-
-            return Conflict(
-            $"Le loyer du mois de {moisLoyer:MMMM yyyy} " +
-            "a déjà été payé pour ce contrat. " +
-            "Un seul paiement est autorisé pour un même mois.");
+                Message = "Le contrat n'est pas actif."
+            });
         }
 
-        // --------------------------------------------------------
-        // Création du paiement
-        // --------------------------------------------------------
+        var moisLoyer = NormaliserMoisLoyer(request.MoisLoyer);
+
+        if (!MoisDansPeriodeContrat(contrat, moisLoyer))
+        {
+            return BadRequest(new
+            {
+                Message = "Le mois sélectionné ne correspond pas à la période du contrat."
+            });
+        }
+
+        // Le montant exigible est figé sur chaque transaction.
+        var montantDu = CalculerMontantDu(contrat);
+
+        var montantDejaConfirme = await _context.Paiements
+            .Where(p =>
+                p.ContratId == contrat.Id &&
+                p.MoisLoyer == moisLoyer &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.Confirme)
+            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
+
+        var montantRestant = montantDu - montantDejaConfirme;
+
+        if (montantRestant <= 0)
+        {
+            return Conflict(new
+            {
+                Message = "Cette échéance de loyer est déjà intégralement payée.",
+                MontantDu = montantDu,
+                MontantDejaConfirme = montantDejaConfirme
+            });
+        }
+
+        if (request.Montant > montantRestant)
+        {
+            return BadRequest(new
+            {
+                Message = "Le versement dépasse le solde exigible.",
+                MontantDu = montantDu,
+                MontantDejaConfirme = montantDejaConfirme,
+                MontantRestant = montantRestant
+            });
+        }
+
+        // Une transaction en attente empêche une seconde tentative
+        // simultanée pour la même échéance.
+        var paiementEnAttente = await _context.Paiements
+            .AnyAsync(p =>
+                p.ContratId == contrat.Id &&
+                p.MoisLoyer == moisLoyer &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.EnAttente,
+                cancellationToken);
+
+        if (paiementEnAttente)
+        {
+            return Conflict(new
+            {
+                Message = "Un paiement est déjà en cours pour cette échéance."
+            });
+        }
 
         var paiement = new Paiement
         {
-            ContratId =
-                contrat.Id,
-
-            Montant =
-                request.Montant,
-
-            MoisLoyer =
-                moisLoyer,
-
-            ModePaiement =
-                request.ModePaiement,
-
-            StatutTransaction =
-                StatutTransaction.EnAttente,
-
-            NumeroQuittance =
-                GenererNumeroQuittance()
+            Id = Guid.NewGuid(),
+            ContratId = contrat.Id,
+            MoisLoyer = moisLoyer,
+            MontantDu = montantDu,
+            Montant = request.Montant,
+            DatePaiement = DateTime.UtcNow,
+            ModePaiement = request.ModePaiement,
+            StatutTransaction = StatutTransaction.EnAttente,
+            NumeroQuittance = GenererNumeroQuittance(),
+            EnregistreParUtilisateurId = utilisateurId.Value,
+            DateCreation = DateTime.UtcNow,
+            EstSupprime = false
         };
 
         _context.Paiements.Add(paiement);
 
+        await _context.SaveChangesAsync(cancellationToken);
+
         try
         {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Une autre requête peut avoir créé simultanément
-            // un paiement EnAttente ou Confirme pour le même mois.
-            return Conflict(
-                $"Un paiement du loyer de {moisLoyer:MMMM yyyy} " +
-                "est déjà en cours de traitement pour ce contrat. " +
-                "Veuillez attendre la fin du traitement avant de réessayer.");
-        }
+            var resultat = await paiementProvider.InitierAsync(
+                new InitierPaiementContext(
+                    PaiementId: paiement.Id,
+                    Montant: paiement.Montant,
+                    Telephone: request.Telephone.Trim(),
+                    EmailClient: contrat.Locataire?.Email
+                        ?? "client@mariongi.cm",
+                    ModePaiement: paiement.ModePaiement,
+                    Description:
+                        $"Loyer {moisLoyer:MM/yyyy} - {paiement.NumeroQuittance}"
+                ));
 
-        // --------------------------------------------------------
-        // Appel du fournisseur Mobile Money
-        // --------------------------------------------------------
-
-        var resultat = await paiementProvider.InitierAsync(
-            new InitierPaiementContext(
-                PaiementId:
-                    paiement.Id,
-
-                Montant:
-                    request.Montant,
-
-                Telephone:
-                    request.Telephone.Trim(),
-
-                EmailClient:
-                    contrat.Locataire?.Email
-                    ?? "client@mariongi.cm",
-
-                ModePaiement:
-                    request.ModePaiement,
-
-                Description:
-                    $"Loyer {moisLoyer:MM/yyyy} - Quittance {paiement.NumeroQuittance}"
-            ));
-
-        // --------------------------------------------------------
-        // Échec du fournisseur
-        // --------------------------------------------------------
-
-        if (!resultat.Succes)
-        {
-            paiement.StatutTransaction =
-                StatutTransaction.Echoue;
-
-            await _context.SaveChangesAsync();
-
-            return BadRequest(new
+            if (!resultat.Succes)
             {
-                Message =
-                    resultat.MessageErreur
-                    ?? "Impossible d'initialiser le paiement."
+                paiement.StatutTransaction = StatutTransaction.Echoue;
+                paiement.MotifEchec = resultat.MessageErreur;
+                await _context.SaveChangesAsync(cancellationToken);
+
+                return BadRequest(new
+                {
+                    Message = resultat.MessageErreur
+                        ?? "Impossible d'initialiser le paiement."
+                });
+            }
+
+            paiement.ReferenceTransactionOperateur =
+                resultat.ReferenceExterne;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return Ok(new
+            {
+                Message = "Demande de paiement envoyée sur le mobile.",
+                paiement.Id,
+                paiement.NumeroQuittance,
+                paiement.MoisLoyer,
+                paiement.Montant,
+                paiement.MontantDu,
+                MontantRestant = montantRestant - paiement.Montant,
+                paiement.ReferenceTransactionOperateur,
+                Statut = paiement.StatutTransaction.ToString()
             });
         }
-
-        // --------------------------------------------------------
-        // Référence opérateur
-        // --------------------------------------------------------
-
-        paiement.ReferenceTransactionOperateur =
-            resultat.ReferenceExterne;
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
+        catch
         {
-            Message =
-                "Demande de paiement envoyée sur le mobile.",
+            // Le paiement est conservé en échec si l'appel fournisseur
+            // échoue avant qu'une transaction soit initiée avec succès.
+            paiement.StatutTransaction = StatutTransaction.Echoue;
+            paiement.MotifEchec = "Erreur lors de l'initialisation auprès du fournisseur.";
+            await _context.SaveChangesAsync(cancellationToken);
 
-            PaiementId =
-                paiement.Id,
-
-            NumeroQuittance =
-                paiement.NumeroQuittance,
-
-            MoisLoyer =
-                paiement.MoisLoyer,
-
-            ReferenceTransactionOperateur =
-                paiement.ReferenceTransactionOperateur,
-
-            Statut =
-                paiement.StatutTransaction.ToString()
-        });
+            throw;
+        }
     }
-
 
     // ============================================================
     // 2. ENREGISTRER UN PAIEMENT EN ESPÈCES
-    //
-    // ADMINISTRATEUR / GESTIONNAIRE UNIQUEMENT
     // ============================================================
 
     [HttpPost("especes")]
-    [Authorize(
-        Roles =
-            nameof(RoleUtilisateur.Administrateur) + "," +
-            nameof(RoleUtilisateur.Gestionnaire))]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> EnregistrerPaiementEspeces(
-        [FromBody] PaiementEspecesRequest request)
+        [FromBody] PaiementEspecesRequest request,
+        CancellationToken cancellationToken)
     {
-        if (request == null)
+        if (request == null ||
+            request.ContratId == Guid.Empty ||
+            request.Montant <= 0)
         {
-            return BadRequest(
-                "Les données du paiement sont obligatoires.");
+            return BadRequest(new
+            {
+                Message = "Un contrat valide et un montant positif sont obligatoires."
+            });
         }
-
-        // --------------------------------------------------------
-        // Validation
-        // --------------------------------------------------------
-
-        if (request.ContratId == Guid.Empty)
-        {
-            return BadRequest(
-                "Le contrat est obligatoire.");
-        }
-
-        if (request.Montant <= 0)
-        {
-            return BadRequest(
-                "Le montant du paiement doit être supérieur à zéro.");
-        }
-
-        // --------------------------------------------------------
-        // Utilisateur connecté
-        // --------------------------------------------------------
 
         var utilisateurId = GetCurrentUserId();
+        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
+            cancellationToken);
 
-        if (!utilisateurId.HasValue)
+        if (utilisateurId == null || societeId == null)
         {
-            return Unauthorized(
-                "Impossible d'identifier l'utilisateur connecté.");
+            return Unauthorized(new
+            {
+                Message = "Impossible d'identifier l'utilisateur ou son propriétaire."
+            });
         }
-
-        // --------------------------------------------------------
-        // Société
-        // --------------------------------------------------------
-
-        var societeId =
-            await GetSocieteIdUtilisateurConnecteAsync();
-
-        if (!societeId.HasValue)
-        {
-            return Unauthorized(
-                "Impossible de déterminer la société de l'utilisateur connecté.");
-        }
-
-        // --------------------------------------------------------
-        // Contrat de la société
-        // --------------------------------------------------------
 
         var contrat = await _context.Contrats
-            .Include(c => c.Locataire)
             .Include(c => c.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .FirstOrDefaultAsync(c =>
                 c.Id == request.ContratId &&
                 !c.EstSupprime &&
-
-                c.UniteLocative != null &&
                 !c.UniteLocative.EstSupprime &&
-
-                c.UniteLocative.BienImmobilier != null &&
                 !c.UniteLocative.BienImmobilier.EstSupprime &&
-
-                c.UniteLocative
-                    .BienImmobilier
-                    .SocieteId == societeId.Value);
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value,
+                cancellationToken);
 
         if (contrat == null)
         {
-            return NotFound(
-                "Contrat introuvable ou inaccessible.");
+            return NotFound(new
+            {
+                Message = "Contrat introuvable ou inaccessible."
+            });
         }
 
         if (contrat.Statut != StatutContrat.Actif)
         {
-            return BadRequest(
-                "Impossible d'enregistrer un paiement pour un contrat qui n'est pas actif.");
-        }
-
-        // --------------------------------------------------------
-        // Normalisation du mois
-        // --------------------------------------------------------
-
-        var moisLoyer =
-            NormaliserMoisLoyer(request.MoisLoyer);
-
-        // --------------------------------------------------------
-        // Vérifier la période du contrat
-        // --------------------------------------------------------
-
-        if (!MoisDansPeriodeContrat(
-                contrat,
-                moisLoyer))
-        {
-            return BadRequest(
-                "Le mois de loyer sélectionné ne correspond pas à la période du contrat.");
-        }
-
-        // --------------------------------------------------------
-        // Vérifier un paiement existant
-        // --------------------------------------------------------
-
-        var paiementExistant =
-            await GetPaiementBloquantAsync(
-                contrat.Id,
-                moisLoyer);
-
-        if (paiementExistant != null)
-        {
-            if (paiementExistant.StatutTransaction ==
-                StatutTransaction.EnAttente)
+            return BadRequest(new
             {
-                return Conflict(
-                    "Un paiement pour ce mois est déjà en cours de traitement.");
-            }
-
-            return Conflict(
-                "Le loyer de ce mois a déjà été payé.");
+                Message = "Le contrat n'est pas actif."
+            });
         }
 
-        // --------------------------------------------------------
-        // Création
-        // --------------------------------------------------------
+        var moisLoyer = NormaliserMoisLoyer(request.MoisLoyer);
+
+        if (!MoisDansPeriodeContrat(contrat, moisLoyer))
+        {
+            return BadRequest(new
+            {
+                Message = "Le mois sélectionné ne correspond pas à la période du contrat."
+            });
+        }
+
+        var montantDu = CalculerMontantDu(contrat);
+
+        var montantDejaConfirme = await _context.Paiements
+            .Where(p =>
+                p.ContratId == contrat.Id &&
+                p.MoisLoyer == moisLoyer &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.Confirme)
+            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
+
+        var montantRestant = montantDu - montantDejaConfirme;
+
+        if (montantRestant <= 0 || request.Montant > montantRestant)
+        {
+            return Conflict(new
+            {
+                Message = montantRestant <= 0
+                    ? "Cette échéance est déjà intégralement payée."
+                    : "Le versement dépasse le solde exigible.",
+                MontantDu = montantDu,
+                MontantDejaConfirme = montantDejaConfirme,
+                MontantRestant = Math.Max(0, montantRestant)
+            });
+        }
+
+        var paiementEnAttente = await _context.Paiements
+            .AnyAsync(p =>
+                p.ContratId == contrat.Id &&
+                p.MoisLoyer == moisLoyer &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.EnAttente,
+                cancellationToken);
+
+        if (paiementEnAttente)
+        {
+            return Conflict(new
+            {
+                Message = "Une transaction Mobile Money est en cours pour cette échéance."
+            });
+        }
+
+        var maintenant = DateTime.UtcNow;
 
         var paiement = new Paiement
         {
-            ContratId =
-                contrat.Id,
-
-            Montant =
-                request.Montant,
-
-            MoisLoyer =
-                moisLoyer,
-
-            ModePaiement =
-                ModePaiement.Especes,
-
-            StatutTransaction =
-                StatutTransaction.Confirme,
-
-            NumeroQuittance =
-                GenererNumeroQuittance(),
-
-            EnregistreParUtilisateurId =
-                utilisateurId.Value
+            Id = Guid.NewGuid(),
+            ContratId = contrat.Id,
+            MoisLoyer = moisLoyer,
+            MontantDu = montantDu,
+            Montant = request.Montant,
+            DatePaiement = maintenant,
+            DateConfirmation = maintenant,
+            ModePaiement = ModePaiement.Especes,
+            StatutTransaction = StatutTransaction.Confirme,
+            NumeroQuittance = GenererNumeroQuittance(),
+            EnregistreParUtilisateurId = utilisateurId.Value,
+            DateCreation = maintenant,
+            EstSupprime = false
         };
 
         _context.Paiements.Add(paiement);
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            return Conflict(
-                "Un paiement pour ce mois existe déjà.");
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new
         {
-            Message =
-                "Paiement enregistré.",
-
-            PaiementId =
-                paiement.Id,
-
-            NumeroQuittance =
-                paiement.NumeroQuittance,
-
-            MoisLoyer =
-                paiement.MoisLoyer,
-
-            Statut =
-                paiement.StatutTransaction.ToString()
+            Message = "Paiement en espèces enregistré.",
+            paiement.Id,
+            paiement.NumeroQuittance,
+            paiement.MoisLoyer,
+            paiement.Montant,
+            paiement.MontantDu,
+            MontantRestant = montantRestant - paiement.Montant,
+            paiement.DatePaiement,
+            paiement.DateConfirmation,
+            Statut = paiement.StatutTransaction.ToString()
         });
     }
-
 
     // ============================================================
     // 3. CONSULTER LE STATUT D'UN PAIEMENT
     // ============================================================
 
     [HttpGet("{id:guid}/statut")]
-    [Authorize(
-        Roles =
-            nameof(RoleUtilisateur.Administrateur) + "," +
-            nameof(RoleUtilisateur.Gestionnaire) + "," +
-            nameof(RoleUtilisateur.Locataire))]
-    public async Task<IActionResult> GetStatut(Guid id)
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Locataire))]
+    public async Task<IActionResult> GetStatut(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        if (id == Guid.Empty)
-        {
-            return BadRequest(
-                "L'identifiant du paiement est invalide.");
-        }
-
-        var paiement =
-            await GetPaiementAccessibleAsync(id);
+        var paiement = await GetPaiementAccessibleAsync(
+            id, cancellationToken);
 
         if (paiement == null)
         {
-            return NotFound(
-                "Paiement introuvable ou inaccessible.");
+            return NotFound(new
+            {
+                Message = "Paiement introuvable ou inaccessible."
+            });
         }
+
+        var montantConfirme = await _context.Paiements
+            .Where(p =>
+                p.ContratId == paiement.ContratId &&
+                p.MoisLoyer == paiement.MoisLoyer &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.Confirme)
+            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
 
         return Ok(new
         {
-            PaiementId =
-                paiement.Id,
-
-            NumeroQuittance =
-                paiement.NumeroQuittance,
-
-            MoisLoyer =
-                paiement.MoisLoyer,
-
-            Statut =
-                paiement.StatutTransaction.ToString(),
-
-            ModePaiement =
-                paiement.ModePaiement.ToString(),
-
-            Montant =
-                paiement.Montant,
-
-            DatePaiement =
-                paiement.DatePaiement
+            paiement.Id,
+            paiement.ContratId,
+            paiement.NumeroQuittance,
+            paiement.MoisLoyer,
+            paiement.Montant,
+            paiement.MontantDu,
+            MontantTotalConfirme = montantConfirme,
+            MontantRestant = Math.Max(0, paiement.MontantDu - montantConfirme),
+            paiement.ModePaiement,
+            paiement.StatutTransaction,
+            paiement.DatePaiement,
+            paiement.DateConfirmation,
+            paiement.ReferenceTransactionOperateur,
+            paiement.FraisTransaction,
+            paiement.MotifEchec,
+            paiement.Observations
         });
     }
-
 
     // ============================================================
     // 4. TÉLÉCHARGER UNE QUITTANCE
     // ============================================================
 
     [HttpGet("{id:guid}/quittance")]
-    [Authorize(
-        Roles =
-            nameof(RoleUtilisateur.Administrateur) + "," +
-            nameof(RoleUtilisateur.Gestionnaire) + "," +
-            nameof(RoleUtilisateur.Locataire))]
-    public async Task<IActionResult> TelechargerQuittance(Guid id)
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Locataire))]
+    public async Task<IActionResult> TelechargerQuittance(
+        Guid id,
+        CancellationToken cancellationToken)
     {
-        if (id == Guid.Empty)
-        {
-            return BadRequest(
-                "L'identifiant du paiement est invalide.");
-        }
-
-        var paiement =
-            await GetPaiementAccessibleAsync(
-                id,
-                inclureRelations: true);
+        var paiement = await GetPaiementAccessibleAsync(
+            id, cancellationToken, inclureRelations: true);
 
         if (paiement == null)
         {
-            return NotFound(
-                "Paiement introuvable ou inaccessible.");
+            return NotFound(new
+            {
+                Message = "Paiement introuvable ou inaccessible."
+            });
         }
 
-        if (paiement.StatutTransaction !=
-            StatutTransaction.Confirme)
+        if (paiement.StatutTransaction != StatutTransaction.Confirme)
         {
-            return BadRequest(
-                "Impossible de générer une quittance pour un paiement non confirmé.");
+            return BadRequest(new
+            {
+                Message = "Une quittance ne peut être générée que pour un paiement confirmé."
+            });
         }
 
-        var pdf =
-            _pdfService.GenererQuittance(paiement);
+        var pdf = _pdfService.GenererQuittance(paiement);
 
         return File(
             pdf,
@@ -602,220 +489,130 @@ public class PaiementsController : ControllerBase
             $"Quittance_{paiement.NumeroQuittance}.pdf");
     }
 
-
     // ============================================================
     // 5. LISTE DES PAIEMENTS
     // ============================================================
 
     [HttpGet]
-    [Authorize(
-        Roles =
-            nameof(RoleUtilisateur.Administrateur) + "," +
-            nameof(RoleUtilisateur.Gestionnaire) + "," +
-            nameof(RoleUtilisateur.Locataire))]
-    public async Task<IActionResult> GetPaiements()
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Locataire))]
+    public async Task<IActionResult> GetPaiements(
+        CancellationToken cancellationToken)
     {
         var query = _context.Paiements
             .AsNoTracking()
             .Where(p =>
                 !p.EstSupprime &&
-
-                p.Contrat != null &&
                 !p.Contrat.EstSupprime &&
-
-                p.Contrat.UniteLocative != null &&
                 !p.Contrat.UniteLocative.EstSupprime &&
+                !p.Contrat.UniteLocative.BienImmobilier.EstSupprime);
 
-                p.Contrat.UniteLocative
-                    .BienImmobilier != null &&
-
-                !p.Contrat.UniteLocative
-                    .BienImmobilier.EstSupprime);
-
-        // ========================================================
-        // LOCATAIRE
-        // ========================================================
-
-        if (User.IsInRole(
-                nameof(RoleUtilisateur.Locataire)))
+        if (User.IsInRole(nameof(RoleUtilisateur.Locataire)))
         {
-            var utilisateurId =
-                GetCurrentUserId();
+            var utilisateurId = GetCurrentUserId();
 
-            if (!utilisateurId.HasValue)
+            if (utilisateurId == null)
             {
-                return Unauthorized(
-                    "Impossible d'identifier le locataire connecté.");
+                return Unauthorized();
             }
 
             query = query.Where(p =>
-                p.Contrat.LocataireId ==
-                utilisateurId.Value);
+                p.Contrat.LocataireId == utilisateurId.Value);
         }
-
-        // ========================================================
-        // ADMINISTRATEUR / GESTIONNAIRE
-        // ========================================================
-
         else
         {
-            var societeId =
-                await GetSocieteIdUtilisateurConnecteAsync();
+            var societeId = await GetSocieteIdUtilisateurConnecteAsync(
+                cancellationToken);
 
-            if (!societeId.HasValue)
+            if (societeId == null)
             {
-                return Unauthorized(
-                    "Impossible de déterminer la société de l'utilisateur connecté.");
+                return Unauthorized();
             }
 
             query = query.Where(p =>
-                p.Contrat.UniteLocative
-                    .BienImmobilier
-                    .SocieteId ==
-                    societeId.Value);
+                p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
+                societeId.Value);
         }
 
-        // ========================================================
-        // PROJECTION
-        // ========================================================
-
-        var paiements =
-            await query
-                .OrderByDescending(p => p.MoisLoyer)
-                .ThenByDescending(p => p.DatePaiement)
-                .Select(p => new PaiementListItemDto
-                {
-                    Id = p.Id,
-
-                    ContratId = p.ContratId,
-
-                    DatePaiement = p.DatePaiement,
-
-                    MoisLoyer = p.MoisLoyer,
-
-                    Montant = p.Montant,
-
-                    Mode = p.ModePaiement,
-
-                    Statut = p.StatutTransaction,
-
-                    NumeroQuittance = p.NumeroQuittance,
-
-                    BienNom =
-        p.Contrat
-            .UniteLocative
-            .BienImmobilier
-            .Nom,
-
-                    BienReference =
-        p.Contrat
-            .UniteLocative
-            .BienImmobilier
-            .Reference,
-
-                    UniteReference =
-        p.Contrat
-            .UniteLocative
-            .Reference,
-
-                    LocataireNom =
-        p.Contrat.Locataire != null
-            ? (
-                p.Contrat.Locataire.Nom
-                + " "
-                + p.Contrat.Locataire.Prenom
-              ).Trim()
-            : "N/A"
-                })
-                .ToListAsync();
+        var paiements = await query
+            .OrderByDescending(p => p.MoisLoyer)
+            .ThenByDescending(p => p.DatePaiement)
+            .Select(p => new PaiementListItemDto
+            {
+                Id = p.Id,
+                ContratId = p.ContratId,
+                DatePaiement = p.DatePaiement,
+                DateConfirmation = p.DateConfirmation,
+                MoisLoyer = p.MoisLoyer,
+                Montant = p.Montant,
+                MontantDu = p.MontantDu,
+                Mode = p.ModePaiement,
+                Statut = p.StatutTransaction,
+                NumeroQuittance = p.NumeroQuittance,
+                ReferenceTransactionOperateur = p.ReferenceTransactionOperateur,
+                FraisTransaction = p.FraisTransaction,
+                MotifEchec = p.MotifEchec,
+                BienNom = p.Contrat.UniteLocative.BienImmobilier.Nom,
+                BienReference = p.Contrat.UniteLocative.BienImmobilier.Reference,
+                UniteReference = p.Contrat.UniteLocative.Reference,
+                LocataireNom = (
+                    p.Contrat.Locataire.Nom + " " +
+                    p.Contrat.Locataire.Prenom).Trim()
+            })
+            .ToListAsync(cancellationToken);
 
         return Ok(paiements);
     }
-
 
     // ============================================================
     // 6. TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT
     // ============================================================
 
-    [HttpGet(
-        "contrat/{contratId:guid}/toutes-les-quittances")]
-    [Authorize(
-        Roles =
-            nameof(RoleUtilisateur.Administrateur) + "," +
-            nameof(RoleUtilisateur.Gestionnaire) + "," +
-            nameof(RoleUtilisateur.Locataire))]
-    public async Task<IActionResult>
-        TelechargerToutesLesQuittances(
-            Guid contratId)
+    [HttpGet("contrat/{contratId:guid}/toutes-les-quittances")]
+    [Authorize(Roles =
+        nameof(RoleUtilisateur.Administrateur) + "," +
+        nameof(RoleUtilisateur.Gestionnaire) + "," +
+        nameof(RoleUtilisateur.Locataire))]
+    public async Task<IActionResult> TelechargerToutesLesQuittances(
+        Guid contratId,
+        CancellationToken cancellationToken)
     {
-        if (contratId == Guid.Empty)
+        if (!await EstContratAccessibleAsync(contratId, cancellationToken))
         {
-            return BadRequest(
-                "Le contrat est obligatoire.");
+            return NotFound(new
+            {
+                Message = "Contrat introuvable ou inaccessible."
+            });
         }
 
-        // --------------------------------------------------------
-        // Vérification d'accès au contrat
-        // --------------------------------------------------------
-
-        var contratAccessible =
-            await EstContratAccessibleAsync(contratId);
-
-        if (!contratAccessible)
-        {
-            return NotFound(
-                "Contrat introuvable ou inaccessible.");
-        }
-
-        // --------------------------------------------------------
-        // Paiements confirmés
-        // --------------------------------------------------------
-
-        var paiements =
-            await _context.Paiements
-                .Include(p => p.Contrat)
-                    .ThenInclude(c => c.Locataire)
-
-                .Include(p => p.Contrat)
-                    .ThenInclude(c => c.UniteLocative)
-                        .ThenInclude(u => u.BienImmobilier)
-
-                .Where(p =>
-                    p.ContratId == contratId &&
-
-                    p.StatutTransaction ==
-                        StatutTransaction.Confirme &&
-
-                    !p.EstSupprime &&
-
-                    p.Contrat != null &&
-                    !p.Contrat.EstSupprime &&
-
-                    p.Contrat.UniteLocative != null &&
-                    !p.Contrat.UniteLocative.EstSupprime &&
-
-                    p.Contrat.UniteLocative
-                        .BienImmobilier != null &&
-
-                    !p.Contrat.UniteLocative
-                        .BienImmobilier.EstSupprime)
-
-                .OrderBy(p => p.MoisLoyer)
-                .ThenBy(p => p.DatePaiement)
-                .ToListAsync();
+        var paiements = await _context.Paiements
+            .Include(p => p.Contrat)
+                .ThenInclude(c => c.Locataire)
+            .Include(p => p.Contrat)
+                .ThenInclude(c => c.UniteLocative)
+                    .ThenInclude(u => u.BienImmobilier)
+            .Where(p =>
+                p.ContratId == contratId &&
+                p.StatutTransaction == StatutTransaction.Confirme &&
+                !p.EstSupprime &&
+                !p.Contrat.EstSupprime &&
+                !p.Contrat.UniteLocative.EstSupprime &&
+                !p.Contrat.UniteLocative.BienImmobilier.EstSupprime)
+            .OrderBy(p => p.MoisLoyer)
+            .ThenBy(p => p.DatePaiement)
+            .ToListAsync(cancellationToken);
 
         if (paiements.Count == 0)
         {
-            return NotFound(
-                "Aucun paiement confirmé trouvé pour ce contrat.");
+            return NotFound(new
+            {
+                Message = "Aucun paiement confirmé trouvé pour ce contrat."
+            });
         }
 
-        // --------------------------------------------------------
-        // Création ZIP
-        // --------------------------------------------------------
-
-        await using var memoryStream =
-            new MemoryStream();
+        await using var memoryStream = new MemoryStream();
 
         using (var archive = new ZipArchive(
             memoryStream,
@@ -824,30 +621,20 @@ public class PaiementsController : ControllerBase
         {
             foreach (var paiement in paiements)
             {
-                var pdfBytes =
-                    _pdfService.GenererQuittance(
-                        paiement);
+                var pdf = _pdfService.GenererQuittance(paiement);
+                var entry = archive.CreateEntry(
+                    $"Quittance_{paiement.NumeroQuittance}.pdf");
 
-                var entry =
-                    archive.CreateEntry(
-                        $"Quittance_{paiement.NumeroQuittance}.pdf");
-
-                await using var entryStream =
-                    entry.Open();
-
-                await entryStream.WriteAsync(
-                    pdfBytes.AsMemory());
+                await using var entryStream = entry.Open();
+                await entryStream.WriteAsync(pdf.AsMemory(), cancellationToken);
             }
         }
-
-        memoryStream.Position = 0;
 
         return File(
             memoryStream.ToArray(),
             "application/zip",
             $"Quittances_Contrat_{contratId}.zip");
     }
-
 
     // ============================================================
     // 7. WEBHOOK NOTCHPAY
@@ -856,351 +643,255 @@ public class PaiementsController : ControllerBase
     [HttpPost("webhook/notchpay")]
     [AllowAnonymous]
     public async Task<IActionResult> WebhookNotchpay(
-        [FromServices]
-        IOptions<NotchpayPaiementOptions> options)
+        [FromServices] IOptions<NotchpayPaiementOptions> options,
+        CancellationToken cancellationToken)
     {
         Request.EnableBuffering();
 
-        using var reader =
-            new StreamReader(
-                Request.Body,
-                leaveOpen: true);
+        using var reader = new StreamReader(
+            Request.Body,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: false,
+            leaveOpen: true);
 
-        var rawBody =
-            await reader.ReadToEndAsync();
-
+        var rawBody = await reader.ReadToEndAsync(cancellationToken);
         Request.Body.Position = 0;
 
         if (string.IsNullOrWhiteSpace(rawBody))
         {
-            return BadRequest(new
-            {
-                error = "Payload vide."
-            });
+            return BadRequest(new { error = "Payload vide." });
         }
 
-        var signature =
-            Request.Headers["x-notch-signature"]
-                .ToString();
-
-        var hashKey =
-            options.Value.WebhookHashKey;
+        var signature = Request.Headers["x-notch-signature"].ToString();
+        var hashKey = options.Value.WebhookHashKey;
 
         if (string.IsNullOrWhiteSpace(hashKey))
         {
             return StatusCode(500, new
             {
-                error =
-                    "La clé de signature du webhook n'est pas configurée."
+                error = "La clé de signature du webhook n'est pas configurée."
             });
         }
 
-        if (!VerifierSignature(
-                rawBody,
-                signature,
-                hashKey))
+        if (!VerifierSignature(rawBody, signature, hashKey))
         {
-            return StatusCode(
-                StatusCodes.Status403Forbidden,
-                new
-                {
-                    error =
-                        "Invalid signature"
-                });
+            return StatusCode(StatusCodes.Status403Forbidden, new
+            {
+                error = "Signature invalide."
+            });
         }
 
         NotchpayWebhookPayload? payload;
 
         try
         {
-            payload =
-                JsonSerializer.Deserialize
-                    <NotchpayWebhookPayload>(
-                        rawBody);
+            payload = JsonSerializer.Deserialize<NotchpayWebhookPayload>(rawBody);
         }
         catch (JsonException)
         {
-            return BadRequest(new
-            {
-                error =
-                    "Payload webhook invalide."
-            });
+            return BadRequest(new { error = "Payload webhook invalide." });
         }
 
         if (payload?.Data?.Reference == null)
         {
-            return BadRequest(new
-            {
-                error =
-                    "Référence de paiement absente."
-            });
+            return BadRequest(new { error = "Référence de paiement absente." });
         }
 
-        // --------------------------------------------------------
-        // Recherche par référence opérateur
-        // --------------------------------------------------------
-
-        var paiement =
-            await _context.Paiements
-                .FirstOrDefaultAsync(p =>
-                    p.ReferenceTransactionOperateur ==
-                        payload.Data.Reference &&
-
-                    !p.EstSupprime);
+        var paiement = await _context.Paiements
+            .FirstOrDefaultAsync(p =>
+                p.ReferenceTransactionOperateur == payload.Data.Reference &&
+                !p.EstSupprime,
+                cancellationToken);
 
         if (paiement == null)
         {
-            return NotFound(new
-            {
-                error =
-                    "Paiement introuvable."
-            });
+            return NotFound(new { error = "Paiement introuvable." });
         }
 
-        // --------------------------------------------------------
-        // Idempotence
-        // --------------------------------------------------------
-
-        if (paiement.StatutTransaction !=
-            StatutTransaction.EnAttente)
+        // Éviter qu'un événement répété écrase une transaction traitée.
+        if (paiement.StatutTransaction != StatutTransaction.EnAttente)
         {
-            return Ok(new
-            {
-                message =
-                    "Événement déjà traité."
-            });
+            return Ok(new { message = "Événement déjà traité." });
         }
-
-        // --------------------------------------------------------
-        // Événement
-        // --------------------------------------------------------
 
         switch (payload.Event)
         {
             case "payment.complete":
+                {
+                    var dejaConfirme = await _context.Paiements
+                        .Where(p =>
+                            p.ContratId == paiement.ContratId &&
+                            p.MoisLoyer == paiement.MoisLoyer &&
+                            p.Id != paiement.Id &&
+                            !p.EstSupprime &&
+                            p.StatutTransaction == StatutTransaction.Confirme)
+                        .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
 
-                paiement.StatutTransaction =
-                    StatutTransaction.Confirme;
+                    if (dejaConfirme + paiement.Montant > paiement.MontantDu)
+                    {
+                        paiement.StatutTransaction = StatutTransaction.Echoue;
+                        paiement.MotifEchec =
+                            "La confirmation dépasserait le montant exigible de l'échéance.";
+                        await _context.SaveChangesAsync(cancellationToken);
 
-                break;
+                        return Conflict(new
+                        {
+                            error = "Le montant confirmé dépasse le solde exigible."
+                        });
+                    }
+
+                    paiement.StatutTransaction = StatutTransaction.Confirme;
+                    paiement.DateConfirmation = DateTime.UtcNow;
+                    paiement.DatePaiement = DateTime.UtcNow;
+                    paiement.MotifEchec = null;
+                    break;
+                }
 
             case "payment.failed":
-
-                paiement.StatutTransaction =
-                    StatutTransaction.Echoue;
-
+                paiement.StatutTransaction = StatutTransaction.Echoue;
+                paiement.MotifEchec = "Le fournisseur a signalé l'échec de la transaction.";
                 break;
 
             default:
-
                 return Ok(new
                 {
-                    message =
-                        "Événement reçu mais non pris en charge."
+                    message = "Événement reçu mais non pris en charge."
                 });
         }
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateException)
-        {
-            // Une autre opération a éventuellement confirmé
-            // un paiement du même mois entre-temps.
-            return Conflict(new
-            {
-                error =
-                    "Impossible de confirmer ce paiement car un autre paiement confirmé existe déjà pour ce mois."
-            });
-        }
+        await _context.SaveChangesAsync(cancellationToken);
 
-        return Ok(new
-        {
-            message =
-                "Webhook traité avec succès."
-        });
+        return Ok(new { message = "Webhook traité avec succès." });
     }
 
-
     // ============================================================
-    // 8. VÉRIFIER SI UN CONTRAT EST ACCESSIBLE
+    // 8. VÉRIFIER L'ACCÈS À UN CONTRAT
     // ============================================================
 
     private async Task<bool> EstContratAccessibleAsync(
-        Guid contratId)
+        Guid contratId,
+        CancellationToken cancellationToken)
     {
-        var query =
-            _context.Contrats
-                .AsNoTracking()
-                .Where(c =>
-                    c.Id == contratId &&
+        var query = _context.Contrats
+            .AsNoTracking()
+            .Where(c =>
+                c.Id == contratId &&
+                !c.EstSupprime &&
+                !c.UniteLocative.EstSupprime &&
+                !c.UniteLocative.BienImmobilier.EstSupprime);
 
-                    !c.EstSupprime &&
-
-                    c.UniteLocative != null &&
-                    !c.UniteLocative.EstSupprime &&
-
-                    c.UniteLocative.BienImmobilier != null &&
-                    !c.UniteLocative.BienImmobilier.EstSupprime);
-
-        // --------------------------------------------------------
-        // LOCATAIRE
-        // --------------------------------------------------------
-
-        if (User.IsInRole(
-                nameof(RoleUtilisateur.Locataire)))
+        if (User.IsInRole(nameof(RoleUtilisateur.Locataire)))
         {
-            var utilisateurId =
-                GetCurrentUserId();
+            var utilisateurId = GetCurrentUserId();
 
-            if (!utilisateurId.HasValue)
+            if (utilisateurId == null)
             {
                 return false;
             }
 
             query = query.Where(c =>
-                c.LocataireId ==
-                utilisateurId.Value);
+                c.LocataireId == utilisateurId.Value);
         }
-
-        // --------------------------------------------------------
-        // ADMIN / GESTIONNAIRE
-        // --------------------------------------------------------
-
         else
         {
-            var societeId =
-                await GetSocieteIdUtilisateurConnecteAsync();
+            var societeId = await GetSocieteIdUtilisateurConnecteAsync(
+                cancellationToken);
 
-            if (!societeId.HasValue)
+            if (societeId == null)
             {
                 return false;
             }
 
             query = query.Where(c =>
-                c.UniteLocative
-                    .BienImmobilier
-                    .SocieteId ==
-                    societeId.Value);
+                c.UniteLocative.BienImmobilier.SocieteId == societeId.Value);
         }
 
-        return await query.AnyAsync();
+        return await query.AnyAsync(cancellationToken);
     }
-
 
     // ============================================================
     // 9. RÉCUPÉRER UN PAIEMENT ACCESSIBLE
     // ============================================================
 
-    private async Task<Paiement?>
-        GetPaiementAccessibleAsync(
-            Guid paiementId,
-            bool inclureRelations = false)
+    private async Task<Paiement?> GetPaiementAccessibleAsync(
+        Guid paiementId,
+        CancellationToken cancellationToken,
+        bool inclureRelations = false)
     {
-        IQueryable<Paiement> query =
-            _context.Paiements;
+        if (paiementId == Guid.Empty)
+        {
+            return null;
+        }
 
-        // --------------------------------------------------------
-        // Relations
-        // --------------------------------------------------------
+        IQueryable<Paiement> query = _context.Paiements;
 
         if (inclureRelations)
         {
             query = query
                 .Include(p => p.Contrat)
                     .ThenInclude(c => c.Locataire)
-
                 .Include(p => p.Contrat)
                     .ThenInclude(c => c.UniteLocative)
-                        .ThenInclude(u =>
-                            u.BienImmobilier);
+                        .ThenInclude(u => u.BienImmobilier);
         }
-        else
-        {
-            query = query
-                .Include(p => p.Contrat);
-        }
-
-        // --------------------------------------------------------
-        // Paiement valide
-        // --------------------------------------------------------
 
         query = query.Where(p =>
             p.Id == paiementId &&
-
             !p.EstSupprime &&
-
-            p.Contrat != null &&
             !p.Contrat.EstSupprime &&
-
-            p.Contrat.UniteLocative != null &&
             !p.Contrat.UniteLocative.EstSupprime &&
+            !p.Contrat.UniteLocative.BienImmobilier.EstSupprime);
 
-            p.Contrat.UniteLocative
-                .BienImmobilier != null &&
-
-            !p.Contrat.UniteLocative
-                .BienImmobilier.EstSupprime);
-
-        // --------------------------------------------------------
-        // LOCATAIRE
-        // --------------------------------------------------------
-
-        if (User.IsInRole(
-                nameof(RoleUtilisateur.Locataire)))
+        if (User.IsInRole(nameof(RoleUtilisateur.Locataire)))
         {
-            var utilisateurId =
-                GetCurrentUserId();
+            var utilisateurId = GetCurrentUserId();
 
-            if (!utilisateurId.HasValue)
+            if (utilisateurId == null)
             {
                 return null;
             }
 
             query = query.Where(p =>
-                p.Contrat.LocataireId ==
-                utilisateurId.Value);
+                p.Contrat.LocataireId == utilisateurId.Value);
         }
-
-        // --------------------------------------------------------
-        // ADMIN / GESTIONNAIRE
-        // --------------------------------------------------------
-
         else
         {
-            var societeId =
-                await GetSocieteIdUtilisateurConnecteAsync();
+            var societeId = await GetSocieteIdUtilisateurConnecteAsync(
+                cancellationToken);
 
-            if (!societeId.HasValue)
+            if (societeId == null)
             {
                 return null;
             }
 
             query = query.Where(p =>
-                p.Contrat.UniteLocative
-                    .BienImmobilier
-                    .SocieteId ==
-                    societeId.Value);
+                p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
+                societeId.Value);
         }
 
-        return await query
-            .AsNoTracking()
-            .FirstOrDefaultAsync();
+        return await query.FirstOrDefaultAsync(cancellationToken);
     }
 
-
     // ============================================================
-    // 10. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
+    // 10. CALCULER LE MONTANT MENSUEL EXIGIBLE
     // ============================================================
 
-    private async Task<Guid?>
-        GetSocieteIdUtilisateurConnecteAsync()
+    private static decimal CalculerMontantDu(Contrat contrat)
     {
-        var currentUserId =
-            GetCurrentUserId();
+        return contrat.MontantLoyer +
+               (contrat.MontantChargesLocatives ?? 0m);
+    }
 
-        if (!currentUserId.HasValue)
+    // ============================================================
+    // 11. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
+    // ============================================================
+
+    private async Task<Guid?> GetSocieteIdUtilisateurConnecteAsync(
+        CancellationToken cancellationToken)
+    {
+        var utilisateurId = GetCurrentUserId();
+
+        if (utilisateurId == null)
         {
             return null;
         }
@@ -1208,110 +899,51 @@ public class PaiementsController : ControllerBase
         return await _context.Utilisateurs
             .AsNoTracking()
             .Where(u =>
-                u.Id == currentUserId.Value &&
+                u.Id == utilisateurId.Value &&
                 !u.EstSupprime &&
                 u.Statut)
-            .Select(u =>
-                (Guid?)u.SocieteId)
-            .FirstOrDefaultAsync();
+            .Select(u => (Guid?)u.SocieteId)
+            .FirstOrDefaultAsync(cancellationToken);
     }
 
-
     // ============================================================
-    // 11. UTILISATEUR CONNECTÉ
+    // 12. UTILISATEUR CONNECTÉ
     // ============================================================
 
     private Guid? GetCurrentUserId()
     {
         var userId =
-            User.FindFirstValue(
-                ClaimTypes.NameIdentifier)
+            User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? User.FindFirstValue("sub")
             ?? User.FindFirstValue("Id");
 
-        if (Guid.TryParse(
-                userId,
-                out var parsedUserId))
-        {
-            return parsedUserId;
-        }
-
-        return null;
+        return Guid.TryParse(userId, out var parsedUserId)
+            ? parsedUserId
+            : null;
     }
 
-
     // ============================================================
-    // 12. NORMALISER LE MOIS DE LOYER
+    // 13. NORMALISER LE MOIS DE LOYER
     // ============================================================
 
-    private static DateTime NormaliserMoisLoyer(
-        DateTime moisLoyer)
+    private static DateTime NormaliserMoisLoyer(DateTime moisLoyer)
     {
-        return new DateTime(
-            moisLoyer.Year,
-            moisLoyer.Month,
-            1);
+        return new DateTime(moisLoyer.Year, moisLoyer.Month, 1);
     }
-
-
-    // ============================================================
-    // 13. VÉRIFIER QUE LE MOIS APPARTIENT AU CONTRAT
-    // ============================================================
 
     private static bool MoisDansPeriodeContrat(
         Contrat contrat,
         DateTime moisLoyer)
     {
-        var debutMois =
-            new DateTime(
-                moisLoyer.Year,
-                moisLoyer.Month,
-                1);
-
-        var finMois =
-            debutMois
-                .AddMonths(1)
-                .AddTicks(-1);
+        var debutMois = NormaliserMoisLoyer(moisLoyer);
+        var finMois = debutMois.AddMonths(1).AddTicks(-1);
 
         return debutMois <= contrat.DateFin &&
                finMois >= contrat.DateDebut;
     }
 
-
     // ============================================================
-    // 14. RECHERCHER UN PAIEMENT BLOQUANT
-    //
-    // EnAttente  -> bloque
-    // Confirme   -> bloque
-    // Echoue     -> ne bloque pas
-    // ============================================================
-
-    private async Task<Paiement?>
-        GetPaiementBloquantAsync(
-            Guid contratId,
-            DateTime moisLoyer)
-    {
-        return await _context.Paiements
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p =>
-                p.ContratId == contratId &&
-
-                p.MoisLoyer == moisLoyer &&
-
-                !p.EstSupprime &&
-
-                (
-                    p.StatutTransaction ==
-                        StatutTransaction.EnAttente ||
-
-                    p.StatutTransaction ==
-                        StatutTransaction.Confirme
-                ));
-    }
-
-
-    // ============================================================
-    // 15. VÉRIFICATION SIGNATURE WEBHOOK
+    // 14. SIGNATURE WEBHOOK
     // ============================================================
 
     private static bool VerifierSignature(
@@ -1325,56 +957,31 @@ public class PaiementsController : ControllerBase
             return false;
         }
 
-        using var hmac =
-            new HMACSHA256(
-                Encoding.UTF8.GetBytes(hashKey));
+        using var hmac = new HMACSHA256(
+            Encoding.UTF8.GetBytes(hashKey));
 
-        var computedBytes =
-            hmac.ComputeHash(
-                Encoding.UTF8.GetBytes(payload));
-
-        var computedHex =
-            Convert.ToHexString(
-                computedBytes)
+        var computedHex = Convert.ToHexString(
+            hmac.ComputeHash(Encoding.UTF8.GetBytes(payload)))
             .ToLowerInvariant();
 
-        var expectedBytes =
-            Encoding.UTF8.GetBytes(
-                computedHex);
+        var expectedBytes = Encoding.UTF8.GetBytes(computedHex);
+        var providedBytes = Encoding.UTF8.GetBytes(
+            signature.Trim().ToLowerInvariant());
 
-        var providedBytes =
-            Encoding.UTF8.GetBytes(
-                signature
-                    .Trim()
-                    .ToLowerInvariant());
-
-        if (expectedBytes.Length !=
-            providedBytes.Length)
-        {
-            return false;
-        }
-
-        return CryptographicOperations
-            .FixedTimeEquals(
-                expectedBytes,
-                providedBytes);
+        return expectedBytes.Length == providedBytes.Length &&
+               CryptographicOperations.FixedTimeEquals(
+                   expectedBytes, providedBytes);
     }
 
-
     // ============================================================
-    // 16. NUMÉRO DE QUITTANCE
+    // 15. NUMÉRO DE QUITTANCE
     // ============================================================
 
     private static string GenererNumeroQuittance()
     {
-        return
-            $"Q-{DateTime.UtcNow:yyyyMMdd}-" +
-            $"{Guid.NewGuid()
-                .ToString()[..4]
-                .ToUpperInvariant()}";
+        return $"Q-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
     }
 }
-
 
 // =================================================================
 // DTO : LISTE DES PAIEMENTS
@@ -1384,36 +991,25 @@ public sealed class PaiementListItemDto
 {
     public Guid Id { get; set; }
     public Guid ContratId { get; set; }
-
     public DateTime DatePaiement { get; set; }
-
+    public DateTime? DateConfirmation { get; set; }
     public DateTime MoisLoyer { get; set; }
-
     public decimal Montant { get; set; }
-
+    public decimal MontantDu { get; set; }
     public ModePaiement Mode { get; set; }
-
     public StatutTransaction Statut { get; set; }
-
-    public string NumeroQuittance { get; set; } =
-        string.Empty;
-
-    public string LocataireNom { get; set; } =
-        "N/A";
-
-    public string UniteReference { get; set; } =
-        "N/A";
-
-    public string BienReference { get; set; } =
-        "N/A";
-
-    public string BienNom { get; set; } =
-        "N/A";
+    public string NumeroQuittance { get; set; } = string.Empty;
+    public string? ReferenceTransactionOperateur { get; set; }
+    public decimal? FraisTransaction { get; set; }
+    public string? MotifEchec { get; set; }
+    public string LocataireNom { get; set; } = "N/A";
+    public string UniteReference { get; set; } = "N/A";
+    public string BienReference { get; set; } = "N/A";
+    public string BienNom { get; set; } = "N/A";
 }
 
-
 // =================================================================
-// REQUEST : PAIEMENT MOBILE MONEY
+// DTO : PAIEMENT MOBILE MONEY
 // =================================================================
 
 public record InitierPaiementRequest(
@@ -1423,9 +1019,8 @@ public record InitierPaiementRequest(
     string Telephone,
     DateTime MoisLoyer);
 
-
 // =================================================================
-// REQUEST : PAIEMENT ESPÈCES
+// DTO : PAIEMENT ESPÈCES
 // =================================================================
 
 public record PaiementEspecesRequest(

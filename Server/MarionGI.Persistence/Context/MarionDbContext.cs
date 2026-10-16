@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
+﻿
 using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MarionGI.Persistence.Context;
 
@@ -47,9 +48,13 @@ public class MarionDbContext : DbContext
     public DbSet<TicketPhoto> TicketsPhotos =>
         Set<TicketPhoto>();
 
+    public DbSet<Prestataire> Prestataires =>
+        Set<Prestataire>();
+
     // Fiscalité
 
-    public DbSet<ChargeBien> ChargesBiens => Set<ChargeBien>();
+    public DbSet<ChargeBien> ChargesBiens =>
+        Set<ChargeBien>();
 
     public DbSet<TrancheIRPP> TranchesIRPP =>
         Set<TrancheIRPP>();
@@ -59,6 +64,12 @@ public class MarionDbContext : DbContext
 
     public DbSet<RegimeFiscal> RegimesFiscaux =>
         Set<RegimeFiscal>();
+
+    public DbSet<ValeurFiscaleBien> ValeursFiscalesBiens =>
+        Set<ValeurFiscaleBien>();
+
+    public DbSet<DeclarationFiscale> DeclarationsFiscales =>
+    Set<DeclarationFiscale>();
 
     // ============================================================
     // 2. Conventions EF Core
@@ -87,11 +98,13 @@ public class MarionDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // ========================================================
-        // 3.1. SOCIÉTÉ
+        // 3.1. SOCIETE
         // ========================================================
 
         modelBuilder.Entity<Societe>(entity =>
         {
+            entity.HasQueryFilter(s => !s.EstSupprime);
+
             entity.Property(s => s.Nom)
                 .HasMaxLength(200)
                 .IsRequired();
@@ -99,14 +112,36 @@ public class MarionDbContext : DbContext
             entity.Property(s => s.NumeroEntreprise)
                 .HasMaxLength(100);
 
+            entity.Property(s => s.NumeroContribuable)
+                .HasMaxLength(100);
+
             entity.Property(s => s.Adresse)
+                .HasMaxLength(250);
+
+            entity.Property(s => s.AdresseFiscale)
                 .HasMaxLength(250);
 
             entity.Property(s => s.Ville)
                 .HasMaxLength(100);
 
+            entity.Property(s => s.Region)
+                .HasMaxLength(100);
+
+            entity.Property(s => s.Departement)
+                .HasMaxLength(100);
+
             entity.Property(s => s.CodePostal)
                 .HasMaxLength(20);
+
+            entity.Property(s => s.Pays)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(s => s.CentreImpots)
+                .HasMaxLength(200);
+
+            entity.Property(s => s.ActivitePrincipale)
+                .HasMaxLength(250);
 
             entity.Property(s => s.Telephone)
                 .HasMaxLength(30);
@@ -114,13 +149,22 @@ public class MarionDbContext : DbContext
             entity.Property(s => s.Email)
                 .HasMaxLength(200);
 
+            entity.Property(s => s.Actif)
+                .HasDefaultValue(true);
+
             entity.HasMany(s => s.Utilisateurs)
                 .WithOne(u => u.Societe)
-                .HasForeignKey(u => u.SocieteId);
+                .HasForeignKey(u => u.SocieteId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(s => s.BiensImmobiliers)
                 .WithOne(b => b.Societe)
-                .HasForeignKey(b => b.SocieteId);
+                .HasForeignKey(b => b.SocieteId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(s => s.NumeroContribuable)
+                .HasDatabaseName(
+                    "IX_Societes_NumeroContribuable");
         });
 
         // ========================================================
@@ -153,6 +197,15 @@ public class MarionDbContext : DbContext
             entity.Property(u => u.OtpSecret)
                 .HasMaxLength(500);
 
+            entity.Property(u => u.Statut)
+                .HasDefaultValue(true);
+
+            entity.Property(u => u.TelephoneVerifie)
+                .HasDefaultValue(false);
+
+            entity.Property(u => u.TentativesConnexionEchouees)
+                .HasDefaultValue(0);
+
             entity.HasIndex(u => new
             {
                 u.SocieteId,
@@ -160,7 +213,8 @@ public class MarionDbContext : DbContext
             })
                 .IsUnique()
                 .HasDatabaseName(
-                    "IX_Utilisateurs_SocieteId_Email");
+                    "IX_Utilisateurs_SocieteId_Email")
+                .HasFilter("[EstSupprime] = 0");
 
             entity.HasIndex(u => new
             {
@@ -169,11 +223,13 @@ public class MarionDbContext : DbContext
             })
                 .IsUnique()
                 .HasDatabaseName(
-                    "IX_Utilisateurs_SocieteId_Telephone");
+                    "IX_Utilisateurs_SocieteId_Telephone")
+                .HasFilter("[EstSupprime] = 0");
 
             entity.HasOne(u => u.Societe)
                 .WithMany(s => s.Utilisateurs)
-                .HasForeignKey(u => u.SocieteId);
+                .HasForeignKey(u => u.SocieteId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -182,6 +238,8 @@ public class MarionDbContext : DbContext
 
         modelBuilder.Entity<RefreshToken>(entity =>
         {
+            entity.HasQueryFilter(r => !r.EstSupprime);
+
             entity.Property(r => r.Token)
                 .HasMaxLength(500)
                 .IsRequired();
@@ -198,7 +256,8 @@ public class MarionDbContext : DbContext
 
             entity.HasOne(r => r.Utilisateur)
                 .WithMany(u => u.RefreshTokens)
-                .HasForeignKey(r => r.UtilisateurId);
+                .HasForeignKey(r => r.UtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -229,8 +288,41 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(100)
                 .IsRequired();
 
+            entity.Property(b => b.Region)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.Departement)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.Arrondissement)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.NumeroTitreFoncier)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.NumeroLot)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.NumeroParcelle)
+                .HasMaxLength(100);
+
+            entity.Property(b => b.ReferenceCadastrale)
+                .HasMaxLength(150);
+
             entity.Property(b => b.Superficie)
                 .HasPrecision(10, 2);
+
+            entity.Property(b => b.ValeurAcquisition)
+                .HasPrecision(18, 2);
+
+            entity.Property(b => b.ValeurEstimee)
+                .HasPrecision(18, 2);
+
+            entity.Property(b => b.Type)
+                .IsRequired();
+
+            entity.Property(b => b.StatutFoncier)
+                .IsRequired(false);
 
             entity.HasIndex(b => new
             {
@@ -267,22 +359,22 @@ public class MarionDbContext : DbContext
 
             entity.HasOne(b => b.Societe)
                 .WithMany(s => s.BiensImmobiliers)
-                .HasForeignKey(b => b.SocieteId);
+                .HasForeignKey(b => b.SocieteId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(b => b.UnitesLocatives)
                 .WithOne(u => u.BienImmobilier)
-                .HasForeignKey(u => u.BienImmobilierId);
+                .HasForeignKey(u => u.BienImmobilierId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Toutes les charges du bien, y compris les charges
-            // qui concernent une unité locative particulière.
             entity.HasMany(b => b.Charges)
                 .WithOne(c => c.BienImmobilier)
                 .HasForeignKey(c => c.BienImmobilierId)
-                .IsRequired();
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 3.5. UNITÉ LOCATIVE
+        // 3.5. UNITE LOCATIVE
         // ========================================================
 
         modelBuilder.Entity<UniteLocative>(entity =>
@@ -297,7 +389,17 @@ public class MarionDbContext : DbContext
                 .HasPrecision(10, 2);
 
             entity.Property(u => u.Loyer)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(u => u.ChargesLocativesMensuelles)
                 .HasPrecision(18, 2);
+
+            entity.Property(u => u.MontantCaution)
+                .HasPrecision(18, 2);
+
+            entity.Property(u => u.MotifExoneration)
+                .HasMaxLength(1000);
 
             entity.HasIndex(u => new
             {
@@ -306,11 +408,8 @@ public class MarionDbContext : DbContext
             })
                 .IsUnique()
                 .HasDatabaseName(
-                    "IX_UnitesLocatives_BienImmobilierId_Reference");
-
-            entity.HasOne(u => u.BienImmobilier)
-                .WithMany(b => b.UnitesLocatives)
-                .HasForeignKey(u => u.BienImmobilierId);
+                    "IX_UnitesLocatives_BienImmobilierId_Reference")
+                .HasFilter("[EstSupprime] = 0");
 
             entity.Property(u => u.Photos)
                 .HasColumnType("nvarchar(max)")
@@ -325,19 +424,26 @@ public class MarionDbContext : DbContext
                             (JsonSerializerOptions?)null)
                           ?? new List<string>());
 
+            entity.HasOne(u => u.BienImmobilier)
+                .WithMany(b => b.UnitesLocatives)
+                .HasForeignKey(u => u.BienImmobilierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.HasMany(u => u.Contrats)
                 .WithOne(c => c.UniteLocative)
-                .HasForeignKey(c => c.UniteLocativeId);
+                .HasForeignKey(c => c.UniteLocativeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(u => u.DemandesVisite)
                 .WithOne(d => d.UniteLocative)
-                .HasForeignKey(d => d.UniteLocativeId);
+                .HasForeignKey(d => d.UniteLocativeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Charges spécifiques à cette unité.
             entity.HasMany(u => u.Charges)
                 .WithOne(c => c.UniteLocative)
                 .HasForeignKey(c => c.UniteLocativeId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -354,7 +460,8 @@ public class MarionDbContext : DbContext
 
             entity.HasIndex(c => c.Reference)
                 .IsUnique()
-                .HasDatabaseName("IX_Contrats_Reference");
+                .HasDatabaseName("IX_Contrats_Reference")
+                .HasFilter("[EstSupprime] = 0");
 
             entity.Property(c => c.DateDebut)
                 .IsRequired();
@@ -370,6 +477,12 @@ public class MarionDbContext : DbContext
                 .HasPrecision(18, 2)
                 .IsRequired();
 
+            entity.Property(c => c.MontantChargesLocatives)
+                .HasPrecision(18, 2);
+
+            entity.Property(c => c.TauxRevisionLoyer)
+                .HasPrecision(9, 6);
+
             entity.Property(c => c.FrequencePaiement)
                 .IsRequired()
                 .HasDefaultValue(FrequencePaiement.Mensuel);
@@ -382,13 +495,21 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(StatutContrat.Actif);
 
+            entity.Property(c => c.CheminDocumentContrat)
+                .HasMaxLength(1000);
+
+            entity.Property(c => c.Observations)
+                .HasMaxLength(4000);
+
             entity.HasOne(c => c.UniteLocative)
                 .WithMany(u => u.Contrats)
-                .HasForeignKey(c => c.UniteLocativeId);
+                .HasForeignKey(c => c.UniteLocativeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(c => c.Locataire)
                 .WithMany(u => u.ContratsLocataire)
-                .HasForeignKey(c => c.LocataireId);
+                .HasForeignKey(c => c.LocataireId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -399,9 +520,16 @@ public class MarionDbContext : DbContext
         {
             entity.HasQueryFilter(p => !p.EstSupprime);
 
+            entity.Property(p => p.MontantDu)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
             entity.Property(p => p.Montant)
                 .HasPrecision(18, 2)
                 .IsRequired();
+
+            entity.Property(p => p.FraisTransaction)
+                .HasPrecision(18, 2);
 
             entity.Property(p => p.DatePaiement)
                 .IsRequired();
@@ -417,6 +545,12 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(50)
                 .IsRequired();
 
+            entity.Property(p => p.MotifEchec)
+                .HasMaxLength(1000);
+
+            entity.Property(p => p.Observations)
+                .HasMaxLength(2000);
+
             entity.Property(p => p.ModePaiement)
                 .IsRequired();
 
@@ -427,41 +561,35 @@ public class MarionDbContext : DbContext
             entity.HasIndex(p => p.ContratId)
                 .HasDatabaseName("IX_Paiements_ContratId");
 
-            // Vérifier les valeurs numériques réelles de l'enum
-            // StatutTransaction avant d'appliquer ces filtres.
             entity.HasIndex(p => new
             {
                 p.ContratId,
                 p.MoisLoyer
             })
-                .IsUnique()
                 .HasDatabaseName(
-                    "IX_Paiements_ContratId_MoisLoyer_EnAttente")
-                .HasFilter(
-                    "[EstSupprime] = 0 AND [StatutTransaction] = 1");
-
-            entity.HasIndex(p => new
-            {
-                p.ContratId,
-                p.MoisLoyer
-            })
-                .IsUnique()
-                .HasDatabaseName(
-                    "IX_Paiements_ContratId_MoisLoyer_Confirme")
-                .HasFilter(
-                    "[EstSupprime] = 0 AND [StatutTransaction] = 2");
+                    "IX_Paiements_ContratId_MoisLoyer");
 
             entity.HasIndex(p => p.NumeroQuittance)
                 .IsUnique()
-                .HasDatabaseName("IX_Paiements_NumeroQuittance");
+                .HasDatabaseName("IX_Paiements_NumeroQuittance")
+                .HasFilter("[EstSupprime] = 0");
+
+            entity.HasIndex(p => p.ReferenceTransactionOperateur)
+                .IsUnique()
+                .HasDatabaseName(
+                    "IX_Paiements_ReferenceTransactionOperateur")
+                .HasFilter(
+                    "[EstSupprime] = 0 AND " +
+                    "[ReferenceTransactionOperateur] IS NOT NULL");
 
             entity.HasOne(p => p.Contrat)
                 .WithMany(c => c.Paiements)
-                .HasForeignKey(p => p.ContratId);
+                .HasForeignKey(p => p.ContratId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 3.8. CHARGE IMMOBILIÈRE
+        // 3.8. CHARGE IMMOBILIERE
         // ========================================================
 
         modelBuilder.Entity<ChargeBien>(entity =>
@@ -471,7 +599,6 @@ public class MarionDbContext : DbContext
             entity.HasQueryFilter(c => !c.EstSupprime);
 
             entity.Property(c => c.DateDepense)
-                .HasColumnType("datetime")
                 .IsRequired();
 
             entity.Property(c => c.TypeCharge)
@@ -480,6 +607,12 @@ public class MarionDbContext : DbContext
             entity.Property(c => c.Description)
                 .HasMaxLength(2000)
                 .IsRequired();
+
+            entity.Property(c => c.NomFournisseur)
+                .HasMaxLength(200);
+
+            entity.Property(c => c.NumeroContribuableFournisseur)
+                .HasMaxLength(100);
 
             entity.Property(c => c.MontantTTC)
                 .HasPrecision(18, 2)
@@ -494,12 +627,18 @@ public class MarionDbContext : DbContext
             entity.Property(c => c.ReferenceFacture)
                 .HasMaxLength(100);
 
+            entity.Property(c => c.CheminJustificatif)
+                .HasMaxLength(1000);
+
             entity.Property(c => c.EstDeductibleFiscalement)
                 .IsRequired()
                 .HasDefaultValue(false);
 
             entity.Property(c => c.JustificationNonDeductibilite)
                 .HasMaxLength(1000);
+
+            entity.Property(c => c.Observations)
+                .HasMaxLength(2000);
 
             entity.HasIndex(c => new
             {
@@ -516,13 +655,76 @@ public class MarionDbContext : DbContext
             entity.HasOne(c => c.BienImmobilier)
                 .WithMany(b => b.Charges)
                 .HasForeignKey(c => c.BienImmobilierId)
-                .IsRequired();
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(c => c.UniteLocative)
                 .WithMany(u => u.Charges)
                 .HasForeignKey(c => c.UniteLocativeId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
+
+
+
+        // ========================================================
+        // VALEUR FISCALE DU BIEN IMMOBILIER
+        // ========================================================
+
+        modelBuilder.Entity<ValeurFiscaleBien>(entity =>
+        {
+            entity.ToTable("ValeursFiscalesBiens", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_ValeursFiscalesBiens_Montant",
+                    "[Montant] > 0");
+
+                table.HasCheckConstraint(
+                    "CK_ValeursFiscalesBiens_Dates",
+                    "[DateValidationOfficielle] IS NULL " +
+                    "OR [DateValidationOfficielle] >= [DateEvaluation]");
+            });
+
+
+            entity.HasQueryFilter(v => !v.EstSupprime);
+
+            entity.Property(v => v.Montant)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(v => v.TypeValeur)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.Property(v => v.DateEvaluation)
+                .IsRequired();
+
+            entity.Property(v => v.ReferenceJustificative)
+                .HasMaxLength(500);
+
+            entity.Property(v => v.CheminJustificatif)
+                .HasMaxLength(1000);
+
+            entity.Property(v => v.Observations)
+                .HasMaxLength(2000);
+
+            // Recherche par bien et année fiscale.
+            entity.HasIndex(v => new
+            {
+                v.BienImmobilierId,
+                v.AnneeFiscale,
+                v.TypeValeur
+            })
+            .HasDatabaseName(
+                "IX_ValeursFiscalesBiens_Bien_Annee_Type");
+
+            entity.HasOne(v => v.BienImmobilier)
+                .WithMany(b => b.ValeursFiscales)
+                .HasForeignKey(v => v.BienImmobilierId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
 
         // ========================================================
         // 3.9. DEMANDE DE VISITE
@@ -540,17 +742,40 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(30)
                 .IsRequired();
 
+            entity.Property(d => d.EmailProspect)
+                .HasMaxLength(200);
+
             entity.Property(d => d.Observations)
-                .HasMaxLength(1000)
+                .HasMaxLength(1000);
+
+            entity.Property(d => d.CommentaireInterne)
+                .HasMaxLength(2000);
+
+            entity.Property(d => d.DateSouhaitee)
                 .IsRequired();
+
+            entity.Property(d => d.Statut)
+                .IsRequired()
+                .HasDefaultValue(StatutDemandeVisite.EnAttente);
+
+            entity.HasIndex(d => new
+            {
+                d.UniteLocativeId,
+                d.DateSouhaitee
+            })
+                .HasDatabaseName(
+                    "IX_DemandesVisite_UniteLocativeId_DateSouhaitee");
 
             entity.HasOne(d => d.UniteLocative)
                 .WithMany(u => u.DemandesVisite)
-                .HasForeignKey(d => d.UniteLocativeId);
+                .HasForeignKey(d => d.UniteLocativeId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(d => d.Agent)
                 .WithMany()
-                .HasForeignKey(d => d.AgentId);
+                .HasForeignKey(d => d.AgentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -574,7 +799,8 @@ public class MarionDbContext : DbContext
 
             entity.HasOne(n => n.Utilisateur)
                 .WithMany()
-                .HasForeignKey(n => n.UtilisateurId);
+                .HasForeignKey(n => n.UtilisateurId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
@@ -598,8 +824,6 @@ public class MarionDbContext : DbContext
             entity.Property(j => j.DetailsJson)
                 .HasColumnType("nvarchar(max)")
                 .IsRequired();
-
-            // UtilisateurId reste sans navigation EF explicite.
         });
 
         // ========================================================
@@ -629,14 +853,7 @@ public class MarionDbContext : DbContext
                 .IsRequired();
 
             entity.Property(t => t.DateIncident)
-                .HasColumnType("datetime")
                 .IsRequired();
-
-            entity.Property(t => t.DateResolution)
-                .HasColumnType("datetime");
-
-            entity.Property(t => t.DateValidationDevis)
-                .HasColumnType("datetime");
 
             entity.Property(t => t.Priorite)
                 .IsRequired()
@@ -684,56 +901,137 @@ public class MarionDbContext : DbContext
                 .HasDatabaseName(
                     "IX_TicketsIncidents_LocataireId");
 
-            // Le bien est obligatoire pour chaque incident.
+            entity.HasIndex(t => t.DeclarantId)
+                .HasDatabaseName(
+                    "IX_TicketsIncidents_DeclarantId");
+
             entity.HasOne(t => t.BienImmobilier)
                 .WithMany()
                 .HasForeignKey(t => t.BienImmobilierId)
-                .IsRequired();
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // L'unité est facultative pour les incidents généraux.
             entity.HasOne(t => t.UniteLocative)
                 .WithMany()
                 .HasForeignKey(t => t.UniteLocativeId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(t => t.Locataire)
                 .WithMany()
                 .HasForeignKey(t => t.LocataireId)
-                .IsRequired();
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.Declarant)
+                .WithMany()
+                .HasForeignKey(t => t.DeclarantId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(t => t.ValideParUtilisateur)
                 .WithMany()
                 .HasForeignKey(t => t.ValideParUtilisateurId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(t => t.Photos)
                 .WithOne(p => p.TicketIncident)
-                .HasForeignKey(p => p.TicketIncidentId);
+                .HasForeignKey(p => p.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasMany(t => t.Intervenants)
                 .WithOne(i => i.TicketIncident)
-                .HasForeignKey(i => i.TicketIncidentId);
+                .HasForeignKey(i => i.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 3.13. TICKET INTERVENANT
+        // 3.13. PRESTATAIRE
+        // ========================================================
+
+        modelBuilder.Entity<Prestataire>(entity =>
+        {
+            entity.HasQueryFilter(p => !p.EstSupprime);
+
+            entity.Property(p => p.TypePrestataire)
+                .IsRequired()
+                .HasDefaultValue(TypePrestataire.PersonnePhysique);
+
+            entity.Property(p => p.Nom)
+                .HasMaxLength(150)
+                .IsRequired();
+
+            entity.Property(p => p.Prenom)
+                .HasMaxLength(150);
+
+            entity.Property(p => p.NomEntreprise)
+                .HasMaxLength(200);
+
+            entity.Property(p => p.Specialite)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(p => p.Telephone)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(p => p.Courriel)
+                .HasMaxLength(200);
+
+            entity.Property(p => p.Adresse)
+                .HasMaxLength(250);
+
+            entity.Property(p => p.Ville)
+                .HasMaxLength(100);
+
+            entity.Property(p => p.NumeroContribuable)
+                .HasMaxLength(100);
+
+            entity.Property(p => p.Observations)
+                .HasMaxLength(2000);
+
+            entity.Property(p => p.Actif)
+                .HasDefaultValue(true);
+
+            entity.HasIndex(p => new
+            {
+                p.SocieteId,
+                p.Nom
+            })
+                .HasDatabaseName(
+                    "IX_Prestataires_SocieteId_Nom")
+                .HasFilter("[EstSupprime] = 0");
+
+            entity.HasIndex(p => new
+            {
+                p.SocieteId,
+                p.Specialite
+            })
+                .HasDatabaseName(
+                    "IX_Prestataires_SocieteId_Specialite")
+                .HasFilter("[EstSupprime] = 0");
+
+            entity.HasOne(p => p.Societe)
+                .WithMany()
+                .HasForeignKey(p => p.SocieteId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(p => p.Interventions)
+                .WithOne(i => i.Prestataire)
+                .HasForeignKey(i => i.PrestataireId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========================================================
+        // 3.14. TICKET INTERVENANT
         // ========================================================
 
         modelBuilder.Entity<TicketIntervenant>(entity =>
         {
             entity.HasQueryFilter(i => !i.EstSupprime);
-
-            entity.Property(i => i.NomArtisan)
-                .HasMaxLength(150)
-                .IsRequired();
-
-            entity.Property(i => i.Specialite)
-                .HasMaxLength(150)
-                .IsRequired();
-
-            entity.Property(i => i.Telephone)
-                .HasMaxLength(30)
-                .IsRequired();
 
             entity.Property(i => i.MontantDevis)
                 .HasPrecision(18, 2);
@@ -741,17 +1039,43 @@ public class MarionDbContext : DbContext
             entity.Property(i => i.MontantFacture)
                 .HasPrecision(18, 2);
 
+            entity.Property(i => i.ReferenceDevis)
+                .HasMaxLength(100);
+
+            entity.Property(i => i.ReferenceFacture)
+                .HasMaxLength(100);
+
+            entity.Property(i => i.Observations)
+                .HasMaxLength(2000);
+
             entity.HasIndex(i => i.TicketIncidentId)
                 .HasDatabaseName(
                     "IX_TicketsIntervenants_TicketIncidentId");
 
+            entity.HasIndex(i => new
+            {
+                i.TicketIncidentId,
+                i.PrestataireId
+            })
+                .IsUnique()
+                .HasDatabaseName(
+                    "IX_TicketsIntervenants_TicketIncidentId_PrestataireId")
+                .HasFilter("[EstSupprime] = 0");
+
             entity.HasOne(i => i.TicketIncident)
                 .WithMany(t => t.Intervenants)
-                .HasForeignKey(i => i.TicketIncidentId);
+                .HasForeignKey(i => i.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(i => i.Prestataire)
+                .WithMany(p => p.Interventions)
+                .HasForeignKey(i => i.PrestataireId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 3.14. TICKET PHOTO
+        // 3.15. TICKET PHOTO
         // ========================================================
 
         modelBuilder.Entity<TicketPhoto>(entity =>
@@ -762,11 +1086,16 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(1000)
                 .IsRequired();
 
+            entity.Property(p => p.NomFichier)
+                .HasMaxLength(255);
+
+            entity.Property(p => p.Description)
+                .HasMaxLength(1000);
+
             entity.Property(p => p.Type)
                 .IsRequired();
 
             entity.Property(p => p.DateAjout)
-                .HasColumnType("datetime")
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
@@ -780,16 +1109,18 @@ public class MarionDbContext : DbContext
 
             entity.HasOne(p => p.TicketIncident)
                 .WithMany(t => t.Photos)
-                .HasForeignKey(p => p.TicketIncidentId);
+                .HasForeignKey(p => p.TicketIncidentId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne<Utilisateur>()
                 .WithMany()
                 .HasForeignKey(p => p.AjouteParUtilisateurId)
-                .IsRequired(false);
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 3.15. TRANCHE IRPP
+        // 3.16. TRANCHE IRPP
         // ========================================================
 
         modelBuilder.Entity<TrancheIRPP>(entity =>
@@ -805,7 +1136,7 @@ public class MarionDbContext : DbContext
             entity.Property(t => t.SeuilMax)
                 .HasPrecision(18, 2);
 
-            // 0.10 = 10 %
+            // Convention : 0.10 représente 10 %.
             entity.Property(t => t.Taux)
                 .HasPrecision(9, 6)
                 .IsRequired();
@@ -814,6 +1145,9 @@ public class MarionDbContext : DbContext
                 .IsRequired();
 
             entity.Property(t => t.Description)
+                .HasMaxLength(500);
+
+            entity.Property(t => t.ReferenceLegale)
                 .HasMaxLength(500);
 
             entity.HasIndex(t => new
@@ -828,13 +1162,11 @@ public class MarionDbContext : DbContext
         });
 
         // ========================================================
-        // 3.16. PARAMÈTRE FISCAL
+        // 3.17. PARAMETRE FISCAL
         // ========================================================
 
         modelBuilder.Entity<ParametreFiscal>(entity =>
         {
-            entity.ToTable("ParametresFiscaux");
-
             entity.HasQueryFilter(p => !p.EstSupprime);
 
             entity.Property(p => p.CodeRegle)
@@ -842,44 +1174,109 @@ public class MarionDbContext : DbContext
                 .IsRequired();
 
             entity.Property(p => p.Description)
-                .HasMaxLength(1000)
+                .HasMaxLength(500)
                 .IsRequired();
 
-            // 0.10 = 10 %
             entity.Property(p => p.Valeur)
-                .HasPrecision(18, 6)
+                .HasPrecision(18, 4);
+
+            entity.Property(p => p.TypeImpot)
+                .HasConversion<int>()
                 .IsRequired();
 
             entity.Property(p => p.TypeParametre)
+                .HasConversion<int>()
                 .IsRequired();
 
-            entity.Property(p => p.DateDebutValidite)
-                .HasColumnType("datetime")
-                .IsRequired();
+            entity.Property(p => p.ReferenceLegale)
+                .HasMaxLength(500);
 
-            entity.Property(p => p.DateFinValidite)
-                .HasColumnType("datetime");
+            entity.Property(p => p.ConditionsApplication)
+                .HasMaxLength(2000);
 
-            // Non unique pour permettre plusieurs versions
-            // d'une règle si les périodes de validité diffèrent.
+            // Plusieurs versions d'une même règle peuvent exister.
             entity.HasIndex(p => new
             {
                 p.AnneeFiscale,
-                p.CodeRegle
+                p.CodeRegle,
+                p.RegimeFiscalId
             })
                 .HasDatabaseName(
-                    "IX_ParametresFiscaux_AnneeFiscale_CodeRegle")
+                    "IX_ParametresFiscaux_Annee_Code_Regime")
                 .HasFilter("[EstSupprime] = 0");
+
+            entity.HasOne(p => p.RegimeFiscal)
+                .WithMany(r => r.ParametresFiscaux)
+                .HasForeignKey(p => p.RegimeFiscalId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.ToTable("ParametresFiscaux", table =>
+            {
+                table.HasCheckConstraint(
+                    "CK_ParametresFiscaux_DatesValidite",
+                    "[DateFinValidite] IS NULL OR " +
+                    "[DateFinValidite] >= [DateDebutValidite]");
+            });
         });
 
+
+        modelBuilder.Entity<DeclarationFiscale>(entity =>
+        {
+            entity.ToTable("DeclarationsFiscales");
+
+            entity.HasQueryFilter(d => !d.EstSupprime);
+
+            entity.Property(d => d.TypeImpot)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.Property(d => d.Statut)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.Property(d => d.BaseImposable)
+                .HasPrecision(18, 2);
+
+            entity.Property(d => d.MontantImpot)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(d => d.ReferenceDeclaration)
+                .HasMaxLength(200);
+
+            entity.Property(d => d.Observations)
+                .HasMaxLength(2000);
+
+            entity.HasIndex(d => new
+            {
+                d.SocieteId,
+                d.AnneeFiscale,
+                d.TypeImpot
+            })
+                .HasDatabaseName(
+                    "IX_DeclarationsFiscales_Societe_Annee_Type");
+
+            entity.HasOne(d => d.Societe)
+                .WithMany(s => s.DeclarationsFiscales)
+                .HasForeignKey(d => d.SocieteId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.BienImmobilier)
+                .WithMany(b => b.DeclarationsFiscales)
+                .HasForeignKey(d => d.BienImmobilierId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
         // ========================================================
-        // 3.17. RÉGIME FISCAL
+        // 3.18. REGIME FISCAL
         // ========================================================
 
         modelBuilder.Entity<RegimeFiscal>(entity =>
         {
-            entity.ToTable("RegimesFiscaux");
-
             entity.HasQueryFilter(r => !r.EstSupprime);
 
             entity.Property(r => r.Code)
@@ -887,34 +1284,40 @@ public class MarionDbContext : DbContext
                 .IsRequired();
 
             entity.Property(r => r.Libelle)
-                .HasMaxLength(200)
+                .HasMaxLength(150)
                 .IsRequired();
 
             entity.Property(r => r.Description)
-                .HasMaxLength(1000)
+                .HasMaxLength(500)
                 .IsRequired();
 
+            entity.Property(r => r.ReferenceLegale)
+                .HasMaxLength(500);
+
             entity.Property(r => r.EstActif)
-                .HasDefaultValue(true)
-                .IsRequired();
+                .HasDefaultValue(true);
 
             entity.HasIndex(r => r.Code)
                 .IsUnique()
                 .HasDatabaseName("IX_RegimesFiscaux_Code")
                 .HasFilter("[EstSupprime] = 0");
+
+            entity.HasMany(r => r.ParametresFiscaux)
+                .WithOne(p => p.RegimeFiscal)
+                .HasForeignKey(p => p.RegimeFiscalId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         // ========================================================
-        // 4. COMPORTEMENT GLOBAL DES CLÉS ÉTRANGÈRES
+        // 4. COMPORTEMENT GLOBAL DES CLES ETRANGERES
         // ========================================================
-        // Désactive les suppressions en cascade pour toutes les
-        // relations configurées, y compris les relations facultatives.
-        // Les suppressions logiques doivent être gérées explicitement.
+        // Désactive les suppressions en cascade.
+        // Les suppressions logiques restent gérées par l'application.
         // ========================================================
 
         foreach (var foreignKey in modelBuilder.Model
-                     .GetEntityTypes()
-                     .SelectMany(e => e.GetForeignKeys()))
+             .GetEntityTypes()
+             .SelectMany(e => e.GetForeignKeys()))
         {
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
         }

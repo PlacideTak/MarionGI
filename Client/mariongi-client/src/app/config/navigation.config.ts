@@ -84,13 +84,28 @@ export const APP_NAV_ITEMS: NavItem[] = [
   },
 
   // ========================================================
+  // PRESTATAIRES ET GESTION IMMOBILIÈRE
+  // ========================================================
+
+  {
+    label: 'Prestataires',
+    icon: 'pi pi-briefcase',
+    route: 'prestataires',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+
+  // ========================================================
   // GESTION FISCALE ET CHARGES IMMOBILIÈRES
   // ========================================================
 
   {
     label: 'Charges immobilières',
     icon: 'pi pi-wallet',
-    route: 'charges',
+    route: 'chargesimmobilieres',
     roles: [
       ROLES.Administrateur,
       ROLES.Admin,
@@ -124,6 +139,28 @@ export const APP_NAV_ITEMS: NavItem[] = [
     label: 'Régimes fiscaux',
     icon: 'pi pi-briefcase',
     route: 'regimesfiscaux',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+
+  {
+    label: 'Valeurs fiscales des biens',
+    icon: 'pi pi-chart-line',
+    route: 'valeursfiscalesbiens',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+
+  {
+    label: 'Déclarations fiscales des biens',
+    icon: 'pi pi-file-edit',
+    route: 'declarationsfiscalesbiens',
     roles: [
       ROLES.Administrateur,
       ROLES.Admin,

@@ -992,6 +992,7 @@ textarea[pTextarea] {
   .ticket-detail-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  
 }
 
 /* =========================================================
@@ -1161,6 +1162,18 @@ textarea[pTextarea] {
   }
 }
 
-.ticket-form-row .field-cout {
-  max-width: 100px;
+/* Largeur ciblée du champ Coût uniquement */
+:host ::ng-deep .ticket-form-row .field-cout {
+  width: 175px;
+  min-width: 0;
+}
+
+:host ::ng-deep .ticket-form-row .field-cout .p-inputnumber {
+  width: 175px !important;
+  max-width: 175px !important;
+}
+
+:host ::ng-deep .ticket-form-row .field-cout .p-inputnumber-input {
+  width: 175px !important;
+  max-width: 175px !important;
 }

@@ -440,31 +440,40 @@ export class DemandesVisite implements OnInit {
     });
   }
 
+  
   private ajouterAgentConnecteSiAbsent(): void {
-    const currentUser = this.authService.currentUser();
+  const currentUser = this.authService.currentUser();
 
-    if (
-      !currentUser ||
-      this.currentUserRole?.toLowerCase() !== ROLES.Agent.toLowerCase() ||
-      this.agentsDisponibles.some(agent => agent.id === currentUser.id)
-    ) {
-      return;
-    }
-
-    this.agentsDisponibles = [
-      ...this.agentsDisponibles,
-      {
-        id: currentUser.id,
-        nom: currentUser.nom,
-        prenom: currentUser.prenom,
-        email: currentUser.email,
-        role: RoleUtilisateur.Agent,
-        telephone: '',
-        statut: true,
-        societeId: currentUser.societeId ?? ''
-      }
-    ];
+  if (
+    !currentUser ||
+    this.currentUserRole?.toLowerCase() !== ROLES.Agent.toLowerCase() ||
+    this.agentsDisponibles.some(agent => agent.id === currentUser.id)
+  ) {
+    return;
   }
+
+  const agentConnecte: UtilisateurDto = {
+    id: currentUser.id,
+    nom: currentUser.nom,
+    prenom: currentUser.prenom,
+    email: currentUser.email,
+    role: RoleUtilisateur.Agent,
+    telephone: '',
+    statut: true,
+    societeId: currentUser.societeId ?? '',
+
+    // Propriétés obligatoires du modèle UtilisateurDto
+    nomSociete: '',
+    derniereConnexion: null,
+    telephoneVerifie: false,
+    dateDerniereModificationProfil: null
+  };
+
+  this.agentsDisponibles = [
+    ...this.agentsDisponibles,
+    agentConnecte
+  ];
+}
 
   // =========================================================
   // CRÉATION

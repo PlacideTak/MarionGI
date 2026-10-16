@@ -350,50 +350,70 @@ export class UnitesLocatives
   // FORMULAIRE UNITÉ
   // ============================================================
 
-  initForm(): void {
-
-    this.uniteForm = this.fb.group({
-
-      reference: [
-        '',
-        [
-          Validators.required,
-          Validators.maxLength(50)
-        ]
-      ],
-
-      type: [
-        TypeUniteLocative.Appartement,
-        Validators.required
-      ],
-
-      superficie: [
-        0,
-        [
-          Validators.required,
-          Validators.min(1)
-        ]
-      ],
-
-      loyer: [
-        0,
-        [
-          Validators.required,
-          Validators.min(0)
-        ]
-      ],
-
-      statut: [
-        StatutBien.Disponible,
-        Validators.required
-      ],
-
-      bienImmobilierId: [
-        null,
-        Validators.required
+initForm(): void {
+  this.uniteForm = this.fb.group({
+    reference: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(50)
       ]
-    });
-  }
+    ],
+
+    type: [
+      TypeUniteLocative.Appartement,
+      Validators.required
+    ],
+
+    superficie: [
+      0,
+      [
+        Validators.required,
+        Validators.min(1)
+      ]
+    ],
+
+    nombrePieces: [null],
+
+    etage: [null],
+
+    loyer: [
+      0,
+      [
+        Validators.required,
+        Validators.min(0)
+      ]
+    ],
+
+    chargesLocativesMensuelles: [
+      null,
+      Validators.min(0)
+    ],
+
+    montantCaution: [
+      null,
+      Validators.min(0)
+    ],
+
+    statut: [
+      StatutBien.Disponible,
+      Validators.required
+    ],
+
+    datePremiereMiseEnLocation: [null],
+
+    dateDerniereRenovation: [null],
+
+    estExonereeFiscalement: [false],
+
+    motifExoneration: [null],
+
+    bienImmobilierId: [
+      null,
+      Validators.required
+    ]
+  });
+}
 
 
   // ============================================================
@@ -1316,22 +1336,22 @@ export class UnitesLocatives
 
     this.selectedUniteId = null;
 
-    this.uniteForm.reset({
-
-      reference: '',
-
-      type:
-        TypeUniteLocative.Appartement,
-
-      superficie: 0,
-
-      loyer: 0,
-
-      statut:
-        StatutBien.Disponible,
-
-      bienImmobilierId: null
-    });
+this.uniteForm.reset({
+  reference: '',
+  type: TypeUniteLocative.Appartement,
+  superficie: 0,
+  nombrePieces: null,
+  etage: null,
+  loyer: 0,
+  chargesLocativesMensuelles: null,
+  montantCaution: null,
+  statut: StatutBien.Disponible,
+  datePremiereMiseEnLocation: null,
+  dateDerniereRenovation: null,
+  estExonereeFiscalement: false,
+  motifExoneration: null,
+  bienImmobilierId: null
+});
 
     this.displayModal = true;
   }
@@ -1341,48 +1361,62 @@ export class UnitesLocatives
   // MODIFICATION D'UNE UNITÉ
   // ============================================================
 
-  ouvrirModalModification(
-    unite: UniteLocativeDto
-  ): void {
 
-    if (!this.canManageUnites) {
-
-      return;
-    }
-
-    this.nettoyerPhotos();
-
-    this.isEditMode = true;
-
-    this.selectedUniteId =
-      unite.id;
-
-    this.uniteForm.patchValue({
-
-      reference:
-        unite.reference,
-
-      type:
-        unite.type,
-
-      superficie:
-        unite.superficie,
-
-      loyer:
-        unite.loyer,
-
-      statut:
-        unite.statut,
-
-      bienImmobilierId:
-        unite.bienImmobilierId
-    });
-
-    this.photosExistantes =
-      [...(unite.photos ?? [])];
-
-    this.displayModal = true;
+ouvrirModalModification(
+  unite: UniteLocativeDto
+): void {
+  if (!this.canManageUnites) {
+    return;
   }
+
+  this.nettoyerPhotos();
+
+  this.isEditMode = true;
+  this.selectedUniteId = unite.id;
+
+  this.uniteForm.reset({
+    reference: unite.reference ?? '',
+    type: unite.type,
+    superficie: unite.superficie ?? 0,
+
+    nombrePieces: unite.nombrePieces ?? null,
+    etage: unite.etage ?? null,
+
+    loyer: unite.loyer ?? 0,
+    chargesLocativesMensuelles:
+      unite.chargesLocativesMensuelles ?? null,
+    montantCaution: unite.montantCaution ?? null,
+
+    statut: unite.statut,
+
+    datePremiereMiseEnLocation:
+      unite.datePremiereMiseEnLocation
+        ? String(unite.datePremiereMiseEnLocation)
+            .substring(0, 10)
+        : null,
+
+    dateDerniereRenovation:
+      unite.dateDerniereRenovation
+        ? String(unite.dateDerniereRenovation)
+            .substring(0, 10)
+        : null,
+
+    estExonereeFiscalement:
+      unite.estExonereeFiscalement ?? false,
+
+    motifExoneration:
+      unite.motifExoneration ?? null,
+
+    bienImmobilierId: unite.bienImmobilierId
+  });
+
+  this.photosExistantes = [
+    ...(unite.photos ?? [])
+  ];
+
+  this.displayModal = true;
+}
+
 
 
   // ============================================================
@@ -1611,16 +1645,12 @@ export class UnitesLocatives
       .getUniteById(unite.id)
       .subscribe({
 
-        next: (
-          data: UniteLocativeDetailDto
-        ) => {
+      next: (data: UniteLocativeDetailDto) => {
+        console.log('Détail unité reçu de l’API :', data);
 
-          this.selectedUnite =
-            data;
-
-          this.displayDetailModal =
-            true;
-        },
+        this.selectedUnite = data;
+        this.displayDetailModal = true;
+      },
 
         error: (err: unknown) => {
 
@@ -1647,241 +1677,101 @@ export class UnitesLocatives
   // SAUVEGARDE
   // ============================================================
 
-  sauvegarder(): void {
-
-    if (!this.canManageUnites) {
-
-      return;
-    }
-
-    if (this.uniteForm.invalid) {
-
-      this.uniteForm.markAllAsTouched();
-
-      return;
-    }
-
-    const valeurs =
-      this.uniteForm.getRawValue();
-
-
-    const reference =
-      String(valeurs.reference)
-        .trim();
-
-    const type: TypeUniteLocative =
-      Number(valeurs.type);
-
-    const superficie =
-      Number(valeurs.superficie);
-
-    const loyer =
-      Number(valeurs.loyer);
-
-    const statut: StatutBien =
-      Number(valeurs.statut);
-
-    const bienImmobilierId =
-      String(valeurs.bienImmobilierId);
-
-
-    if (!reference) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Validation',
-
-        detail:
-          'La référence de l’unité est obligatoire.'
-      });
-
-      return;
-    }
-
-
-    if (superficie <= 0) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Validation',
-
-        detail:
-          'La superficie doit être supérieure à zéro.'
-      });
-
-      return;
-    }
-
-
-    if (loyer < 0) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Validation',
-
-        detail:
-          'Le loyer ne peut pas être négatif.'
-      });
-
-      return;
-    }
-
-
-    if (!bienImmobilierId) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Validation',
-
-        detail:
-          'Veuillez sélectionner un bien immobilier.'
-      });
-
-      return;
-    }
-
-
-    // ==========================================================
-    // CRÉATION
-    // ==========================================================
-
-    if (!this.isEditMode) {
-
-      const creation:
-        CreerUniteLocativeRequest = {
-
-        reference,
-
-        type,
-
-        superficie,
-
-        loyer,
-
-        statut,
-
-        bienImmobilierId,
-
-        fichiers:
-          [...this.fichiersSelectionnes]
-      };
-
-
-      this.uniteService
-        .createUnite(creation)
-        .subscribe({
-
-          next: () => {
-
-            this.messageService.add({
-
-              severity: 'success',
-
-              summary: 'Succès',
-
-              detail:
-                'Unité locative créée avec succès.'
-            });
-
-            this.displayModal =
-              false;
-
-            this.nettoyerPhotos();
-
-            this.chargerUnites();
-          },
-
-          error: (err: unknown) => {
-
-            this.gererErreurSauvegarde(
-              err,
-              'Erreur lors de la création de l’unité.'
-            );
-          }
-        });
-
-      return;
-    }
-
-
-    // ==========================================================
-    // MODIFICATION
-    // ==========================================================
-
-    if (
-      this.isEditMode &&
-      this.selectedUniteId
-    ) {
-
-      const modification:
-        ModifierUniteLocativeRequest = {
-
-        reference,
-
-        type,
-
-        superficie,
-
-        loyer,
-
-        statut,
-
-        bienImmobilierId,
-
-        photosExistantes:
-          [...this.photosExistantes],
-
-        fichiers:
-          [...this.fichiersSelectionnes]
-      };
-
-
-      this.uniteService
-        .updateUnite(
-          this.selectedUniteId,
-          modification
-        )
-        .subscribe({
-
-          next: () => {
-
-            this.messageService.add({
-
-              severity: 'success',
-
-              summary: 'Succès',
-
-              detail:
-                'Unité locative modifiée avec succès.'
-            });
-
-            this.displayModal =
-              false;
-
-            this.nettoyerPhotos();
-
-            this.chargerUnites();
-          },
-
-          error: (err: unknown) => {
-
-            this.gererErreurSauvegarde(
-              err,
-              'Erreur lors de la modification de l’unité.'
-            );
-          }
-        });
-    }
+sauvegarder(): void {
+  if (this.uniteForm.invalid) {
+    this.uniteForm.markAllAsTouched();
+    return;
   }
 
+  const valeurs = this.uniteForm.getRawValue();
+
+  const donneesCommunes = {
+    reference: valeurs.reference,
+    type: valeurs.type,
+    superficie: Number(valeurs.superficie),
+    nombrePieces: valeurs.nombrePieces !== null && valeurs.nombrePieces !== ''
+      ? Number(valeurs.nombrePieces)
+      : null,
+    etage: valeurs.etage !== null && valeurs.etage !== ''
+      ? Number(valeurs.etage)
+      : null,
+    loyer: Number(valeurs.loyer),
+    chargesLocativesMensuelles:
+      valeurs.chargesLocativesMensuelles !== null &&
+      valeurs.chargesLocativesMensuelles !== ''
+        ? Number(valeurs.chargesLocativesMensuelles)
+        : null,
+    montantCaution:
+      valeurs.montantCaution !== null && valeurs.montantCaution !== ''
+        ? Number(valeurs.montantCaution)
+        : null,
+    statut: valeurs.statut,
+    datePremiereMiseEnLocation: valeurs.datePremiereMiseEnLocation || null,
+    dateDerniereRenovation: valeurs.dateDerniereRenovation || null,
+    estExonereeFiscalement: valeurs.estExonereeFiscalement,
+    motifExoneration: valeurs.motifExoneration || null,
+    bienImmobilierId: valeurs.bienImmobilierId
+  };
+
+  if (!this.isEditMode) {
+    const creation: CreerUniteLocativeRequest = {
+      ...donneesCommunes,
+      fichiers: [...this.fichiersSelectionnes]
+    };
+
+    this.uniteService.createUnite(creation).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Succès',
+          detail: 'Unité locative créée.'
+        });
+        this.chargerUnites();
+        this.fermerModal();
+      },
+      error: (erreur) => {
+        console.error('Erreur lors de la création :', erreur);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Erreur',
+          detail: 'Impossible de créer l’unité locative.'
+        });
+      }
+    });
+
+    return;
+  }
+
+  if (!this.selectedUniteId) {
+    return;
+  }
+
+  const modification: ModifierUniteLocativeRequest = {
+    ...donneesCommunes,
+    photosExistantes: [...this.photosExistantes],
+    fichiers: [...this.fichiersSelectionnes]
+  };
+
+  this.uniteService.updateUnite(this.selectedUniteId, modification).subscribe({
+    next: () => {
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Succès',
+        detail: 'Unité locative modifiée.'
+      });
+      this.chargerUnites();
+      this.fermerModal();
+    },
+    error: (erreur) => {
+      console.error('Erreur lors de la modification :', erreur);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erreur',
+        detail: 'Impossible de modifier l’unité locative.'
+      });
+    }
+  });
+}
 
   // ============================================================
   // FERMETURE DE LA MODALE UNITÉ
@@ -2230,33 +2120,28 @@ export class UnitesLocatives
   // INDICATEURS DU TABLEAU DE BORD
   // ============================================================
 
-  get nombreUnitesTotal(): number {
-    return this.unites.length;
-  }
+    get nombreUnitesTotal(): number {
+      return this.unites.length;
+    }
 
-  get nombreUnitesDisponibles(): number {
-    return this.unites.filter(unite =>
-      this.getStatutLibelle(unite.statut)
-        .toLocaleLowerCase()
-        .includes('disponible')
-    ).length;
-  }
+    get nombreUnitesDisponibles(): number {
+      return this.unites.filter(
+        unite => unite.statut === StatutBien.Disponible
+      ).length;
+    }
 
-  get nombreUnitesOccupees(): number {
-    return this.unites.filter(unite =>
-      this.getStatutLibelle(unite.statut)
-        .toLocaleLowerCase()
-        .includes('occup')
-    ).length;
-  }
+    get nombreUnitesOccupees(): number {
+      return this.unites.filter(
+        unite => unite.statut === StatutBien.Loue
+      ).length;
+    }
 
-  get loyerMensuelTotal(): number {
-    return this.unites.reduce(
-      (total, unite) => total + (unite.loyer ?? 0),
-      0
-    );
-  }
-
+    get loyerMensuelTotal(): number {
+      return this.unites.reduce(
+        (total, unite) => total + (unite.loyer ?? 0),
+        0
+      );
+    }
   // ============================================================
   // FILTRES
   // ============================================================
@@ -2295,3 +2180,4 @@ export class UnitesLocatives
   }
 
 }
+

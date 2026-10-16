@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 
 import { BiensService, BienDetailDto } from '../services/biens.service';
-import { ROLES } from '../models/gestimmo.models';
+import { ROLES, StatutFoncier } from '../models/gestimmo.models';
 import { AuthService } from '../login/auth.service';
 
 @Component({
@@ -24,38 +24,47 @@ export class BienDetails implements OnInit {
   public readonly bienService = inject(BiensService);
   private readonly authService = inject(AuthService);
 
-  // ============================================================
-  // ÉTAT
-  // ============================================================
-
-  isLocataire = false;
-
   bien: BienDetailDto | null = null;
-
   bienId: string | null = null;
 
   chargementEnCours = true;
+  erreurChargement = false;
+  messageErreur = '';
 
   photoActiveIndex = 0;
 
+  private requeteEnCours = 0;
 
-  // ============================================================
-  // INITIALISATION
-  // ============================================================
+  get isLocataire(): boolean {
+    return this.authService.hasRole([ROLES.Locataire]);
+  }
+
+  get peutGererBien(): boolean {
+    return this.authService.hasRole([
+      ROLES.Administrateur,
+      ROLES.Gestionnaire
+    ]);
+  }
+
+  get photos(): string[] {
+    return this.bien?.photos ?? [];
+  }
+
+  get unitesLocatives() {
+    return this.bien?.unitesLocatives ?? [];
+  }
 
   ngOnInit(): void {
-
-    this.isLocataire =
-      this.authService.hasRole([ROLES.Locataire]);
-
     this.route.paramMap.subscribe(params => {
-
       const id = params.get('id');
 
       this.bienId = id;
 
       if (!id) {
+        this.bien = null;
         this.chargementEnCours = false;
+        this.erreurChargement = true;
+        this.messageErreur = 'Identifiant du bien manquant.';
         return;
       }
 
@@ -63,26 +72,42 @@ export class BienDetails implements OnInit {
     });
   }
 
-
-  // ============================================================
-  // CHARGEMENT DU BIEN
-  // ============================================================
-
   private chargerBien(id: string): void {
+    const requete = ++this.requeteEnCours;
 
     this.chargementEnCours = true;
+    this.erreurChargement = false;
+    this.messageErreur = '';
+    this.bien = null;
+    this.photoActiveIndex = 0;
 
     this.bienService.getBienById(id).subscribe({
+      next: data => {
+        if (requete !== this.requeteEnCours) {
+          return;
+        }
 
-      next: (data) => {
+        if (!data) {
+          this.bien = null;
+          this.erreurChargement = true;
+          this.messageErreur = 'Aucun bien immobilier ne correspond à cet identifiant.';
+          this.chargementEnCours = false;
+          return;
+        }
 
-        this.bien = data;
-        this.photoActiveIndex = 0;
+        this.bien = {
+          ...data,
+          photos: data.photos ?? [],
+          unitesLocatives: data.unitesLocatives ?? []
+        };
+
         this.chargementEnCours = false;
-
       },
 
-      error: (err) => {
+      error: err => {
+        if (requete !== this.requeteEnCours) {
+          return;
+        }
 
         console.error(
           'Erreur lors de la récupération du bien :',
@@ -90,56 +115,84 @@ export class BienDetails implements OnInit {
         );
 
         this.bien = null;
+        this.erreurChargement = true;
+        this.messageErreur =
+          err?.status === 404
+            ? 'Ce bien immobilier est introuvable ou n’est plus accessible.'
+            : 'Impossible de charger les informations du bien. Vérifie ta connexion et réessaie.';
+
         this.chargementEnCours = false;
-
       }
-
     });
   }
 
+  getStatutFoncierLibelle(
+    statut: StatutFoncier | number | null | undefined
+  ): string {
+    if (statut === null || statut === undefined) {
+      return 'Non renseigné';
+    }
 
-  // ============================================================
-  // NAVIGATION
-  // ============================================================
+    switch (Number(statut)) {
+      case StatutFoncier.NonRenseigne:
+        return 'Non renseigné';
+
+      case StatutFoncier.TitreFoncierDisponible:
+        return 'Titre foncier disponible';
+
+      case StatutFoncier.DemandeEnCours:
+        return 'Demande en cours';
+
+      case StatutFoncier.SansTitreFoncier:
+        return 'Sans titre foncier';
+
+      case StatutFoncier.Autre:
+        return 'Autre';
+
+      default:
+        return 'Non renseigné';
+    }
+  }
+
+  selectionnerPhoto(index: number): void {
+    if (index < 0 || index >= this.photos.length) {
+      return;
+    }
+
+    this.photoActiveIndex = index;
+  }
 
   allerVersListe(): void {
-
     this.router.navigate(['/biens']);
-
   }
 
-
-  // ============================================================
-  // MODIFICATION DU BIEN
-  // ============================================================
-
-modifierBien(): void {
-  if (this.isLocataire || !this.bien) {
-    return;
-  }
-
-  this.router.navigate(['/biens'], {
-    queryParams: {
-      edit: this.bien.id
+  modifierBien(): void {
+    if (!this.peutGererBien || !this.bien) {
+      return;
     }
-  });
-}
 
-
-  // ============================================================
-  // GESTION DES UNITÉS LOCATIVES
-  // ============================================================
-
-gererUnites(): void {
-  if (this.isLocataire || !this.bien) {
-    return;
+    this.router.navigate(['/biens'], {
+      queryParams: {
+        edit: this.bien.id
+      }
+    });
   }
 
-  this.router.navigate(['/uniteslocatives'], {
-    queryParams: {
-      bienId: this.bien.id
+  gererUnites(): void {
+    if (!this.peutGererBien || !this.bien) {
+      return;
     }
-  });
-}
 
+    this.router.navigate(['/uniteslocatives'], {
+      queryParams: {
+        bienId: this.bien.id
+      }
+    });
+  }
+
+  rechargerBien(): void {
+    if (this.bienId) {
+      this.chargerBien(this.bienId);
+    }
+  }
 }

@@ -9,6 +9,81 @@
 
 
   <!-- =========================================================
+       GRILLE DES STATISTIQUES
+       ========================================================= -->
+  <div class="paiements-stats mb-4">
+
+    <!-- Total -->
+    <div class="stat-card stat-card-total">
+      <div class="stat-card__icon">
+        <i class="pi pi-wallet"></i>
+      </div>
+
+      <div class="stat-card__content">
+        <span class="stat-card__label">Total des paiements</span>
+        <strong class="stat-card__value">
+          {{ totalPaiements }}
+        </strong>
+        <span class="stat-card__description">
+          Tous statuts confondus
+        </span>
+      </div>
+    </div>
+
+    <!-- En attente -->
+    <div class="stat-card stat-card-attente">
+      <div class="stat-card__icon">
+        <i class="pi pi-clock"></i>
+      </div>
+
+      <div class="stat-card__content">
+        <span class="stat-card__label">En attente</span>
+        <strong class="stat-card__value">
+          {{ nombrePaiementsEnAttente }}
+        </strong>
+        <span class="stat-card__description">
+          Paiements à traiter
+        </span>
+      </div>
+    </div>
+
+    <!-- Confirmés -->
+    <div class="stat-card stat-card-confirme">
+      <div class="stat-card__icon">
+        <i class="pi pi-check-circle"></i>
+      </div>
+
+      <div class="stat-card__content">
+        <span class="stat-card__label">Confirmés</span>
+        <strong class="stat-card__value">
+          {{ nombrePaiementsConfirmes }}
+        </strong>
+        <span class="stat-card__description">
+          Paiements réussis
+        </span>
+      </div>
+    </div>
+
+    <!-- Échoués -->
+    <div class="stat-card stat-card-echoue">
+      <div class="stat-card__icon">
+        <i class="pi pi-times-circle"></i>
+      </div>
+
+      <div class="stat-card__content">
+        <span class="stat-card__label">Échoués</span>
+        <strong class="stat-card__value">
+          {{ nombrePaiementsEchoues }}
+        </strong>
+        <span class="stat-card__description">
+          Paiements non aboutis
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =========================================================
        FILTRES
        ========================================================= -->
   <div class="card filters-bar mb-4">

@@ -457,3 +457,126 @@ $success-hover: #246348;
     gap: 0.25rem;
   }
 }
+
+
+/* =========================================================
+   GRILLE DES STATISTIQUES DES PAIEMENTS
+   ========================================================= */
+
+.paiements-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 1.5rem 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1.25rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  &__icon {
+    display: flex;
+    flex: 0 0 48px;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    font-size: 1.35rem;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  &__label {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  &__value {
+    color: #1e293b;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__description {
+    color: #94a3b8;
+    font-size: 0.75rem;
+  }
+}
+
+/* Total */
+.stat-card-total .stat-card__icon {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+/* En attente */
+.stat-card-attente .stat-card__icon {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+/* Confirmés */
+.stat-card-confirme .stat-card__icon {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+/* Échoués */
+.stat-card-echoue .stat-card__icon {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Tablettes */
+@media (max-width: 900px) {
+  .paiements-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Mobiles */
+@media (max-width: 600px) {
+  .paiements-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin: 0 0.5rem 1rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+
+    &__icon {
+      flex-basis: 42px;
+      width: 42px;
+      height: 42px;
+      font-size: 1.2rem;
+    }
+
+    &__value {
+      font-size: 1.5rem;
+    }
+  }
+}

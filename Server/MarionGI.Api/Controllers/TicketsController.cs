@@ -1,12 +1,9 @@
-﻿using MarionGI.Application.Dtos;
-using MarionGI.Domain.Entities;
+﻿using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Net.Mail;
 using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
@@ -139,7 +136,7 @@ public class TicketsController : ControllerBase
         if (EstPersonnel(utilisateur.Role))
         {
             return requete.Where(t =>
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                 == utilisateur.SocieteId);
         }
 
@@ -151,11 +148,14 @@ public class TicketsController : ControllerBase
         Utilisateur utilisateur)
     {
         var requete = _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
-                .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Locataire)
+            .Include(t => t.Declarant)
+            .Include(t => t.ValideParUtilisateur)
             .Include(t => t.Photos)
             .Include(t => t.Intervenants)
+                .ThenInclude(i => i.Prestataire)
             .Where(t =>
                 t.Id == ticketId &&
                 !t.EstSupprime);
@@ -168,7 +168,7 @@ public class TicketsController : ControllerBase
         else if (EstPersonnel(utilisateur.Role))
         {
             requete = requete.Where(t =>
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                 == utilisateur.SocieteId);
         }
         else
@@ -232,12 +232,13 @@ public class TicketsController : ControllerBase
                 Id = t.Id,
                 Reference = t.Reference,
                 DateCreation = t.DateCreation,
+                BienImmobilierId = t.BienImmobilierId,
                 UniteLocativeId = t.UniteLocativeId,
-                ReferenceUnite = t.UniteLocative.Reference,
-                NomBienImmobilier = t.UniteLocative.BienImmobilier.Nom,
+                ReferenceUnite = t.UniteLocative != null ? t.UniteLocative.Reference : null,
+                NomBienImmobilier = t.BienImmobilier.Nom,
                 LocataireId = t.LocataireId,
-                NomLocataire = t.Locataire.Nom,
-                PrenomLocataire = t.Locataire.Prenom,
+                NomLocataire = t.Locataire != null ? t.Locataire.Nom : string.Empty,
+                PrenomLocataire = t.Locataire != null ? t.Locataire.Prenom : string.Empty,
                 Categorie = t.Categorie,
                 Description = t.Description,
                 Priorite = t.Priorite,
@@ -345,12 +346,13 @@ public class TicketsController : ControllerBase
             Id = ticket.Id,
             Reference = ticket.Reference,
             DateCreation = ticket.DateCreation,
+            BienImmobilierId = ticket.BienImmobilierId,
             UniteLocativeId = ticket.UniteLocativeId,
-            ReferenceUnite = ticket.UniteLocative.Reference,
-            NomBienImmobilier = ticket.UniteLocative.BienImmobilier.Nom,
+            ReferenceUnite = ticket.UniteLocative?.Reference,
+            NomBienImmobilier = ticket.BienImmobilier.Nom,
             LocataireId = ticket.LocataireId,
-            NomLocataire = ticket.Locataire.Nom,
-            PrenomLocataire = ticket.Locataire.Prenom,
+            NomLocataire = ticket.Locataire?.Nom ?? string.Empty,
+            PrenomLocataire = ticket.Locataire?.Prenom ?? string.Empty,
             Categorie = ticket.Categorie,
             Description = ticket.Description,
             DateIncident = ticket.DateIncident,
@@ -365,6 +367,7 @@ public class TicketsController : ControllerBase
             DevisValide = ticket.DevisValide,
             DateValidationDevis = ticket.DateValidationDevis,
             ValideParUtilisateurId = ticket.ValideParUtilisateurId,
+            DeclarantId = ticket.DeclarantId,
 
             Photos = ticket.Photos
                 .Where(p => !p.EstSupprime)
@@ -385,14 +388,20 @@ public class TicketsController : ControllerBase
                 .Select(i => new TicketIntervenantDto
                 {
                     Id = i.Id,
-                    NomArtisan = i.NomArtisan,
-                    Specialite = i.Specialite,
-                    Telephone = i.Telephone,
-                    Courriel = i.Courriel,
+                    PrestataireId = i.PrestataireId,
+                    NomPrestataire = i.Prestataire.NomEntreprise ?? (i.Prestataire.Prenom + " " + i.Prestataire.Nom),
+                    TypePrestataire = i.Prestataire.TypePrestataire,
+                    Specialite = i.Prestataire.Specialite,
+                    Telephone = i.Prestataire.Telephone,
+                    Courriel = i.Prestataire.Courriel,
                     MontantDevis = i.MontantDevis,
                     MontantFacture = i.MontantFacture,
+                    ReferenceDevis = i.ReferenceDevis,
+                    ReferenceFacture = i.ReferenceFacture,
                     DateAssignation = i.DateAssignation,
-                    DateIntervention = i.DateIntervention
+                    DateIntervention = i.DateIntervention,
+                    DateFinIntervention = i.DateFinIntervention,
+                    Observations = i.Observations
                 })
                 .ToList()
         });
@@ -488,53 +497,56 @@ public class TicketsController : ControllerBase
             });
         }
 
-        var unite = await _context.UnitesLocatives
-            .Include(u => u.BienImmobilier)
-            .FirstOrDefaultAsync(u =>
-                u.Id == request.UniteLocativeId &&
-                !u.EstSupprime &&
-                !u.BienImmobilier.EstSupprime);
+        var bien = await _context.Set<BienImmobilier>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b =>
+                b.Id == request.BienImmobilierId &&
+                !b.EstSupprime &&
+                b.SocieteId == utilisateur.SocieteId);
 
-        if (unite is null)
+        if (bien is null)
         {
-            return BadRequest(new
-            {
-                message = "L'unité locative n'existe pas."
-            });
+            return NotFound(new { message = "Le bien immobilier est introuvable ou inaccessible." });
         }
 
-        Guid locataireId;
+        UniteLocative? unite = null;
+        if (request.UniteLocativeId.HasValue)
+        {
+            unite = await _context.UnitesLocatives
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.Id == request.UniteLocativeId.Value &&
+                    u.BienImmobilierId == bien.Id &&
+                    !u.EstSupprime);
+
+            if (unite is null)
+            {
+                return BadRequest(new { message = "L'unité locative n'appartient pas au bien sélectionné ou n'existe pas." });
+            }
+        }
+
+        Guid? locataireId = null;
         var maintenant = DateTime.UtcNow;
 
         if (utilisateur.Role == RoleUtilisateur.Locataire)
         {
-            locataireId = utilisateur.Id;
+            if (!request.UniteLocativeId.HasValue || unite is null)
+                return BadRequest(new { message = "Un locataire doit sélectionner une unité locative." });
 
-            var contratActif = await _context.Contrats
-                .AnyAsync(c =>
-                    c.LocataireId == locataireId &&
-                    c.UniteLocativeId == unite.Id &&
-                    c.Statut == StatutContrat.Actif &&
-                    c.DateDebut <= maintenant &&
-                    c.DateFin >= maintenant &&
-                    !c.EstSupprime);
+            locataireId = utilisateur.Id;
+            var contratActif = await _context.Contrats.AnyAsync(c =>
+                c.LocataireId == utilisateur.Id &&
+                c.UniteLocativeId == unite.Id &&
+                c.Statut == StatutContrat.Actif &&
+                c.DateDebut <= maintenant &&
+                c.DateFin >= maintenant &&
+                !c.EstSupprime);
 
             if (!contratActif)
                 return Forbid();
         }
-        else
+        else if (request.LocataireId.HasValue)
         {
-            if (unite.BienImmobilier.SocieteId != utilisateur.SocieteId)
-                return NotFound();
-
-            if (!request.LocataireId.HasValue)
-            {
-                return BadRequest(new
-                {
-                    message = "Le locataire doit être renseigné."
-                });
-            }
-
             var locataire = await _context.Utilisateurs
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u =>
@@ -545,32 +557,23 @@ public class TicketsController : ControllerBase
                     !u.EstSupprime);
 
             if (locataire is null)
-            {
-                return BadRequest(new
-                {
-                    message = "Le locataire est introuvable ou inactif."
-                });
-            }
+                return BadRequest(new { message = "Le locataire est introuvable ou inactif." });
 
-            locataireId = locataire.Id;
+            if (unite is null)
+                return BadRequest(new { message = "Un locataire ne peut être associé à un ticket sans unité locative." });
 
-            var contratActif = await _context.Contrats
-                .AnyAsync(c =>
-                    c.LocataireId == locataireId &&
-                    c.UniteLocativeId == unite.Id &&
-                    c.Statut == StatutContrat.Actif &&
-                    c.DateDebut <= maintenant &&
-                    c.DateFin >= maintenant &&
-                    !c.EstSupprime);
+            var contratActif = await _context.Contrats.AnyAsync(c =>
+                c.LocataireId == locataire.Id &&
+                c.UniteLocativeId == unite.Id &&
+                c.Statut == StatutContrat.Actif &&
+                c.DateDebut <= maintenant &&
+                c.DateFin >= maintenant &&
+                !c.EstSupprime);
 
             if (!contratActif)
-            {
-                return BadRequest(new
-                {
-                    message =
-                        "Ce locataire ne possède pas de contrat actif pour cette unité."
-                });
-            }
+                return BadRequest(new { message = "Ce locataire ne possède pas de contrat actif pour cette unité." });
+
+            locataireId = locataire.Id;
         }
 
         var fichiers = request.Photos ?? [];
@@ -591,8 +594,10 @@ public class TicketsController : ControllerBase
         var ticket = new TicketIncident
         {
             Reference = reference,
-            UniteLocativeId = unite.Id,
+            BienImmobilierId = bien.Id,
+            UniteLocativeId = unite?.Id,
             LocataireId = locataireId,
+            DeclarantId = utilisateur.Id,
             Categorie = request.Categorie,
             Description = request.Description.Trim(),
             Priorite = request.Priorite,
@@ -666,13 +671,14 @@ public class TicketsController : ControllerBase
             return Forbid();
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Intervenants)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -810,12 +816,13 @@ public class TicketsController : ControllerBase
             return Forbid();
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -868,13 +875,14 @@ public class TicketsController : ControllerBase
         }
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Intervenants)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -963,13 +971,14 @@ public class TicketsController : ControllerBase
             return Forbid();
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Intervenants)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -1050,13 +1059,14 @@ public class TicketsController : ControllerBase
             return Forbid();
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Intervenants)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -1115,129 +1125,58 @@ public class TicketsController : ControllerBase
         [FromBody] AjouterTicketIntervenantRequest request)
     {
         var utilisateur = await ObtenirUtilisateurConnecteAsync();
-
-        if (utilisateur is null)
-            return Unauthorized();
-
-        if (!EstAdministrateurOuGestionnaire(utilisateur.Role))
-            return Forbid();
+        if (utilisateur is null) return Unauthorized();
+        if (!EstAdministrateurOuGestionnaire(utilisateur.Role)) return Forbid();
 
         var ticket = await _context.TicketsIncidents
-            .Include(t => t.UniteLocative)
-                .ThenInclude(u => u.BienImmobilier)
+            .Include(t => t.BienImmobilier)
             .Include(t => t.Intervenants)
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
-                    == utilisateur.SocieteId);
+            .FirstOrDefaultAsync(t => t.Id == id && !t.EstSupprime &&
+                t.BienImmobilier.SocieteId == utilisateur.SocieteId);
 
-        if (ticket is null)
-            return NotFound();
-
+        if (ticket is null) return NotFound(new { message = "Ticket introuvable ou accès non autorisé." });
         if (ticket.Statut == StatutIncident.Cloture)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Impossible d'ajouter un intervenant à un ticket clôturé."
-            });
-        }
+            return BadRequest(new { message = "Impossible d'ajouter un prestataire à un ticket clôturé." });
+        if (request.PrestataireId == Guid.Empty)
+            return BadRequest(new { message = "Le prestataire est obligatoire." });
+        if (request.MontantDevis is < 0 || request.MontantFacture is < 0)
+            return BadRequest(new { message = "Les montants ne peuvent pas être négatifs." });
+        if (request.ReferenceDevis?.Trim().Length > 100 || request.ReferenceFacture?.Trim().Length > 100)
+            return BadRequest(new { message = "Les références de devis et de facture sont limitées à 100 caractères." });
+        if (request.Observations?.Trim().Length > 2000)
+            return BadRequest(new { message = "Les observations sont limitées à 2000 caractères." });
 
-        if (string.IsNullOrWhiteSpace(request.NomArtisan) ||
-            request.NomArtisan.Trim().Length > 150)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le nom de l'artisan est obligatoire et limité à 150 caractères."
-            });
-        }
+        var prestataire = await _context.Set<Prestataire>().FirstOrDefaultAsync(p =>
+            p.Id == request.PrestataireId && p.SocieteId == utilisateur.SocieteId &&
+            p.Actif && !p.EstSupprime);
+        if (prestataire is null)
+            return BadRequest(new { message = "Le prestataire est introuvable, inactif ou inaccessible." });
 
-        if (string.IsNullOrWhiteSpace(request.Specialite) ||
-            request.Specialite.Trim().Length > 150)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La spécialité est obligatoire et limitée à 150 caractères."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Telephone) ||
-            request.Telephone.Trim().Length > 30)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le téléphone est obligatoire et limité à 30 caractères."
-            });
-        }
-
-        var courriel = request.Courriel?.Trim();
-
-        if (!string.IsNullOrWhiteSpace(courriel) &&
-            (courriel.Length > 254 ||
-             !MailAddress.TryCreate(courriel, out var adresse) ||
-             !string.Equals(
-                 adresse.Address,
-                 courriel,
-                 StringComparison.OrdinalIgnoreCase)))
-        {
-            return BadRequest(new
-            {
-                message = "L'adresse courriel de l'intervenant est invalide."
-            });
-        }
-
-        if (request.MontantDevis is < 0 ||
-            request.MontantFacture is < 0)
-        {
-            return BadRequest(new
-            {
-                message = "Les montants ne peuvent pas être négatifs."
-            });
-        }
+        if (ticket.Intervenants.Any(i => !i.EstSupprime && i.PrestataireId == prestataire.Id))
+            return Conflict(new { message = "Ce prestataire est déjà affecté à ce ticket." });
 
         var intervenant = new TicketIntervenant
         {
             TicketIncidentId = ticket.Id,
-            NomArtisan = request.NomArtisan.Trim(),
-            Specialite = request.Specialite.Trim(),
-            Telephone = request.Telephone.Trim(),
-            Courriel = string.IsNullOrWhiteSpace(courriel)
-                ? null
-                : courriel,
+            PrestataireId = prestataire.Id,
             MontantDevis = request.MontantDevis,
             MontantFacture = request.MontantFacture,
+            ReferenceDevis = string.IsNullOrWhiteSpace(request.ReferenceDevis) ? null : request.ReferenceDevis.Trim(),
+            ReferenceFacture = string.IsNullOrWhiteSpace(request.ReferenceFacture) ? null : request.ReferenceFacture.Trim(),
             DateAssignation = DateTime.UtcNow,
-            DateIntervention = request.DateIntervention
+            DateIntervention = request.DateIntervention,
+            DateFinIntervention = request.DateFinIntervention,
+            Observations = string.IsNullOrWhiteSpace(request.Observations) ? null : request.Observations.Trim()
         };
 
-        // Ajouter à la navigation permet au calcul d'inclure immédiatement
-        // ce nouvel intervenant.
         _context.TicketsIntervenants.Add(intervenant);
-
-        // Une nouvelle offre de prix rend l'ancienne validation caduque.
-        if (ticket.ValidationDevisRequise &&
-            intervenant.MontantDevis.HasValue)
-        {
+        ticket.Intervenants.Add(intervenant);
+        if (ticket.ValidationDevisRequise && intervenant.MontantDevis.HasValue)
             InvaliderValidationDevis(ticket);
-        }
-
         RecalculerCoutTotal(ticket);
-
-
         await _context.SaveChangesAsync();
 
-
-        return Ok(new
-        {
-            message = "Intervenant ajouté avec succès.",
-            ticket.Reference,
-            intervenant.Id,
-            ticket.CoutTotal
-        });
+        return Ok(new { message = "Prestataire affecté au ticket avec succès.", intervenant.Id, intervenant.PrestataireId, ticket.Reference, ticket.CoutTotal });
     }
 
     // ============================================================
@@ -1252,134 +1191,50 @@ public class TicketsController : ControllerBase
         [FromBody] ModifierTicketIntervenantRequest request)
     {
         var utilisateur = await ObtenirUtilisateurConnecteAsync();
-
-        if (utilisateur is null)
-            return Unauthorized();
-
-        if (!EstAdministrateurOuGestionnaire(utilisateur.Role))
-            return Forbid();
+        if (utilisateur is null) return Unauthorized();
+        if (!EstAdministrateurOuGestionnaire(utilisateur.Role)) return Forbid();
 
         var ticket = await _context.TicketsIncidents
-            .Include(t => t.UniteLocative)
-                .ThenInclude(u => u.BienImmobilier)
+            .Include(t => t.BienImmobilier)
             .Include(t => t.Intervenants)
-            .FirstOrDefaultAsync(t =>
-                t.Id == id &&
-                !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
-                    == utilisateur.SocieteId);
-
-        if (ticket is null)
-        {
-            return NotFound(new
-            {
-                message = "Ticket introuvable ou accès non autorisé."
-            });
-        }
-
+            .FirstOrDefaultAsync(t => t.Id == id && !t.EstSupprime &&
+                t.BienImmobilier.SocieteId == utilisateur.SocieteId);
+        if (ticket is null) return NotFound(new { message = "Ticket introuvable ou accès non autorisé." });
         if (ticket.Statut == StatutIncident.Cloture)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Impossible de modifier un intervenant d'un ticket clôturé."
-            });
-        }
+            return BadRequest(new { message = "Impossible de modifier un prestataire affecté à un ticket clôturé." });
 
-        var intervenant = ticket.Intervenants.FirstOrDefault(i =>
-            i.Id == intervenantId &&
-            !i.EstSupprime);
+        var intervenant = ticket.Intervenants.FirstOrDefault(i => i.Id == intervenantId && !i.EstSupprime);
+        if (intervenant is null) return NotFound(new { message = "Affectation introuvable." });
+        if (request.PrestataireId == Guid.Empty)
+            return BadRequest(new { message = "Le prestataire est obligatoire." });
+        if (request.MontantDevis is < 0 || request.MontantFacture is < 0)
+            return BadRequest(new { message = "Les montants ne peuvent pas être négatifs." });
+        if (request.ReferenceDevis?.Trim().Length > 100 || request.ReferenceFacture?.Trim().Length > 100)
+            return BadRequest(new { message = "Les références de devis et de facture sont limitées à 100 caractères." });
+        if (request.Observations?.Trim().Length > 2000)
+            return BadRequest(new { message = "Les observations sont limitées à 2000 caractères." });
 
-        if (intervenant is null)
-        {
-            return NotFound(new
-            {
-                message = "Intervenant introuvable."
-            });
-        }
+        var prestataire = await _context.Set<Prestataire>().FirstOrDefaultAsync(p =>
+            p.Id == request.PrestataireId && p.SocieteId == utilisateur.SocieteId && p.Actif && !p.EstSupprime);
+        if (prestataire is null)
+            return BadRequest(new { message = "Le prestataire est introuvable, inactif ou inaccessible." });
+        if (ticket.Intervenants.Any(i => !i.EstSupprime && i.Id != intervenant.Id && i.PrestataireId == prestataire.Id))
+            return Conflict(new { message = "Ce prestataire est déjà affecté à ce ticket." });
 
-        if (string.IsNullOrWhiteSpace(request.NomArtisan) ||
-            request.NomArtisan.Trim().Length > 150)
-        {
-            return BadRequest(new
-            {
-                message = "Le nom est obligatoire et limité à 150 caractères."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Specialite) ||
-            request.Specialite.Trim().Length > 150)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "La spécialité est obligatoire et limitée à 150 caractères."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Telephone) ||
-            request.Telephone.Trim().Length > 30)
-        {
-            return BadRequest(new
-            {
-                message =
-                    "Le téléphone est obligatoire et limité à 30 caractères."
-            });
-        }
-
-        var courriel = request.Courriel?.Trim();
-
-        if (!string.IsNullOrWhiteSpace(courriel) &&
-            (courriel.Length > 254 ||
-             !MailAddress.TryCreate(courriel, out var adresse) ||
-             !string.Equals(
-                 adresse.Address,
-                 courriel,
-                 StringComparison.OrdinalIgnoreCase)))
-        {
-            return BadRequest(new
-            {
-                message = "L'adresse courriel de l'intervenant est invalide."
-            });
-        }
-
-        if (request.MontantDevis is < 0 ||
-            request.MontantFacture is < 0)
-        {
-            return BadRequest(new
-            {
-                message = "Les montants ne peuvent pas être négatifs."
-            });
-        }
-
-        var devisModifie =
-            intervenant.MontantDevis != request.MontantDevis;
-
-        intervenant.NomArtisan = request.NomArtisan.Trim();
-        intervenant.Specialite = request.Specialite.Trim();
-        intervenant.Telephone = request.Telephone.Trim();
-        intervenant.Courriel =
-            string.IsNullOrWhiteSpace(courriel) ? null : courriel;
+        var devisModifie = intervenant.PrestataireId != prestataire.Id || intervenant.MontantDevis != request.MontantDevis;
+        intervenant.PrestataireId = prestataire.Id;
         intervenant.MontantDevis = request.MontantDevis;
         intervenant.MontantFacture = request.MontantFacture;
+        intervenant.ReferenceDevis = string.IsNullOrWhiteSpace(request.ReferenceDevis) ? null : request.ReferenceDevis.Trim();
+        intervenant.ReferenceFacture = string.IsNullOrWhiteSpace(request.ReferenceFacture) ? null : request.ReferenceFacture.Trim();
         intervenant.DateIntervention = request.DateIntervention;
+        intervenant.DateFinIntervention = request.DateFinIntervention;
+        intervenant.Observations = string.IsNullOrWhiteSpace(request.Observations) ? null : request.Observations.Trim();
 
-        if (devisModifie && ticket.ValidationDevisRequise)
-            InvaliderValidationDevis(ticket);
-
+        if (devisModifie && ticket.ValidationDevisRequise) InvaliderValidationDevis(ticket);
         RecalculerCoutTotal(ticket);
-
-
         await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message = "Intervenant modifié avec succès.",
-            intervenant.Id,
-            ticket.Reference,
-            ticket.CoutTotal,
-            ticket.DevisValide
-        });
+        return Ok(new { message = "Affectation du prestataire modifiée avec succès.", intervenant.Id, intervenant.PrestataireId, ticket.Reference, ticket.CoutTotal, ticket.DevisValide });
     }
 
     // ============================================================
@@ -1401,13 +1256,14 @@ public class TicketsController : ControllerBase
             return Forbid();
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .Include(t => t.Intervenants)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -1480,12 +1336,13 @@ public class TicketsController : ControllerBase
         }
 
         var ticket = await _context.TicketsIncidents
+            .Include(t => t.BienImmobilier)
             .Include(t => t.UniteLocative)
                 .ThenInclude(u => u.BienImmobilier)
             .FirstOrDefaultAsync(t =>
                 t.Id == id &&
                 !t.EstSupprime &&
-                t.UniteLocative.BienImmobilier.SocieteId
+                t.BienImmobilier.SocieteId
                     == utilisateur.SocieteId);
 
         if (ticket is null)
@@ -1707,32 +1564,23 @@ public class TicketIncidentListeDto
     public Guid Id { get; set; }
     public string Reference { get; set; } = string.Empty;
     public DateTime DateCreation { get; set; }
-
-    // L'incident peut concerner l'immeuble entier.
     public Guid BienImmobilierId { get; set; }
     public string NomBienImmobilier { get; set; } = string.Empty;
-
-    // L'unité locative est facultative.
     public Guid? UniteLocativeId { get; set; }
     public string? ReferenceUnite { get; set; }
-
-    public Guid LocataireId { get; set; }
+    public Guid? LocataireId { get; set; }
     public string NomLocataire { get; set; } = string.Empty;
     public string PrenomLocataire { get; set; } = string.Empty;
-
     public CategorieIncident Categorie { get; set; }
     public string Description { get; set; } = string.Empty;
     public PrioriteIncident Priorite { get; set; }
     public StatutIncident Statut { get; set; }
-
     public decimal? CoutEstime { get; set; }
     public decimal CoutTotal { get; set; }
-
     public bool ValidationDevisRequise { get; set; }
     public bool DevisValide { get; set; }
     public DateTime DateIncident { get; set; }
 }
-
 
 public class TicketIncidentDetailDto : TicketIncidentListeDto
 {
@@ -1741,6 +1589,7 @@ public class TicketIncidentDetailDto : TicketIncidentListeDto
     public ImputabiliteIncident ImputableA { get; set; }
     public DateTime? DateValidationDevis { get; set; }
     public Guid? ValideParUtilisateurId { get; set; }
+    public Guid? DeclarantId { get; set; }
 
     public List<TicketPhotoDto> Photos { get; set; } = [];
     public List<TicketIntervenantDto> Intervenants { get; set; } = [];
@@ -1758,14 +1607,20 @@ public class TicketPhotoDto
 public class TicketIntervenantDto
 {
     public Guid Id { get; set; }
-    public string NomArtisan { get; set; } = string.Empty;
+    public Guid PrestataireId { get; set; }
+    public string NomPrestataire { get; set; } = string.Empty;
+    public TypePrestataire TypePrestataire { get; set; }
     public string Specialite { get; set; } = string.Empty;
     public string Telephone { get; set; } = string.Empty;
     public string? Courriel { get; set; }
     public decimal? MontantDevis { get; set; }
     public decimal? MontantFacture { get; set; }
+    public string? ReferenceDevis { get; set; }
+    public string? ReferenceFacture { get; set; }
     public DateTime? DateAssignation { get; set; }
     public DateTime? DateIntervention { get; set; }
+    public DateTime? DateFinIntervention { get; set; }
+    public string? Observations { get; set; }
 }
 
 // ============================================================
@@ -1774,27 +1629,18 @@ public class TicketIntervenantDto
 
 public class CreerTicketIncidentRequest
 {
-    public Guid UniteLocativeId { get; set; }
+    public Guid BienImmobilierId { get; set; }
+    public Guid? UniteLocativeId { get; set; }
     public Guid? LocataireId { get; set; }
-
     public CategorieIncident Categorie { get; set; }
     public string Description { get; set; } = string.Empty;
     public string Reference { get; set; } = string.Empty;
-
-    public PrioriteIncident Priorite { get; set; } =
-        PrioriteIncident.Moyenne;
-
+    public PrioriteIncident Priorite { get; set; } = PrioriteIncident.Moyenne;
     public DateTime DateIncident { get; set; }
     public decimal? CoutEstime { get; set; }
-
-    public ImputabiliteIncident ImputableA { get; set; } =
-        ImputabiliteIncident.Indeterminee;
-
+    public ImputabiliteIncident ImputableA { get; set; } = ImputabiliteIncident.Indeterminee;
     public bool ValidationDevisRequise { get; set; }
-
-    public TypePhotoIncident TypePhoto { get; set; } =
-        TypePhotoIncident.AvantIntervention;
-
+    public TypePhotoIncident TypePhoto { get; set; } = TypePhotoIncident.AvantIntervention;
     public List<IFormFile>? Photos { get; set; }
 }
 
@@ -1817,15 +1663,28 @@ public class ModifierStatutTicketRequest
     public string? ResultatReparation { get; set; }
 }
 
-public class AjouterTicketIntervenantRequest
+public class ModifierTicketIntervenantRequest
 {
-    public string NomArtisan { get; set; } = string.Empty;
-    public string Specialite { get; set; } = string.Empty;
-    public string Telephone { get; set; } = string.Empty;
-    public string? Courriel { get; set; }
+    public Guid PrestataireId { get; set; }
     public decimal? MontantDevis { get; set; }
     public decimal? MontantFacture { get; set; }
+    public string? ReferenceDevis { get; set; }
+    public string? ReferenceFacture { get; set; }
     public DateTime? DateIntervention { get; set; }
+    public DateTime? DateFinIntervention { get; set; }
+    public string? Observations { get; set; }
+}
+
+public class AjouterTicketIntervenantRequest
+{
+    public Guid PrestataireId { get; set; }
+    public decimal? MontantDevis { get; set; }
+    public decimal? MontantFacture { get; set; }
+    public string? ReferenceDevis { get; set; }
+    public string? ReferenceFacture { get; set; }
+    public DateTime? DateIntervention { get; set; }
+    public DateTime? DateFinIntervention { get; set; }
+    public string? Observations { get; set; }
 }
 
 public class AjouterPhotosTicketRequest

@@ -418,17 +418,20 @@
           </p-select>
         </div>
 
+
       <div class="field field-cout">
         <label for="cout">Coût</label>
         <p-inputNumber
           inputId="cout"
           formControlName="cout"
-          styleClass="w-full"
           mode="currency"
           currency="XAF"
-          locale="fr-FR">
+          locale="fr-FR"
+          [style]="{ width: '175px' }"
+          [inputStyle]="{ width: '175px', maxWidth: '100%' }">
         </p-inputNumber>
       </div>
+
 
       </div>
 

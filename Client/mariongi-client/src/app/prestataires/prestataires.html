@@ -1,0 +1,776 @@
+<p-toast
+  position="top-right"
+  [breakpoints]="{
+    '600px': {
+      width: '100%',
+      right: '0',
+      left: '0'
+    }
+  }">
+</p-toast>
+
+<p-confirmDialog
+  [style]="{ width: 'min(28rem, 95vw)' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
+
+<div class="prestataires-page">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div class="page-header__content">
+      <div class="page-header__icon">
+        <i class="pi pi-wrench"></i>
+      </div>
+
+      <div>
+        <h1>Gestion des prestataires</h1>
+        <p class="page-subtitle">
+          Gérez les artisans, entreprises et professionnels intervenant
+          dans l'entretien et la réparation de vos biens immobiliers.
+        </p>
+      </div>
+    </div>
+
+    @if (canManagePrestataires) {
+      <button
+        pButton
+        type="button"
+        label="Nouveau prestataire"
+        icon="pi pi-plus"
+        (click)="openNew()">
+      </button>
+    }
+  </div>
+
+  <!-- Indicateurs -->
+  <div class="summary-grid">
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--blue">
+        <i class="pi pi-users"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Total des prestataires</span>
+        <strong>{{ prestataires.length }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Prestataires actifs</span>
+        <strong>{{ nombrePrestatairesActifs }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--gray">
+        <i class="pi pi-building"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">Entreprises</span>
+        <strong>{{ nombreEntreprises }}</strong>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Accès refusé -->
+  @if (!canAccessPrestataires) {
+    <div class="access-denied">
+      <i class="pi pi-lock"></i>
+
+      <div>
+        <h3>Accès non autorisé</h3>
+        <p>
+          Vous ne disposez pas des droits nécessaires pour consulter
+          les prestataires.
+        </p>
+      </div>
+    </div>
+  } @else {
+
+    <!-- Liste -->
+    <section class="content-card">
+
+      <div class="content-card__header">
+        <div>
+          <h2>Liste des prestataires</h2>
+          <p>
+            Consultez les coordonnées et les spécialités des professionnels.
+          </p>
+        </div>
+
+        <span class="results-count">
+          {{ prestatairesFiltres.length }}
+          résultat(s)
+        </span>
+      </div>
+
+      <!-- Recherche et filtres -->
+      <div class="filters">
+
+        <div class="filter-field filter-field--search">
+          <label for="recherchePrestataire">Rechercher</label>
+
+          <span class="search-input">
+            <i class="pi pi-search"></i>
+
+            <input
+              id="recherchePrestataire"
+              pInputText
+              type="text"
+              [(ngModel)]="recherche"
+              placeholder="Nom, spécialité, téléphone..."
+              autocomplete="off">
+          </span>
+        </div>
+
+        <div class="filter-field">
+          <label for="filtreType">Type de prestataire</label>
+
+          <p-select
+            inputId="filtreType"
+            [options]="typesPrestataire"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filtreType"
+            (ngModelChange)="filtreType = $event"
+            placeholder="Tous les types"
+            [showClear]="true"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
+
+        <div class="filter-field">
+          <label for="filtreActif">Statut</label>
+
+          <p-select
+            inputId="filtreActif"
+            [options]="statutOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="filtreActif"
+            (ngModelChange)="filtreActif = $event"
+            placeholder="Tous les statuts"
+            styleClass="w-full"
+            appendTo="body">
+          </p-select>
+        </div>
+
+        <div class="filter-actions">
+          <button
+            pButton
+            type="button"
+            label="Réinitialiser"
+            icon="pi pi-filter-slash"
+            class="p-button-outlined p-button-secondary"
+            (click)="reinitialiserFiltres()">
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tableau -->
+      <div class="table-container">
+        <p-table
+          [value]="prestatairesFiltres"
+          [loading]="loading"
+          dataKey="id"
+          responsiveLayout="scroll"
+          [rowHover]="true"
+          [paginator]="prestatairesFiltres.length > 10"
+          [rows]="10"
+          [rowsPerPageOptions]="[5, 10, 25, 50]"
+          currentPageReportTemplate="{first} à {last} sur {totalRecords} prestataires"
+          [showCurrentPageReport]="true"
+          [tableStyle]="{ 'min-width': '70rem' }"
+          styleClass="p-datatable-sm prestataires-table">
+
+          <ng-template pTemplate="header">
+            <tr>
+              <th class="col-prestataire">Prestataire</th>
+              <th class="col-type">Type</th>
+              <th class="col-specialite">Spécialité</th>
+              <th class="col-telephone">Téléphone</th>
+              <th class="col-ville">Ville</th>
+              <th class="col-statut">Statut</th>
+
+              @if (canManagePrestataires) {
+                <th class="col-actions">Actions</th>
+              }
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-prestataire>
+            <tr>
+
+              <!-- Prestataire -->
+              <td>
+                <div class="prestataire-cell">
+                  <div class="prestataire-avatar">
+                    <i
+                      class="pi"
+                      [ngClass]="
+                        prestataire.typePrestataire === 1
+                          ? 'pi-building'
+                          : 'pi-user'
+                      ">
+                    </i>
+                  </div>
+
+                  <div class="prestataire-info">
+                    <strong
+                      class="prestataire-name"
+                      [title]="getNomAffiche(prestataire)">
+                      {{ getNomAffiche(prestataire) }}
+                    </strong>
+
+                    @if (
+                      prestataire.typePrestataire === 0 &&
+                      prestataire.nomEntreprise
+                    ) {
+                      <span class="prestataire-secondary">
+                        {{ prestataire.nomEntreprise }}
+                      </span>
+                    }
+
+                    @if (prestataire.courriel) {
+                      <span
+                        class="prestataire-secondary"
+                        [title]="prestataire.courriel">
+                        {{ prestataire.courriel }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              </td>
+
+              <!-- Type -->
+              <td>
+                <p-tag
+                  [value]="getTypeLabel(prestataire.typePrestataire)"
+                  [severity]="getTypeSeverity(prestataire.typePrestataire)">
+                </p-tag>
+              </td>
+
+              <!-- Spécialité -->
+              <td>
+                <span
+                  class="specialite-cell"
+                  [title]="prestataire.specialite">
+                  {{ prestataire.specialite || 'Non renseignée' }}
+                </span>
+              </td>
+
+              <!-- Téléphone -->
+              <td>
+                <span class="telephone-cell">
+                  <i class="pi pi-phone"></i>
+                  {{ prestataire.telephone || '—' }}
+                </span>
+              </td>
+
+              <!-- Ville -->
+              <td>
+                <span class="ville-cell">
+                  {{ prestataire.ville || '—' }}
+                </span>
+              </td>
+
+              <!-- Statut -->
+              <td>
+                <p-tag
+                  [value]="prestataire.actif ? 'Actif' : 'Inactif'"
+                  [severity]="getStatutSeverity(prestataire.actif)">
+                </p-tag>
+              </td>
+
+              <!-- Actions -->
+              @if (canManagePrestataires) {
+                <td>
+                  <div class="row-actions">
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-pencil"
+                      class="p-button-rounded p-button-text p-button-secondary action-button"
+                      pTooltip="Modifier le prestataire"
+                      tooltipPosition="top"
+                      aria-label="Modifier le prestataire"
+                      (click)="editPrestataire(prestataire)">
+                    </button>
+
+                    <button
+                      pButton
+                      type="button"
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-text p-button-danger action-button"
+                      pTooltip="Supprimer le prestataire"
+                      tooltipPosition="top"
+                      aria-label="Supprimer le prestataire"
+                      (click)="deletePrestataire(prestataire)">
+                    </button>
+
+                  </div>
+                </td>
+              }
+
+            </tr>
+          </ng-template>
+
+          <!-- Aucun résultat -->
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td [attr.colspan]="canManagePrestataires ? 7 : 6">
+
+                <div class="empty-state">
+                  <div class="empty-state__icon">
+                    <i class="pi pi-users"></i>
+                  </div>
+
+                  <h3>
+                    {{
+                      recherche ||
+                      filtreType !== null ||
+                      filtreActif !== null
+                        ? 'Aucun résultat'
+                        : 'Aucun prestataire'
+                    }}
+                  </h3>
+
+                  <p>
+                    {{
+                      recherche ||
+                      filtreType !== null ||
+                      filtreActif !== null
+                        ? 'Modifiez vos critères de recherche ou réinitialisez les filtres.'
+                        : 'Aucun prestataire n’est encore enregistré.'
+                    }}
+                  </p>
+
+                  @if (
+                    canManagePrestataires &&
+                    !recherche &&
+                    filtreType === null &&
+                    filtreActif === null
+                  ) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Créer un prestataire"
+                      icon="pi pi-plus"
+                      class="p-button-outlined"
+                      (click)="openNew()">
+                    </button>
+                  }
+
+                  @if (
+                    recherche ||
+                    filtreType !== null ||
+                    filtreActif !== null
+                  ) {
+                    <button
+                      pButton
+                      type="button"
+                      label="Effacer les filtres"
+                      icon="pi pi-filter-slash"
+                      class="p-button-text"
+                      (click)="reinitialiserFiltres()">
+                    </button>
+                  }
+                </div>
+
+              </td>
+            </tr>
+          </ng-template>
+
+          <!-- Chargement -->
+          <ng-template pTemplate="loadingbody">
+            <tr>
+              <td [attr.colspan]="canManagePrestataires ? 7 : 6">
+                Chargement des prestataires...
+              </td>
+            </tr>
+          </ng-template>
+
+        </p-table>
+      </div>
+
+    </section>
+  }
+</div>
+
+<!-- Dialogue de création / modification -->
+<p-dialog
+  [(visible)]="prestataireDialog"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!saving"
+  [closeOnEscape]="!saving"
+  [dismissableMask]="false"
+  [style]="{ width: 'min(48rem, 96vw)' }"
+  [breakpoints]="{
+    '960px': '90vw',
+    '640px': '96vw'
+  }"
+  [header]="isEditMode ? 'Modifier le prestataire' : 'Nouveau prestataire'"
+  styleClass="prestataire-dialog"
+  (onHide)="fermerDialog()">
+
+  <form
+    [formGroup]="prestataireForm"
+    (ngSubmit)="savePrestataire()"
+    novalidate>
+
+    <!-- Introduction -->
+    <div class="dialog-intro">
+      <div class="dialog-intro__icon">
+        <i
+          class="pi"
+          [ngClass]="isEditMode ? 'pi-pencil' : 'pi-user-plus'">
+        </i>
+      </div>
+
+      <p>
+        {{
+          isEditMode
+            ? 'Modifiez les coordonnées et les informations du prestataire.'
+            : 'Renseignez les informations du professionnel ou de l’entreprise.'
+        }}
+      </p>
+    </div>
+
+    <div class="form-grid">
+
+      <!-- Type -->
+      <div class="form-field form-field--full">
+        <label for="typePrestataire">
+          Type de prestataire <span class="required">*</span>
+        </label>
+
+
+        <p-select
+        inputId="typePrestataire"
+        formControlName="typePrestataire"
+        [options]="typesPrestataire"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner un type"
+        (onChange)="onTypePrestataireChange()"
+        styleClass="w-full"
+        appendTo="body">
+        </p-select>
+
+        <small class="field-hint">
+          Choisissez une personne physique ou une entreprise.
+        </small>
+      </div>
+
+      <!-- Nom et prénom : personne physique uniquement -->
+      @if (+prestataireForm.get('typePrestataire')?.value === TypePersonne.PersonnePhysique) {
+
+        <div class="form-field">
+          <label for="nom">
+            Nom <span class="required">*</span>
+          </label>
+
+          <input
+            id="nom"
+            pInputText
+            type="text"
+            formControlName="nom"
+            maxlength="150"
+            placeholder="Nom du prestataire"
+            autocomplete="family-name">
+
+          @if (
+            prestataireForm.get('nom')?.hasError('required') &&
+            prestataireForm.get('nom')?.touched
+          ) {
+            <small class="field-error">
+              Le nom est obligatoire.
+            </small>
+          }
+
+          @if (
+            prestataireForm.get('nom')?.hasError('maxlength') &&
+            prestataireForm.get('nom')?.touched
+          ) {
+            <small class="field-error">
+              Le nom ne doit pas dépasser 150 caractères.
+            </small>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="prenom">
+            Prénom <span class="required">*</span>
+          </label>
+
+          <input
+            id="prenom"
+            pInputText
+            type="text"
+            formControlName="prenom"
+            maxlength="150"
+            placeholder="Prénom du prestataire"
+            autocomplete="given-name">
+
+          @if (
+            prestataireForm.get('prenom')?.hasError('required') &&
+            prestataireForm.get('prenom')?.touched
+          ) {
+            <small class="field-error">
+              Le prénom est obligatoire.
+            </small>
+          }
+
+          @if (
+            prestataireForm.get('prenom')?.hasError('maxlength') &&
+            prestataireForm.get('prenom')?.touched
+          ) {
+            <small class="field-error">
+              Le prénom ne doit pas dépasser 150 caractères.
+            </small>
+          }
+        </div>
+      } @else {      <!-- Nom de l'entreprise -->
+      <div class="form-field form-field--full">
+        <label for="nomEntreprise">
+          Nom de l'entreprise <span class="required">*</span>
+        </label>
+
+        <input
+          id="nomEntreprise"
+          pInputText
+          type="text"
+          formControlName="nomEntreprise"
+          maxlength="200"
+          placeholder="Raison sociale ou nom commercial"
+          autocomplete="organization">
+
+        @if (prestataireForm.get('typePrestataire')?.value === 1) {
+          <small class="field-hint">
+            Le nom de l'entreprise est obligatoire pour ce type de prestataire.
+          </small>
+        } @else {
+          <small class="field-hint">
+            Facultatif pour une personne physique.
+          </small>
+        }
+
+        @if (
+          prestataireForm.get('nomEntreprise')?.hasError('required') &&
+          prestataireForm.get('nomEntreprise')?.touched
+        ) {
+          <small class="field-error">
+            Le nom de l'entreprise est obligatoire.
+          </small>
+        }
+
+        @if (
+          prestataireForm.get('nomEntreprise')?.hasError('maxlength') &&
+          prestataireForm.get('nomEntreprise')?.touched
+        ) {
+          <small class="field-error">
+            Le nom de l'entreprise ne doit pas dépasser 200 caractères.
+          </small>
+        }
+      </div>}
+
+      <!-- Spécialité -->
+      <div class="form-field">
+        <label for="specialite">
+          Spécialité <span class="required">*</span>
+        </label>
+
+        <input
+          id="specialite"
+          pInputText
+          type="text"
+          formControlName="specialite"
+          maxlength="150"
+          placeholder="Ex. : plomberie, électricité...">
+
+        @if (
+          prestataireForm.get('specialite')?.hasError('required') &&
+          prestataireForm.get('specialite')?.touched
+        ) {
+          <small class="field-error">
+            La spécialité est obligatoire.
+          </small>
+        }
+
+        @if (
+          prestataireForm.get('specialite')?.hasError('maxlength') &&
+          prestataireForm.get('specialite')?.touched
+        ) {
+          <small class="field-error">
+            La spécialité ne doit pas dépasser 150 caractères.
+          </small>
+        }
+      </div>
+
+      <!-- Téléphone -->
+      <div class="form-field">
+        <label for="telephone">
+          Téléphone <span class="required">*</span>
+        </label>
+
+        <input
+          id="telephone"
+          pInputText
+          type="tel"
+          formControlName="telephone"
+          maxlength="30"
+          placeholder="Numéro de téléphone"
+          autocomplete="tel">
+
+        @if (
+          prestataireForm.get('telephone')?.hasError('required') &&
+          prestataireForm.get('telephone')?.touched
+        ) {
+          <small class="field-error">
+            Le téléphone est obligatoire.
+          </small>
+        }
+
+        @if (
+          prestataireForm.get('telephone')?.hasError('maxlength') &&
+          prestataireForm.get('telephone')?.touched
+        ) {
+          <small class="field-error">
+            Le téléphone ne doit pas dépasser 30 caractères.
+          </small>
+        }
+      </div>
+
+      <!-- Courriel -->
+      <div class="form-field form-field--full">
+        <label for="courriel">Courriel</label>
+
+        <input
+          id="courriel"
+          pInputText
+          type="email"
+          formControlName="courriel"
+          maxlength="254"
+          placeholder="exemple@domaine.com"
+          autocomplete="email">
+
+        @if (
+          prestataireForm.get('courriel')?.hasError('email') &&
+          prestataireForm.get('courriel')?.touched
+        ) {
+          <small class="field-error">
+            Saisissez une adresse courriel valide.
+          </small>
+        }
+
+        @if (
+          prestataireForm.get('courriel')?.hasError('maxlength') &&
+          prestataireForm.get('courriel')?.touched
+        ) {
+          <small class="field-error">
+            Le courriel ne doit pas dépasser 254 caractères.
+          </small>
+        }
+      </div>
+
+      <!-- Adresse -->
+      <div class="form-field form-field--full">
+        <label for="adresse">Adresse</label>
+
+        <input
+          id="adresse"
+          pInputText
+          type="text"
+          formControlName="adresse"
+          maxlength="250"
+          placeholder="Adresse du prestataire"
+          autocomplete="street-address">
+      </div>
+
+      <!-- Ville -->
+      <div class="form-field">
+        <label for="ville">Ville</label>
+
+        <input
+          id="ville"
+          pInputText
+          type="text"
+          formControlName="ville"
+          maxlength="100"
+          placeholder="Ville">
+      </div>
+
+      <!-- Numéro de contribuable -->
+      <div class="form-field">
+        <label for="numeroContribuable">
+          Numéro de contribuable
+        </label>
+
+        <input
+          id="numeroContribuable"
+          pInputText
+          type="text"
+          formControlName="numeroContribuable"
+          maxlength="100"
+          placeholder="Numéro fiscal, si applicable">
+      </div>
+
+      <!-- Observations -->
+      <div class="form-field form-field--full">
+        <label for="observations">Observations</label>
+
+        <textarea
+          id="observations"
+          pTextarea
+          formControlName="observations"
+          rows="3"
+          maxlength="1000"
+          [autoResize]="true"
+          placeholder="Informations complémentaires sur le prestataire...">
+        </textarea>
+
+        <small class="field-hint">
+          Maximum 1 000 caractères.
+        </small>
+      </div>
+
+    </div>
+
+    <!-- Actions -->
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-outlined p-button-secondary"
+        [disabled]="saving"
+        (click)="fermerDialog()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer le prestataire'"
+        [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+        [loading]="saving"
+        [disabled]="saving || prestataireForm.invalid">
+      </button>
+    </div>
+
+  </form>
+</p-dialog>

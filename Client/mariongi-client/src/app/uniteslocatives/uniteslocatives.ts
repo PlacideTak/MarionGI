@@ -1646,8 +1646,6 @@ ouvrirModalModification(
       .subscribe({
 
       next: (data: UniteLocativeDetailDto) => {
-        console.log('Détail unité reçu de l’API :', data);
-
         this.selectedUnite = data;
         this.displayDetailModal = true;
       },

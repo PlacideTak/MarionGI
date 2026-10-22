@@ -40,13 +40,7 @@
 
     <div class="tranche-stat">
       <span>Années fiscales</span>
-      <strong>
-        {{
-          tranchesFiltrees.length > 0
-            ? (tranchesFiltrees | keyvalue).length
-            : 0
-        }}
-      </strong>
+      <strong>{{ nombreAnneesFiltrees }}</strong>
     </div>
 
     <div class="tranche-stat">
@@ -138,6 +132,8 @@
           <th>Seuil maximal (FCFA)</th>
           <th>Taux</th>
           <th>Description</th>
+          <th>Référence légale</th>
+          <th>Validité</th>
 
           <th
             *ngIf="canManageTranchesIRPP"
@@ -191,6 +187,24 @@
             {{ tranche.description || '—' }}
           </td>
 
+          <td class="reference-cell">
+            {{ tranche.referenceLegale || '—' }}
+          </td>
+
+          <td class="validite-cell">
+            <div>
+              <strong>Du :</strong>
+              {{ tranche.dateDebutValidite ? (tranche.dateDebutValidite | date:'dd/MM/yyyy') : '—' }}
+            </div>
+            <div>
+              <strong>Au :</strong>
+              {{ tranche.dateFinValidite ? (tranche.dateFinValidite | date:'dd/MM/yyyy') : 'Sans fin' }}
+            </div>
+            <small *ngIf="tranche.dateDerniereVerification">
+              Vérifiée le {{ tranche.dateDerniereVerification | date:'dd/MM/yyyy' }}
+            </small>
+          </td>
+
           <td
             *ngIf="canManageTranchesIRPP"
             class="actions-column">
@@ -228,7 +242,7 @@
       <ng-template pTemplate="emptymessage">
         <tr>
           <td
-            [attr.colspan]="canManageTranchesIRPP ? 7 : 6"
+            [attr.colspan]="canManageTranchesIRPP ? 9 : 8"
             class="empty-message">
 
             <i class="pi pi-inbox"></i>
@@ -441,38 +455,113 @@
       </div>
 
 
-      <!-- DESCRIPTION -->
+      <!-- DESCRIPTION ET RÉFÉRENCE LÉGALE -->
 
-      <div class="form-field">
-        <label for="description">
-          Description <span class="required">*</span>
-        </label>
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="description">
+            Description <span class="required">*</span>
+          </label>
 
-        <textarea
-          pTextarea
-          id="description"
-          formControlName="description"
-          rows="3"
-          maxlength="500"
-          [autoResize]="true"
-          placeholder="Description de la tranche d'imposition..."
-          class="w-full"
-          [class.input-invalid]="
-            trancheIRPPForm.get('description')?.invalid &&
-            trancheIRPPForm.get('description')?.touched
-          ">
-        </textarea>
+          <textarea
+            pTextarea
+            id="description"
+            formControlName="description"
+            rows="3"
+            maxlength="500"
+            [autoResize]="true"
+            placeholder="Description de la tranche d'imposition..."
+            class="w-full"
+            [class.input-invalid]="
+              trancheIRPPForm.get('description')?.invalid &&
+              trancheIRPPForm.get('description')?.touched
+            ">
+          </textarea>
 
-        <small
-          class="field-error"
-          *ngIf="
-            trancheIRPPForm.get('description')?.touched &&
-            trancheIRPPForm.get('description')?.invalid
-          ">
-          La description est obligatoire et limitée à 500 caractères.
-        </small>
+          <small
+            class="field-error"
+            *ngIf="
+              trancheIRPPForm.get('description')?.touched &&
+              trancheIRPPForm.get('description')?.invalid
+            ">
+            La description est obligatoire et limitée à 500 caractères.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="referenceLegale">Référence légale</label>
+          <input
+            pInputText
+            id="referenceLegale"
+            type="text"
+            formControlName="referenceLegale"
+            maxlength="500"
+            placeholder="Ex. : CGI, article applicable"
+            class="w-full" />
+          <small class="field-hint">
+            Indique le texte officiel et l'article justifiant cette tranche.
+          </small>
+        </div>
       </div>
 
+      <!-- PÉRIODE DE VALIDITÉ ET TRAÇABILITÉ -->
+
+      <div class="form-section-title">
+        <i class="pi pi-calendar"></i>
+        <span>Validité et vérification</span>
+      </div>
+
+      <div class="form-grid form-grid-dates">
+        <div class="form-field">
+          <label for="dateDebutValidite">
+            Début de validité <span class="required">*</span>
+          </label>
+          <input
+            pInputText
+            id="dateDebutValidite"
+            type="date"
+            formControlName="dateDebutValidite"
+            class="w-full"
+            [class.input-invalid]="
+              trancheIRPPForm.get('dateDebutValidite')?.invalid &&
+              trancheIRPPForm.get('dateDebutValidite')?.touched
+            " />
+          <small
+            class="field-error"
+            *ngIf="
+              trancheIRPPForm.get('dateDebutValidite')?.touched &&
+              trancheIRPPForm.get('dateDebutValidite')?.invalid
+            ">
+            La date de début de validité est obligatoire.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="dateFinValidite">Fin de validité</label>
+          <input
+            pInputText
+            id="dateFinValidite"
+            type="date"
+            formControlName="dateFinValidite"
+            class="w-full" />
+          <small class="field-hint">
+            Laisse vide si la fin de validité n'est pas connue ou n'est pas définie.
+          </small>
+        </div>
+
+        <div class="form-field">
+          <label for="dateDerniereVerification">Dernière vérification</label>
+          <input
+            pInputText
+            id="dateDerniereVerification"
+            type="date"
+            formControlName="dateDerniereVerification"
+            class="w-full" />
+          <small class="field-hint">
+            Date à laquelle la règle fiscale a été vérifiée dans une source officielle.
+          </small>
+        </div>
+      </div>
 
       <!-- ACTIONS -->
 

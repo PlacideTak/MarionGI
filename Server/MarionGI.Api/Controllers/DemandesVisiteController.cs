@@ -501,6 +501,17 @@ public class DemandesVisiteController : ControllerBase
             });
         }
 
+        if (IsAgent())
+        {
+            var utilisateurId = GetCurrentUserId();
+
+            if (utilisateurId == null ||
+                demande.AgentId != utilisateurId.Value)
+            {
+                return Forbid();
+            }
+        }
+
         demande.EstSupprime = true;
         demande.DateSuppression = DateTime.UtcNow;
 

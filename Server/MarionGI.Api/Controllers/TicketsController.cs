@@ -510,6 +510,7 @@ public class TicketsController : ControllerBase
         }
 
         UniteLocative? unite = null;
+
         if (request.UniteLocativeId.HasValue)
         {
             unite = await _context.UnitesLocatives
@@ -521,7 +522,11 @@ public class TicketsController : ControllerBase
 
             if (unite is null)
             {
-                return BadRequest(new { message = "L'unité locative n'appartient pas au bien sélectionné ou n'existe pas." });
+                return BadRequest(new
+                {
+                    message =
+                        "L'unité locative n'appartient pas au bien sélectionné ou n'existe pas."
+                });
             }
         }
 
@@ -1630,17 +1635,33 @@ public class TicketIntervenantDto
 public class CreerTicketIncidentRequest
 {
     public Guid BienImmobilierId { get; set; }
+
     public Guid? UniteLocativeId { get; set; }
+
     public Guid? LocataireId { get; set; }
+
     public CategorieIncident Categorie { get; set; }
+
     public string Description { get; set; } = string.Empty;
-    public string Reference { get; set; } = string.Empty;
-    public PrioriteIncident Priorite { get; set; } = PrioriteIncident.Moyenne;
+
+    public string? DescriptionDegats { get; set; }
+
+    public PrioriteIncident Priorite { get; set; }
+
     public DateTime DateIncident { get; set; }
+
+    public string Reference { get; set; } = string.Empty;
+
     public decimal? CoutEstime { get; set; }
-    public ImputabiliteIncident ImputableA { get; set; } = ImputabiliteIncident.Indeterminee;
+
+    public ImputabiliteIncident ImputableA { get; set; }
+        = ImputabiliteIncident.Indeterminee;
+
     public bool ValidationDevisRequise { get; set; }
-    public TypePhotoIncident TypePhoto { get; set; } = TypePhotoIncident.AvantIntervention;
+
+    public TypePhotoIncident TypePhoto { get; set; }
+        = TypePhotoIncident.AvantIntervention;
+
     public List<IFormFile>? Photos { get; set; }
 }
 

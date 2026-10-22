@@ -486,123 +486,114 @@ export interface SupprimerUniteResponse {
 }
 
 
-
 export interface ContratDto {
-
   id: string;
 
-  /**
-   * Référence unique et lisible du contrat.
-   *
-   * Exemple :
-   * "CTR-2026-001"
-   */
+  // Identification
   reference: string;
 
-  /**
-   * Identifiant de l'unité locative.
-   */
+  // Relations
   uniteLocativeId: string;
-
-  /**
-   * Identifiant du locataire.
-   */
   locataireId: string;
-
-  dateDebut: string;
-
-  dateFin: string;
-
-  montantLoyer: number;
-
-  montantCaution: number;
-
-  frequencePaiement: number;
-
-  delaiJoursTolerance: number;
-
-  statut: StatutContrat;
-
-
-  // ----------------------------------------------------------
-  // UNITÉ LOCATIVE
-  // ----------------------------------------------------------
 
   uniteLocative?: UniteLocativeDto | null;
-
-
-  // ----------------------------------------------------------
-  // BIEN IMMOBILIER
-  // ----------------------------------------------------------
-
-  /**
-   * Bien immobilier associé à l'unité locative.
-   *
-   * Retourne par l'API sous la forme :
-   *
-   * "bienImmobilier": {
-   *   "id": "...",
-   *   "reference": "...",
-   *   "nom": "...",
-   *   "adresse": "...",
-   *   "ville": "...",
-   *   "quartier": "..."
-   * }
-   */
   bienImmobilier?: BienDto | null;
-
-
-  // ----------------------------------------------------------
-  // LOCATAIRE
-  // ----------------------------------------------------------
-
   locataire?: UtilisateurDto | null;
-}
 
-
-export interface CreerContratRequest {
-
-  /**
-   * Référence saisie par l'utilisateur.
-   *
-   * Exemple :
-   * "CTR-2026-001"
-   */
-  reference: string;
-
-  uniteLocativeId: string;
-
-  locataireId: string;
-
+  // Période contractuelle
   dateDebut: string;
-
   dateFin: string;
+  dateSignature?: string | null;
 
+  // Conditions financières
   montantLoyer: number;
-
   montantCaution: number;
+  montantChargesLocatives?: number | null;
 
   frequencePaiement: number;
-
   delaiJoursTolerance: number;
+
+  // Révision du loyer
+  revisionLoyerAutorisee: boolean;
+  dateProchaineRevisionLoyer?: string | null;
+  tauxRevisionLoyer?: number | null;
+
+  // Renouvellement
+  renouvellementAutomatique: boolean;
+  delaiPreavisJours?: number | null;
+
+  // Informations documentaires
+  cheminDocumentContrat?: string | null;
+  observations?: string | null;
+
+  // État
+  statut: StatutContrat;
+}
+
+export interface CreerContratRequest {
+  // Identification
+  reference: string;
+
+  // Relations
+  uniteLocativeId: string;
+  locataireId: string;
+
+  // Période contractuelle
+  dateDebut: string;
+  dateFin: string;
+  dateSignature?: string | null;
+
+  // Conditions financières
+  montantLoyer: number;
+  montantCaution: number;
+  montantChargesLocatives?: number | null;
+
+  frequencePaiement: number;
+  delaiJoursTolerance: number;
+
+  // Révision du loyer
+  revisionLoyerAutorisee: boolean;
+  dateProchaineRevisionLoyer?: string | null;
+  tauxRevisionLoyer?: number | null;
+
+  // Renouvellement
+  renouvellementAutomatique: boolean;
+  delaiPreavisJours?: number | null;
+
+  // Informations complémentaires
+  observations?: string | null;
 }
 
 export interface ModifierContratRequest {
-
+  // Période contractuelle
   dateDebut: string;
-
   dateFin: string;
+  dateSignature?: string | null;
 
+  // Conditions financières
   montantLoyer: number;
-
   montantCaution: number;
+  montantChargesLocatives?: number | null;
 
   frequencePaiement: number;
-
   delaiJoursTolerance: number;
 
+  // Révision du loyer
+  revisionLoyerAutorisee: boolean;
+  dateProchaineRevisionLoyer?: string | null;
+  tauxRevisionLoyer?: number | null;
+
+  // Renouvellement
+  renouvellementAutomatique: boolean;
+  delaiPreavisJours?: number | null;
+
+  // Informations complémentaires
+  observations?: string | null;
+
+  // État
   statut: StatutContrat;
 }
+
 
 // ============================================================
 // PAIEMENT
@@ -693,54 +684,37 @@ export interface PaiementFilterCriteria {
 // ============================================================
 
 export interface DemandeVisiteDto {
-
   id?: string;
 
-  // =========================================================
-  // UNITÉ LOCATIVE
-  // =========================================================
-
+  // Unité locative
   uniteLocativeId: string;
-
   uniteLocative?: UniteLocativeDto | null;
 
-
-  // =========================================================
-  // BIEN IMMOBILIER
-  // =========================================================
-
+  // Bien immobilier (informations complémentaires)
   bienId?: string;
-
   bien?: BienDto | null;
 
-  // =========================================================
-  // AGENT
-  // =========================================================
-
+  // Agent affecté
   agentId?: string | null;
-
   agent?: UtilisateurDto | null;
 
-  // =========================================================
-  // PROSPECT
-  // =========================================================
-
+  // Coordonnées du prospect
   nomProspect: string;
-
   telephoneProspect: string;
+  emailProspect?: string | null;
 
-  // =========================================================
-  // VISITE
-  // =========================================================
-
+  // Dates de visite
   dateSouhaitee: string | Date;
+  dateConfirmee?: string | Date | null;
 
+  // Commentaires
   observations?: string | null;
+  commentaireInterne?: string | null;
 
-  // =========================================================
-  // STATUT
-  // =========================================================
+  // Suivi
+  dateTraitement?: string | Date | null;
 
+  // Statut
   statut?: StatutDemandeVisite | number;
 }
 
@@ -1321,18 +1295,27 @@ export interface LocataireOption {
 }
 
 export interface TicketIncidentDto extends BaseEntity {
-  uniteLocativeId: string;
-  locataireId: string;
-  reference?: string;
+  reference: string;
+  resultatReparation?: string | null;
+
+  bienImmobilierId: string;
+  bienImmobilier?: BienDto | null;
+
+  uniteLocativeId?: string | null;
+  uniteLocative?: UniteLocativeDto | null;
+
+  locataireId?: string | null;
+  locataire?: UtilisateurDto | null;
+
+  declarantId?: string | null;
+
+  dateIncident: string;
   categorie: CategorieIncident;
   description: string;
-  dateincident?: string;
-
   priorite: PrioriteIncident;
   statut: StatutIncident;
 
   dateResolution?: string | null;
-  resultatReparation?: string | null;
 
   coutEstime?: number | null;
   coutTotal: number;
@@ -1343,24 +1326,8 @@ export interface TicketIncidentDto extends BaseEntity {
   dateValidationDevis?: string | null;
   valideParUtilisateurId?: string | null;
 
-  // Informations complémentaires renvoyées par l'API
-  locataireNom?: string;
-  locataireTelephone?: string;
-
-  uniteReference?: string;
-  uniteType?: TypeUniteLocative;
-
-  bienImmobilierId?: string;
-  bienReference?: string;
-  bienNom?: string;
-  bienAdresse?: string;
-  bienVille?: string;
-
-  societeId?: string;
-  societeNom?: string;
-
-  nombrePhotos?: number;
-  nombreIntervenants?: number;
+  photos?: TicketPhotoDto[] | null;
+  intervenants?: TicketIntervenantDto[] | null;
 }
 
 
@@ -1434,26 +1401,27 @@ export interface ValiderDevisTicketRequest {
 // ============================================================
 
 export interface CreerTicketIntervenantRequest {
-  nomArtisan: string;
-  specialite: string;
-  telephone: string;
-  courriel: string;
-
-  montantDevis?: number | null;
-  montantFacture?: number | null;
-
-  dateAssignation?: string | null;
-  dateIntervention?: string | null;
+prestataireId: string;
+montantDevis: number | null;
+referenceDevis: string | null;
+montantFacture: number | null;
+referenceFacture: string | null;
+dateAssignation: string | null;
+dateIntervention: string | null;
+dateFinIntervention: string | null;
+observations: string | null;
 }
 
 export interface ModifierTicketIntervenantRequest {
-  nomArtisan: string;
-  specialite: string;
-  telephone: string;
-  courriel?: string | null;
-  montantDevis?: number | null;
-  montantFacture?: number | null;
-  dateIntervention?: string | null;
+prestataireId: string;
+montantDevis: number | null;
+referenceDevis: string | null;
+montantFacture: number | null;
+referenceFacture: string | null;
+dateAssignation: string | null;
+dateIntervention: string | null;
+dateFinIntervention: string | null;
+observations: string | null;
 }
 
 // ============================================================
@@ -1541,6 +1509,7 @@ export interface ModifierParametreFiscalRequest
 /**
  * DTO de lecture d'une tranche IRPP.
  */
+
 export interface TrancheIRPPDto {
   id: string;
   anneeFiscale: number;
@@ -1549,7 +1518,14 @@ export interface TrancheIRPPDto {
   taux: number;
   ordreTranche: number;
   description: string | null;
+
+  // Traçabilité et validité fiscale
+  referenceLegale: string | null;
+  dateDebutValidite: string;
+  dateFinValidite: string | null;
+  dateDerniereVerification: string | null;
 }
+
 
 /**
  * Requête de création d'une tranche IRPP.
@@ -1561,6 +1537,11 @@ export interface CreerTrancheIRPPRequest {
   taux: number;
   ordreTranche: number;
   description: string;
+
+  referenceLegale: string | null;
+  dateDebutValidite: string;
+  dateFinValidite: string | null;
+  dateDerniereVerification: string | null;
 }
 
 /**
@@ -1633,4 +1614,155 @@ export interface FiltreChargesBiens {
   typeCharge?: TypeCharge | null;
   dateDebut?: string | null;
   dateFin?: string | null;
+}
+
+
+
+export interface PrestataireDto {
+  id: string;
+  typePrestataire: TypePersonne;
+  nom: string;
+  prenom: string;
+  nomEntreprise?: string | null;
+  specialite: string;
+  telephone: string;
+  courriel?: string | null;
+  adresse?: string | null;
+  ville?: string | null;
+  numeroContribuable?: string | null;
+  observations?: string | null;
+  actif: boolean;
+  dateCreation: string;
+}
+
+export interface CreerPrestataireRequest {
+  typePrestataire: TypePersonne;
+  nom: string;
+  prenom: string;
+  nomEntreprise?: string | null;
+  specialite: string;
+  telephone: string;
+  courriel?: string | null;
+  adresse?: string | null;
+  ville?: string | null;
+  numeroContribuable?: string | null;
+  observations?: string | null;
+}
+
+export interface ModifierPrestataireRequest
+  extends CreerPrestataireRequest {}
+
+export interface ModifierStatutPrestataireRequest {
+  actif: boolean;
+}
+
+export interface PrestataireOption {
+  label: string;
+  value: string;
+}
+
+
+
+export enum TypeValeurFiscale {
+  Estimee = 1,
+  Declaree = 2,
+  Officielle = 3,
+  Expertise = 4
+}
+
+export interface ValeurFiscaleBienDto {
+  id: string;
+  bienImmobilierId: string;
+  referenceBien: string;
+  nomBien: string;
+  anneeFiscale: number;
+  montant: number;
+  typeValeur: TypeValeurFiscale;
+  dateEvaluation: string;
+  dateValidationOfficielle: string | null;
+  referenceJustificative: string | null;
+  cheminJustificatif: string | null;
+  observations: string | null;
+  dateCreation: string;
+}
+
+export interface CreerValeurFiscaleBienRequest {
+  bienImmobilierId: string;
+  anneeFiscale: number;
+  montant: number;
+  typeValeur: TypeValeurFiscale;
+  dateEvaluation: string;
+  dateValidationOfficielle: string | null;
+  referenceJustificative: string | null;
+  cheminJustificatif: string | null;
+  observations: string | null;
+}
+
+export type ModifierValeurFiscaleBienRequest =
+  CreerValeurFiscaleBienRequest;
+
+
+  export enum TypeImpotFiscal {
+  NonDefini = 0,
+  ProprieteFonciere = 1,
+  RevenusFonciers = 2,
+  PrecompteSurLoyers = 3,
+  IRPP = 4,
+  ImpotSocietes = 5,
+  PlusValueImmobiliere = 6,
+  DroitsEnregistrement = 7,
+  TVA = 8,
+  Autre = 99
+}
+
+export enum StatutDeclarationFiscale {
+  APreparer = 1,
+  ADeclarer = 2,
+  Declaree = 3,
+  ARegler = 4,
+  PartiellementReglee = 5,
+  Reglee = 6,
+  EnRetard = 7
+}
+
+export interface BienDeclarationFiscaleDto {
+  id: string;
+  reference: string;
+  nom: string;
+  adresse?: string | null;
+  ville?: string | null;
+  quartier?: string | null;
+}
+
+export interface DeclarationFiscaleDto {
+  id: string;
+  societeId: string;
+  bienImmobilierId: string | null;
+  bienImmobilier: BienDeclarationFiscaleDto | null;
+  anneeFiscale: number;
+  typeImpot: TypeImpotFiscal;
+  baseImposable: number | null;
+  montantImpot: number;
+  dateEcheance: string | null;
+  dateDeclaration: string | null;
+  referenceDeclaration: string | null;
+  observations: string | null;
+  statut: StatutDeclarationFiscale;
+  dateCreation: string;
+}
+
+export interface DeclarationFiscaleRequest {
+  // Le PUT vérifie que dto.Id correspond à l'identifiant de l'URL.
+  // Le POST n'a pas besoin de cet identifiant.
+  id?: string;
+  bienImmobilierId: string | null;
+  anneeFiscale: number;
+  typeImpot: TypeImpotFiscal;
+  baseImposable: number | null;
+  montantImpot: number;
+  dateEcheance: string | null;
+  dateDeclaration: string | null;
+  referenceDeclaration: string | null;
+  observations: string | null;
+  statut: StatutDeclarationFiscale;
 }

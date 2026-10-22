@@ -37,7 +37,8 @@ import {
   ModifierContratRequest,
   UniteLocativeDto,
   ROLES,
-  StatutContrat
+  StatutContrat,
+  TypeUniteLocative
 } from '../models/gestimmo.models';
 
 import { AuthService } from '../login/auth.service';
@@ -57,7 +58,6 @@ interface DropdownItem {
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-
     TableModule,
     ButtonModule,
     DialogModule,
@@ -184,6 +184,11 @@ export class Contrats implements OnInit {
     }
   ];
 
+  private obtenirLibelleTypeUnite(
+  type: TypeUniteLocative | number
+    ): string {
+      return TypeUniteLocative[type] ?? 'Type inconnu';
+    }
 
   // ============================================================
   // INITIALISATION
@@ -229,6 +234,34 @@ export class Contrats implements OnInit {
           Validators.required,
           Validators.maxLength(50)
         ]
+      ],
+
+      dateSignature: [null],
+
+      montantChargesLocatives: [
+        null,
+        Validators.min(0)
+      ],
+
+      revisionLoyerAutorisee: [false],
+
+      dateProchaineRevisionLoyer: [null],
+
+      tauxRevisionLoyer: [
+        null,
+        [Validators.min(0), Validators.max(100)]
+      ],
+
+      renouvellementAutomatique: [false],
+
+      delaiPreavisJours: [
+        null,
+        Validators.min(0)
+      ],
+
+      observations: [
+        '',
+        Validators.maxLength(2000)
       ],
 
       /**
@@ -363,27 +396,33 @@ chargerContrats(): void {
             }));
         },
 
-        error: (err: HttpErrorResponse) => {
+       error: (err: HttpErrorResponse) => {
+          console.error('Erreur lors de la modification du contrat :', err);
 
-          console.error(
-            'Erreur chargement biens immobiliers :',
-            err
-          );
+          let message = `Une erreur est survenue lors de la modification du contrat (Code ${err.status}).`;
+
+          if (typeof err.error === 'string' && err.error.trim()) {
+            message = err.error;
+          } else if (err.error?.message) {
+            message = err.error.message;
+          } else if (err.error?.detail) {
+            message = err.error.detail;
+          } else if (err.error?.title) {
+            message = err.error.title;
+          }
 
           this.messageService.add({
-
             severity: 'error',
-
-            summary: 'Erreur',
-
-            detail:
-              'Impossible de charger les biens immobiliers.'
+            summary: 'Erreur de modification',
+            detail: message,
+            life: 6000
           });
         }
       });
   }
 
 
+  
   // ============================================================
   // CHANGEMENT DE BIEN
   // ============================================================
@@ -415,17 +454,23 @@ chargerContrats(): void {
             return;
           }
 
-          this.unitesLocativesOptions =
-            unites.map(
-              (unite: UniteLocativeDto) => ({
+         this.unitesLocativesOptions = unites.map(
+            (unite: UniteLocativeDto) => ({
+              label: [
+                unite.reference,
+                this.obtenirLibelleTypeUnite(unite.type),
+                unite.superficie != null
+                  ? `${unite.superficie} m²`
+                  : null
+              ]
+                .filter(Boolean)
+                .join(' — '),
 
-                label:
-                  unite.reference,
+              value: unite.id,
 
-                value:
-                  unite.id
-              })
-            );
+              description: undefined
+            })
+          );
         },
 
         error: (err: HttpErrorResponse) => {
@@ -720,46 +765,88 @@ editContrat(contrat: ContratDto): void {
   // REMPLISSAGE DU FORMULAIRE
   // ==========================================================
 
-  this.contratForm.patchValue({
+// ==========================================================
+// REMPLISSAGE DU FORMULAIRE
+// ==========================================================
 
-    reference:
-      contrat.reference ?? '',
+this.contratForm.patchValue({
 
-    bienImmobilierId:
-      bienImmobilierId,
+  // Identification
+  reference:
+    contrat.reference ?? '',
 
-    // L'unité sera sélectionnée après son chargement
-    uniteLocativeId:
-      '',
+  bienImmobilierId:
+    bienImmobilierId,
 
-    locataireId:
-      locataireId,
+  // L'unité sera sélectionnée après son chargement
+  uniteLocativeId:
+    '',
 
-    dateDebut:
-      contrat.dateDebut
-        ? this.formatDateForInput(contrat.dateDebut)
-        : null,
+  locataireId:
+    locataireId,
 
-    dateFin:
-      contrat.dateFin
-        ? this.formatDateForInput(contrat.dateFin)
-        : null,
+  // Dates du contrat
+  dateDebut:
+    contrat.dateDebut
+      ? this.formatDateForInput(contrat.dateDebut)
+      : null,
 
-    montantLoyer:
-      contrat.montantLoyer ?? null,
+  dateFin:
+    contrat.dateFin
+      ? this.formatDateForInput(contrat.dateFin)
+      : null,
 
-    montantCaution:
-      contrat.montantCaution ?? 0,
+  dateSignature:
+    contrat.dateSignature
+      ? this.formatDateForInput(contrat.dateSignature)
+      : null,
 
-    frequencePaiement:
-      contrat.frequencePaiement ?? 1,
+  // Montants
+  montantLoyer:
+    contrat.montantLoyer ?? null,
 
-    delaiJoursTolerance:
-      contrat.delaiJoursTolerance ?? 5,
+  montantCaution:
+    contrat.montantCaution ?? 0,
 
-    statut:
-      contrat.statut
-  });
+  montantChargesLocatives:
+    contrat.montantChargesLocatives ?? null,
+
+  // Modalités de paiement
+  frequencePaiement:
+    contrat.frequencePaiement ?? 1,
+
+  delaiJoursTolerance:
+    contrat.delaiJoursTolerance ?? 5,
+
+  // Révision du loyer
+  revisionLoyerAutorisee:
+    contrat.revisionLoyerAutorisee ?? false,
+
+  dateProchaineRevisionLoyer:
+    contrat.dateProchaineRevisionLoyer
+      ? this.formatDateForInput(
+          contrat.dateProchaineRevisionLoyer
+        )
+      : null,
+
+  tauxRevisionLoyer:
+    contrat.tauxRevisionLoyer ?? null,
+
+  // Renouvellement et préavis
+  renouvellementAutomatique:
+    contrat.renouvellementAutomatique ?? false,
+
+  delaiPreavisJours:
+    contrat.delaiPreavisJours ?? null,
+
+  // Informations complémentaires
+  observations:
+    contrat.observations ?? '',
+
+  // Statut
+  statut:
+    contrat.statut
+});
 
 
   // ==========================================================
@@ -963,43 +1050,61 @@ editContrat(contrat: ContratDto): void {
        *
        * La référence est immutable après création.
        */
-      const payload: ModifierContratRequest = {
+const valeurs = this.contratForm.value;
 
-        dateDebut:
-          this.convertToIsoDate(
-            formValue.dateDebut
-          ),
+const payload: ModifierContratRequest = {
+  // Période contractuelle
+  dateDebut: this.convertToIsoDate(valeurs.dateDebut),
+  dateFin: this.convertToIsoDate(valeurs.dateFin),
+  dateSignature: valeurs.dateSignature
+    ? this.convertToIsoDate(valeurs.dateSignature)
+    : null,
 
-        dateFin:
-          this.convertToIsoDate(
-            formValue.dateFin
-          ),
+  // Conditions financières
+  montantLoyer: Number(valeurs.montantLoyer),
+  montantCaution: Number(valeurs.montantCaution),
+  montantChargesLocatives:
+    valeurs.montantChargesLocatives !== null &&
+    valeurs.montantChargesLocatives !== ''
+      ? Number(valeurs.montantChargesLocatives)
+      : null,
 
-        montantLoyer:
-          Number(
-            formValue.montantLoyer
-          ),
+  frequencePaiement: Number(valeurs.frequencePaiement),
+  delaiJoursTolerance: Number(valeurs.delaiJoursTolerance),
 
-        montantCaution:
-          Number(
-            formValue.montantCaution
-          ),
+  // Révision du loyer
+  revisionLoyerAutorisee:
+    valeurs.revisionLoyerAutorisee ?? false,
 
-        frequencePaiement:
-          Number(
-            formValue.frequencePaiement ?? 1
-          ),
+  dateProchaineRevisionLoyer:
+    valeurs.revisionLoyerAutorisee &&
+    valeurs.dateProchaineRevisionLoyer
+      ? this.convertToIsoDate(valeurs.dateProchaineRevisionLoyer)
+      : null,
 
-        delaiJoursTolerance:
-          Number(
-            formValue.delaiJoursTolerance ?? 0
-          ),
+  tauxRevisionLoyer:
+    valeurs.revisionLoyerAutorisee &&
+    valeurs.tauxRevisionLoyer !== null &&
+    valeurs.tauxRevisionLoyer !== ''
+      ? Number(valeurs.tauxRevisionLoyer)
+      : null,
 
-        statut:
-          Number(
-            formValue.statut
-          ) as StatutContrat
-      };
+  // Renouvellement
+  renouvellementAutomatique:
+    valeurs.renouvellementAutomatique ?? false,
+
+  delaiPreavisJours:
+    valeurs.delaiPreavisJours !== null &&
+    valeurs.delaiPreavisJours !== ''
+      ? Number(valeurs.delaiPreavisJours)
+      : null,
+
+  // Informations complémentaires
+  observations: valeurs.observations || null,
+
+  // Statut
+  statut: valeurs.statut
+};
 
       this.contratsService
         .updateContrat(
@@ -1044,50 +1149,65 @@ editContrat(contrat: ContratDto): void {
     // CRÉATION
     // ==========================================================
 
-    const payload: CreerContratRequest = {
+const valeurs = this.contratForm.value;
 
-      reference:
-        String(
-          formValue.reference ?? ''
-        ).trim(),
+const payload: CreerContratRequest = {
+  // Identification
+  reference: valeurs.reference,
 
-      uniteLocativeId:
-        formValue.uniteLocativeId,
+  // Relations
+  uniteLocativeId: valeurs.uniteLocativeId,
+  locataireId: valeurs.locataireId,
 
-      locataireId:
-        formValue.locataireId,
+  // Période contractuelle
+  dateDebut: this.convertToIsoDate(valeurs.dateDebut),
+  dateFin: this.convertToIsoDate(valeurs.dateFin),
+  dateSignature: valeurs.dateSignature
+    ? this.convertToIsoDate(valeurs.dateSignature)
+    : null,
 
-      dateDebut:
-        this.convertToIsoDate(
-          formValue.dateDebut
-        ),
+  // Conditions financières
+  montantLoyer: Number(valeurs.montantLoyer),
+  montantCaution: Number(valeurs.montantCaution),
+  montantChargesLocatives:
+    valeurs.montantChargesLocatives !== null &&
+    valeurs.montantChargesLocatives !== ''
+      ? Number(valeurs.montantChargesLocatives)
+      : null,
 
-      dateFin:
-        this.convertToIsoDate(
-          formValue.dateFin
-        ),
+  frequencePaiement: Number(valeurs.frequencePaiement),
+  delaiJoursTolerance: Number(valeurs.delaiJoursTolerance),
 
-      montantLoyer:
-        Number(
-          formValue.montantLoyer
-        ),
+  // Révision du loyer
+  revisionLoyerAutorisee:
+    valeurs.revisionLoyerAutorisee ?? false,
 
-      montantCaution:
-        Number(
-          formValue.montantCaution
-        ),
+  dateProchaineRevisionLoyer:
+    valeurs.revisionLoyerAutorisee &&
+    valeurs.dateProchaineRevisionLoyer
+      ? this.convertToIsoDate(valeurs.dateProchaineRevisionLoyer)
+      : null,
 
-      frequencePaiement:
-        Number(
-          formValue.frequencePaiement ?? 1
-        ),
+  tauxRevisionLoyer:
+    valeurs.revisionLoyerAutorisee &&
+    valeurs.tauxRevisionLoyer !== null &&
+    valeurs.tauxRevisionLoyer !== ''
+      ? Number(valeurs.tauxRevisionLoyer)
+      : null,
 
-      delaiJoursTolerance:
-        Number(
-          formValue.delaiJoursTolerance ?? 0
-        )
-    };
+  // Renouvellement
+  renouvellementAutomatique:
+    valeurs.renouvellementAutomatique ?? false,
 
+  delaiPreavisJours:
+    valeurs.delaiPreavisJours !== null &&
+    valeurs.delaiPreavisJours !== ''
+      ? Number(valeurs.delaiPreavisJours)
+      : null,
+
+  // Informations complémentaires
+  observations: valeurs.observations || null
+};
     this.contratsService
       .createContrat(
         payload
@@ -1386,89 +1506,86 @@ reinitialiserFiltres(): void {
   // ERREURS HTTP
   // ============================================================
 
-  private traiterErreurHttp(
-    err: HttpErrorResponse,
-    action:
-      | 'chargement'
-      | 'création'
-      | 'modification'
-      | 'suppression'
-  ): void {
+ 
+private traiterErreurHttp(
+  err: HttpErrorResponse,
+  action:
+    | 'chargement'
+    | 'création'
+    | 'modification'
+    | 'suppression'
+): void {
 
-    console.error(
-      `Erreur lors de la ${action} du contrat :`,
-      err
-    );
+  console.error(
+    `Erreur lors de la ${action} du contrat :`,
+    err
+  );
 
-    if (err.status === 403) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Accès refusé',
-
-        detail:
-          `Vous n'avez pas les droits nécessaires pour la ${action} d'un contrat.`,
-
-        life: 5000
-      });
-
-      return;
-    }
-
-    if (err.status === 401) {
-
-      this.messageService.add({
-
-        severity: 'error',
-
-        summary: 'Non authentifié',
-
-        detail:
-          'Votre session a expiré. Veuillez vous reconnecter.',
-
-        life: 5000
-      });
-
-      return;
-    }
-
-    const apiMessage =
-      err.error?.message;
-
-    if (
-      err.status === 400 &&
-      typeof apiMessage === 'string' &&
-      apiMessage.trim()
-    ) {
-
-      this.messageService.add({
-
-        severity: 'warn',
-
-        summary: 'Données invalides',
-
-        detail:
-          apiMessage,
-
-        life: 5000
-      });
-
-      return;
-    }
-
+  if (err.status === 403) {
     this.messageService.add({
-
-      severity: 'error',
-
-      summary: 'Erreur',
-
+      severity: 'warn',
+      summary: 'Accès refusé',
       detail:
-        `Une erreur est survenue lors de la ${action} du contrat ` +
-        `(Code ${err.status || 'inconnu'}).`,
-
+        `Vous n'avez pas les droits nécessaires pour la ${action} d'un contrat.`,
       life: 5000
     });
+    return;
   }
+
+  if (err.status === 401) {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Non authentifié',
+      detail:
+        'Votre session a expiré. Veuillez vous reconnecter.',
+      life: 5000
+    });
+    return;
+  }
+
+  // Extraction du message retourné par l'API.
+  let apiMessage: string | null = null;
+
+  if (typeof err.error === 'string') {
+    apiMessage = err.error;
+  } else if (err.error && typeof err.error === 'object') {
+    const body = err.error;
+
+    if (typeof body.message === 'string') {
+      apiMessage = body.message;
+    } else if (typeof body.detail === 'string') {
+      apiMessage = body.detail;
+    } else if (typeof body.title === 'string') {
+      apiMessage = body.title;
+    } else if (typeof body.errors === 'object' && body.errors !== null) {
+      apiMessage = Object.values(body.errors)
+        .flat()
+        .filter((value): value is string => typeof value === 'string')
+        .join(' ');
+    }
+  }
+
+  if (apiMessage?.trim()) {
+    this.messageService.add({
+      severity: err.status === 400 ? 'warn' : 'error',
+      summary: err.status === 400
+        ? 'Données invalides'
+        : 'Erreur',
+      detail: apiMessage,
+      life: 6000
+    });
+    return;
+  }
+
+  // Message générique uniquement si l'API n'a fourni aucun message exploitable.
+  this.messageService.add({
+    severity: 'error',
+    summary: 'Erreur',
+    detail:
+      `Une erreur est survenue lors de la ${action} du contrat ` +
+      `(Code ${err.status || 'inconnu'}).`,
+    life: 5000
+  });
+}
+
 }

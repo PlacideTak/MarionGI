@@ -1,0 +1,585 @@
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="declarations-page">
+
+  <!-- En-tête -->
+  <header class="page-header">
+    <div>
+      <h1>Déclarations fiscales</h1>
+      <p>Suivez les obligations fiscales de votre patrimoine immobilier.</p>
+    </div>
+
+    <p-button
+      label="Nouvelle déclaration"
+      icon="pi pi-plus"
+      (onClick)="ouvrirCreation()">
+    </p-button>
+  </header>
+
+  <!-- Résumé des déclarations fiscales -->
+<section class="summary-grid" aria-label="Résumé des déclarations fiscales">
+
+  <!-- Total -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--blue">
+      <i class="pi pi-file" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">Total des déclarations</span>
+      <strong class="summary-card__value">
+        {{ declarations.length }}
+      </strong>
+      <span class="summary-card__description">
+        Déclarations enregistrées
+      </span>
+    </div>
+  </article>
+
+  <!-- À préparer -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--orange">
+      <i class="pi pi-pencil" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">À préparer</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsAPreparer }}
+      </strong>
+      <span class="summary-card__description">
+        Déclarations à préparer
+      </span>
+    </div>
+  </article>
+
+  <!-- À déclarer -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--orange">
+      <i class="pi pi-send" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">À déclarer</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsADeclarer }}
+      </strong>
+      <span class="summary-card__description">
+        Déclarations à transmettre
+      </span>
+    </div>
+  </article>
+
+  <!-- Déclarées -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--green">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">Déclarées</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsDeclarees }}
+      </strong>
+      <span class="summary-card__description">
+        Déclarations transmises
+      </span>
+    </div>
+  </article>
+
+  <!-- À régler -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--orange">
+      <i class="pi pi-wallet" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">À régler</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsARegler }}
+      </strong>
+      <span class="summary-card__description">
+        Impôts en attente de paiement
+      </span>
+    </div>
+  </article>
+
+  <!-- Partiellement réglées -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--orange">
+      <i class="pi pi-money-bill" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">Partiellement réglées</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsPartiellementReglees }}
+      </strong>
+      <span class="summary-card__description">
+        Paiements partiels effectués
+      </span>
+    </div>
+  </article>
+
+  <!-- Réglées -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--green">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">Réglées</span>
+      <strong class="summary-card__value">
+        {{ nombreDeclarationsReglees }}
+      </strong>
+      <span class="summary-card__description">
+        Impôts entièrement payés
+      </span>
+    </div>
+  </article>
+
+  <!-- En retard -->
+  <article class="summary-card">
+    <div class="summary-card__icon summary-card__icon--red">
+      <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+    </div>
+
+    <div class="summary-card__content">
+      <span class="summary-card__label">En retard</span>
+      <strong class="summary-card__value danger-value">
+        {{ nombreDeclarationsEnRetard }}
+      </strong>
+      <span class="summary-card__description">
+        Déclarations ou obligations fiscales en retard
+      </span>
+    </div>
+  </article>
+
+</section>
+
+  <!-- Liste des déclarations -->
+  <section class="content-card">
+
+    <div class="section-heading">
+      <div>
+        <h2>Liste des déclarations</h2>
+        <p>Recherchez et consultez les déclarations enregistrées.</p>
+      </div>
+
+      <span class="result-count">
+        {{ declarationsFiltrees.length }}
+        résultat(s)
+      </span>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-grid">
+
+      <div class="filter-field search-field">
+        <label for="rechercheDeclaration">Recherche</label>
+        <input
+          id="rechercheDeclaration"
+          pInputText
+          [(ngModel)]="recherche"
+          (ngModelChange)="appliquerFiltres()"
+          placeholder="Bien, référence, observations..." />
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreAnnee">Année fiscale</label>
+        <p-inputnumber
+          inputId="filtreAnnee"
+          [(ngModel)]="filtreAnnee"
+          (ngModelChange)="appliquerFiltres()"
+          [useGrouping]="false"
+          [min]="1900"
+          [max]="2100"
+          placeholder="Toutes">
+        </p-inputnumber>
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreType">Type d'impôt</label>
+        <p-select
+          inputId="filtreType"
+          [options]="typesImpot"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="filtreType"
+          (ngModelChange)="appliquerFiltres()"
+          placeholder="Tous les types"
+          [showClear]="true">
+        </p-select>
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreStatut">Statut</label>
+        <p-select
+          inputId="filtreStatut"
+          [options]="statuts"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="filtreStatut"
+          (ngModelChange)="appliquerFiltres()"
+          placeholder="Tous les statuts"
+          [showClear]="true">
+        </p-select>
+      </div>
+
+      <div class="filter-actions">
+        <p-button
+          label="Réinitialiser"
+          icon="pi pi-filter-slash"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="reinitialiserFiltres()">
+        </p-button>
+      </div>
+
+    </div>
+
+    <!-- Tableau -->
+    <p-table
+      [value]="declarationsFiltrees"
+      [loading]="chargement"
+      dataKey="id"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords}"
+      responsiveLayout="scroll"
+      [rowHover]="true"
+      styleClass="p-datatable-sm">
+
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Année</th>
+          <th>Bien concerné</th>
+          <th>Type d'impôt</th>
+          <th>Montant de l'impôt</th>
+          <th>Échéance</th>
+          <th>Statut</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template pTemplate="body" let-declaration>
+        <tr>
+          <td>
+            <strong>{{ declaration.anneeFiscale }}</strong>
+          </td>
+
+          <td>
+            <div class="bien-cell">
+              <strong>
+                {{ declaration.bienImmobilier?.nom || 'Patrimoine global' }}
+              </strong>
+
+              <small>
+                {{
+                  declaration.bienImmobilier?.reference ||
+                  'Aucun bien spécifique'
+                }}
+              </small>
+            </div>
+          </td>
+
+          <td>
+            {{ libelleType(declaration.typeImpot) }}
+          </td>
+
+          <td class="amount-cell">
+            {{ formaterMontant(declaration.montantImpot) }}
+          </td>
+
+          <td>
+            {{ formaterDate(declaration.dateEcheance) }}
+          </td>
+
+          <td>
+            <p-tag
+              [value]="libelleStatut(declaration.statut)"
+              [severity]="severiteStatut(declaration.statut)">
+            </p-tag>
+          </td>
+
+          <td>
+            <div class="table-actions">
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Modifier la déclaration"
+                pTooltip="Modifier"
+                (onClick)="ouvrirModification(declaration)">
+              </p-button>
+
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                ariaLabel="Supprimer la déclaration"
+                pTooltip="Supprimer"
+                (onClick)="confirmerSuppression(declaration)">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <!-- Aucun résultat -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="pi pi-file" aria-hidden="true"></i>
+              <strong>Aucune déclaration fiscale</strong>
+              <span>
+                Aucune déclaration ne correspond aux critères sélectionnés.
+              </span>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+  </section>
+</div>
+
+<!-- Dialogue de création et de modification -->
+<p-dialog
+  [(visible)]="dialogueVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: 'min(48rem, 95vw)' }"
+  [header]="modeEdition
+    ? 'Modifier la déclaration fiscale'
+    : 'Nouvelle déclaration fiscale'"
+  styleClass="declaration-dialog">
+
+  <form [formGroup]="formulaire" (ngSubmit)="enregistrer()">
+
+    <div class="dialog-intro">
+      <p>
+        Renseignez les informations fiscales. Le bien immobilier est facultatif :
+        laissez ce champ vide si la déclaration concerne le patrimoine global.
+      </p>
+    </div>
+
+    <div class="form-grid">
+
+      <!-- Bien immobilier -->
+      <div class="form-field full-width">
+        <label for="bienImmobilierId">Bien immobilier (facultatif)</label>
+
+        <p-select
+          inputId="bienImmobilierId"
+          formControlName="bienImmobilierId"
+          [options]="biens"
+          optionLabel="nom"
+          optionValue="id"
+          placeholder="Patrimoine global — aucun bien spécifique"
+          [showClear]="true"
+          [filter]="true"
+          filterBy="nom,reference"
+          appendTo="body">
+
+          <ng-template pTemplate="item" let-bien>
+            <div class="bien-option">
+              <strong>{{ bien.nom }}</strong>
+              <small>
+                {{ bien.reference }}
+                <span *ngIf="bien.ville"> · {{ bien.ville }}</span>
+              </small>
+            </div>
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-bien>
+            <span *ngIf="bien">
+              {{ bien.nom }} ({{ bien.reference }})
+            </span>
+          </ng-template>
+
+        </p-select>
+      </div>
+
+      <!-- Année fiscale -->
+      <div class="form-field">
+        <label for="anneeFiscale">Année fiscale *</label>
+
+        <p-inputnumber
+          inputId="anneeFiscale"
+          formControlName="anneeFiscale"
+          [useGrouping]="false"
+          [min]="1900"
+          [max]="2100">
+        </p-inputnumber>
+
+        @if (formulaire.controls['anneeFiscale'].touched &&
+             formulaire.controls['anneeFiscale'].invalid) {
+          <small class="field-error">
+            L'année doit être comprise entre 1900 et 2100.
+          </small>
+        }
+      </div>
+
+      <!-- Type d'impôt -->
+      <div class="form-field">
+        <label for="typeImpot">Type d'impôt *</label>
+
+        <p-select
+          inputId="typeImpot"
+          formControlName="typeImpot"
+          [options]="typesImpot"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <!-- Base imposable -->
+      <div class="form-field">
+        <label for="baseImposable">Base imposable (FCFA)</label>
+
+        <p-inputnumber
+          inputId="baseImposable"
+          formControlName="baseImposable"
+          [min]="0"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          suffix=" FCFA">
+        </p-inputnumber>
+
+        @if (formulaire.controls['baseImposable'].touched &&
+             formulaire.controls['baseImposable'].invalid) {
+          <small class="field-error">
+            La base imposable ne peut pas être négative.
+          </small>
+        }
+      </div>
+
+      <!-- Montant de l'impôt -->
+      <div class="form-field">
+        <label for="montantImpot">Montant de l'impôt (FCFA) *</label>
+
+        <p-inputnumber
+          inputId="montantImpot"
+          formControlName="montantImpot"
+          [min]="0"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          suffix=" FCFA">
+        </p-inputnumber>
+
+        @if (formulaire.controls['montantImpot'].touched &&
+             formulaire.controls['montantImpot'].invalid) {
+          <small class="field-error">
+            Le montant doit être supérieur ou égal à zéro.
+          </small>
+        }
+      </div>
+
+      <!-- Date d'échéance -->
+      <div class="form-field">
+        <label for="dateEcheance">Date d'échéance</label>
+
+        <p-datepicker
+          inputId="dateEcheance"
+          formControlName="dateEcheance"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          appendTo="body">
+        </p-datepicker>
+      </div>
+
+      <!-- Date de déclaration -->
+      <div class="form-field">
+        <label for="dateDeclaration">Date de déclaration</label>
+
+        <p-datepicker
+          inputId="dateDeclaration"
+          formControlName="dateDeclaration"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          appendTo="body">
+        </p-datepicker>
+      </div>
+
+      <!-- Statut -->
+      <div class="form-field">
+        <label for="statut">Statut de suivi *</label>
+
+        <p-select
+          inputId="statut"
+          formControlName="statut"
+          [options]="statuts"
+          optionLabel="label"
+          optionValue="value"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <!-- Référence -->
+      <div class="form-field full-width">
+        <label for="referenceDeclaration">
+          Référence de déclaration ou d'avis
+        </label>
+
+        <input
+          id="referenceDeclaration"
+          pInputText
+          formControlName="referenceDeclaration"
+          maxlength="150"
+          placeholder="Ex. : référence de l'avis fiscal" />
+
+        <small class="field-hint">150 caractères maximum.</small>
+      </div>
+
+      <!-- Observations -->
+      <div class="form-field full-width">
+        <label for="observations">Observations</label>
+
+        <textarea
+          id="observations"
+          pTextarea
+          formControlName="observations"
+          rows="4"
+          maxlength="2000"
+          [autoResize]="true"
+          placeholder="Informations complémentaires...">
+        </textarea>
+
+        <small class="field-hint">2 000 caractères maximum.</small>
+      </div>
+
+    </div>
+
+    <!-- Actions du dialogue -->
+    <div class="dialog-actions">
+      <p-button
+        label="Annuler"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="sauvegardeEnCours"
+        (onClick)="dialogueVisible = false">
+      </p-button>
+
+      <p-button
+        [label]="modeEdition
+          ? 'Enregistrer les modifications'
+          : 'Créer la déclaration'"
+        icon="pi pi-check"
+        type="submit"
+        [loading]="sauvegardeEnCours">
+      </p-button>
+    </div>
+
+  </form>
+</p-dialog>

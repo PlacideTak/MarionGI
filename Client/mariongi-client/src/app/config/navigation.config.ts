@@ -14,7 +14,69 @@ export const APP_NAV_ITEMS: NavItem[] = [
     route: 'societes',
     roles: [ROLES.Administrateur, ROLES.Admin]
   },
+  {
+    label: 'Charges immobilières',
+    icon: 'pi pi-wallet',
+    route: 'chargesimmobilieres',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
 
+  {
+    label: 'Tranches IRPP',
+    icon: 'pi pi-calculator',
+    route: 'tranchesirpp',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+
+  {
+    label: 'Paramètres fiscaux',
+    icon: 'pi pi-sliders-h',
+    route: 'parametresfiscaux',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+    {
+    label: 'Régimes fiscaux',
+    icon: 'pi pi-briefcase',
+    route: 'regimesfiscaux',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+{
+    label: 'Valeurs fiscales',
+    icon: 'pi pi-chart-line',
+    route: 'valeursfiscalesbiens',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+
+  {
+    label: 'Déclarations fiscales',
+    icon: 'pi pi-file-edit',
+    route: 'declarationsfiscales',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
   {
     label: 'Biens immobiliers',
     icon: 'pi pi-building',
@@ -60,6 +122,16 @@ export const APP_NAV_ITEMS: NavItem[] = [
   },
 
   {
+    label: 'Prestataires',
+    icon: 'pi pi-briefcase',
+    route: 'prestataires',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+  {
     label: 'Incidents / Tickets',
     icon: 'pi pi-wrench',
     route: 'tickets',
@@ -72,7 +144,7 @@ export const APP_NAV_ITEMS: NavItem[] = [
   },
 
   {
-    label: 'Paiements',
+    label: 'Eats des paiements',
     icon: 'pi pi-dollar',
     route: 'paiements',
     roles: [
@@ -82,95 +154,6 @@ export const APP_NAV_ITEMS: NavItem[] = [
       ROLES.Locataire
     ]
   },
-
-  // ========================================================
-  // PRESTATAIRES ET GESTION IMMOBILIÈRE
-  // ========================================================
-
-  {
-    label: 'Prestataires',
-    icon: 'pi pi-briefcase',
-    route: 'prestataires',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  // ========================================================
-  // GESTION FISCALE ET CHARGES IMMOBILIÈRES
-  // ========================================================
-
-  {
-    label: 'Charges immobilières',
-    icon: 'pi pi-wallet',
-    route: 'chargesimmobilieres',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  {
-    label: 'Tranches IRPP',
-    icon: 'pi pi-calculator',
-    route: 'tranchesirpp',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  {
-    label: 'Paramètres fiscaux',
-    icon: 'pi pi-sliders-h',
-    route: 'parametresfiscaux',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  {
-    label: 'Régimes fiscaux',
-    icon: 'pi pi-briefcase',
-    route: 'regimesfiscaux',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  {
-    label: 'Valeurs fiscales des biens',
-    icon: 'pi pi-chart-line',
-    route: 'valeursfiscalesbiens',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  {
-    label: 'Déclarations fiscales des biens',
-    icon: 'pi pi-file-edit',
-    route: 'declarationsfiscalesbiens',
-    roles: [
-      ROLES.Administrateur,
-      ROLES.Admin,
-      ROLES.Gestionnaire
-    ]
-  },
-
-  // ========================================================
-  // RAPPORTS ET ADMINISTRATION
-  // ========================================================
 
   {
     label: 'Rapports',

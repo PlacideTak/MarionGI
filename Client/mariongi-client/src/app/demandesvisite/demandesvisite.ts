@@ -27,7 +27,8 @@ import {
   UtilisateurDto,
   StatutDemandeVisite,
   ROLES,
-  RoleUtilisateur
+  RoleUtilisateur,
+  TypeUniteLocative
 } from '../models/gestimmo.models';
 
 import { environment } from '../../environments/environment.development';
@@ -228,18 +229,22 @@ export class DemandesVisite implements OnInit {
     this.chargerAgents();
   }
 
-  private creerNouvelleDemande(): DemandeVisiteDto {
-    return {
-      uniteLocativeId: '',
-      bienId: undefined,
-      agentId: null,
-      nomProspect: '',
-      telephoneProspect: '',
-      dateSouhaitee: new Date(),
-      observations: '',
-      statut: StatutDemandeVisite.EnAttente
-    };
-  }
+private creerNouvelleDemande(): DemandeVisiteDto {
+  return {
+    uniteLocativeId: '',
+    bienId: undefined,
+    agentId: null,
+    nomProspect: '',
+    telephoneProspect: '',
+    emailProspect: '',
+    dateSouhaitee: new Date(),
+    dateConfirmee: null,
+    observations: '',
+    commentaireInterne: '',
+    dateTraitement: null,
+    statut: StatutDemandeVisite.EnAttente
+  };
+}
 
   // =========================================================
   // DATE
@@ -338,7 +343,7 @@ export class DemandesVisite implements OnInit {
   // =========================================================
   // CHARGER LES UNITÉS D'UN BIEN
   // =========================================================
-
+      
   chargerUnitesDuBien(
     bienId: string,
     selectedUniteId?: string
@@ -526,16 +531,20 @@ export class DemandesVisite implements OnInit {
       '';
 
     this.nouvelleDemande = {
-      id: demande.id,
-      uniteLocativeId,
-      bienId,
-      agentId: demande.agentId ?? null,
-      nomProspect: demande.nomProspect ?? '',
-      telephoneProspect: demande.telephoneProspect ?? '',
-      dateSouhaitee: demande.dateSouhaitee,
-      observations: demande.observations ?? '',
-      statut: demande.statut ?? StatutDemandeVisite.EnAttente
-    };
+        id: demande.id,
+        uniteLocativeId,
+        bienId,
+        agentId: demande.agentId ?? null,
+        nomProspect: demande.nomProspect ?? '',
+        telephoneProspect: demande.telephoneProspect ?? '',
+        emailProspect: demande.emailProspect ?? '',
+        dateSouhaitee: demande.dateSouhaitee,
+        dateConfirmee: demande.dateConfirmee ?? null,
+        observations: demande.observations ?? '',
+        commentaireInterne: demande.commentaireInterne ?? '',
+        dateTraitement: demande.dateTraitement ?? null,
+        statut: demande.statut ?? StatutDemandeVisite.EnAttente
+      };
 
     this.dateSouhaiteeInput = this.convertirDateEnInput(
       demande.dateSouhaitee
@@ -626,19 +635,30 @@ export class DemandesVisite implements OnInit {
       return;
     }
 
-    const payload: DemandeVisiteDto = {
-      ...(this.nouvelleDemande.id
-        ? { id: this.nouvelleDemande.id }
-        : {}),
-      uniteLocativeId: this.nouvelleDemande.uniteLocativeId,
-      agentId: this.nouvelleDemande.agentId ?? null,
-      nomProspect,
-      telephoneProspect,
-      dateSouhaitee: dateSelectionnee,
-      observations: this.nouvelleDemande.observations?.trim() || null,
-      statut: this.nouvelleDemande.statut ??
-        StatutDemandeVisite.EnAttente
-    };
+const payload: DemandeVisiteDto = {
+  ...(this.nouvelleDemande.id
+    ? { id: this.nouvelleDemande.id }
+    : {}),
+
+  uniteLocativeId: this.nouvelleDemande.uniteLocativeId,
+  agentId: this.nouvelleDemande.agentId ?? null,
+
+  nomProspect,
+  telephoneProspect,
+  emailProspect: this.nouvelleDemande.emailProspect?.trim() || null,
+
+  dateSouhaitee: dateSelectionnee,
+  dateConfirmee: this.nouvelleDemande.dateConfirmee ?? null,
+
+  observations: this.nouvelleDemande.observations?.trim() || null,
+  commentaireInterne:
+    this.nouvelleDemande.commentaireInterne?.trim() || null,
+
+  dateTraitement: this.nouvelleDemande.dateTraitement ?? null,
+
+  statut: this.nouvelleDemande.statut ??
+    StatutDemandeVisite.EnAttente
+};
 
     this.enregistrementEnCours = true;
 
@@ -785,6 +805,12 @@ export class DemandesVisite implements OnInit {
         });
       }
     });
+  }
+
+   obtenirLibelleTypeUnite(
+    type: TypeUniteLocative | number
+      ): string {
+        return TypeUniteLocative[type] ?? 'Type inconnu';
   }
 
   // =========================================================

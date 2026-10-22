@@ -130,6 +130,33 @@ builder.Services.AddAuthorization(options =>
             "Administrateur",
             "Gestionnaire"));
 
+    // ========================================================
+    // DECLARATIONS FISCALES DES BIENS
+    // ========================================================
+
+    // Lecture : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationsFiscales.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationsFiscales.Create", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Modification : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationsFiscales.Update", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Suppression logique : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationsFiscales.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
 
     // ========================================================
     // UTILISATEURS

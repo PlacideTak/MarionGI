@@ -128,7 +128,8 @@ public class TranchesIRPPController : ControllerBase
             Description = Nettoyer(request.Description),
             ReferenceLegale = Nettoyer(request.ReferenceLegale),
             DateDebutValidite = request.DateDebutValidite,
-            DateFinValidite = request.DateFinValidite
+            DateFinValidite = request.DateFinValidite,
+            DateDerniereVerification = request.DateDerniereVerification
         };
 
         _context.TranchesIRPP.Add(tranche);
@@ -196,6 +197,7 @@ public class TranchesIRPPController : ControllerBase
         tranche.ReferenceLegale = Nettoyer(request.ReferenceLegale);
         tranche.DateDebutValidite = request.DateDebutValidite;
         tranche.DateFinValidite = request.DateFinValidite;
+        tranche.DateDerniereVerification = request.DateDerniereVerification;
 
         await _context.SaveChangesAsync();
 
@@ -240,6 +242,7 @@ public class TranchesIRPPController : ControllerBase
     // ========================================================
     // VALIDATION DES DONNÉES
     // ========================================================
+
 
     private static string? Valider(
         CreerTrancheIRPPRequest request)
@@ -311,8 +314,27 @@ public class TranchesIRPPController : ControllerBase
             }
         }
 
+        // Date de dernière vérification : facultative.
+        if (request.DateDerniereVerification.HasValue)
+        {
+            var dateVerification =
+                request.DateDerniereVerification.Value;
+
+            if (dateVerification == default)
+            {
+                return "La date de dernière vérification est invalide.";
+            }
+
+            if (dateVerification.Year < 2000 ||
+                dateVerification.Year > 2100)
+            {
+                return "L'année de la date de dernière vérification doit être comprise entre 2000 et 2100.";
+            }
+        }
+
         return null;
     }
+
 
     // ========================================================
     // DÉTECTION DES CONFLITS
@@ -468,6 +490,7 @@ public class CreerTrancheIRPPRequest
     public DateTime DateDebutValidite { get; set; }
 
     public DateTime? DateFinValidite { get; set; }
+    public DateTime? DateDerniereVerification { get; set; }
 }
 
 // ============================================================

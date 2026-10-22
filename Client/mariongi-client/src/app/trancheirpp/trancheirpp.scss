@@ -1,3 +1,7 @@
+// ============================================================
+// PALETTE
+// ============================================================
+
 $border: #e2e8f0;
 $text: #334155;
 $text-muted: #64748b;
@@ -9,12 +13,15 @@ $success: #15803d;
 :host {
   display: block;
   width: 100%;
+  min-width: 0;
   color: $text;
 }
 
 .tranches-page {
-  padding: 1.5rem;
+  width: 100%;
   min-width: 0;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 // ============================================================
@@ -28,17 +35,23 @@ $success: #15803d;
   gap: 1rem;
   margin-bottom: 1.5rem;
 
+  > div {
+    min-width: 0;
+  }
+
   h1 {
     margin: 0 0 0.4rem;
     color: #0f172a;
     font-size: 1.65rem;
     font-weight: 700;
+    line-height: 1.25;
   }
 
   p {
     margin: 0;
     color: $text-muted;
     font-size: 0.95rem;
+    line-height: 1.5;
   }
 }
 
@@ -57,20 +70,25 @@ $success: #15803d;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  min-width: 0;
   padding: 1.1rem 1.25rem;
   border: 1px solid $border;
   border-radius: 0.75rem;
   background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
 
   span {
     color: $text-muted;
     font-size: 0.85rem;
+    line-height: 1.4;
   }
 
   strong {
     color: #0f172a;
     font-size: 1.55rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
   }
 }
 
@@ -79,10 +97,12 @@ $success: #15803d;
 // ============================================================
 
 .tranches-panel {
+  min-width: 0;
   overflow: hidden;
   border: 1px solid $border;
   border-radius: 0.75rem;
   background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 3%);
 }
 
 // ============================================================
@@ -114,12 +134,25 @@ $success: #15803d;
 }
 
 // ============================================================
-// TABLEAU
+// TABLEAU PRIME NG
 // ============================================================
 
 :host ::ng-deep {
   .p-datatable {
+    min-width: 0;
     font-size: 0.9rem;
+  }
+
+  .p-datatable-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  // Les colonnes Référence légale et Validité demandent un peu
+  // d'espace : le tableau défile horizontalement sur petit écran.
+  .p-datatable-table {
+    min-width: 68rem;
   }
 
   .p-datatable-thead > tr > th {
@@ -137,6 +170,10 @@ $success: #15803d;
     vertical-align: middle;
   }
 
+  .p-datatable-tbody > tr {
+    transition: background-color 120ms ease;
+  }
+
   .p-datatable-tbody > tr:hover {
     background: #f8fafc;
   }
@@ -149,6 +186,20 @@ $success: #15803d;
   .p-inputnumber-input {
     width: 100%;
   }
+
+  .p-inputtext,
+  .p-inputnumber-input,
+  textarea.p-inputtextarea {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .p-button:focus-visible,
+  .p-inputtext:focus-visible,
+  .p-inputnumber-input:focus-visible {
+    outline: 2px solid rgb(37 99 235 / 35%);
+    outline-offset: 2px;
+  }
 }
 
 .annee-badge {
@@ -160,6 +211,7 @@ $success: #15803d;
   color: #1d4ed8;
   font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .ordre-badge {
@@ -168,10 +220,12 @@ $success: #15803d;
   justify-content: center;
   min-width: 1.8rem;
   height: 1.8rem;
+  padding: 0 0.25rem;
   border-radius: 50%;
   background: #f1f5f9;
   color: #475569;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .montant {
@@ -187,6 +241,7 @@ $success: #15803d;
   background: #ecfdf5;
   color: $success;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
@@ -195,6 +250,39 @@ $success: #15803d;
   max-width: 24rem;
   overflow-wrap: anywhere;
   color: #475569;
+  line-height: 1.45;
+}
+
+.reference-cell {
+  min-width: 11rem;
+  max-width: 18rem;
+  color: #475569;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.validite-cell {
+  min-width: 12rem;
+  color: #475569;
+  font-size: 0.83rem;
+  line-height: 1.55;
+
+  > div + div {
+    margin-top: 0.2rem;
+  }
+
+  strong {
+    color: #334155;
+    font-weight: 600;
+  }
+
+  .verification-date {
+    display: block;
+    margin-top: 0.35rem;
+    color: $text-muted;
+    font-size: 0.78rem;
+  }
 }
 
 .actions-column {
@@ -229,23 +317,42 @@ $success: #15803d;
 .tranche-form {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .form-intro {
   display: flex;
   align-items: flex-start;
-  gap: 0.7rem;
-  padding: 0.85rem 1rem;
+  gap: 0.55rem;
+  padding: 0.65rem 0.8rem;
   border: 1px solid #bfdbfe;
   border-radius: 0.6rem;
   background: #eff6ff;
   color: #1e40af;
-  font-size: 0.85rem;
-  line-height: 1.5;
+  font-size: 0.8rem;
+  line-height: 1.4;
 
   i {
+    flex: 0 0 auto;
     margin-top: 0.15rem;
+    font-size: 1rem;
+  }
+}
+
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.1rem 0 -0.25rem;
+  padding-bottom: 0.45rem;
+  border-bottom: 1px solid $border;
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
+
+  i {
+    color: $primary;
     font-size: 1rem;
   }
 }
@@ -253,30 +360,59 @@ $success: #15803d;
 .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.form-grid-dates {
+  align-items: start;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.3rem;
   min-width: 0;
 
   label {
     color: #334155;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     font-weight: 600;
+    line-height: 1.3;
   }
 
   input[pInputText],
+  input[type='date'],
   textarea,
   p-inputNumber {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  input[type='date'] {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: $text;
+    font: inherit;
+  }
+
+  input[type='date']:focus {
+    border-color: $primary;
+    outline: 0;
+    box-shadow: 0 0 0 1px $primary;
   }
 
   textarea {
     resize: vertical;
-    min-height: 5rem;
+    min-height: 3.75rem;
+  }
+
+  .w-full {
+    width: 100%;
   }
 }
 
@@ -286,14 +422,14 @@ $success: #15803d;
 
 .field-hint {
   color: $text-muted;
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.74rem;
+  line-height: 1.3;
 }
 
 .field-error {
   color: $danger;
-  font-size: 0.8rem;
-  line-height: 1.4;
+  font-size: 0.76rem;
+  line-height: 1.3;
 }
 
 .input-invalid {
@@ -304,10 +440,26 @@ $success: #15803d;
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  padding-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+  padding-top: 0.7rem;
   border-top: 1px solid $border;
+}
+
+// Dialogue plus compact : réduit les marges sans sacrifier la lisibilité.
+:host ::ng-deep .p-dialog.tranche-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+
+  .p-dialog-header {
+    padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid $border;
+  }
+
+  .p-dialog-content {
+    padding: 0.85rem 1.1rem 1rem;
+    overflow-x: hidden;
+  }
 }
 
 // ============================================================
@@ -365,6 +517,16 @@ $success: #15803d;
       width: 100%;
     }
   }
+
+  :host ::ng-deep .p-dialog.tranche-dialog {
+    width: calc(100vw - 1.5rem) !important;
+    max-width: calc(100vw - 1.5rem);
+
+    .p-dialog-header,
+    .p-dialog-content {
+      padding: 0.75rem;
+    }
+  }
 }
 
 @media (max-width: 480px) {
@@ -372,7 +534,19 @@ $success: #15803d;
     padding: 0.75rem;
   }
 
+  .tranches-filters {
+    padding: 0.75rem;
+  }
+
   .description-cell {
     min-width: 9rem;
+  }
+
+  .form-intro {
+    padding: 0.6rem 0.7rem;
+  }
+
+  .form-grid {
+    gap: 0.7rem;
   }
 }

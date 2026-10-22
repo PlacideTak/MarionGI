@@ -442,8 +442,12 @@ public class PrestatairesController : ControllerBase
         if (!Enum.IsDefined(typeof(TypePrestataire), typePrestataire))
             return "Le type de prestataire est invalide.";
 
-        if (string.IsNullOrWhiteSpace(nom))
-            return "Le nom est obligatoire.";
+
+        if (typePrestataire == TypePrestataire.PersonnePhysique &&
+            string.IsNullOrWhiteSpace(nom))
+        {
+            return "Le nom est obligatoire pour une personne physique.";
+        }
 
         if (string.IsNullOrWhiteSpace(specialite))
             return "La spécialité est obligatoire.";

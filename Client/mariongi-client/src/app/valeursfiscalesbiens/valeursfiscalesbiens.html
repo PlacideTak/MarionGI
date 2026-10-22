@@ -1,0 +1,485 @@
+
+<p-toast position="top-right"></p-toast>
+
+<p-confirmDialog
+  [style]="{ width: 'min(28rem, 95vw)' }"
+  [breakpoints]="{ '600px': '95vw' }">
+</p-confirmDialog>
+
+<div class="valeurs-page">
+  <header class="page-header">
+    <div class="page-header__content">
+      <div class="page-header__icon">
+        <i class="pi pi-building"></i>
+      </div>
+      <div>
+        <h1>Valeurs fiscales des biens</h1>
+        <p class="page-subtitle">
+          Consultez et gérez les valeurs fiscales annuelles de vos biens immobiliers.
+        </p>
+      </div>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      label="Nouvelle valeur fiscale"
+      icon="pi pi-plus"
+      (click)="openNew()">
+    </button>
+  </header>
+
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--blue">
+        <i class="pi pi-list"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Valeurs enregistrées</span>
+        <strong>{{ valeursFiscales.length }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--green">
+        <i class="pi pi-calendar"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Années couvertes</span>
+        <strong>{{ nombreAnnees }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--gray">
+        <i class="pi pi-wallet"></i>
+      </div>
+      <div class="summary-card__content">
+        <span class="summary-card__label">Montant des résultats filtrés</span>
+        <strong>{{ montantTotal | number:'1.0-2' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <section class="content-card">
+    <div class="content-card__header">
+      <div>
+        <h2>Historique des valeurs fiscales</h2>
+        <p>Les valeurs sont classées par année fiscale et date d’évaluation.</p>
+      </div>
+      <span class="results-count">{{ valeursFiltrees.length }} résultat(s)</span>
+    </div>
+
+    <div class="filters">
+      <div class="filter-field filter-field--search">
+        <label for="rechercheValeur">Rechercher</label>
+        <span class="search-input">
+          <i class="pi pi-search"></i>
+          <input
+            id="rechercheValeur"
+            pInputText
+            type="text"
+            [(ngModel)]="recherche"
+            placeholder="Bien, référence, observations..."
+            autocomplete="off">
+        </span>
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreBien">Bien immobilier</label>
+
+        <p-select
+          inputId="filtreBien"
+          [options]="biensOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="filtreBien"
+          [showClear]="true"
+          placeholder="Tous les biens"
+          styleClass="w-full"
+          appendTo="body">
+        <ng-template pTemplate="item" let-bien>
+            <div class="bien-option">
+              <strong>{{ bien.nom }}</strong>
+              <small>
+                {{ bien.reference }}
+                <span *ngIf="bien.ville"> · {{ bien.ville }}</span>
+              </small>
+            </div>
+          </ng-template>
+
+          <ng-template pTemplate="selectedItem" let-bien>
+            <span *ngIf="bien">
+              {{ bien.nom }} ({{ bien.reference }})
+            </span>
+          </ng-template>
+
+        </p-select>
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreAnnee">Année fiscale</label>
+        <p-select
+          inputId="filtreAnnee"
+          [options]="anneesOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="filtreAnnee"
+          [showClear]="true"
+          placeholder="Toutes les années"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="filter-field">
+        <label for="filtreType">Type de valeur</label>
+        <p-select
+          inputId="filtreType"
+          [options]="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          [(ngModel)]="filtreType"
+          [showClear]="true"
+          placeholder="Tous les types"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+      </div>
+
+      <div class="filter-actions">
+        <button
+          pButton
+          type="button"
+          label="Réinitialiser"
+          icon="pi pi-filter-slash"
+          class="p-button-outlined p-button-secondary"
+          (click)="reinitialiserFiltres()">
+        </button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <p-table
+        [value]="valeursFiltrees"
+        [loading]="loading"
+        dataKey="id"
+        responsiveLayout="scroll"
+        [rowHover]="true"
+        [paginator]="valeursFiltrees.length > 10"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 25, 50]"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="{first} à {last} sur {totalRecords} valeurs"
+        [tableStyle]="{ 'min-width': '75rem' }"
+        styleClass="p-datatable-sm valeurs-table">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Année</th>
+            <th>Bien immobilier</th>
+            <th>Montant</th>
+            <th>Type</th>
+            <th>Date d’évaluation</th>
+            <th>Validation officielle</th>
+            <th>Justificatif</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-valeur>
+          <tr>
+            <td>
+              <span class="annee-badge">{{ valeur.anneeFiscale }}</span>
+            </td>
+
+            <td>
+              <div class="bien-cell">
+                <strong>{{ valeur.nomBien || 'Bien immobilier' }}</strong>
+                <small>{{ valeur.referenceBien }}</small>
+              </div>
+            </td>
+
+            <td>
+              <strong class="montant-cell">
+                {{ valeur.montant | number:'1.0-2' }}
+              </strong>
+            </td>
+
+            <td>
+              <span class="type-badge">
+                {{ getTypeLabel(valeur.typeValeur) }}
+              </span>
+            </td>
+
+            <td>{{ valeur.dateEvaluation | date:'dd/MM/yyyy' }}</td>
+
+            <td>
+              @if (valeur.dateValidationOfficielle) {
+                <span class="validation-ok">
+                  <i class="pi pi-check-circle"></i>
+                  {{ valeur.dateValidationOfficielle | date:'dd/MM/yyyy' }}
+                </span>
+              } @else {
+                <span class="validation-pending">Non validée</span>
+              }
+            </td>
+
+            <td>
+              @if (valeur.referenceJustificative) {
+                <span class="reference-cell" [title]="valeur.referenceJustificative">
+                  {{ valeur.referenceJustificative }}
+                </span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
+
+            <td>
+              <div class="row-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-secondary"
+                  pTooltip="Modifier"
+                  aria-label="Modifier la valeur fiscale"
+                  (click)="editValeur(valeur)">
+                </button>
+
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  pTooltip="Supprimer"
+                  aria-label="Supprimer la valeur fiscale"
+                  (click)="deleteValeur(valeur)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <h3>
+                  {{
+                    recherche || filtreBien || filtreAnnee !== null || filtreType !== null
+                      ? 'Aucun résultat'
+                      : 'Aucune valeur fiscale'
+                  }}
+                </h3>
+                <p>
+                  {{
+                    recherche || filtreBien || filtreAnnee !== null || filtreType !== null
+                      ? 'Modifiez vos critères ou réinitialisez les filtres.'
+                      : 'Ajoutez une première valeur fiscale pour un bien immobilier.'
+                  }}
+                </p>
+                @if (!recherche && !filtreBien && filtreAnnee === null && filtreType === null) {
+                  <button
+                    pButton
+                    type="button"
+                    label="Ajouter une valeur fiscale"
+                    icon="pi pi-plus"
+                    class="p-button-outlined"
+                    (click)="openNew()">
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </section>
+</div>
+
+<p-dialog
+  [(visible)]="dialogVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!saving"
+  [closeOnEscape]="!saving"
+  [style]="{ width: 'min(48rem, 96vw)' }"
+  [breakpoints]="{ '960px': '90vw', '640px': '96vw' }"
+  [header]="isEditMode ? 'Modifier la valeur fiscale' : 'Nouvelle valeur fiscale'"
+  styleClass="valeur-dialog"
+  (onHide)="fermerDialog()">
+
+  <form [formGroup]="valeurForm" (ngSubmit)="saveValeur()" novalidate>
+    <div class="dialog-intro">
+      <div class="dialog-intro__icon">
+        <i class="pi pi-info-circle"></i>
+      </div>
+      <p>
+        Renseignez la valeur fiscale du bien pour l’année concernée.
+        Les champs marqués d’un astérisque sont obligatoires.
+      </p>
+    </div>
+
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label for="bienImmobilierId">Bien immobilier <span class="required">*</span></label>
+        <p-select
+          inputId="bienImmobilierId"
+          formControlName="bienImmobilierId"
+          [options]="biensOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un bien"
+          styleClass="w-full"
+          appendTo="body"
+          [filter]="true">
+        </p-select>
+        @if (valeurForm.get('bienImmobilierId')?.invalid && valeurForm.get('bienImmobilierId')?.touched) {
+          <small class="field-error">Le bien immobilier est obligatoire.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="anneeFiscale">Année fiscale <span class="required">*</span></label>
+        <p-inputnumber
+          inputId="anneeFiscale"
+          formControlName="anneeFiscale"
+          [useGrouping]="false"
+          [min]="1900"
+          [max]="anneeActuelle + 1"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="0"
+          placeholder="Ex. : 2026"
+          styleClass="w-full">
+        </p-inputnumber>
+        @if (valeurForm.get('anneeFiscale')?.invalid && valeurForm.get('anneeFiscale')?.touched) {
+          <small class="field-error">Saisissez une année valide.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="montant">Montant <span class="required">*</span></label>
+        <p-inputnumber
+          inputId="montant"
+          formControlName="montant"
+          [min]="0.01"
+          [minFractionDigits]="0"
+          [maxFractionDigits]="2"
+          [useGrouping]="true"
+          placeholder="Montant fiscal"
+          styleClass="w-full">
+        </p-inputnumber>
+        @if (valeurForm.get('montant')?.invalid && valeurForm.get('montant')?.touched) {
+          <small class="field-error">Le montant doit être supérieur à zéro.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="typeValeur">Type de valeur <span class="required">*</span></label>
+        <p-select
+          inputId="typeValeur"
+          formControlName="typeValeur"
+          [options]="typeOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un type"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
+        @if (valeurForm.get('typeValeur')?.invalid && valeurForm.get('typeValeur')?.touched) {
+          <small class="field-error">Le type de valeur est obligatoire.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="dateEvaluation">Date d’évaluation <span class="required">*</span></label>
+        <p-datepicker
+          inputId="dateEvaluation"
+          formControlName="dateEvaluation"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          placeholder="JJ/MM/AAAA"
+          styleClass="w-full"
+          appendTo="body">
+        </p-datepicker>
+        @if (valeurForm.get('dateEvaluation')?.invalid && valeurForm.get('dateEvaluation')?.touched) {
+          <small class="field-error">La date d’évaluation est obligatoire.</small>
+        }
+      </div>
+
+      <div class="form-field">
+        <label for="dateValidationOfficielle">Date de validation officielle</label>
+        <p-datepicker
+          inputId="dateValidationOfficielle"
+          formControlName="dateValidationOfficielle"
+          dateFormat="dd/mm/yy"
+          [showIcon]="true"
+          [showButtonBar]="true"
+          placeholder="Facultative"
+          styleClass="w-full"
+          appendTo="body">
+        </p-datepicker>
+        <small class="field-hint">À renseigner uniquement si la valeur a été validée officiellement.</small>
+      </div>
+
+      <div class="form-field">
+        <label for="referenceJustificative">Référence justificative</label>
+        <input
+          id="referenceJustificative"
+          pInputText
+          formControlName="referenceJustificative"
+          maxlength="250"
+          placeholder="Référence du document">
+      </div>
+
+      <div class="form-field">
+        <label for="cheminJustificatif">Chemin du justificatif</label>
+        <input
+          id="cheminJustificatif"
+          pInputText
+          formControlName="cheminJustificatif"
+          maxlength="500"
+          placeholder="Chemin ou URL du document">
+        <small class="field-hint">Ce champ enregistre un chemin ou une référence, pas un téléversement de fichier.</small>
+      </div>
+
+      <div class="form-field form-field--full">
+        <label for="observations">Observations</label>
+        <textarea
+          id="observations"
+          pTextarea
+          formControlName="observations"
+          rows="3"
+          maxlength="2000"
+          [autoResize]="true"
+          placeholder="Précisions sur l’évaluation ou le document justificatif...">
+        </textarea>
+      </div>
+    </div>
+
+    <div class="dialog-footer">
+      <button
+        pButton
+        type="button"
+        label="Annuler"
+        icon="pi pi-times"
+        class="p-button-outlined p-button-secondary"
+        [disabled]="saving"
+        (click)="fermerDialog()">
+      </button>
+
+      <button
+        pButton
+        type="submit"
+        [label]="isEditMode ? 'Enregistrer les modifications' : 'Créer la valeur fiscale'"
+        [icon]="isEditMode ? 'pi pi-check' : 'pi pi-plus'"
+        [loading]="saving"
+        [disabled]="saving || valeurForm.invalid">
+      </button>
+    </div>
+  </form>
+</p-dialog>

@@ -2,7 +2,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-
 import {
   FormBuilder,
   FormGroup,
@@ -11,6 +10,7 @@ import {
   Validators
 } from '@angular/forms';
 import { finalize } from 'rxjs';
+
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -25,6 +25,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 
 import {
+  BienDto,
   CategorieIncident,
   ImputabiliteIncident,
   PrioriteIncident,
@@ -36,12 +37,15 @@ import {
   TypeUniteLocative,
   UniteLocativeDto,
   ModifierTicketIncidentRequest,
-  CreerTicketIntervenantRequest
+  CreerTicketIntervenantRequest,
+  ModifierTicketIntervenantRequest,
+  PrestataireDto
 } from '../models/gestimmo.models';
 
+import { BiensService } from '../services/biens.service';
 import { TicketsService } from '../services/tickets.service';
 import { UnitesLocativesService } from '../services/uniteslocatives.service';
-
+import { PrestatairesService } from '../services/prestataire.service';
 
 interface Option<T> {
   label: string;
@@ -53,27 +57,27 @@ interface LocataireOption {
   value: string;
 }
 
-/** Données d'un intervenant telles que renvoyées par l'API. */
 interface IntervenantTicket {
   id: string;
-  nomArtisan: string;
+  prestataireId: string;
+  nomPrestataire: string;
+  typePrestataire?: number;
   specialite: string;
   telephone: string;
   courriel?: string | null;
   montantDevis?: number | null;
   montantFacture?: number | null;
+  referenceDevis?: string | null;
+  referenceFacture?: string | null;
+  dateAssignation?: string | null;
   dateIntervention?: string | null;
+  dateFinIntervention?: string | null;
+  observations?: string | null;
 }
 
-/** Données envoyées à l'API pour modifier un intervenant. */
-interface ModifierIntervenantTicketRequest {
-  nomArtisan: string;
-  specialite: string;
-  telephone: string;
-  courriel: string;
-  montantDevis: number | null;
-  montantFacture: number | null;
-  dateIntervention: string | null;
+interface PrestataireOption {
+  label: string;
+  value: string;
 }
 
 @Component({
@@ -101,40 +105,43 @@ interface ModifierIntervenantTicketRequest {
 })
 export class Tickets implements OnInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
+  private readonly biensService = inject(BiensService);
   private readonly ticketsService = inject(TicketsService);
   private readonly unitesService = inject(UnitesLocativesService);
   private readonly messages = inject(MessageService);
   private readonly confirmation = inject(ConfirmationService);
+  private readonly prestatairesService =   inject(PrestatairesService);
 
   readonly StatutIncident = StatutIncident;
   readonly PrioriteIncident = PrioriteIncident;
-  loadingLocataires = false;
+
   readonly nombreMaxPhotos = 20;
   readonly tailleMaxPhoto = 10 * 1024 * 1024;
   readonly dateMaximale = this.dateLocaleISO();
 
+  prestatairesOptions: PrestataireOption[] = [];
+  loadingPrestataires = false;
+
   tickets: TicketIncidentDto[] = [];
   ticketsAffiches: TicketIncidentDto[] = [];
+
+  biens: BienDto[] = [];
+  biensOptions: Option<string>[] = [];
+
   unites: UniteLocativeDto[] = [];
   locataires: LocataireOption[] = [];
 
-  /** Photos déjà enregistrées sur le ticket. */
   photosExistantes: TicketPhotoDto[] = [];
-
-  /** Nouveaux fichiers du formulaire de création/modification. */
   photos: File[] = [];
-
-  /** Prévisualisations des nouveaux fichiers du formulaire. */
   apercusPhotos: string[] = [];
 
-  /** Nouveaux fichiers ajoutés depuis la fenêtre de détail. */
   photosSupplementaires: File[] = [];
-
-  /** Prévisualisations des photos ajoutées depuis le détail. */
   apercusPhotosSupplementaires: string[] = [];
 
   loading = false;
+  loadingBiens = false;
   loadingUnites = false;
+  loadingLocataires = false;
   loadingDetail = false;
   saving = false;
 
@@ -143,10 +150,8 @@ export class Tickets implements OnInit, OnDestroy {
   modalIntervenantVisible = false;
   modeEditionIntervenant = false;
 
-  /** Identifiant de l'intervenant en cours de modification. */
   intervenantIdEdition: string | null = null;
 
-  /** Popup de saisie du résultat de réparation avant résolution. */
   modalResolutionVisible = false;
   resultatReparationSaisi = '';
   ticketEnResolution: TicketIncidentDetailDto | null = null;
@@ -164,6 +169,9 @@ export class Tickets implements OnInit, OnDestroy {
 
   typePhotoSupplementaire: TypePhotoIncident =
     TypePhotoIncident.AvantIntervention;
+
+  private requeteLocatairesUnite = 0;
+  private requeteUnitesBien = 0;
 
   readonly categoriesOptions: Option<CategorieIncident>[] = [
     { label: 'Plomberie', value: CategorieIncident.Plomberie },
@@ -210,7 +218,8 @@ export class Tickets implements OnInit, OnDestroy {
 
   formulaire: FormGroup = this.fb.group({
     reference: ['', [Validators.required, Validators.maxLength(50)]],
-    uniteLocativeId: ['', Validators.required],
+    bienImmobilierId: ['', Validators.required],
+    uniteLocativeId: [''],
     locataireId: [''],
     categorie: [CategorieIncident.Autre, Validators.required],
     description: ['', [Validators.required, Validators.maxLength(4000)]],
@@ -222,60 +231,380 @@ export class Tickets implements OnInit, OnDestroy {
     typePhoto: [TypePhotoIncident.AvantIntervention]
   });
 
-  formulaireIntervenant: FormGroup = this.fb.group({
-    nomArtisan: ['', [Validators.required, Validators.maxLength(150)]],
-    specialite: ['', [Validators.required, Validators.maxLength(150)]],
-    telephone: ['', [Validators.required, Validators.maxLength(40)]],
-    courriel: [
-      '',
-      [Validators.required, Validators.email, Validators.maxLength(254)]
-    ],
+formulaireIntervenant: FormGroup = this.fb.group(
+  {
+    prestataireId: ['', Validators.required],
+
     montantDevis: [null],
+    referenceDevis: ['', Validators.maxLength(100)],
+
     montantFacture: [null],
-    dateIntervention: ['']
-  });
+    referenceFacture: ['', Validators.maxLength(100)],
 
-  ngOnInit(): void {
-    this.chargerUnites();
-    this.chargerTickets();
+    dateAssignation: [''],
+    dateIntervention: [''],
+    dateFinIntervention: [''],
+
+    observations: ['', Validators.maxLength(2000)]
+  },
+  {
+    validators: [
+      (group) => {
+        const debut = group.get('dateIntervention')?.value;
+        const fin = group.get('dateFinIntervention')?.value;
+
+        if (debut && fin && debut > fin) {
+          return { datesInterventionInvalides: true };
+        }
+
+        return null;
+      }
+    ]
   }
+);
 
-  /**
-   * Libère les URL temporaires créées pour les prévisualisations.
-   */
+ngOnInit(): void {
+  this.chargerBiens();
+  this.chargerTickets();
+  this.chargerPrestataires();
+}
+
   ngOnDestroy(): void {
     this.libererApercus(this.apercusPhotos);
     this.libererApercus(this.apercusPhotosSupplementaires);
   }
 
   get unitesOptions(): Option<string>[] {
-    return this.unites.map(unite => {
-      const u = unite as any;
-      const reference = u.reference ?? u.referenceUnite ?? '';
-      const bien = u.bienNom ?? u.nomBienImmobilier ?? '';
-      const label = [reference, bien].filter(Boolean).join(' — ');
-
-      return {
-        label: label || 'Unité locative',
-        value: u.id
-      };
-    });
+    return this.unites.map(unite => ({
+      label: [
+        unite.reference,
+        this.libelleTypeUnite(unite.type),
+        unite.superficie != null ? `${unite.superficie} m²` : null
+      ].filter(Boolean).join(' - '),
+      value: unite.id
+    }));
   }
-
   get locatairesOptions(): LocataireOption[] {
     return this.locataires;
   }
 
-  /** Nombre de photos déjà enregistrées sur le ticket sélectionné. */
   get nombrePhotosExistantes(): number {
     return this.ticketSelectionne?.photos?.length ?? 0;
   }
 
-  /** Nombre total de photos existantes et nouvelles dans le formulaire. */
   get nombreTotalPhotosFormulaire(): number {
     return (this.modeEdition ? this.photosExistantes.length : 0)
       + this.photos.length;
   }
+
+  // ============================================================
+  // Biens immobiliers et unités locatives
+  // ============================================================
+
+  chargerBiens(): void {
+    this.loadingBiens = true;
+
+    this.biensService.getBiens()
+      .pipe(finalize(() => this.loadingBiens = false))
+      .subscribe({
+        next: (resultat: BienDto[]) => {
+          this.biens = resultat ?? [];
+
+          this.biensOptions = this.biens.map(bien => {
+            const b = bien as BienDto & {
+              id: string;
+              reference?: string;
+              nom?: string;
+              ville?: string;
+              quartier?: string;
+            };
+
+            return {
+              label: [
+                b.reference,
+                b.nom,
+                b.ville,
+                b.quartier
+              ]
+                .filter(valeur =>
+                  valeur != null && String(valeur).trim() !== ''
+                )
+                .join(' — ') || 'Bien immobilier',
+              value: b.id
+            };
+          });
+        },
+        error: (erreur: HttpErrorResponse) => {
+          this.afficherErreur(
+            erreur,
+            'Impossible de charger les biens immobiliers.'
+          );
+        }
+      });
+  }
+
+  champIntervenantInvalide(nom: string): boolean {
+  const controle = this.formulaireIntervenant.get(nom);
+
+  return !!controle
+    && controle.invalid
+    && (controle.touched || controle.dirty);
+}
+
+private dateIntervenantPourInput(
+  valeur: string | Date | null | undefined
+): string {
+  if (!valeur) {
+    return '';
+  }
+
+  if (typeof valeur === 'string') {
+    return valeur.length >= 10
+      ? valeur.substring(0, 10)
+      : valeur;
+  }
+
+  return this.dateLocaleISO(valeur);
+}
+
+private chargerPrestataires(): void {
+  this.loadingPrestataires = true;
+
+  this.prestatairesService
+    .getPrestataires(undefined, undefined, true)
+    .pipe(
+      finalize(() => {
+        this.loadingPrestataires = false;
+      })
+    )
+    .subscribe({
+      next: (prestataires: PrestataireDto[]) => {
+        this.prestatairesOptions = (prestataires ?? []).map(p => {
+          const nomPersonne = [
+            p.prenom?.trim(),
+            p.nom?.trim()
+          ]
+            .filter(Boolean)
+            .join(' ');
+
+          const nom = p.nomEntreprise?.trim()
+            || nomPersonne
+            || p.nom?.trim()
+            || 'Prestataire sans nom';
+
+          return {
+            label: `${nom} — ${p.specialite || 'Spécialité non précisée'}`
+              + (p.telephone ? ` (${p.telephone})` : ''),
+            value: p.id
+          };
+        });
+      },
+      error: (erreur: HttpErrorResponse) => {
+        this.prestatairesOptions = [];
+
+        this.afficherErreur(
+          erreur,
+          'Impossible de charger les prestataires.'
+        );
+      }
+    });
+}
+
+
+  /**
+   * Appelée lorsque l'utilisateur sélectionne ou change de bien.
+   * Réinitialise les sélections dépendantes et charge les unités du bien.
+   */
+
+  
+  changerBien(bienId: string | null): void {
+    const id = bienId ? String(bienId) : '';
+
+    this.formulaire.patchValue({
+      bienImmobilierId: id,
+      uniteLocativeId: '',
+      locataireId: ''
+    });
+
+    this.unites = [];
+    this.locataires = [];
+
+    // Invalide les éventuelles requêtes de locataires précédentes.
+    this.requeteLocatairesUnite++;
+
+    if (!id) {
+      this.loadingUnites = false;
+      this.loadingLocataires = false;
+      this.requeteUnitesBien++;
+      return;
+    }
+
+    this.chargerUnitesDuBien(id);
+  }
+
+  /**
+   * Charge les unités d'un bien.
+   * uniteIdAConserver est utilisé lors de la modification d'un ticket.
+   */
+  private chargerUnitesDuBien(
+    bienId: string,
+    uniteIdAConserver?: string
+  ): void {
+    const numeroRequete = ++this.requeteUnitesBien;
+
+    this.loadingUnites = true;
+
+    this.unitesService.getUnitesParBien(bienId)
+      .pipe(
+        finalize(() => {
+          if (numeroRequete === this.requeteUnitesBien) {
+            this.loadingUnites = false;
+          }
+        })
+      )
+      .subscribe({
+        next: (resultat: UniteLocativeDto[]) => {
+          if (numeroRequete !== this.requeteUnitesBien) {
+            return;
+          }
+
+          this.unites = resultat ?? [];
+
+          if (uniteIdAConserver) {
+            const uniteExiste = this.unites.some(
+              unite => unite.id.toLowerCase() ===
+                uniteIdAConserver.toLowerCase()
+            );
+
+            this.formulaire.patchValue({
+              uniteLocativeId: uniteExiste ? uniteIdAConserver : ''
+            });
+            
+          }
+        },
+        error: (erreur: HttpErrorResponse) => {
+          if (numeroRequete !== this.requeteUnitesBien) {
+            return;
+          }
+
+          this.unites = [];
+          this.formulaire.patchValue({ uniteLocativeId: '' });
+
+          this.afficherErreur(
+            erreur,
+            'Impossible de charger les unités de ce bien.'
+          );
+        }
+      });
+  }
+
+  chargerUnites(): void {
+    const bienId = String(
+      this.formulaire.get('bienImmobilierId')?.value ?? ''
+    );
+
+    if (bienId) {
+      this.chargerUnitesDuBien(bienId);
+    } else {
+      this.unites = [];
+    }
+  }
+
+  get uniteLocativeSelectionnee(): string {
+    return String(
+      this.formulaire.get('uniteLocativeId')?.value ?? ''
+    );
+  }
+
+  /**
+   * Charge les locataires d'une unité.
+   * Le deuxième paramètre permet de conserver le locataire en édition.
+   */
+  chargerLocatairesParUnite(
+    uniteLocativeId: string,
+    locataireIdAConserver?: string
+  ): void {
+    const numeroRequete = ++this.requeteLocatairesUnite;
+
+    this.locataires = [];
+
+    if (!uniteLocativeId) {
+      this.formulaire.patchValue({ locataireId: '' });
+      this.loadingLocataires = false;
+      return;
+    }
+
+    if (!locataireIdAConserver) {
+      this.formulaire.patchValue({ locataireId: '' });
+    }
+
+    this.loadingLocataires = true;
+
+    this.ticketsService
+      .obtenirLocatairesParUnite(uniteLocativeId)
+      .pipe(
+        finalize(() => {
+          if (numeroRequete === this.requeteLocatairesUnite) {
+            this.loadingLocataires = false;
+          }
+        })
+      )
+      .subscribe({
+        next: (resultat: any[]) => {
+          if (numeroRequete !== this.requeteLocatairesUnite) {
+            return;
+          }
+
+          this.locataires = (resultat ?? []).map(locataire => {
+            const nomComplet =
+              `${locataire.prenom ?? locataire.prenomLocataire ?? ''} ${
+                locataire.nom ?? locataire.nomLocataire ?? ''
+              }`.trim();
+
+            return {
+              label:
+                locataire.nomComplet ||
+                locataire.nomAffichage ||
+                nomComplet ||
+                locataire.email ||
+                'Locataire',
+              value: String(locataire.id)
+            };
+          });
+
+          if (locataireIdAConserver) {
+            const locataireExiste = this.locataires.some(
+              locataire =>
+                locataire.value.toLowerCase() ===
+                locataireIdAConserver.toLowerCase()
+            );
+
+            this.formulaire.patchValue({
+              locataireId: locataireExiste
+                ? locataireIdAConserver
+                : ''
+            });
+          }
+        },
+        error: (erreur: HttpErrorResponse) => {
+          if (numeroRequete !== this.requeteLocatairesUnite) {
+            return;
+          }
+
+          this.locataires = [];
+          this.formulaire.patchValue({ locataireId: '' });
+
+          this.afficherErreur(
+            erreur,
+            'Impossible de charger les locataires.'
+          );
+        }
+      });
+  }
+
+  // ============================================================
+  // Liste et filtres
+  // ============================================================
 
   chargerTickets(): void {
     this.loading = true;
@@ -292,102 +621,6 @@ export class Tickets implements OnInit, OnDestroy {
         }
       });
   }
-
-  chargerUnites(): void {
-    this.loadingUnites = true;
-
-    this.unitesService.getUnites()
-      .pipe(finalize(() => this.loadingUnites = false))
-      .subscribe({
-        next: (resultat: UniteLocativeDto[]) => {
-          this.unites = resultat ?? [];
-        },
-        error: (erreur: HttpErrorResponse) => {
-          this.afficherErreur(
-            erreur,
-            'Impossible de charger les unités locatives.'
-          );
-        }
-      });
-  }
-
-  /**
-   * Charge les locataires associés à l'unité.
-   * Le deuxième paramètre permet de conserver le locataire du ticket en édition.
-   */
-
-  
-  
-private requeteLocatairesUnite = 0;
-
-chargerLocatairesParUnite(
-  uniteLocativeId: string,
-  locataireIdAConserver?: string
-): void {
-  this.locataires = [];
-
-  if (!uniteLocativeId) {
-    this.formulaire.patchValue({ locataireId: '' });
-    this.loadingLocataires = false;
-    return;
-  }
-
-  if (!locataireIdAConserver) {
-    this.formulaire.patchValue({ locataireId: '' });
-  }
-
-  this.loadingLocataires = true;
-
-  this.ticketsService
-    .obtenirLocatairesParUnite(uniteLocativeId)
-    .pipe(
-      finalize(() => {
-        this.loadingLocataires = false;
-      })
-    )
-    .subscribe({
-      next: (resultat: any[]) => {
-        this.locataires = (resultat ?? []).map(locataire => {
-          const nomComplet =
-            `${locataire.prenom ?? locataire.prenomLocataire ?? ''} ${
-              locataire.nom ?? locataire.nomLocataire ?? ''
-            }`.trim();
-
-          return {
-            label:
-              locataire.nomComplet ||
-              locataire.nomAffichage ||
-              nomComplet ||
-              locataire.email ||
-              'Locataire',
-            value: String(locataire.id)
-          };
-        });
-
-        if (locataireIdAConserver) {
-          const locataireExiste = this.locataires.some(
-            l => l.value.toLowerCase() ===
-              locataireIdAConserver.toLowerCase()
-          );
-
-          this.formulaire.patchValue({
-            locataireId: locataireExiste
-              ? locataireIdAConserver
-              : ''
-          });
-        }
-      },
-      error: (erreur: HttpErrorResponse) => {
-        this.locataires = [];
-        this.formulaire.patchValue({ locataireId: '' });
-
-        this.afficherErreur(
-          erreur,
-          'Impossible de charger les locataires.'
-        );
-      }
-    });
-}
 
   appliquerFiltresLocaux(): void {
     const recherche = this.recherche.trim().toLocaleLowerCase();
@@ -406,13 +639,20 @@ chargerLocatairesParUnite(
         t.prenomLocataire,
         t.description,
         this.libelleCategorie(t.categorie)
-      ].filter(Boolean).join(' ').toLocaleLowerCase();
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase();
 
-      const correspondRecherche = !recherche || texte.includes(recherche);
+      const correspondRecherche =
+        !recherche || texte.includes(recherche);
+
       const correspondStatut =
         !this.filtreStatut || t.statut === this.filtreStatut;
+
       const correspondPriorite =
         !this.filtrePriorite || t.priorite === this.filtrePriorite;
+
       const correspondCategorie =
         !this.filtreCategorie || t.categorie === this.filtreCategorie;
 
@@ -439,28 +679,35 @@ chargerLocatairesParUnite(
     this.appliquerFiltresLocaux();
   }
 
-  ouvrirCreation(): void {
-    this.modeEdition = false;
-    this.ticketIdEdition = null;
-    this.nettoyerPhotos();
+  // ============================================================
+  // Création et modification d'un ticket
+  // ============================================================
 
-    this.formulaire.reset({
-      reference: '',
-      uniteLocativeId: '',
-      locataireId: '',
-      categorie: CategorieIncident.Autre,
-      description: '',
-      priorite: PrioriteIncident.Moyenne,
-      dateincident: this.dateLocaleISO(),
-      coutEstime: null,
-      imputableA: ImputabiliteIncident.Indeterminee,
-      validationDevisRequise: false,
-      typePhoto: TypePhotoIncident.AvantIntervention
-    });
+ouvrirCreation(): void {
+  this.modeEdition = false;
+  this.ticketIdEdition = null;
 
-    this.locataires = [];
-    this.modalCreationVisible = true;
-  }
+  this.formulaire.reset({
+    reference: '',
+    bienImmobilierId: '',
+    uniteLocativeId: '',
+    locataireId: '',
+    categorie: CategorieIncident.Autre,
+    description: '',
+    priorite: PrioriteIncident.Moyenne,
+    dateincident: this.dateLocaleISO(),
+    coutEstime: null,
+    imputableA: ImputabiliteIncident.Indeterminee,
+    validationDevisRequise: false,
+    typePhoto: TypePhotoIncident.AvantIntervention
+  });
+
+  this.locataires = [];
+  this.unites = [];
+
+  this.nettoyerPhotos();
+  this.modalCreationVisible = true;
+}
 
   supprimerTicket(
     ticket: TicketIncidentDto | TicketIncidentDetailDto
@@ -502,97 +749,108 @@ chargerLocatairesParUnite(
     });
   }
 
+  ouvrirModification(
+    ticket: TicketIncidentDto | TicketIncidentDetailDto
+  ): void {
+    const t = ticket as any;
 
-ouvrirModification(
-  ticket: TicketIncidentDto | TicketIncidentDetailDto
-): void {
-  const t = ticket as any;
+    this.modeEdition = true;
+    this.ticketIdEdition = t.id;
 
-  this.modeEdition = true;
-  this.ticketIdEdition = t.id;
+    this.nettoyerPhotos();
+    this.photosExistantes = [];
+    this.ticketSelectionne = null;
+    this.modalDetailVisible = false;
+    this.modalCreationVisible = false;
+    this.loadingDetail = true;
 
-  this.nettoyerPhotos();
-  this.ticketSelectionne = null;
-  this.modalDetailVisible = false;
-  this.modalCreationVisible = false;
-  this.loadingDetail = true;
+    this.ticketsService.obtenirParId(t.id)
+      .pipe(finalize(() => this.loadingDetail = false))
+      .subscribe({
+        next: (detail: TicketIncidentDetailDto) => {
+          const d = detail as any;
 
-  this.ticketsService.obtenirParId(t.id)
-    .pipe(
-      finalize(() => {
-        this.loadingDetail = false;
-      })
-    )
-    .subscribe({
-      next: (detail: TicketIncidentDetailDto) => {
-        const d = detail as any;
+          const photosBrutes = d.photos ?? d.Photos ?? [];
+          const photosChargees: TicketPhotoDto[] =
+            Array.isArray(photosBrutes) ? photosBrutes : [];
 
-        // Récupérer les photos renvoyées par l'API.
-        const photosBrutes = d.photos ?? d.Photos ?? [];
+          this.photosExistantes = [...photosChargees];
 
-        const photosChargees: TicketPhotoDto[] =
-          Array.isArray(photosBrutes)
-            ? photosBrutes
-            : [];
+          this.ticketSelectionne = {
+            ...detail,
+            photos: photosChargees
+          } as TicketIncidentDetailDto;
 
-        // Conserver les photos existantes.
-        this.photosExistantes = photosChargees;
+          const bienId = String(
+            d.bienImmobilierId ??
+            d.BienImmobilierId ??
+            d.bienImmobilier?.id ??
+            d.BienImmobilier?.Id ??
+            ''
+          );
 
-        this.ticketSelectionne = {
-          ...detail,
-          photos: photosChargees
-        } as TicketIncidentDetailDto;
+          const uniteId = String(
+            d.uniteLocativeId ??
+            d.UniteLocativeId ??
+            ''
+          );
 
+          const locataireId = String(
+            d.locataireId ??
+            d.LocataireId ??
+            ''
+          );
 
-        // Remplir le formulaire.
-        this.formulaire.reset({
-          reference: d.reference ?? d.Reference ?? t.reference ?? '',
-          uniteLocativeId:
-            d.uniteLocativeId ?? d.UniteLocativeId ?? '',
-          locataireId:
-            d.locataireId ?? d.LocataireId ?? '',
-          categorie:
-            d.categorie ?? d.Categorie ?? CategorieIncident.Autre,
-          description:
-            d.description ?? d.Description ?? '',
-          priorite:
-            d.priorite ?? d.Priorite ?? PrioriteIncident.Moyenne,
-          dateincident: this.formaterDatePourInput(
-            d.dateincident ?? d.dateIncident ?? d.DateIncident
-          ),
-          coutEstime:
-            d.coutEstime ?? d.CoutEstime ?? null,
-          imputableA:
-            d.imputableA
-            ?? d.ImputableA
-            ?? ImputabiliteIncident.Indeterminee,
-          validationDevisRequise:
-            d.validationDevisRequise
-            ?? d.ValidationDevisRequise
-            ?? false,
-          typePhoto:
-            d.typePhoto
-            ?? d.TypePhoto
-            ?? TypePhotoIncident.AvantIntervention
-        });
+          this.formulaire.reset({
+            reference: d.reference ?? d.Reference ?? t.reference ?? '',
+            bienImmobilierId: bienId,
+            uniteLocativeId: uniteId,
+            locataireId,
+            categorie:
+              d.categorie ?? d.Categorie ?? CategorieIncident.Autre,
+            description:
+              d.description ?? d.Description ?? '',
+            priorite:
+              d.priorite ?? d.Priorite ?? PrioriteIncident.Moyenne,
+            dateincident: this.formaterDatePourInput(
+              d.dateincident ?? d.dateIncident ?? d.DateIncident
+            ),
+            coutEstime: d.coutEstime ?? d.CoutEstime ?? null,
+            imputableA:
+              d.imputableA ??
+              d.ImputableA ??
+              ImputabiliteIncident.Indeterminee,
+            validationDevisRequise:
+              d.validationDevisRequise ??
+              d.ValidationDevisRequise ??
+              false,
+            typePhoto:
+              d.typePhoto ??
+              d.TypePhoto ??
+              TypePhotoIncident.AvantIntervention
+          });
 
-        this.chargerLocatairesParUnite(
-          d.uniteLocativeId ?? d.UniteLocativeId ?? '',
-          d.locataireId ?? d.LocataireId ?? ''
-        );
+          this.unites = [];
+          this.locataires = [];
 
-        // Ouvrir le formulaire une fois les données chargées.
-        this.modalCreationVisible = true;
-      },
+          if (bienId) {
+            this.chargerUnitesDuBien(bienId, uniteId);
+          }
 
-      error: (erreur: HttpErrorResponse) => {
-        this.afficherErreur(
-          erreur,
-          'Impossible de charger le ticket à modifier.'
-        );
-      }
-    });
-}
+          if (uniteId) {
+            this.chargerLocatairesParUnite(uniteId, locataireId);
+          }
+
+          this.modalCreationVisible = true;
+        },
+        error: (erreur: HttpErrorResponse) => {
+          this.afficherErreur(
+            erreur,
+            'Impossible de charger le ticket à modifier.'
+          );
+        }
+      });
+  }
 
   fermerCreation(): void {
     this.modalCreationVisible = false;
@@ -615,6 +873,23 @@ ouvrirModification(
 
     const v = this.formulaire.getRawValue();
 
+    const bienImmobilierId = String(
+      v.bienImmobilierId ?? ''
+    ).trim();
+
+    if (!bienImmobilierId) {
+      this.formulaire.get('bienImmobilierId')?.setErrors({
+        required: true
+      });
+
+      this.messages.add({
+        severity: 'warn',
+        summary: 'Bien immobilier obligatoire',
+        detail: 'Sélectionne le bien immobilier concerné par l’incident.'
+      });
+      return;
+    }
+
     if (!this.dateValide(v.dateincident)) {
       this.formulaire.get('dateincident')?.setErrors({
         dateInvalide: true
@@ -629,11 +904,15 @@ ouvrirModification(
       return;
     }
 
-    if (v.coutEstime !== null && Number(v.coutEstime) < 0) {
+    if (
+      v.coutEstime !== null &&
+      v.coutEstime !== '' &&
+      (!Number.isFinite(Number(v.coutEstime)) || Number(v.coutEstime) < 0)
+    ) {
       this.messages.add({
         severity: 'error',
         summary: 'Coût invalide',
-        detail: 'Le coût estimé ne peut pas être négatif.'
+        detail: 'Le coût estimé doit être un montant positif ou nul.'
       });
       return;
     }
@@ -660,105 +939,107 @@ ouvrirModification(
 
     const reference = String(v.reference ?? '').trim();
 
+    // ----------------------------------------------------------
+    // Modification d'un ticket existant
+    // ----------------------------------------------------------
+
     if (this.modeEdition && this.ticketIdEdition) {
       const id = this.ticketIdEdition;
       const nouvellesPhotos = [...this.photos];
       const typePhoto = v.typePhoto as TypePhotoIncident;
 
-      const demande = {
-        reference,
-        uniteLocativeId: v.uniteLocativeId,
-        locataireId: v.locataireId || null,
+      const demande: ModifierTicketIncidentRequest = {
         categorie: v.categorie,
         description: String(v.description ?? '').trim(),
+        descriptionDegats:
+          String(v.descriptionDegats ?? '').trim() || null,
         priorite: v.priorite,
-        dateincident: v.dateincident,
         coutEstime:
           v.coutEstime === null || v.coutEstime === ''
             ? null
             : Number(v.coutEstime),
         imputableA: v.imputableA,
-        validationDevisRequise: !!v.validationDevisRequise,
-        typePhoto
-      } as ModifierTicketIncidentRequest;
+        validationDevisRequise: !!v.validationDevisRequise
+      };
 
-      this.ticketsService.modifier(id, demande)
-        .subscribe({
-          next: () => {
-            // Si aucune nouvelle photo n'est sélectionnée,
-            // la modification du ticket suffit.
-            if (!nouvellesPhotos.length) {
-              this.saving = false;
-
-              this.messages.add({
-                severity: 'success',
-                summary: 'Ticket modifié',
-                detail: 'Les modifications ont été enregistrées.'
-              });
-
-              this.modalCreationVisible = false;
-              this.nettoyerPhotos();
-              this.chargerTickets();
-              this.actualiserTicketSelectionne(id);
-              return;
-            }
-
-            // L'API utilise un endpoint distinct pour ajouter les photos.
-            this.ticketsService.ajouterPhotos(
-              id,
-              nouvellesPhotos,
-              typePhoto
-            )
-              .pipe(finalize(() => this.saving = false))
-              .subscribe({
-                next: () => {
-                  this.messages.add({
-                    severity: 'success',
-                    summary: 'Ticket modifié',
-                    detail:
-                      'Le ticket et les nouvelles photos ont été enregistrés.'
-                  });
-
-                  this.modalCreationVisible = false;
-                  this.nettoyerPhotos();
-                  this.chargerTickets();
-                  this.actualiserTicketSelectionne(id);
-                },
-                error: (erreur: HttpErrorResponse) => {
-                  this.messages.add({
-                    severity: 'warn',
-                    summary: 'Ticket modifié, photos non envoyées',
-                    detail:
-                      'Le ticket a été modifié, mais l’envoi des nouvelles photos a échoué.'
-                  });
-
-                  this.afficherErreur(
-                    erreur,
-                    'Impossible d’ajouter les nouvelles photos.'
-                  );
-
-                  this.chargerTickets();
-                  this.actualiserTicketSelectionne(id);
-                }
-              });
-          },
-          error: (erreur: HttpErrorResponse) => {
+      this.ticketsService.modifier(id, demande).subscribe({
+        next: () => {
+          if (!nouvellesPhotos.length) {
             this.saving = false;
-            this.afficherErreur(
-              erreur,
-              'Impossible de modifier le ticket.'
-            );
+
+            this.messages.add({
+              severity: 'success',
+              summary: 'Ticket modifié',
+              detail: 'Les modifications ont été enregistrées.'
+            });
+
+            this.modalCreationVisible = false;
+            this.nettoyerPhotos();
+            this.chargerTickets();
+            this.actualiserTicketSelectionne(id);
+            return;
           }
-        });
+
+          this.ticketsService
+            .ajouterPhotos(id, nouvellesPhotos, typePhoto)
+            .pipe(finalize(() => this.saving = false))
+            .subscribe({
+              next: () => {
+                this.messages.add({
+                  severity: 'success',
+                  summary: 'Ticket modifié',
+                  detail:
+                    'Le ticket et les nouvelles photos ont été enregistrés.'
+                });
+
+                this.modalCreationVisible = false;
+                this.nettoyerPhotos();
+                this.chargerTickets();
+                this.actualiserTicketSelectionne(id);
+              },
+              error: (erreur: HttpErrorResponse) => {
+                this.messages.add({
+                  severity: 'warn',
+                  summary: 'Ticket modifié, photos non envoyées',
+                  detail:
+                    'Le ticket a été modifié, mais l’envoi des nouvelles photos a échoué.'
+                });
+
+                this.afficherErreur(
+                  erreur,
+                  'Impossible d’ajouter les nouvelles photos.'
+                );
+
+                this.chargerTickets();
+                this.actualiserTicketSelectionne(id);
+              }
+            });
+        },
+        error: (erreur: HttpErrorResponse) => {
+          this.saving = false;
+          this.afficherErreur(
+            erreur,
+            'Impossible de modifier le ticket.'
+          );
+        }
+      });
 
       return;
     }
 
-    // Création du ticket : les photos sont envoyées avec le formulaire.
+    // ----------------------------------------------------------
+    // Création : BienImmobilierId est obligatoire côté API.
+    // ----------------------------------------------------------
+
     const formData = new FormData();
 
     formData.append('Reference', reference);
-    formData.append('UniteLocativeId', String(v.uniteLocativeId));
+    formData.append('BienImmobilierId', bienImmobilierId);
+
+    if (v.uniteLocativeId) {
+      formData.append('UniteLocativeId', String(v.uniteLocativeId));
+    }
+
     formData.append('Categorie', String(v.categorie));
     formData.append('Description', String(v.description ?? '').trim());
     formData.append('Priorite', String(v.priorite));
@@ -843,51 +1124,30 @@ ouvrirModification(
     input.value = '';
   }
 
-
-    // ============================================================
-  // SUPPRIMER UNE PHOTO EXISTANTE
-  // ============================================================
-
-  supprimerPhotoExistante(
-    index: number
-  ): void {
-
-    if (
-      index < 0 ||
-      index >= this.photosExistantes.length
-    ) {
-
+  supprimerPhotoExistante(index: number): void {
+    if (index < 0 || index >= this.photosExistantes.length) {
       return;
     }
 
-    this.photosExistantes.splice(
-      index,
-      1
-    );
+    this.photosExistantes.splice(index, 1);
   }
 
-supprimerPhoto(index: number): void {
-  const apercu = this.apercusPhotos[index];
+  supprimerPhoto(index: number): void {
+    const apercu = this.apercusPhotos[index];
 
-  if (apercu) {
-    URL.revokeObjectURL(apercu);
+    if (apercu?.startsWith('blob:')) {
+      URL.revokeObjectURL(apercu);
+    }
+
+    this.apercusPhotos.splice(index, 1);
+    this.photos.splice(index, 1);
   }
-
-  this.apercusPhotos.splice(index, 1);
-  this.photos.splice(index, 1);
-}
 
   nettoyerPhotos(): void {
     this.libererApercus(this.apercusPhotos);
-
     this.photos = [];
     this.apercusPhotos = [];
-    this.photosExistantes = [];
   }
-
-  // ============================================================
-  // Validation et libération des prévisualisations
-  // ============================================================
 
   validerListePhotos(
     fichiers: File[],
@@ -972,7 +1232,6 @@ supprimerPhoto(index: number): void {
       return;
     }
 
-    // La résolution nécessite une description détaillée dans un popup dédié.
     if (statut === StatutIncident.Resolu) {
       this.ticketEnResolution = ticket;
       this.resultatReparationSaisi =
@@ -983,7 +1242,8 @@ supprimerPhoto(index: number): void {
 
     this.confirmation.confirm({
       header: 'Confirmer le changement',
-      message: `Veux-tu changer le statut du ticket vers « ${this.libelleStatut(statut)} » ?`,
+      message:
+        `Veux-tu changer le statut du ticket vers « ${this.libelleStatut(statut)} » ?`,
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Confirmer',
       rejectLabel: 'Annuler',
@@ -1017,7 +1277,6 @@ supprimerPhoto(index: number): void {
     });
   }
 
-  /** Enregistre le résultat saisi dans le popup et passe le ticket à Résolu. */
   confirmerResolution(): void {
     const ticket = this.ticketEnResolution;
     const resultatReparation = this.resultatReparationSaisi.trim();
@@ -1067,7 +1326,6 @@ supprimerPhoto(index: number): void {
       });
   }
 
-  /** Ferme le popup sans modifier le statut du ticket. */
   annulerResolution(): void {
     if (this.saving) {
       return;
@@ -1164,224 +1422,283 @@ supprimerPhoto(index: number): void {
   // Intervenants
   // ============================================================
 
-  /** Ouvre le formulaire en mode ajout. */
-  ouvrirAjoutIntervenant(): void {
-    if (!this.ticketSelectionne || this.saving) {
-      return;
-    }
-
-    this.modeEditionIntervenant = false;
-    this.intervenantIdEdition = null;
-
-    this.formulaireIntervenant.reset({
-      nomArtisan: '',
-      specialite: '',
-      telephone: '',
-      courriel: '',
-      montantDevis: null,
-      montantFacture: null,
-      dateIntervention: ''
-    });
-
-    this.formulaireIntervenant.markAsPristine();
-    this.formulaireIntervenant.markAsUntouched();
-
-    this.modalIntervenantVisible = true;
+ouvrirAjoutIntervenant(): void {
+  if (!this.ticketSelectionne || this.saving) {
+    return;
   }
 
-  /** Ouvre le formulaire prérempli en mode modification. */
-  modifierIntervenant(intervenant: IntervenantTicket): void {
-    if (!this.ticketSelectionne || !intervenant || this.saving) {
-      return;
-    }
+  this.modeEditionIntervenant = false;
+  this.intervenantIdEdition = null;
 
-    this.modeEditionIntervenant = true;
-    this.intervenantIdEdition = intervenant.id;
+  this.formulaireIntervenant.reset({
+    prestataireId: '',
 
-    this.formulaireIntervenant.reset({
-      nomArtisan: intervenant.nomArtisan ?? '',
-      specialite: intervenant.specialite ?? '',
-      telephone: intervenant.telephone ?? '',
-      courriel: intervenant.courriel ?? '',
-      montantDevis: intervenant.montantDevis ?? null,
-      montantFacture: intervenant.montantFacture ?? null,
-      dateIntervention: intervenant.dateIntervention
-        ? String(intervenant.dateIntervention).substring(0, 10)
-        : ''
-    });
+    montantDevis: null,
+    referenceDevis: '',
 
-    this.formulaireIntervenant.markAsPristine();
-    this.formulaireIntervenant.markAsUntouched();
+    montantFacture: null,
+    referenceFacture: '',
 
-    this.modalIntervenantVisible = true;
+    dateAssignation: this.dateLocaleISO(),
+    dateIntervention: '',
+    dateFinIntervention: '',
+
+    observations: ''
+  });
+
+  this.formulaireIntervenant.markAsPristine();
+  this.formulaireIntervenant.markAsUntouched();
+
+  if (!this.prestatairesOptions.length && !this.loadingPrestataires) {
+    this.chargerPrestataires();
   }
 
-  /** Ajoute ou modifie un intervenant selon le mode du formulaire. */
-  enregistrerIntervenant(): void {
-    this.formulaireIntervenant.markAllAsTouched();
+  this.modalIntervenantVisible = true;
+}
 
-    if (
-      this.formulaireIntervenant.invalid ||
-      !this.ticketSelectionne ||
-      this.saving
-    ) {
-      return;
-    }
+  fermerFormulaireIntervenant(): void {
+  if (this.saving) {
+    return;
+  }
 
-    const v = this.formulaireIntervenant.getRawValue();
+  this.modalIntervenantVisible = false;
+  this.formulaireIntervenant.markAsPristine();
+  this.formulaireIntervenant.markAsUntouched();
+}
 
-    const montantDevis =
-      v.montantDevis === null || v.montantDevis === ''
-        ? null
-        : Number(v.montantDevis);
+modifierIntervenant(intervenant: IntervenantTicket): void {
+  if (!this.ticketSelectionne || !intervenant || this.saving) {
+    return;
+  }
 
-    const montantFacture =
-      v.montantFacture === null || v.montantFacture === ''
-        ? null
-        : Number(v.montantFacture);
+  this.modeEditionIntervenant = true;
+  this.intervenantIdEdition = intervenant.id;
 
-    if (
-      (montantDevis !== null &&
-        (!Number.isFinite(montantDevis) || montantDevis < 0)) ||
-      (montantFacture !== null &&
-        (!Number.isFinite(montantFacture) || montantFacture < 0))
-    ) {
+  this.formulaireIntervenant.reset({
+    prestataireId: intervenant.prestataireId ?? '',
+
+    montantDevis: intervenant.montantDevis ?? null,
+    referenceDevis: intervenant.referenceDevis ?? '',
+
+    montantFacture: intervenant.montantFacture ?? null,
+    referenceFacture: intervenant.referenceFacture ?? '',
+
+    dateAssignation: this.dateIntervenantPourInput(
+      intervenant.dateAssignation
+    ),
+
+    dateIntervention: this.dateIntervenantPourInput(
+      intervenant.dateIntervention
+    ),
+
+    dateFinIntervention: this.dateIntervenantPourInput(
+      intervenant.dateFinIntervention
+    ),
+
+    observations: intervenant.observations ?? ''
+  });
+
+  this.formulaireIntervenant.markAsPristine();
+  this.formulaireIntervenant.markAsUntouched();
+
+  if (!this.prestatairesOptions.length && !this.loadingPrestataires) {
+    this.chargerPrestataires();
+  }
+
+  this.modalIntervenantVisible = true;
+}
+
+
+
+enregistrerIntervenant(): void {
+  this.formulaireIntervenant.markAllAsTouched();
+
+  if (
+    this.formulaireIntervenant.invalid ||
+    !this.ticketSelectionne ||
+    this.saving
+  ) {
+    if (this.formulaireIntervenant.hasError('datesInterventionInvalides')) {
       this.messages.add({
         severity: 'warn',
-        summary: 'Montant invalide',
+        summary: 'Dates incohérentes',
         detail:
-          'Les montants du devis et de la facture doivent être positifs ou nuls.'
+          'La date de fin ne peut pas précéder la date de début de l’intervention.'
       });
-      return;
     }
 
-    const demande: ModifierIntervenantTicketRequest = {
-      nomArtisan: String(v.nomArtisan ?? '').trim(),
-      specialite: String(v.specialite ?? '').trim(),
-      telephone: String(v.telephone ?? '').trim(),
-      courriel: String(v.courriel ?? '').trim(),
-      montantDevis,
-      montantFacture,
-      dateIntervention: v.dateIntervention || null
-    };
+    return;
+  }
 
-    if (
-      !demande.nomArtisan ||
-      !demande.specialite ||
-      !demande.telephone ||
-      !demande.courriel
-    ) {
-      this.messages.add({
-        severity: 'warn',
-        summary: 'Champs obligatoires',
-        detail:
-          'Le nom, la spécialité, le téléphone et le courriel sont obligatoires.'
-      });
-      return;
+  const v = this.formulaireIntervenant.getRawValue();
+
+  const prestataireId = String(v.prestataireId ?? '').trim();
+
+  if (!prestataireId) {
+    this.messages.add({
+      severity: 'warn',
+      summary: 'Prestataire obligatoire',
+      detail: 'Sélectionne un prestataire dans la liste.'
+    });
+    return;
+  }
+
+  const convertirMontant = (
+    valeur: unknown
+  ): number | null => {
+    if (valeur === null || valeur === undefined || valeur === '') {
+      return null;
     }
 
-    const ticketId = this.ticketSelectionne.id;
-    const intervenantId = this.intervenantIdEdition;
-    const estModification = this.modeEditionIntervenant;
+    const montant = Number(valeur);
 
-    if (estModification && !intervenantId) {
-      this.messages.add({
-        severity: 'error',
-        summary: 'Modification impossible',
-        detail: 'L’identifiant de l’intervenant est manquant.'
-      });
-      return;
-    }
+    return Number.isFinite(montant) ? montant : NaN;
+  };
 
-    this.saving = true;
+  const montantDevis = convertirMontant(v.montantDevis);
+  const montantFacture = convertirMontant(v.montantFacture);
 
-    const operation = estModification
-      ? this.ticketsService.modifierIntervenant(
-          ticketId,
-          intervenantId!,
-          demande
-        )
-      : this.ticketsService.ajouterIntervenant(
-          ticketId,
-          demande as CreerTicketIntervenantRequest
+  if (
+    (montantDevis !== null &&
+      (!Number.isFinite(montantDevis) || montantDevis < 0)) ||
+    (montantFacture !== null &&
+      (!Number.isFinite(montantFacture) || montantFacture < 0))
+  ) {
+    this.messages.add({
+      severity: 'warn',
+      summary: 'Montant invalide',
+      detail:
+        'Les montants du devis et de la facture doivent être positifs ou nuls.'
+    });
+    return;
+  }
+
+  const demande: ModifierTicketIntervenantRequest = {
+    prestataireId,
+
+    montantDevis,
+    referenceDevis: String(v.referenceDevis ?? '').trim() || null,
+
+    montantFacture,
+    referenceFacture: String(v.referenceFacture ?? '').trim() || null,
+
+    dateAssignation: v.dateAssignation || null,
+    dateIntervention: v.dateIntervention || null,
+    dateFinIntervention: v.dateFinIntervention || null,
+
+    observations: String(v.observations ?? '').trim() || null
+  };
+
+  const ticketId = this.ticketSelectionne.id;
+  const intervenantId = this.intervenantIdEdition;
+  const estModification = this.modeEditionIntervenant;
+
+  if (estModification && !intervenantId) {
+    this.messages.add({
+      severity: 'error',
+      summary: 'Modification impossible',
+      detail: 'L’identifiant de l’intervenant est manquant.'
+    });
+    return;
+  }
+
+  this.saving = true;
+
+  const operation = estModification
+    ? this.ticketsService.modifierIntervenant(
+        ticketId,
+        intervenantId!,
+        demande
+      )
+    : this.ticketsService.ajouterIntervenant(
+        ticketId,
+        demande as CreerTicketIntervenantRequest
+      );
+
+  operation
+    .pipe(finalize(() => {
+      this.saving = false;
+    }))
+    .subscribe({
+      next: () => {
+        this.messages.add({
+          severity: 'success',
+          summary: estModification
+            ? 'Intervenant modifié'
+            : 'Intervenant ajouté',
+          detail: estModification
+            ? 'Les informations de l’affectation ont été enregistrées.'
+            : 'Le prestataire a été affecté au ticket.'
+        });
+
+        this.modalIntervenantVisible = false;
+        this.modeEditionIntervenant = false;
+        this.intervenantIdEdition = null;
+
+        this.actualiserTicketSelectionne(ticketId);
+        this.chargerTickets();
+      },
+      error: (erreur: HttpErrorResponse) => {
+        this.afficherErreur(
+          erreur,
+          estModification
+            ? 'Impossible de modifier cet intervenant.'
+            : 'Impossible d’ajouter cet intervenant.'
         );
-
-    operation
-      .pipe(finalize(() => this.saving = false))
-      .subscribe({
-        next: () => {
-          this.messages.add({
-            severity: 'success',
-            summary: estModification
-              ? 'Intervenant modifié'
-              : 'Intervenant ajouté',
-            detail: estModification
-              ? 'Les modifications de l’intervenant ont été enregistrées.'
-              : 'L’intervenant a été ajouté au ticket.'
-          });
-
-          this.modalIntervenantVisible = false;
-          this.modeEditionIntervenant = false;
-          this.intervenantIdEdition = null;
-
-          this.actualiserTicketSelectionne(ticketId);
-          this.chargerTickets();
-        },
-        error: (erreur: HttpErrorResponse) => {
-          this.afficherErreur(
-            erreur,
-            estModification
-              ? 'Impossible de modifier cet intervenant.'
-              : 'Impossible d’ajouter cet intervenant.'
-          );
-        }
-      });
-  }
-
-  /** Supprime logiquement un intervenant après confirmation. */
-  supprimerIntervenant(intervenant: IntervenantTicket): void {
-    const ticket = this.ticketSelectionne;
-
-    if (!ticket || !intervenant || this.saving) {
-      return;
-    }
-
-    this.confirmation.confirm({
-      header: 'Supprimer l’intervenant',
-      message:
-        `Voulez-vous vraiment supprimer l’intervenant « ${intervenant.nomArtisan} » ?`,
-      icon: 'pi pi-exclamation-triangle',
-      acceptLabel: 'Supprimer',
-      rejectLabel: 'Annuler',
-      accept: () => {
-        this.saving = true;
-
-        this.ticketsService.supprimerIntervenant(
-          ticket.id,
-          intervenant.id
-        )
-          .pipe(finalize(() => this.saving = false))
-          .subscribe({
-            next: () => {
-              this.messages.add({
-                severity: 'success',
-                summary: 'Intervenant supprimé',
-                detail: 'L’intervenant a été supprimé du ticket.'
-              });
-
-              this.actualiserTicketSelectionne(ticket.id);
-              this.chargerTickets();
-            },
-            error: (erreur: HttpErrorResponse) => {
-              this.afficherErreur(
-                erreur,
-                'Impossible de supprimer cet intervenant.'
-              );
-            }
-          });
       }
     });
+}
+
+
+supprimerIntervenant(intervenant: IntervenantTicket): void {
+  const ticket = this.ticketSelectionne;
+
+  if (!ticket || !intervenant || this.saving) {
+    return;
   }
+
+  this.confirmation.confirm({
+    header: 'Supprimer l’intervenant',
+    message: `Voulez-vous vraiment supprimer l’intervenant « ${intervenant.nomPrestataire} » ?`,
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Supprimer',
+    rejectLabel: 'Annuler',
+    acceptButtonStyleClass: 'p-button-danger',
+    rejectButtonStyleClass: 'p-button-secondary',
+
+    accept: () => {
+      this.saving = true;
+
+      this.ticketsService
+        .supprimerIntervenant(ticket.id, intervenant.id)
+        .pipe(
+          finalize(() => {
+            this.saving = false;
+          })
+        )
+        .subscribe({
+          next: () => {
+            this.messages.add({
+              severity: 'success',
+              summary: 'Intervenant supprimé',
+              detail: 'L’intervenant a été supprimé du ticket.'
+            });
+
+            this.actualiserTicketSelectionne(ticket.id);
+            this.chargerTickets();
+          },
+
+          error: (erreur: HttpErrorResponse) => {
+            this.afficherErreur(
+              erreur,
+              'Impossible de supprimer cet intervenant.'
+            );
+          }
+        });
+    }
+  });
+}
+
 
   // ============================================================
   // Ajout de photos depuis le détail du ticket
@@ -1396,10 +1713,7 @@ supprimerPhoto(index: number): void {
     }
 
     this.nettoyerPhotosSupplementaires();
-
-    this.typePhotoSupplementaire =
-      TypePhotoIncident.AvantIntervention;
-
+    this.typePhotoSupplementaire = TypePhotoIncident.AvantIntervention;
     this.modalPhotosVisible = true;
   }
 
@@ -1459,7 +1773,6 @@ supprimerPhoto(index: number): void {
 
   nettoyerPhotosSupplementaires(): void {
     this.libererApercus(this.apercusPhotosSupplementaires);
-
     this.photosSupplementaires = [];
     this.apercusPhotosSupplementaires = [];
   }
@@ -1500,11 +1813,7 @@ supprimerPhoto(index: number): void {
 
     this.saving = true;
 
-    this.ticketsService.ajouterPhotos(
-      id,
-      fichiers,
-      typePhoto
-    )
+    this.ticketsService.ajouterPhotos(id, fichiers, typePhoto)
       .pipe(finalize(() => this.saving = false))
       .subscribe({
         next: () => {
@@ -1594,10 +1903,13 @@ supprimerPhoto(index: number): void {
     return valeurs[String(imputabilite)] ?? String(imputabilite ?? '—');
   }
 
-  libelleTypeUnite(type: TypeUniteLocative | string): string {
-    return String(type ?? 'Unité locative');
+libelleTypeUnite(type: TypeUniteLocative | null | undefined): string {
+  if (type == null) {
+    return 'Type non précisé';
   }
 
+  return TypeUniteLocative[type] ?? 'Type inconnu';
+}
   severiteStatut(
     statut: StatutIncident | string
   ): 'success' | 'info' | 'warn' | 'danger' | 'secondary' {

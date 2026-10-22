@@ -177,7 +177,24 @@ export class TrancheIRPP implements OnInit {
         ]
       ],
 
-      taux: [
+      referenceLegale: [
+          '',
+          Validators.maxLength(500)
+        ],
+
+        dateDebutValidite: [
+          new Date().toISOString().substring(0, 10),
+          Validators.required
+        ],
+
+        dateFinValidite: [
+          null
+        ],
+
+        dateDerniereVerification: [
+          null
+        ],
+              taux: [
         null,
         [
           Validators.required,
@@ -372,7 +389,12 @@ export class TrancheIRPP implements OnInit {
       seuilMax: tranche.seuilMax,
       taux: tranche.taux,
       ordreTranche: tranche.ordreTranche,
-      description: tranche.description ?? ''
+      description: tranche.description ?? '',
+      referenceLegale: tranche.referenceLegale ?? '',
+      dateDebutValidite: tranche.dateDebutValidite?.substring(0, 10) ?? '',
+      dateFinValidite: tranche.dateFinValidite?.substring(0, 10) ?? null,
+      dateDerniereVerification:
+      tranche.dateDerniereVerification?.substring(0, 10) ?? null
     });
 
     this.trancheIRPPDialog = true;
@@ -447,7 +469,16 @@ export class TrancheIRPP implements OnInit {
     const payload: CreerTrancheIRPPRequest = {
       anneeFiscale: Number(formValue.anneeFiscale),
       seuilMin: Number(formValue.seuilMin),
+      referenceLegale:
+        String(formValue.referenceLegale ?? '').trim() || null,
 
+      dateDebutValidite: formValue.dateDebutValidite,
+
+      dateFinValidite:
+        formValue.dateFinValidite || null,
+
+      dateDerniereVerification:
+        formValue.dateDerniereVerification || null,
       seuilMax:
         formValue.seuilMax === null ||
         formValue.seuilMax === '' ||

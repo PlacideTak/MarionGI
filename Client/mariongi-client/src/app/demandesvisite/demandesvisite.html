@@ -370,7 +370,13 @@
             <option
               *ngFor="let unite of unitesDisponibles"
               [value]="unite.id">
+
               {{ unite.reference }}
+              —  {{ obtenirLibelleTypeUnite(unite.type) }}
+              <ng-container *ngIf="unite.superficie != null">
+                — {{ unite.superficie }} m²
+              </ng-container>
+
             </option>
           </select>
 
@@ -431,7 +437,8 @@
           pInputText
           class="form-control"
           [(ngModel)]="nouvelleDemande.nomProspect"
-          maxlength="150"
+          maxlength="200"
+          required
           placeholder="Nom complet du prospect">
       </div>
 
@@ -448,18 +455,29 @@
           maxlength="30"
           placeholder="Numéro de téléphone">
       </div>
+<div class="form-field">
+  <label for="emailProspect">Courriel du prospect</label>
+  <input
+    id="emailProspect"
+    type="email"
+    pInputText
+    class="form-control"
+    [(ngModel)]="nouvelleDemande.emailProspect"
+    maxlength="254"
+    placeholder="Adresse courriel du prospect">
+</div>
 
-      <div class="form-field form-field-full">
-        <label for="dateSouhaitee">
-          Date et heure souhaitées <span class="required">*</span>
-        </label>
-        <input
-          id="dateSouhaitee"
-          type="datetime-local"
-          class="form-control"
-          [(ngModel)]="dateSouhaiteeInput"
-          [min]="minDateString">
-      </div>
+<div class="form-field">
+  <label for="dateSouhaitee">
+    Date et heure souhaitées <span class="required">*</span>
+  </label>
+  <input
+    id="dateSouhaitee"
+    type="datetime-local"
+    class="form-control"
+    [(ngModel)]="dateSouhaiteeInput"
+    [min]="minDateString">
+</div>
 
       <div class="form-field form-field-full">
         <label for="observations">Observations</label>

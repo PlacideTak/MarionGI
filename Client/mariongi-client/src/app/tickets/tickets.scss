@@ -1177,3 +1177,22 @@ textarea[pTextarea] {
   width: 175px !important;
   max-width: 175px !important;
 }
+
+.cout-field {
+  width: 180px;
+  max-width: 100%;
+}
+
+.cout-field p-inputNumber {
+  display: block;
+  width: 100%;
+}
+
+.cout-field ::ng-deep .p-inputnumber {
+  width: 100%;
+}
+
+.cout-field ::ng-deep .p-inputnumber-input {
+  width: 100%;
+  box-sizing: border-box;
+}

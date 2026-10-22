@@ -82,6 +82,18 @@ export const routes: Routes = [
           { 
             path: 'chargesimmobilieres', 
             loadComponent: () => import('./chargesimmobilieres/chargesimmobilieres').then(m => m.ChargesImmobilieres) 
+          },
+          { 
+            path: 'prestataires', 
+            loadComponent: () => import('./prestataires/prestataires').then(m => m.Prestataires) 
+          },
+          { 
+            path: 'valeursfiscalesbiens', 
+            loadComponent: () => import('./valeursfiscalesbiens/valeursfiscalesbiens').then(m => m.ValeursFiscalesBiens) 
+          },
+           { 
+            path: 'declarationsfiscales', 
+            loadComponent: () => import('./declarationsfiscales/declarationsfiscales').then(m => m.DeclarationsFiscales) 
           }
         ]
       }

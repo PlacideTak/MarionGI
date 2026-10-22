@@ -317,30 +317,49 @@
       </div>
 
       <!-- Unité -->
-      <div class="field">
-        <label for="uniteLocativeId">Unité locative *</label>
 
-        <p-select
-          inputId="uniteLocativeId"
-          formControlName="uniteLocativeId"
-          [options]="unitesOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Sélectionner une unité"
-          [loading]="loadingUnites"
-          [filter]="true"
-          [showClear]="true"
-          styleClass="w-full"
-          appendTo="body"
-          (onChange)="chargerLocatairesParUnite($event.value)">
-        </p-select>
+<!-- Bien immobilier : obligatoire -->
+<div class="field">
+  <label for="bienImmobilierId">
+    Bien immobilier <span class="required">*</span>
+  </label>
 
-        <small
-          class="field-error"
-          *ngIf="champInvalide('uniteLocativeId')">
-          {{ messageErreurChamp('uniteLocativeId') }}
-        </small>
-      </div>
+  <p-select
+    formControlName="bienImmobilierId"
+    [options]="biensOptions"
+    optionLabel="label"
+    optionValue="value"
+    placeholder="Sélectionner un bien immobilier"
+    [loading]="loadingBiens"
+    [showClear]="true"
+    (onChange)="changerBien($event.value ?? null)">
+  </p-select>
+
+  <small
+    class="field-error"
+    *ngIf="champInvalide('bienImmobilierId')">
+    {{ messageErreurChamp('bienImmobilierId') }}
+  </small>
+</div>
+
+<!-- Unité locative : facultative -->
+<div class="field">
+  <label for="uniteLocativeId">Unité locative (facultatif)</label>
+
+<p-select
+  formControlName="uniteLocativeId"
+  [options]="unitesOptions"
+  optionLabel="label"
+  optionValue="value"
+  placeholder="Sélectionner une unité locative">
+</p-select>
+
+  <small class="field-hint">
+    Laisse ce champ vide pour un incident concernant le bien
+    dans son ensemble ou les parties communes.
+  </small>
+</div>
+
 
       <!-- Locataire -->
       <div class="field">
@@ -419,18 +438,18 @@
         </div>
 
 
-      <div class="field field-cout">
-        <label for="cout">Coût</label>
-        <p-inputNumber
-          inputId="cout"
-          formControlName="cout"
-          mode="currency"
-          currency="XAF"
-          locale="fr-FR"
-          [style]="{ width: '175px' }"
-          [inputStyle]="{ width: '175px', maxWidth: '100%' }">
-        </p-inputNumber>
-      </div>
+<div class="form-field cout-field">
+  <label for="coutEstime">Coût estimé</label>
+  <p-inputNumber
+    inputId="coutEstime"
+    formControlName="coutEstime"
+    mode="decimal"
+    [min]="0"
+    [minFractionDigits]="0"
+    [maxFractionDigits]="2"
+    placeholder="Coût">
+  </p-inputNumber>
+</div>
 
 
       </div>
@@ -857,9 +876,28 @@
 
         <ng-template pTemplate="body" let-intervenant>
           <tr>
-            <td>{{ intervenant.nomArtisan }}</td>
-            <td>{{ intervenant.specialite }}</td>
-            <td>{{ intervenant.telephone }}</td>
+            <td>{{ intervenant.nomPrestataire || '—' }}</td><td>{{ intervenant.nomArtisan }}</td>
+            <td>
+              <div>
+                {{
+                  intervenant.montantDevis != null
+                    ? (intervenant.montantDevis | number:'1.2-2')
+                    : '—'
+                }}
+              </div>
+              <small>{{ intervenant.referenceDevis || '' }}</small>
+            </td>
+
+            <td>
+              <div>
+                {{
+                  intervenant.montantFacture != null
+                    ? (intervenant.montantFacture | number:'1.2-2')
+                    : '—'
+                }}
+              </div>
+              <small>{{ intervenant.referenceFacture || '' }}</small>
+            </td>
 
             <td>
               <a
@@ -938,116 +976,200 @@
 </p-dialog>
 
 <!-- Ajout / modification d'un intervenant -->
+
+<!-- Ajout / modification d'un intervenant -->
 <p-dialog
   [(visible)]="modalIntervenantVisible"
   [modal]="true"
   [draggable]="false"
   [resizable]="false"
+  [closable]="!saving"
   [header]="modeEditionIntervenant
     ? 'Modifier un intervenant'
     : 'Ajouter un intervenant'"
-  [style]="{ width: 'min(38rem, 96vw)' }"
+  [style]="{ width: 'min(44rem, 96vw)' }"
   [breakpoints]="{ '768px': '96vw' }"
-  appendTo="body">
+  styleClass="ticket-intervenant-dialog"
+  appendTo="body"
+  (onHide)="fermerFormulaireIntervenant()">
 
   <form
     [formGroup]="formulaireIntervenant"
-    (ngSubmit)="enregistrerIntervenant()">
+    (ngSubmit)="enregistrerIntervenant()"
+    novalidate>
 
     <div class="ticket-form-grid">
 
-      <div class="field">
-        <label for="nomArtisan">Nom de l'intervenant *</label>
-        <input
-          id="nomArtisan"
-          pInputText
-          formControlName="nomArtisan"
-          class="w-full">
-      </div>
-
-      <div class="field">
-        <label for="specialite">Spécialité *</label>
-        <input
-          id="specialite"
-          pInputText
-          formControlName="specialite"
-          class="w-full">
-      </div>
-
+      <!-- Prestataire -->
       <div class="field field-full">
-        <label for="telephoneIntervenant">Téléphone *</label>
-        <input
-          id="telephoneIntervenant"
-          pInputText
-          formControlName="telephone"
-          class="w-full">
-      </div>
+        <label for="prestataireId">
+          Prestataire <span class="required">*</span>
+        </label>
 
-      <div class="field field-full">
-        <label for="courrielIntervenant">Courriel *</label>
-        <input
-          id="courrielIntervenant"
-          pInputText
-          type="email"
-          formControlName="courriel"
-          autocomplete="email"
-          maxlength="254"
-          placeholder="nom@exemple.com"
-          class="w-full">
+        <p-select
+          inputId="prestataireId"
+          formControlName="prestataireId"
+          [options]="prestatairesOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un prestataire"
+          [filter]="true"
+          filterPlaceholder="Rechercher un prestataire"
+          [showClear]="true"
+          [loading]="loadingPrestataires"
+          [disabled]="saving || loadingPrestataires"
+          styleClass="w-full"
+          appendTo="body">
+        </p-select>
 
         <small
           class="field-error"
-          *ngIf="formulaireIntervenant.get('courriel')?.invalid
-            && (formulaireIntervenant.get('courriel')?.touched
-              || formulaireIntervenant.get('courriel')?.dirty)">
+          *ngIf="champIntervenantInvalide('prestataireId')">
+          Sélectionne un prestataire.
+        </small>
 
-          <ng-container
-            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['required']">
-            Le courriel est obligatoire.
-          </ng-container>
+        <small class="field-hint">
+          Les coordonnées et la spécialité proviennent de la fiche du
+          prestataire sélectionné.
+        </small>
+      </div>
 
-          <ng-container
-            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['email']">
-            Saisis une adresse courriel valide.
-          </ng-container>
+      <!-- Devis -->
+      <div class="field">
+        <label for="montantDevis">Montant du devis</label>
 
-          <ng-container
-            *ngIf="formulaireIntervenant.get('courriel')?.errors?.['maxlength']">
-            Le courriel ne doit pas dépasser 254 caractères.
-          </ng-container>
+        <p-inputNumber
+          inputId="montantDevis"
+          formControlName="montantDevis"
+          mode="decimal"
+          [min]="0"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          [useGrouping]="true"
+          placeholder="0,00"
+          styleClass="w-full"
+          inputStyleClass="w-full">
+        </p-inputNumber>
 
+        <small
+          class="field-error"
+          *ngIf="champIntervenantInvalide('montantDevis')">
+          Saisis un montant positif ou nul.
         </small>
       </div>
 
       <div class="field">
-        <label for="montantDevis">Montant du devis</label>
-        <p-inputNumber
-          inputId="montantDevis"
-          formControlName="montantDevis"
-          [min]="0"
-          styleClass="w-full"
-          inputStyleClass="w-full">
-        </p-inputNumber>
+        <label for="referenceDevis">Référence du devis</label>
+
+        <input
+          id="referenceDevis"
+          pInputText
+          type="text"
+          formControlName="referenceDevis"
+          maxlength="100"
+          autocomplete="off"
+          placeholder="Ex. DEV-2026-001"
+          class="w-full">
       </div>
 
+      <!-- Facture -->
       <div class="field">
-        <label for="montantFacture">Montant facturé</label>
+        <label for="montantFacture">Montant de la facture</label>
+
         <p-inputNumber
           inputId="montantFacture"
           formControlName="montantFacture"
+          mode="decimal"
           [min]="0"
+          [minFractionDigits]="2"
+          [maxFractionDigits]="2"
+          [useGrouping]="true"
+          placeholder="0,00"
           styleClass="w-full"
           inputStyleClass="w-full">
         </p-inputNumber>
+
+        <small
+          class="field-error"
+          *ngIf="champIntervenantInvalide('montantFacture')">
+          Saisis un montant positif ou nul.
+        </small>
       </div>
 
-      <div class="field field-full">
-        <label for="dateIntervention">Date d'intervention</label>
+      <div class="field">
+        <label for="referenceFacture">Référence de la facture</label>
+
+        <input
+          id="referenceFacture"
+          pInputText
+          type="text"
+          formControlName="referenceFacture"
+          maxlength="100"
+          autocomplete="off"
+          placeholder="Ex. FAC-2026-001"
+          class="w-full">
+      </div>
+
+      <!-- Dates -->
+      <div class="field">
+        <label for="dateAssignation">Date d'assignation</label>
+
+        <input
+          id="dateAssignation"
+          type="date"
+          formControlName="dateAssignation"
+          class="form-control w-full">
+      </div>
+
+      <div class="field">
+        <label for="dateIntervention">Date de début de l'intervention</label>
+
         <input
           id="dateIntervention"
           type="date"
           formControlName="dateIntervention"
-          class="form-control">
+          class="form-control w-full">
+
+        <small
+          class="field-error"
+          *ngIf="formulaireIntervenant.hasError('datesInterventionInvalides')
+            && (
+              formulaireIntervenant.get('dateIntervention')?.touched
+              || formulaireIntervenant.get('dateFinIntervention')?.touched
+            )">
+          La date de début doit être antérieure ou égale à la date de fin.
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="dateFinIntervention">Date de fin de l'intervention</label>
+
+        <input
+          id="dateFinIntervention"
+          type="date"
+          formControlName="dateFinIntervention"
+          class="form-control w-full">
+      </div>
+
+      <!-- Observations -->
+      <div class="field field-full">
+        <label for="observations">Observations</label>
+
+        <textarea
+          id="observations"
+          pTextarea
+          formControlName="observations"
+          rows="4"
+          maxlength="2000"
+          class="w-full"
+          placeholder="Précisions sur les travaux, les délais, les consignes ou le suivi."
+          [autoResize]="false">
+        </textarea>
+
+        <small class="field-hint">
+          {{ formulaireIntervenant.get('observations')?.value?.length || 0 }}
+          / 2000 caractères
+        </small>
       </div>
 
     </div>
@@ -1057,10 +1179,11 @@
         pButton
         type="button"
         label="Annuler"
+        icon="pi pi-times"
         severity="secondary"
         [outlined]="true"
         [disabled]="saving"
-        (click)="modalIntervenantVisible = false">
+        (click)="fermerFormulaireIntervenant()">
       </button>
 
       <button
@@ -1068,15 +1191,16 @@
         type="submit"
         [label]="modeEditionIntervenant
           ? 'Enregistrer les modifications'
-          : 'Ajouter'"
+          : 'Ajouter l’intervenant'"
         [icon]="modeEditionIntervenant ? 'pi pi-save' : 'pi pi-check'"
         [loading]="saving"
-        [disabled]="saving">
+        [disabled]="saving || loadingPrestataires">
       </button>
     </div>
 
   </form>
 </p-dialog>
+
 
 <!-- Ajout de photos à un ticket existant -->
 <p-dialog

@@ -1,19 +1,14 @@
+
 <div class="p-2 md:p-4">
 
-  <!-- =========================================================
-       EN-TÊTE
-       ========================================================= -->
+  <!-- EN-TÊTE -->
   <div class="page-header mb-4">
-    <h2 class="m-0">Etats des Paiements</h2>
+    <h2 class="m-0">États des paiements</h2>
   </div>
 
-
-  <!-- =========================================================
-       GRILLE DES STATISTIQUES
-       ========================================================= -->
+  <!-- STATISTIQUES -->
   <div class="paiements-stats mb-4">
 
-    <!-- Total -->
     <div class="stat-card stat-card-total">
       <div class="stat-card__icon">
         <i class="pi pi-wallet"></i>
@@ -21,16 +16,11 @@
 
       <div class="stat-card__content">
         <span class="stat-card__label">Total des paiements</span>
-        <strong class="stat-card__value">
-          {{ totalPaiements }}
-        </strong>
-        <span class="stat-card__description">
-          Tous statuts confondus
-        </span>
+        <strong class="stat-card__value">{{ totalPaiements }}</strong>
+        <span class="stat-card__description">Tous statuts confondus</span>
       </div>
     </div>
 
-    <!-- En attente -->
     <div class="stat-card stat-card-attente">
       <div class="stat-card__icon">
         <i class="pi pi-clock"></i>
@@ -38,16 +28,11 @@
 
       <div class="stat-card__content">
         <span class="stat-card__label">En attente</span>
-        <strong class="stat-card__value">
-          {{ nombrePaiementsEnAttente }}
-        </strong>
-        <span class="stat-card__description">
-          Paiements à traiter
-        </span>
+        <strong class="stat-card__value">{{ nombrePaiementsEnAttente }}</strong>
+        <span class="stat-card__description">Paiements à traiter</span>
       </div>
     </div>
 
-    <!-- Confirmés -->
     <div class="stat-card stat-card-confirme">
       <div class="stat-card__icon">
         <i class="pi pi-check-circle"></i>
@@ -55,16 +40,11 @@
 
       <div class="stat-card__content">
         <span class="stat-card__label">Confirmés</span>
-        <strong class="stat-card__value">
-          {{ nombrePaiementsConfirmes }}
-        </strong>
-        <span class="stat-card__description">
-          Paiements réussis
-        </span>
+        <strong class="stat-card__value">{{ nombrePaiementsConfirmes }}</strong>
+        <span class="stat-card__description">Paiements réussis</span>
       </div>
     </div>
 
-    <!-- Échoués -->
     <div class="stat-card stat-card-echoue">
       <div class="stat-card__icon">
         <i class="pi pi-times-circle"></i>
@@ -72,23 +52,16 @@
 
       <div class="stat-card__content">
         <span class="stat-card__label">Échoués</span>
-        <strong class="stat-card__value">
-          {{ nombrePaiementsEchoues }}
-        </strong>
-        <span class="stat-card__description">
-          Paiements non aboutis
-        </span>
+        <strong class="stat-card__value">{{ nombrePaiementsEchoues }}</strong>
+        <span class="stat-card__description">Paiements non aboutis</span>
       </div>
     </div>
 
   </div>
 
-  <!-- =========================================================
-       FILTRES
-       ========================================================= -->
+  <!-- FILTRES -->
   <div class="card filters-bar mb-4">
 
-    <!-- Recherche -->
     <div class="filter-search">
       <i class="pi pi-search"></i>
 
@@ -98,11 +71,19 @@
         class="w-full"
         [(ngModel)]="filtreTexte"
         (input)="appliquerFiltres()"
-        placeholder="Quittance, bien, unité locative..." />
+        placeholder="Quittance, bien, unité, locataire..." />
     </div>
 
+    <p-select
+      class="filter-select"
+      styleClass="w-full"
+      [options]="typesPaiementOptions"
+      [(ngModel)]="filtreTypePaiement"
+      (onChange)="appliquerFiltres()"
+      placeholder="Type de paiement"
+      [showClear]="true">
+    </p-select>
 
-    <!-- Statut -->
     <p-select
       class="filter-select"
       styleClass="w-full"
@@ -113,8 +94,6 @@
       [showClear]="true">
     </p-select>
 
-
-    <!-- Mode de paiement -->
     <p-select
       class="filter-select"
       styleClass="w-full"
@@ -125,12 +104,18 @@
       [showClear]="true">
     </p-select>
 
+    <button
+      pButton
+      type="button"
+      icon="pi pi-filter-slash"
+      label="Réinitialiser"
+      class="p-button-outlined"
+      (click)="reinitialiserFiltres()">
+    </button>
+
   </div>
 
-
-  <!-- =========================================================
-       TABLEAU DES PAIEMENTS
-       ========================================================= -->
+  <!-- TABLEAU -->
   <div class="card">
 
     <p-table
@@ -144,130 +129,109 @@
       [showCurrentPageReport]="true"
       currentPageReportTemplate="Affichage de {first} à {last} sur {totalRecords} paiements">
 
-
-      <!-- =====================================================
-           EN-TÊTE DU TABLEAU
-           ===================================================== -->
+      <!-- EN-TÊTE -->
       <ng-template pTemplate="header">
-
         <tr>
           <th>N° Quittance</th>
-
           <th>Bien / Unité</th>
-
           <th>Locataire</th>
-
+          <th>Type de paiement</th>
           <th>Montant</th>
-
-          <th class="hide-tablet">
-            Mode
-          </th>
-
-          <th>
-            Statut
-          </th>
-
-          <th class="hide-tablet">
-            Date
-          </th>
-
-          <th class="col-actions">
-            Actions
-          </th>
+          <th class="hide-tablet">Mode</th>
+          <th>Statut</th>
+          <th class="hide-tablet">Date</th>
+          <th class="col-actions">Actions</th>
         </tr>
-
       </ng-template>
 
-
-      <!-- =====================================================
-           CORPS DU TABLEAU
-           ===================================================== -->
+      <!-- CORPS -->
       <ng-template pTemplate="body" let-paiement>
-
         <tr>
 
-          <!-- N° quittance -->
-          <td
-            data-label="N° Quittance"
-            class="font-bold">
-
-            {{ paiement.numeroQuittance }}
-
+          <!-- QUITTANCE -->
+          <td data-label="N° Quittance" class="font-bold">
+            {{ paiement.numeroQuittance || 'N/A' }}
           </td>
 
+          <!-- BIEN / UNITÉ -->
+          <td data-label="Bien / Unité">
+            <div class="flex flex-column">
+              <span class="font-medium">
+                {{ paiement.bienNom || 'N/A' }}
+              </span>
 
-          <!-- Bien / unité -->
-         <td data-label="Bien / Unité">
+              <small
+                *ngIf="paiement.uniteReference"
+                class="text-color-secondary">
+                {{ paiement.uniteReference }}
+              </small>
+            </div>
+          </td>
 
-          <div class="flex flex-column">
-
-            <span class="font-medium">
-              {{ paiement.bienNom || 'N/A' }}
-            </span>
-
-            <small
-              *ngIf="paiement.uniteReference"
-              class="text-color-secondary">
-
-              ({{ paiement.uniteReference }})
-
-            </small>
-
-          </div>
-
-        </td>
-
-
-          <!-- Locataire -->
+          <!-- LOCATAIRE -->
           <td data-label="Locataire">
-
             {{ paiement.locataireNom || 'N/A' }}
-
           </td>
 
+          <!-- TYPE DE PAIEMENT -->
+          <td data-label="Type de paiement">
+            <div class="paiement-type-cell">
+              <span
+                class="paiement-type"
+                [ngClass]="getClasseTypePaiement(paiement.typePaiement)">
+                {{ getLibelleTypePaiement(paiement.typePaiement) }}
+              </span>
+                
+              <small
+                *ngIf="paiement.moisLoyer &&
+                  (paiement.typePaiement === TypePaiement.Loyer ||
+                   paiement.typePaiement === TypePaiement.ChargesLocatives)"
+                class="text-color-secondary">
+                {{ paiement.moisLoyer | date:'MM/yyyy' }}
+              </small>
+            </div>
+          </td>
 
-          <!-- Montant -->
+          <!-- MONTANT -->
           <td data-label="Montant">
+            <div class="paiement-montant-cell">
 
-            <span class="font-semibold">
-              {{ paiement.montant | number:'1.0-0' }} FCFA
-            </span>
+              <strong class="paiement-montant">
+                {{ paiement.montant | number:'1.0-0' }}
+                <span>FCFA</span>
+              </strong>
 
+              <small
+                *ngIf="getMontantDetail(paiement) !== null"
+                class="paiement-montant-detail">
+
+                {{ getLibelleTypePaiement(paiement.typePaiement) }} :
+                {{ getMontantDetail(paiement) | number:'1.0-0' }} FCFA
+
+              </small>
+
+            </div>
           </td>
 
-
-          <!-- Mode -->
-          <td
-            data-label="Mode"
-            class="hide-tablet">
-
+          <!-- MODE -->
+          <td data-label="Mode" class="hide-tablet">
             {{ getLibelleMode(paiement.mode) }}
-
           </td>
 
-
-          <!-- Statut -->
+          <!-- STATUT -->
           <td data-label="Statut">
-
             <p-tag
               [value]="getLibelleStatut(paiement.statut)"
               [severity]="getSeverity(paiement.statut)">
             </p-tag>
-
           </td>
 
-
-          <!-- Date -->
-          <td
-            data-label="Date"
-            class="hide-tablet">
-
+          <!-- DATE -->
+          <td data-label="Date" class="hide-tablet">
             {{ paiement.datePaiement | date:'dd/MM/yyyy HH:mm' }}
-
           </td>
 
-
-          <!-- Actions -->
+          <!-- ACTIONS -->
           <td
             class="col-actions"
             [class.no-action]="paiement.statut !== StatutTransaction.Confirme">
@@ -287,27 +251,15 @@
           </td>
 
         </tr>
-
       </ng-template>
 
-
-      <!-- =====================================================
-           AUCUN RÉSULTAT
-           ===================================================== -->
+      <!-- AUCUN RÉSULTAT -->
       <ng-template pTemplate="emptymessage">
-
         <tr>
-
-          <td
-            colspan="8"
-            class="text-center p-4">
-
+          <td colspan="9" class="text-center p-4">
             Aucun paiement trouvé.
-
           </td>
-
         </tr>
-
       </ng-template>
 
     </p-table>

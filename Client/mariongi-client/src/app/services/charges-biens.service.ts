@@ -3,10 +3,20 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment.development';
-import { ChargeBienDto, CreerChargeBienRequest, FiltreChargesBiens, ModifierChargeBienRequest, SupprimerChargeBienResponse, TypeCharge } from '../models/gestimmo.models';
+
+import {
+  ChargeBienDto,
+  ChargeBienOperationResponse,
+  CreerChargeBienRequest,
+  FiltreChargesBiens,
+  ModifierChargeBienRequest,
+  SupprimerChargeBienResponse,
+  TypeCharge,
+  StatutDeductibilite
+} from '../models/gestimmo.models';
 
 // ============================================================
-// SERVICE
+// SERVICE DE GESTION DES CHARGES IMMOBILIÈRES
 // ============================================================
 
 @Injectable({
@@ -24,21 +34,32 @@ export class ChargesBiensService {
   // ==========================================================
 
   readonly typesCharges = [
+    { label: 'Taxe foncière', value: TypeCharge.TaxeFonciere },
+    { label: 'Entretien et réparations', value: TypeCharge.Entretien },
+    { label: 'Assurance', value: TypeCharge.Assurance },
+    { label: 'Intérêts d’emprunt', value: TypeCharge.InteretEmprunt }
+  ];
+
+  // ==========================================================
+  // RÉFÉRENTIEL : STATUTS DE DÉDUCTIBILITÉ
+  // ==========================================================
+
+  readonly statutsDeductibilite = [
     {
-      label: 'Taxe foncière',
-      value: TypeCharge.TaxeFonciere
+      label: 'À qualifier',
+      value: StatutDeductibilite.AQualifier
     },
     {
-      label: 'Entretien et réparations',
-      value: TypeCharge.Entretien
+      label: 'Déductible',
+      value: StatutDeductibilite.Deductible
     },
     {
-      label: 'Assurance',
-      value: TypeCharge.Assurance
+      label: 'Non déductible',
+      value: StatutDeductibilite.NonDeductible
     },
     {
-      label: 'Intérêts d’emprunt',
-      value: TypeCharge.InteretEmprunt
+      label: 'Partiellement déductible',
+      value: StatutDeductibilite.PartiellementDeductible
     }
   ];
 
@@ -47,18 +68,26 @@ export class ChargesBiensService {
   // ==========================================================
 
   getTypeChargeLibelle(type: TypeCharge): string {
-    const charge = this.typesCharges.find(
+    return this.typesCharges.find(
       t => t.value === type
-    );
+    )?.label ?? 'Inconnu';
+  }
 
-    return charge?.label ?? 'Inconnu';
+  // ==========================================================
+  // LIBELLÉ DU STATUT DE DÉDUCTIBILITÉ
+  // ==========================================================
+
+  getStatutDeductibiliteLibelle(
+    statut: StatutDeductibilite
+  ): string {
+    return this.statutsDeductibilite.find(
+      s => s.value === statut
+    )?.label ?? 'Inconnu';
   }
 
   // ==========================================================
   // GET : LISTE DES CHARGES
-  //
   // GET /api/ChargesBiens
-  // Filtres facultatifs : bien, unité, type, dates
   // ==========================================================
 
   getCharges(
@@ -110,14 +139,10 @@ export class ChargesBiensService {
 
   // ==========================================================
   // GET : DÉTAIL D'UNE CHARGE
-  //
   // GET /api/ChargesBiens/{id}
   // ==========================================================
 
-  getChargeById(
-    id: string
-  ): Observable<ChargeBienDto> {
-
+  getChargeById(id: string): Observable<ChargeBienDto> {
     return this.http.get<ChargeBienDto>(
       `${this.apiUrl}/${id}`
     );
@@ -125,16 +150,14 @@ export class ChargesBiensService {
 
   // ==========================================================
   // POST : CRÉER UNE CHARGE
-  //
   // POST /api/ChargesBiens
-  // Le contrôleur reçoit un objet JSON.
   // ==========================================================
 
   createCharge(
     request: CreerChargeBienRequest
-  ): Observable<ChargeBienDto> {
+  ): Observable<ChargeBienOperationResponse> {
 
-    return this.http.post<ChargeBienDto>(
+    return this.http.post<ChargeBienOperationResponse>(
       this.apiUrl,
       request
     );
@@ -142,24 +165,37 @@ export class ChargesBiensService {
 
   // ==========================================================
   // PUT : MODIFIER UNE CHARGE
-  //
   // PUT /api/ChargesBiens/{id}
   // ==========================================================
 
   updateCharge(
     id: string,
     request: ModifierChargeBienRequest
-  ): Observable<void> {
+  ): Observable<ChargeBienOperationResponse> {
 
-    return this.http.put<void>(
+    return this.http.put<ChargeBienOperationResponse>(
       `${this.apiUrl}/${id}`,
       request
     );
   }
 
+
+  qualifierCharge(
+  id: string,
+  request: {
+    statutDeductibilite: StatutDeductibilite;
+    montantDeductibleFiscalement: number | null;
+    justificationNonDeductibilite: string | null;
+  }
+): Observable<any> {
+  return this.http.put<any>(
+    `${this.apiUrl}/${id}/qualification-fiscale`,
+    request
+  );
+}
+
   // ==========================================================
   // DELETE : SUPPRESSION LOGIQUE
-  //
   // DELETE /api/ChargesBiens/{id}
   // ==========================================================
 
@@ -172,4 +208,3 @@ export class ChargesBiensService {
     );
   }
 }
-

@@ -49,8 +49,9 @@ public class UnitesLocativesController : ControllerBase
         nameof(RoleUtilisateur.Gestionnaire) + "," +
         nameof(RoleUtilisateur.Agent) + "," +
         nameof(RoleUtilisateur.Locataire))]
+
     public async Task<IActionResult> GetUnites(
-        CancellationToken cancellationToken)
+    CancellationToken cancellationToken)
     {
         var utilisateur =
             await GetUtilisateurConnecteAsync(cancellationToken);
@@ -106,7 +107,17 @@ public class UnitesLocativesController : ControllerBase
                 u.Loyer,
                 u.ChargesLocativesMensuelles,
                 u.MontantCaution,
-                u.Statut,
+
+                // Un contrat actif impose le statut Louée.
+                Statut = u.Contrats.Any(c =>
+                    !c.EstSupprime &&
+                    c.Statut == StatutContrat.Actif &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    ))
+                    ? StatutDisponibilite.Loue
+                    : u.Statut,
 
                 u.DatePremiereMiseEnLocation,
                 u.DateDerniereRenovation,
@@ -244,23 +255,25 @@ public class UnitesLocativesController : ControllerBase
                 },
 
                 Contrats = u.Contrats
-                    .Where(c =>
-                        !c.EstSupprime &&
-                        (
-                            utilisateur.Role !=
-                                RoleUtilisateur.Locataire ||
-                            c.LocataireId == utilisateur.Id
-                        ))
-                    .Select(c => new
-                    {
-                        c.Id,
-                        c.Reference,
-                        c.Statut,
-                        c.DateDebut,
-                        c.DateFin,
-                        c.MontantLoyer
-                    })
-                    .ToList(),
+                .Where(c =>
+                    !c.EstSupprime &&
+                    (
+                        utilisateur.Role != RoleUtilisateur.Locataire ||
+                        c.LocataireId == utilisateur.Id
+                    ))
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Reference,
+                    c.Statut,
+                    c.DateDebut,
+                    c.DateFin,
+
+                    c.MontantLoyer,
+                    c.MontantChargesLocatives,
+                    c.MontantCaution
+                })
+                .ToList(),
 
                 AContratActif = u.Contrats.Any(c =>
                     !c.EstSupprime &&
@@ -792,7 +805,9 @@ public class UnitesLocativesController : ControllerBase
             unite.ChargesLocativesMensuelles =
                 request.ChargesLocativesMensuelles;
             unite.MontantCaution = request.MontantCaution;
-            unite.Statut = request.Statut;
+            unite.Statut = contratActifExiste
+             ? StatutDisponibilite.Loue
+             : request.Statut;
 
             unite.DatePremiereMiseEnLocation =
                 request.DatePremiereMiseEnLocation;
@@ -839,9 +854,9 @@ public class UnitesLocativesController : ControllerBase
         nameof(RoleUtilisateur.Administrateur) + "," +
         nameof(RoleUtilisateur.Gestionnaire))]
     public async Task<IActionResult> ModifierStatut(
-        Guid id,
-        [FromBody] ModifierStatutUniteRequest request,
-        CancellationToken cancellationToken)
+    Guid id,
+    [FromBody] ModifierStatutUniteRequest request,
+    CancellationToken cancellationToken)
     {
         if (id == Guid.Empty)
         {
@@ -893,14 +908,9 @@ public class UnitesLocativesController : ControllerBase
                     c.Statut == StatutContrat.Actif,
                 cancellationToken);
 
-        if (contratActifExiste &&
-            request.Statut != StatutDisponibilite.Loue)
-        {
-            return Conflict(
-                "Cette unité possède un contrat actif et doit conserver le statut Louée.");
-        }
-
-        unite.Statut = request.Statut;
+        unite.Statut = contratActifExiste
+            ? StatutDisponibilite.Loue
+            : request.Statut;
 
         await _context.SaveChangesAsync(cancellationToken);
 

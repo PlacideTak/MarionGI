@@ -178,17 +178,16 @@ namespace MarionGI.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<bool>("EstDeductibleFiscalement")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
                     b.Property<bool>("EstSupprime")
                         .HasColumnType("bit");
 
                     b.Property<string>("JustificationNonDeductibilite")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("MontantDeductibleFiscalement")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("MontantHT")
                         .HasPrecision(18, 2)
@@ -217,6 +216,11 @@ namespace MarionGI.Persistence.Migrations
                     b.Property<string>("ReferenceFacture")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("StatutDeductibilite")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<int>("TypeCharge")
                         .HasColumnType("int");
@@ -335,11 +339,70 @@ namespace MarionGI.Persistence.Migrations
                     b.ToTable("Contrats");
                 });
 
+            modelBuilder.Entity("MarionGI.Domain.Entities.DeclarationChargeBien", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ChargeBienId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("DateDepense")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateSuppression")
+                        .HasColumnType("datetime");
+
+                    b.Property<Guid>("DeclarationFiscaleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DescriptionCharge")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<bool>("EstSupprime")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MontantDeductibleFiscalement")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MontantRetenu")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MontantTTC")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("StatutDeductibilite")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChargeBienId");
+
+                    b.HasIndex("DeclarationFiscaleId", "ChargeBienId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DeclarationsChargesBiens_Declaration_Charge")
+                        .HasFilter("[EstSupprime] = 0");
+
+                    b.ToTable("DeclarationsChargesBiens", (string)null);
+                });
+
             modelBuilder.Entity("MarionGI.Domain.Entities.DeclarationFiscale", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("AcomptesVerses")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("AnneeFiscale")
                         .HasColumnType("int");
@@ -350,6 +413,21 @@ namespace MarionGI.Persistence.Migrations
 
                     b.Property<Guid?>("BienImmobilierId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal?>("ChargesForfaitaires")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ChargesReellesAdmissibles")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("ChargesReellesDeclarees")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("DateCalcul")
+                        .HasColumnType("datetime");
 
                     b.Property<DateTime>("DateCreation")
                         .HasColumnType("datetime");
@@ -366,6 +444,9 @@ namespace MarionGI.Persistence.Migrations
                     b.Property<bool>("EstSupprime")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ModeDeduction")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("MontantImpot")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -374,22 +455,47 @@ namespace MarionGI.Persistence.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
+                    b.Property<Guid?>("OptionDeductionFiscaleId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ReferenceDeclaration")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<decimal?>("RevenuNetFoncier")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<Guid>("SocieteId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal?>("SoldeImpot")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("Statut")
                         .HasColumnType("int");
+
+                    b.Property<decimal?>("TotalLoyersBruts")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("TypeImpot")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BienImmobilierId");
+                    b.HasIndex("OptionDeductionFiscaleId");
+
+                    b.HasIndex("BienImmobilierId", "AnneeFiscale")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DeclarationsFiscales_ProprieteFonciere_Bien_Annee")
+                        .HasFilter("[EstSupprime] = 0 AND [TypeImpot] = 1 AND [BienImmobilierId] IS NOT NULL");
+
+                    b.HasIndex("SocieteId", "AnneeFiscale")
+                        .IsUnique()
+                        .HasDatabaseName("IX_DeclarationsFiscales_RevenusFonciers_Societe_Annee")
+                        .HasFilter("[EstSupprime] = 0 AND [TypeImpot] = 2 AND [BienImmobilierId] IS NULL");
 
                     b.HasIndex("SocieteId", "AnneeFiscale", "TypeImpot")
                         .HasDatabaseName("IX_DeclarationsFiscales_Societe_Annee_Type");
@@ -552,6 +658,55 @@ namespace MarionGI.Persistence.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("MarionGI.Domain.Entities.OptionDeductionFiscale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("AnneeFiscale")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DateConfirmation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime>("DateCreation")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateSuppression")
+                        .HasColumnType("datetime");
+
+                    b.Property<DateTime?>("DateVerrouillage")
+                        .HasColumnType("datetime");
+
+                    b.Property<bool>("EstSupprime")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("EstVerrouillee")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("ModeDeduction")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("SocieteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SocieteId", "AnneeFiscale")
+                        .IsUnique()
+                        .HasDatabaseName("IX_OptionsDeductionFiscales_Societe_Annee")
+                        .HasFilter("[EstSupprime] = 0");
+
+                    b.ToTable("OptionsDeductionFiscales", (string)null);
+                });
+
             modelBuilder.Entity("MarionGI.Domain.Entities.Paiement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -586,15 +741,21 @@ namespace MarionGI.Persistence.Migrations
                     b.Property<int>("ModePaiement")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("MoisLoyer")
+                    b.Property<DateTime?>("MoisLoyer")
                         .HasColumnType("datetime");
 
                     b.Property<decimal>("Montant")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("MontantChargesLocativesEncaisse")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("MontantDu")
                         .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("MontantLoyerEncaisse")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("MotifEchec")
@@ -619,6 +780,9 @@ namespace MarionGI.Persistence.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(1);
 
+                    b.Property<int?>("TypePaiement")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ContratId")
@@ -635,7 +799,8 @@ namespace MarionGI.Persistence.Migrations
                         .HasFilter("[EstSupprime] = 0 AND [ReferenceTransactionOperateur] IS NOT NULL");
 
                     b.HasIndex("ContratId", "MoisLoyer")
-                        .HasDatabaseName("IX_Paiements_ContratId_MoisLoyer");
+                        .HasDatabaseName("IX_Paiements_ContratId_MoisLoyer_EnAttente")
+                        .HasFilter("[EstSupprime] = 0 AND [StatutTransaction] = 1");
 
                     b.ToTable("Paiements");
                 });
@@ -1560,11 +1725,35 @@ namespace MarionGI.Persistence.Migrations
                     b.Navigation("UniteLocative");
                 });
 
+            modelBuilder.Entity("MarionGI.Domain.Entities.DeclarationChargeBien", b =>
+                {
+                    b.HasOne("MarionGI.Domain.Entities.ChargeBien", "ChargeBien")
+                        .WithMany()
+                        .HasForeignKey("ChargeBienId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MarionGI.Domain.Entities.DeclarationFiscale", "DeclarationFiscale")
+                        .WithMany("ChargesRetenues")
+                        .HasForeignKey("DeclarationFiscaleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChargeBien");
+
+                    b.Navigation("DeclarationFiscale");
+                });
+
             modelBuilder.Entity("MarionGI.Domain.Entities.DeclarationFiscale", b =>
                 {
                     b.HasOne("MarionGI.Domain.Entities.BienImmobilier", "BienImmobilier")
                         .WithMany("DeclarationsFiscales")
                         .HasForeignKey("BienImmobilierId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("MarionGI.Domain.Entities.OptionDeductionFiscale", "OptionDeductionFiscale")
+                        .WithMany()
+                        .HasForeignKey("OptionDeductionFiscaleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("MarionGI.Domain.Entities.Societe", "Societe")
@@ -1574,6 +1763,8 @@ namespace MarionGI.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("BienImmobilier");
+
+                    b.Navigation("OptionDeductionFiscale");
 
                     b.Navigation("Societe");
                 });
@@ -1605,6 +1796,17 @@ namespace MarionGI.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Utilisateur");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.OptionDeductionFiscale", b =>
+                {
+                    b.HasOne("MarionGI.Domain.Entities.Societe", "Societe")
+                        .WithMany()
+                        .HasForeignKey("SocieteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Societe");
                 });
 
             modelBuilder.Entity("MarionGI.Domain.Entities.Paiement", b =>
@@ -1771,6 +1973,11 @@ namespace MarionGI.Persistence.Migrations
             modelBuilder.Entity("MarionGI.Domain.Entities.Contrat", b =>
                 {
                     b.Navigation("Paiements");
+                });
+
+            modelBuilder.Entity("MarionGI.Domain.Entities.DeclarationFiscale", b =>
+                {
+                    b.Navigation("ChargesRetenues");
                 });
 
             modelBuilder.Entity("MarionGI.Domain.Entities.Prestataire", b =>

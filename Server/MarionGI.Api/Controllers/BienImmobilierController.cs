@@ -1,5 +1,4 @@
-﻿
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;

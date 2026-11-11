@@ -1,0 +1,416 @@
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="declarations-charges-page">
+
+  <!-- En-tête -->
+  <div class="page-header">
+    <div>
+      <h1>Affectation des charges aux déclarations fiscales</h1>
+      <p class="page-subtitle">
+        Associez les charges immobilières admissibles à vos déclarations fiscales
+        et déterminez les montants retenus.
+      </p>
+    </div>
+
+    <button
+      pButton
+      type="button"
+      label="Associer une charge"
+      icon="pi pi-plus"
+      [disabled]="!declarationSelectionnee || chargementDonnees"
+      (click)="ouvrirDialogueAjout()">
+    </button>
+  </div>
+
+  <!-- Sélection de la déclaration -->
+  <section class="content-card declaration-selection">
+    <div class="section-heading">
+      <div>
+        <h2>Déclaration fiscale</h2>
+        <p>Sélectionnez la déclaration à laquelle vous souhaitez associer des charges.</p>
+      </div>
+    </div>
+
+    <div class="selection-field">
+      <label for="declarationSelect">Déclaration</label>
+
+      <select
+        id="declarationSelect"
+        class="form-control"
+        [(ngModel)]="declarationSelectionneeId"
+        (ngModelChange)="changerDeclaration()"
+        [disabled]="chargementDeclarations || declarations.length === 0">
+
+        <option value="">Sélectionner une déclaration</option>
+
+        <option
+          *ngFor="let declaration of declarations"
+          [value]="declaration.id">
+          Année {{ declaration.anneeFiscale }}
+          — {{ declaration.bienImmobilierId ? 'Déclaration liée à un bien' : 'Déclaration globale' }}
+        </option>
+      </select>
+
+      <div *ngIf="chargementDeclarations" class="loading-message">
+        Chargement des déclarations...
+      </div>
+
+      <div
+        *ngIf="!chargementDeclarations && declarations.length === 0"
+        class="empty-inline">
+        Aucune déclaration fiscale disponible.
+      </div>
+    </div>
+
+    <div
+      class="declaration-info"
+      *ngIf="declarationSelectionnee as declaration">
+
+      <div class="info-item">
+        <span>Année fiscale</span>
+        <strong>{{ declaration.anneeFiscale }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Type d'impôt</span>
+        <strong>{{ declaration.typeImpot }}</strong>
+      </div>
+
+      <div class="info-item">
+        <span>Mode de déduction</span>
+        <strong>
+          {{ declaration.modeDeduction ?? 'Non défini' }}
+        </strong>
+      </div>
+
+      <div class="info-item">
+        <span>Bien concerné</span>
+        <strong>
+          {{ declaration.bienImmobilierId ? 'Bien spécifique' : 'Tous les biens' }}
+        </strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Indicateurs -->
+  <section
+    class="summary-grid"
+    *ngIf="declarationSelectionnee">
+
+    <div class="summary-card">
+      <div class="summary-icon icon-blue">
+        <i class="pi pi-list"></i>
+      </div>
+      <div>
+        <span class="summary-label">Charges associées</span>
+        <strong>{{ nombreChargesAssociees }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-green">
+        <i class="pi pi-check-circle"></i>
+      </div>
+      <div>
+        <span class="summary-label">Montants retenus</span>
+        <strong>{{ formaterMontant(totalMontantsRetenus) }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-orange">
+        <i class="pi pi-wallet"></i>
+      </div>
+      <div>
+        <span class="summary-label">Montants TTC associés</span>
+        <strong>{{ formaterMontant(totalMontantsTtc) }}</strong>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon icon-purple">
+        <i class="pi pi-plus-circle"></i>
+      </div>
+      <div>
+        <span class="summary-label">Charges disponibles</span>
+        <strong>{{ chargesDisponibles.length }}</strong>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Charges associées -->
+  <section class="content-card">
+
+    <div class="section-heading">
+      <div>
+        <h2>Charges associées à la déclaration</h2>
+        <p>
+          Liste des charges retenues pour cette déclaration fiscale.
+        </p>
+      </div>
+
+      <button
+        pButton
+        type="button"
+        label="Ajouter"
+        icon="pi pi-plus"
+        size="small"
+        [disabled]="!declarationSelectionnee || chargementDonnees || chargesDisponibles.length === 0"
+        (click)="ouvrirDialogueAjout()">
+      </button>
+    </div>
+
+    <div *ngIf="chargementDonnees" class="loading-container">
+      <i class="pi pi-spin pi-spinner"></i>
+      <span>Chargement des charges...</span>
+    </div>
+
+    <div
+      *ngIf="!chargementDonnees && !declarationSelectionnee"
+      class="empty-state">
+      <i class="pi pi-file"></i>
+      <h3>Aucune déclaration sélectionnée</h3>
+      <p>Sélectionnez une déclaration fiscale pour afficher ses charges.</p>
+    </div>
+
+    <div
+      *ngIf="!chargementDonnees && declarationSelectionnee && chargesAssociees.length === 0"
+      class="empty-state">
+
+      <i class="pi pi-inbox"></i>
+      <h3>Aucune charge associée</h3>
+      <p>
+        Cette déclaration ne contient pas encore de charges immobilières.
+      </p>
+
+      <button
+        pButton
+        type="button"
+        label="Associer une première charge"
+        icon="pi pi-plus"
+        [disabled]="chargesDisponibles.length === 0"
+        (click)="ouvrirDialogueAjout()">
+      </button>
+    </div>
+
+    <div
+      class="table-container"
+      *ngIf="!chargementDonnees && chargesAssociees.length > 0">
+
+      <p-table
+        [value]="chargesAssociees"
+        responsiveLayout="scroll"
+        [paginator]="true"
+        [rows]="10"
+        [rowsPerPageOptions]="[5, 10, 20]">
+
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Description</th>
+            <th>Date de dépense</th>
+            <th>Montant TTC</th>
+            <th>Statut fiscal</th>
+            <th>Montant retenu</th>
+            <th class="actions-column">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-charge>
+          <tr>
+            <td>
+              <div class="charge-description">
+                <strong>{{ charge.descriptionCharge }}</strong>
+                <small>Référence : {{ charge.chargeBienId }}</small>
+              </div>
+            </td>
+
+            <td>
+              {{ charge.dateDepense | date:'dd/MM/yyyy' }}
+            </td>
+
+            <td class="amount-cell">
+              {{ formaterMontant(charge.montantTTC) }}
+            </td>
+
+            <td>
+              <span
+                class="status-badge"
+                [ngClass]="getStatutClasse(charge.statutDeductibilite)">
+                {{ getStatutLibelle(charge.statutDeductibilite) }}
+              </span>
+            </td>
+
+            <td class="amount-cell retained-amount">
+              {{ formaterMontant(charge.montantRetenu) }}
+            </td>
+
+            <td>
+              <div class="table-actions">
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-pencil"
+                  class="p-button-rounded p-button-text p-button-secondary"
+                  pTooltip="Modifier le montant retenu"
+                  (click)="ouvrirDialogueModification(charge)">
+                </button>
+
+                <button
+                  pButton
+                  type="button"
+                  icon="pi pi-trash"
+                  class="p-button-rounded p-button-text p-button-danger"
+                  pTooltip="Retirer cette charge"
+                  (click)="confirmerRetrait(charge)">
+                </button>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+
+      </p-table>
+    </div>
+  </section>
+
+  <!-- Dialogue d'ajout / modification -->
+  <div
+    class="dialog-overlay"
+    *ngIf="dialogueVisible"
+    (click)="fermerDialogue()">
+
+    <section
+      class="dialog-card"
+      role="dialog"
+      aria-modal="true"
+      (click)="$event.stopPropagation()">
+
+      <div class="dialog-header">
+        <div>
+          <h2>
+            {{ modeDialogue === 'ajout' ? 'Associer une charge' : 'Modifier le montant retenu' }}
+          </h2>
+
+          <p>
+            {{ modeDialogue === 'ajout'
+              ? 'Sélectionnez une charge admissible pour cette déclaration.'
+              : 'Ajustez le montant fiscalement retenu.' }}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="dialog-close"
+          aria-label="Fermer"
+          [disabled]="traitementEnCours"
+          (click)="fermerDialogue()">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="dialog-body">
+
+        <div class="form-field" *ngIf="modeDialogue === 'ajout'">
+          <label for="chargeSelect">Charge admissible</label>
+
+          <select
+            id="chargeSelect"
+            class="form-control"
+            [(ngModel)]="chargeSelectionneeId"
+            (ngModelChange)="changerChargeSelectionnee()">
+
+            <option
+              *ngFor="let charge of chargesDisponibles"
+              [value]="charge.id">
+              {{ charge.description }}
+              — {{ formaterMontant(charge.montantDeductibleFiscalement) }}
+            </option>
+          </select>
+        </div>
+
+        <div class="selected-charge" *ngIf="modeDialogue === 'ajout' && chargeCandidate">
+          <div>
+            <span>Montant TTC</span>
+            <strong>{{ formaterMontant(chargeCandidate.montantTTC) }}</strong>
+          </div>
+
+          <div>
+            <span>Montant fiscalement admissible</span>
+            <strong>
+              {{ formaterMontant(chargeCandidate.montantDeductibleFiscalement) }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Statut fiscal</span>
+            <strong>
+              {{ getStatutLibelle(chargeCandidate.statutDeductibilite) }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="selected-charge" *ngIf="modeDialogue === 'modification' && associationSelectionnee">
+          <div>
+            <span>Charge</span>
+            <strong>{{ associationSelectionnee.descriptionCharge }}</strong>
+          </div>
+
+          <div>
+            <span>Montant TTC</span>
+            <strong>
+              {{ formaterMontant(associationSelectionnee.montantTTC) }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="montantRetenu">
+            Montant retenu (FCFA)
+          </label>
+
+          <input
+            id="montantRetenu"
+            type="number"
+            class="form-control"
+            [(ngModel)]="montantRetenuSaisi"
+            min="0.01"
+            step="0.01"
+            placeholder="Saisir le montant retenu">
+        </div>
+
+        <p class="form-hint" *ngIf="modeDialogue === 'ajout' && chargeCandidate">
+          Le montant retenu ne doit pas dépasser le montant fiscalement admissible.
+        </p>
+
+      </div>
+
+      <div class="dialog-footer">
+        <button
+          pButton
+          type="button"
+          label="Annuler"
+          class="p-button-text p-button-secondary"
+          [disabled]="traitementEnCours"
+          (click)="fermerDialogue()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          [label]="modeDialogue === 'ajout' ? 'Associer la charge' : 'Enregistrer'"
+          [icon]="modeDialogue === 'ajout' ? 'pi pi-plus' : 'pi pi-check'"
+          [loading]="traitementEnCours"
+          [disabled]="
+            montantRetenuSaisi === null ||
+            montantRetenuSaisi <= 0 ||
+            (modeDialogue === 'ajout' && !chargeCandidate)
+          "
+          (click)="enregistrer()">
+        </button>
+      </div>
+
+    </section>
+  </div>
+
+</div>

@@ -1,0 +1,1036 @@
+
+<p-toast position="top-right"></p-toast>
+<p-confirmDialog></p-confirmDialog>
+
+<div class="calcul-fiscal-page">
+
+  <!-- ====================================================== -->
+  <!-- MODE 1 : LISTE DES DÉCLARATIONS -->
+  <!-- ====================================================== -->
+
+  @if (!declarationId) {
+
+    <div class="page-header">
+      <div>
+        <h1>Gestion des calculs fiscaux</h1>
+        <p class="page-subtitle">
+          Consultez les déclarations fiscales de votre société,
+          par année fiscale et par type d'impôt.
+        </p>
+      </div>
+
+      <button
+        pButton
+        type="button"
+        label="Actualiser"
+        icon="pi pi-refresh"
+        class="p-button-outlined"
+        [disabled]="chargementListe"
+        (click)="chargerDeclarationsDisponibles()">
+      </button>
+    </div>
+
+    <section class="section-card">
+
+      <div class="section-heading">
+        <div>
+          <h2>Déclarations fiscales</h2>
+          <p>
+            Chaque déclaration est rattachée à votre société,
+            à une année fiscale et à un type d'impôt.
+          </p>
+        </div>
+
+        <p-tag
+          [value]="declarationsDisponibles.length + ' déclaration(s)'"
+          severity="info">
+        </p-tag>
+      </div>
+
+      @if (chargementListe) {
+
+        <div class="loading-container">
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>Chargement des déclarations fiscales...</span>
+        </div>
+
+      } @else if (declarationsDisponibles.length === 0) {
+
+        <div class="empty-state">
+          <i class="pi pi-file"></i>
+          <strong>Aucune déclaration fiscale disponible</strong>
+          <span>
+            Créez d'abord une déclaration fiscale pour pouvoir
+            consulter ses informations et effectuer les calculs disponibles.
+          </span>
+        </div>
+
+      } @else {
+
+        <div class="table-container">
+
+          <p-table
+            [value]="declarationsDisponibles"
+            dataKey="id"
+            [paginator]="true"
+            [rows]="10"
+            [rowsPerPageOptions]="[10, 25, 50]"
+            responsiveLayout="scroll"
+            [rowHover]="true"
+            styleClass="p-datatable-sm">
+
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Année fiscale</th>
+                <th>Type d'impôt</th>
+                <th>Périmètre fiscal</th>
+                <th>Montant de l'impôt</th>
+                <th>Mode de déduction</th>
+                <th>Échéance</th>
+                <th>Actions</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-declaration>
+              <tr>
+
+                <td>
+                  <strong>{{ declaration.anneeFiscale }}</strong>
+                </td>
+
+                <td>
+                  {{ getTypeImpotLibelle(declaration.typeImpot) }}
+                </td>
+
+                <td>
+                  <div class="charge-description">
+                    {{ getPerimetreDeclaration(declaration) }}
+                  </div>
+
+                  @if (
+                    declaration.typeImpot === TypeImpotFiscal.RevenusFonciers &&
+                    !declaration.bienImmobilierId
+                  ) {
+                    <small class="scope-hint">
+                      Tous les immeubles de la société
+                    </small>
+                  } @else if (declaration.bienImmobilierId) {
+                    <small class="scope-hint">
+                      {{ declaration.bienImmobilier?.reference || 'Immeuble spécifique' }}
+                    </small>
+                  } @else {
+                    <small class="scope-hint">
+                      Périmètre société
+                    </small>
+                  }
+                </td>
+
+                <td class="amount-cell">
+                  {{ declaration.montantImpot | currency:'XAF':'symbol':'1.0-0' }}
+                </td>
+
+                <td>
+                  <p-tag
+                    [value]="getModeDeductionLibelle(declaration.modeDeduction)"
+                    severity="info">
+                  </p-tag>
+                </td>
+
+                <td>
+                  {{ declaration.dateEcheance
+                    ? (declaration.dateEcheance | date:'dd/MM/yyyy')
+                    : 'Non renseignée' }}
+                </td>
+
+                <td>
+                  <button
+                    pButton
+                    type="button"
+                    label="Consulter"
+                    icon="pi pi-eye"
+                    size="small"
+                    (click)="ouvrirDeclaration(declaration)">
+                  </button>
+                </td>
+
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">
+                    <strong>Aucune déclaration trouvée</strong>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+
+          </p-table>
+
+        </div>
+      }
+
+    </section>
+  }
+
+  <!-- ====================================================== -->
+  <!-- MODE 2 : DÉTAIL D'UNE DÉCLARATION -->
+  <!-- ====================================================== -->
+
+  @if (declarationId) {
+
+    <div class="page-header">
+
+      <div>
+        <h1>Calcul fiscal</h1>
+        <p class="page-subtitle">
+          Consultation et traitement de la déclaration fiscale
+          sélectionnée.
+        </p>
+      </div>
+
+      <div class="header-actions">
+
+        <button
+          pButton
+          type="button"
+          label="Toutes les déclarations"
+          icon="pi pi-arrow-left"
+          class="p-button-outlined p-button-secondary"
+          (click)="revenirAuxDeclarations()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Actualiser"
+          icon="pi pi-refresh"
+          class="p-button-outlined"
+          [disabled]="chargement || chargementCharges || enCoursCalcul"
+          (click)="actualiserDeclaration()">
+        </button>
+
+        @if (estDeclarationRevenusFonciers) {
+          <button
+            pButton
+            type="button"
+            label="Calculer"
+            icon="pi pi-calculator"
+            [loading]="enCoursCalcul"
+            [disabled]="!peutCalculer"
+            (click)="calculer()">
+          </button>
+        }
+
+      </div>
+    </div>
+
+    <!-- CHARGEMENT -->
+
+    @if (chargement) {
+
+      <div class="loading-container">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>Chargement de la déclaration fiscale...</span>
+      </div>
+
+    }
+
+    @if (!chargement && declaration) {
+
+      <!-- ================================================== -->
+      <!-- INFORMATIONS GÉNÉRALES -->
+      <!-- ================================================== -->
+
+      <section class="section-card declaration-card">
+
+        <div class="section-heading">
+          <div>
+            <h2>Déclaration fiscale</h2>
+            <p>
+              Informations générales et périmètre de la déclaration.
+            </p>
+          </div>
+
+          <p-tag
+            [value]="getTypeImpotLibelle(declaration.typeImpot)"
+            severity="info">
+          </p-tag>
+        </div>
+
+        <div class="info-grid">
+
+          <div class="info-item">
+            <span class="info-label">Année fiscale</span>
+            <strong>{{ declaration.anneeFiscale }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Type d'impôt</span>
+            <strong>
+              {{ getTypeImpotLibelle(declaration.typeImpot) }}
+            </strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Périmètre fiscal</span>
+            <strong>{{ getPerimetreDeclaration(declaration) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Mode de déduction</span>
+            <strong>{{ getModeDeductionLibelle(modeDeduction) }}</strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Montant de l'impôt</span>
+            <strong>
+              {{ montantImpot | currency:'XAF':'symbol':'1.0-0' }}
+            </strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Date d'échéance</span>
+            <strong>
+              {{ declaration.dateEcheance
+                ? (declaration.dateEcheance | date:'dd/MM/yyyy')
+                : 'Non renseignée' }}
+            </strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Date de déclaration</span>
+            <strong>
+              {{ declaration.dateDeclaration
+                ? (declaration.dateDeclaration | date:'dd/MM/yyyy')
+                : 'Non renseignée' }}
+            </strong>
+          </div>
+
+          <div class="info-item">
+            <span class="info-label">Dernier calcul</span>
+            <strong>
+              {{ declaration.dateCalcul
+                ? (declaration.dateCalcul | date:'dd/MM/yyyy HH:mm')
+                : 'Aucun calcul effectué' }}
+            </strong>
+          </div>
+
+        </div>
+
+        <div
+          class="calculation-info"
+          [class.calculation-warning]="estDeclarationRevenusFonciers && !declarationGlobaleSociete">
+
+          <i
+            class="pi"
+            [ngClass]="
+              estDeclarationRevenusFonciers && !declarationGlobaleSociete
+                ? 'pi-exclamation-triangle'
+                : 'pi-info-circle'
+            ">
+          </i>
+
+          <span>{{ getPerimetreDescription() }}</span>
+        </div>
+
+      </section>
+
+      <!-- ================================================== -->
+      <!-- DÉCLARATION DE REVENUS FONCIERS -->
+      <!-- ================================================== -->
+
+      @if (estDeclarationRevenusFonciers) {
+
+        @if (!declarationGlobaleSociete) {
+
+          <section class="section-card warning-card">
+
+            <div class="warning-content">
+              <i class="pi pi-exclamation-triangle"></i>
+
+              <div>
+                <h2>Périmètre fiscal incorrect</h2>
+
+                <p>
+                  Une déclaration de revenus fonciers doit être globale
+                  à la société. Elle ne doit pas être rattachée à un seul
+                  immeuble.
+                </p>
+
+                <p>
+                  Le calcul est désactivé pour cette déclaration.
+                  Il faut corriger son périmètre avant de pouvoir calculer
+                  les revenus fonciers de l'ensemble du patrimoine.
+                </p>
+              </div>
+            </div>
+
+          </section>
+
+        } @else {
+
+          <!-- RÉSULTATS FISCAUX -->
+
+          <section class="section-card">
+
+            <div class="section-heading">
+              <div>
+                <h2>Résultats du calcul fiscal</h2>
+                <p>
+                  Synthèse des revenus et des déductions de tous les
+                  immeubles de la société pour l'année
+                  {{ declaration.anneeFiscale }}.
+                </p>
+              </div>
+
+              <p-tag
+                value="Patrimoine global"
+                severity="success">
+              </p-tag>
+            </div>
+
+            <div class="global-scope-banner">
+              <i class="pi pi-building"></i>
+
+              <div>
+                <strong>Calcul à l'échelle de la société</strong>
+                <span>
+                  Les loyers et les charges de tous les immeubles
+                  sont regroupés dans cette déclaration.
+                </span>
+              </div>
+            </div>
+
+            <div class="results-grid">
+
+              <div class="result-card">
+                <span class="result-label">Total des loyers bruts</span>
+
+                <strong class="result-value">
+                  {{ totalLoyersBruts | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Loyers encaissés sur l'ensemble du patrimoine immobilier
+                  pendant l'année fiscale.
+                </span>
+              </div>
+
+              @if (modeDeduction === ModeDeductionCharges.Forfait30Pourcent) {
+
+                <div class="result-card deduction-card">
+                  <span class="result-label">
+                    Charges forfaitaires (30 %)
+                  </span>
+
+                  <strong class="result-value">
+                    {{ chargesForfaitaires | currency:'XAF':'symbol':'1.0-0' }}
+                  </strong>
+
+                  <span class="result-description">
+                    Déduction forfaitaire calculée sur les loyers bruts
+                    de tous les immeubles.
+                  </span>
+                </div>
+
+              }
+
+              @if (modeDeduction === ModeDeductionCharges.FraisReels) {
+
+                <div class="result-card deduction-card">
+                  <span class="result-label">
+                    Charges réelles déclarées
+                  </span>
+
+                  <strong class="result-value">
+                    {{ chargesReellesDeclarees | currency:'XAF':'symbol':'1.0-0' }}
+                  </strong>
+
+                  <span class="result-description">
+                    Montant des charges déclarées pour tous les immeubles.
+                  </span>
+                </div>
+
+                <div class="result-card deduction-card">
+                  <span class="result-label">
+                    Charges réelles admissibles
+                  </span>
+
+                  <strong class="result-value">
+                    {{ chargesReellesAdmissibles | currency:'XAF':'symbol':'1.0-0' }}
+                  </strong>
+
+                  <span class="result-description">
+                    Montant fiscalement déductible.
+                  </span>
+                </div>
+
+              }
+
+              <div class="result-card">
+                <span class="result-label">Revenu net foncier</span>
+
+                <strong class="result-value">
+                  {{ revenuNetFoncier | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Loyers bruts de la société après déductions.
+                </span>
+              </div>
+
+              <div class="result-card">
+                <span class="result-label">Base imposable</span>
+
+                <strong class="result-value">
+                  {{ baseImposable | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Base retenue pour la déclaration fiscale.
+                </span>
+              </div>
+
+              <div class="result-card">
+                <span class="result-label">Montant de l'impôt</span>
+
+                <strong class="result-value">
+                  {{ montantImpot | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Montant d'impôt renseigné sur la déclaration.
+                </span>
+              </div>
+
+              <div class="result-card cac-card">
+                <span class="result-label">
+                  Centimes additionnels communaux (CAC)
+                </span>
+
+                <strong class="result-value">
+                  {{ montantCac | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  {{ (tauxCac * 100) | number:'1.0-2' }} %
+                  de l'impôt principal
+                </span>
+
+                <small class="cac-detail">
+                  Base de calcul :
+                  {{ montantImpotPrincipal | currency:'XAF':'symbol':'1.0-0' }}
+                </small>
+              </div>
+
+              <div class="result-card">
+                <span class="result-label">Acomptes versés</span>
+
+                <strong class="result-value">
+                  {{ acomptesVerses | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Paiements déjà effectués.
+                </span>
+              </div>
+
+              <div class="result-card balance-card">
+                <span class="result-label">Solde de l'impôt</span>
+
+                <strong class="result-value">
+                  {{ soldeImpot | currency:'XAF':'symbol':'1.0-0' }}
+                </strong>
+
+                <span class="result-description">
+                  Impôt restant après déduction des acomptes.
+                </span>
+              </div>
+
+            </div>
+
+            @if (resultat) {
+
+              <div class="calculation-success">
+                <i class="pi pi-check-circle"></i>
+                <span>
+                  Calcul effectué le
+                  {{ resultat.dateCalcul | date:'dd/MM/yyyy à HH:mm' }}.
+                </span>
+              </div>
+
+            } @else if (!declaration.dateCalcul) {
+
+              <div class="calculation-info">
+                <i class="pi pi-info-circle"></i>
+                <span>
+                  Aucun calcul n'a encore été effectué pour cette déclaration.
+                  Clique sur « Calculer » pour obtenir les résultats globaux
+                  de la société.
+                </span>
+              </div>
+
+            }
+
+          </section>
+
+          <!-- ================================================== -->
+          <!-- CHARGES DISPONIBLES À ASSOCIER -->
+          <!-- ================================================== -->
+
+          <section class="section-card">
+
+            <div class="section-heading">
+              <div>
+                <h2>Charges disponibles à ajouter</h2>
+                <p>
+                  Sélectionnez les charges admissibles provenant de tous les immeubles
+                  de la société pour l'année fiscale {{ declaration.anneeFiscale }}.
+                </p>
+              </div>
+
+              <p-tag
+                [value]="chargesDisponibles.length + ' disponible(s)'"
+                severity="info">
+              </p-tag>
+            </div>
+
+            @if (modeDeduction !== ModeDeductionCharges.FraisReels) {
+
+              <div class="calculation-info">
+                <i class="pi pi-info-circle"></i>
+                <span>
+                  Le mode forfaitaire de 30 % est sélectionné.
+                  L'ajout de charges réelles est réservé au mode Frais réels.
+                </span>
+              </div>
+
+            } @else if (chargementChargesDisponibles) {
+
+              <div class="loading-container compact">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Recherche des charges admissibles de tous les immeubles...</span>
+              </div>
+
+            } @else if (chargesDisponibles.length === 0) {
+
+              <div class="empty-state">
+                <i class="pi pi-check-circle"></i>
+                <strong>Aucune charge disponible</strong>
+                <span>
+                  Toutes les charges admissibles de cette année sont déjà associées
+                  à la déclaration, ou aucune charge admissible n'a été trouvée.
+                </span>
+              </div>
+
+            } @else {
+
+              <div class="table-container">
+
+                <p-table
+                  [value]="chargesDisponibles"
+                  dataKey="id"
+                  [tableStyle]="{ 'min-width': '1050px' }"
+                  responsiveLayout="scroll"
+                  styleClass="p-datatable-sm">
+
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Immeuble</th>
+                      <th>Description</th>
+                      <th>Date de dépense</th>
+                      <th>Statut fiscal</th>
+                      <th class="text-right">Montant TTC</th>
+                      <th class="text-right">Montant déductible</th>
+                      <th class="text-right">Montant à retenir</th>
+                      <th class="text-center">Action</th>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="body" let-charge>
+                    <tr>
+
+                      <td>
+                        <div class="charge-description">
+                          {{ charge.bienImmobilierNom }}
+                        </div>
+
+                        @if (charge.bienImmobilierReference) {
+                          <small class="scope-hint">
+                            {{ charge.bienImmobilierReference }}
+                          </small>
+                        }
+                      </td>
+
+                      <td>
+                        <span class="charge-description">
+                          {{ charge.description }}
+                        </span>
+                      </td>
+
+                      <td>
+                        {{ charge.dateDepense | date:'dd/MM/yyyy' }}
+                      </td>
+
+                      <td>
+                        <p-tag
+                          [value]="getStatutDeductibiliteLibelle(charge.statutDeductibilite)"
+                          [severity]="getStatutDeductibiliteSeverity(charge.statutDeductibilite)">
+                        </p-tag>
+                      </td>
+
+                      <td class="text-right amount-cell">
+                        {{ charge.montantTTC | currency:'XAF':'symbol':'1.0-0' }}
+                      </td>
+
+                      <td class="text-right amount-cell">
+                        {{ charge.montantDeductibleFiscalement | currency:'XAF':'symbol':'1.0-0' }}
+                      </td>
+
+                      <td class="text-right">
+                        <p-inputNumber
+                          [(ngModel)]="charge.montantRetenuModifie"
+                          mode="currency"
+                          currency="XAF"
+                          locale="fr-FR"
+                          [min]="1"
+                          [max]="charge.montantDeductibleFiscalement"
+                          [minFractionDigits]="0"
+                          [maxFractionDigits]="0">
+                        </p-inputNumber>
+                      </td>
+
+                      <td class="actions-cell">
+                        <button
+                          pButton
+                          type="button"
+                          label="Ajouter"
+                          icon="pi pi-plus"
+                          size="small"
+                          [loading]="ajoutEnCoursId === charge.id"
+                          [disabled]="
+                            !!ajoutEnCoursId ||
+                            enCoursCalcul ||
+                            !charge.montantRetenuModifie ||
+                            charge.montantRetenuModifie <= 0 ||
+                            charge.montantRetenuModifie > charge.montantDeductibleFiscalement
+                          "
+                          (click)="ajouterCharge(charge)">
+                        </button>
+                      </td>
+
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="8">
+                        <div class="empty-state">
+                          Aucune charge disponible.
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+
+                </p-table>
+
+              </div>
+
+            }
+
+          </section>
+
+          <!-- ================================================== -->
+          <!-- CHARGES ASSOCIÉES -->
+          <!-- ================================================== -->
+
+          <section class="section-card">
+
+            <div class="section-heading">
+              <div>
+                <h2>Charges retenues dans la déclaration</h2>
+                <p>
+                  Charges associées à la déclaration globale de la société.
+                </p>
+              </div>
+
+              <p-tag
+                [value]="nombreCharges + ' charge(s)'"
+                severity="secondary">
+              </p-tag>
+            </div>
+
+            @if (modeDeduction === ModeDeductionCharges.Forfait30Pourcent) {
+
+              <div class="calculation-info">
+                <i class="pi pi-info-circle"></i>
+                <span>
+                  Le mode forfaitaire de 30 % est sélectionné.
+                  Les charges réelles ne sont pas ajoutées à la déduction
+                  forfaitaire. Elles restent consultables, mais leurs montants
+                  retenus ne sont pas modifiables dans ce mode.
+                </span>
+              </div>
+
+            }
+
+            @if (chargementCharges) {
+
+              <div class="loading-container compact">
+                <i class="pi pi-spin pi-spinner"></i>
+                <span>Chargement des charges...</span>
+              </div>
+
+            } @else if (charges.length === 0) {
+
+              <div class="empty-state">
+                <i class="pi pi-file"></i>
+                <strong>Aucune charge associée</strong>
+                <span>
+                  Aucune charge n'a été retenue dans cette déclaration.
+                </span>
+              </div>
+
+            } @else {
+
+              <div class="table-container">
+
+                <p-table
+                  [value]="charges"
+                  dataKey="id"
+                  [tableStyle]="{ 'min-width': '850px' }"
+                  responsiveLayout="scroll"
+                  styleClass="p-datatable-sm">
+
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>Description</th>
+                      <th>Date de dépense</th>
+                      <th>Statut fiscal</th>
+                      <th class="text-right">Montant TTC</th>
+                      <th class="text-right">Montant retenu</th>
+                      <th class="text-center">Actions</th>
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="body" let-charge>
+                    <tr>
+
+                      <td>
+                        <span class="charge-description">
+                          {{ charge.descriptionCharge }}
+                        </span>
+                      </td>
+
+                      <td>
+                        {{ charge.dateDepense | date:'dd/MM/yyyy' }}
+                      </td>
+
+                      <td>
+                        <p-tag
+                          [value]="getStatutDeductibiliteLibelle(charge.statutDeductibilite)"
+                          [severity]="getStatutDeductibiliteSeverity(charge.statutDeductibilite)">
+                        </p-tag>
+                      </td>
+
+                      <td class="text-right amount-cell">
+                        {{ charge.montantTTC | currency:'XAF':'symbol':'1.0-0' }}
+                      </td>
+
+                      <td class="text-right">
+                        <p-inputNumber
+                          [(ngModel)]="charge.montantRetenuModifie"
+                          mode="currency"
+                          currency="XAF"
+                          locale="fr-FR"
+                          [min]="0"
+                          [max]="charge.montantTTC"
+                          [minFractionDigits]="0"
+                          [maxFractionDigits]="0"
+                          [disabled]="
+                            modeDeduction !== ModeDeductionCharges.FraisReels ||
+                            charge.modificationEnCours ||
+                            enCoursCalcul
+                          ">
+                        </p-inputNumber>
+                      </td>
+
+                      <td class="actions-cell">
+
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-save"
+                          class="p-button-rounded p-button-text p-button-success"
+                          pTooltip="Enregistrer le montant"
+                          [loading]="charge.modificationEnCours"
+                          [disabled]="
+                            modeDeduction !== ModeDeductionCharges.FraisReels ||
+                            charge.modificationEnCours ||
+                            enCoursCalcul ||
+                            charge.montantRetenuModifie === charge.montantRetenu
+                          "
+                          (click)="modifierMontantRetenu(charge)">
+                        </button>
+
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-undo"
+                          class="p-button-rounded p-button-text p-button-secondary"
+                          pTooltip="Annuler la modification"
+                          [disabled]="
+                            charge.modificationEnCours ||
+                            enCoursCalcul ||
+                            charge.montantRetenuModifie === charge.montantRetenu
+                          "
+                          (click)="annulerModification(charge)">
+                        </button>
+
+                        <button
+                          pButton
+                          type="button"
+                          icon="pi pi-trash"
+                          class="p-button-rounded p-button-text p-button-danger"
+                          pTooltip="Retirer la charge"
+                          [disabled]="charge.modificationEnCours || enCoursCalcul"
+                          (click)="confirmerRetraitCharge(charge)">
+                        </button>
+
+                      </td>
+
+                    </tr>
+                  </ng-template>
+
+                  <ng-template pTemplate="emptymessage">
+                    <tr>
+                      <td colspan="6">
+                        <div class="empty-state">
+                          Aucune charge à afficher.
+                        </div>
+                      </td>
+                    </tr>
+                  </ng-template>
+
+                </p-table>
+
+              </div>
+
+            }
+
+          </section>
+
+          <!-- ================================================== -->
+          <!-- ACTION FINALE -->
+          <!-- ================================================== -->
+
+          <div class="footer-actions">
+
+            <div>
+              <strong>Prêt à calculer les revenus fonciers ?</strong>
+              <p>
+                Le calcul prendra en compte tous les immeubles de la société
+                pour l'année {{ declaration.anneeFiscale }}.
+              </p>
+            </div>
+
+            <button
+              pButton
+              type="button"
+              label="Lancer le calcul fiscal"
+              icon="pi pi-calculator"
+              [loading]="enCoursCalcul"
+              [disabled]="!peutCalculer"
+              (click)="calculer()">
+            </button>
+
+          </div>
+
+        }
+
+      } @else {
+
+        <!-- AUTRES TYPES D'IMPÔTS -->
+
+        <section class="section-card">
+
+          <div class="section-heading">
+            <div>
+              <h2>Informations fiscales</h2>
+              <p>
+                Suivi de la déclaration pour l'année
+                {{ declaration.anneeFiscale }}.
+              </p>
+            </div>
+          </div>
+
+          <div class="results-grid">
+
+            <div class="result-card">
+              <span class="result-label">Base imposable</span>
+
+              <strong class="result-value">
+                {{ baseImposable | currency:'XAF':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+            <div class="result-card">
+              <span class="result-label">Montant de l'impôt</span>
+
+              <strong class="result-value">
+                {{ montantImpot | currency:'XAF':'symbol':'1.0-0' }}
+              </strong>
+            </div>
+
+          </div>
+
+          <div class="calculation-info">
+            <i class="pi pi-info-circle"></i>
+            <span>
+              Cette déclaration est consultable dans le module de suivi fiscal.
+              Le calcul automatique spécifique à ce type d'impôt n'est pas
+              encore disponible dans ce module.
+            </span>
+          </div>
+
+        </section>
+
+      }
+
+    } @else if (!chargement && !declaration) {
+
+      <div class="empty-state page-empty">
+        <i class="pi pi-exclamation-circle"></i>
+
+        <strong>Déclaration non disponible</strong>
+
+        <span>
+          La déclaration fiscale demandée n'a pas pu être chargée.
+        </span>
+
+        <button
+          pButton
+          type="button"
+          label="Réessayer"
+          icon="pi pi-refresh"
+          class="p-button-outlined"
+          (click)="chargerDeclaration()">
+        </button>
+
+        <button
+          pButton
+          type="button"
+          label="Retour aux déclarations"
+          icon="pi pi-arrow-left"
+          class="p-button-text"
+          (click)="revenirAuxDeclarations()">
+        </button>
+      </div>
+
+    }
+
+  }
+
+</div>

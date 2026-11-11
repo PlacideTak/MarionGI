@@ -1,11 +1,13 @@
-﻿using System.Security.Claims;
-using MarionGI.Application.Dtos;
+﻿using MarionGI.Application.Dtos;
+using MarionGI.Application.Interfaces;
 using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace MarionGI.Api.Controllers;
 
@@ -15,14 +17,70 @@ namespace MarionGI.Api.Controllers;
 public class DeclarationsFiscalesController : ControllerBase
 {
     private readonly MarionDbContext _context;
+    private readonly ICalculFiscalService _calculFiscalService;
 
-    public DeclarationsFiscalesController(MarionDbContext context)
+    public DeclarationsFiscalesController(
+        MarionDbContext context,
+        ICalculFiscalService calculFiscalService)
     {
         _context = context;
+        _calculFiscalService = calculFiscalService;
     }
 
     // ============================================================
+    // POST : api/DeclarationsFiscales/{id}/calculer
+    // Calcul des données fiscales
+    // ============================================================
+
+
+    [HttpPost("{id:guid}/calculer")]
+    [Authorize(Policy = "DeclarationsFiscales.Update")]
+    public async Task<IActionResult> CalculerDeclarationFiscale(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequest(new
+            {
+                Message = "L'identifiant de la déclaration est invalide."
+            });
+        }
+
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
+
+        if (societeId == null)
+        {
+            return Unauthorized(new
+            {
+                Message = "Impossible de déterminer le propriétaire connecté."
+            });
+        }
+
+        try
+        {
+            var resultat =
+                await _calculFiscalService.CalculerDeclarationAsync(
+                    id,
+                    societeId.Value,
+                    cancellationToken);
+
+            return Ok(resultat);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new
+            {
+                Message = ex.Message
+            });
+        }
+    }
+
+
+    // ============================================================
     // GET : api/DeclarationsFiscales
+    // Liste des déclarations de la société connectée
     // ============================================================
 
     [HttpGet]
@@ -30,8 +88,8 @@ public class DeclarationsFiscalesController : ControllerBase
     public async Task<IActionResult> GetDeclarationsFiscales(
         CancellationToken cancellationToken)
     {
-        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
-            cancellationToken);
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
@@ -74,6 +132,21 @@ public class DeclarationsFiscalesController : ControllerBase
                 d.ReferenceDeclaration,
                 d.Observations,
                 d.Statut,
+
+                d.OptionDeductionFiscaleId,
+                d.ModeDeduction,
+                d.TotalLoyersBruts,
+                d.ChargesForfaitaires,
+                d.ChargesReellesDeclarees,
+                d.ChargesReellesAdmissibles,
+                d.RevenuNetFoncier,
+                d.AcomptesVerses,
+                d.SoldeImpot,
+                d.DateCalcul,
+
+                NombreChargesRetenues = d.ChargesRetenues
+                    .Count(c => !c.EstSupprime),
+
                 d.DateCreation
             })
             .ToListAsync(cancellationToken);
@@ -83,6 +156,7 @@ public class DeclarationsFiscalesController : ControllerBase
 
     // ============================================================
     // GET : api/DeclarationsFiscales/{id}
+    // Détail d'une déclaration
     // ============================================================
 
     [HttpGet("{id:guid}")]
@@ -99,8 +173,8 @@ public class DeclarationsFiscalesController : ControllerBase
             });
         }
 
-        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
-            cancellationToken);
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
@@ -143,6 +217,34 @@ public class DeclarationsFiscalesController : ControllerBase
                 d.ReferenceDeclaration,
                 d.Observations,
                 d.Statut,
+
+                d.OptionDeductionFiscaleId,
+                d.ModeDeduction,
+
+                d.TotalLoyersBruts,
+                d.ChargesForfaitaires,
+                d.ChargesReellesDeclarees,
+                d.ChargesReellesAdmissibles,
+                d.RevenuNetFoncier,
+                d.AcomptesVerses,
+                d.SoldeImpot,
+                d.DateCalcul,
+
+                ChargesRetenues = d.ChargesRetenues
+                    .Where(c => !c.EstSupprime)
+                    .OrderBy(c => c.DateDepense)
+                    .Select(c => new
+                    {
+                        c.Id,
+                        c.ChargeBienId,
+                        c.DescriptionCharge,
+                        c.DateDepense,
+                        c.MontantTTC,
+                        c.StatutDeductibilite,
+                        c.MontantRetenu
+                    })
+                    .ToList(),
+
                 d.DateCreation
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -160,6 +262,7 @@ public class DeclarationsFiscalesController : ControllerBase
 
     // ============================================================
     // POST : api/DeclarationsFiscales
+    // Création d'une déclaration
     // ============================================================
 
     [HttpPost]
@@ -183,8 +286,15 @@ public class DeclarationsFiscalesController : ControllerBase
             return BadRequest(new { Message = erreur });
         }
 
-        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
-            cancellationToken);
+        erreur = ValiderPerimetreDeclaration(dto);
+
+        if (erreur != null)
+        {
+            return BadRequest(new { Message = erreur });
+        }
+
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
@@ -194,7 +304,24 @@ public class DeclarationsFiscalesController : ControllerBase
             });
         }
 
-        // Vérifier que le bien éventuel appartient au propriétaire.
+        // Vérifier l'unicité de la déclaration.
+        var declarationExiste = await DeclarationExisteDejaAsync(
+            societeId.Value,
+            dto.AnneeFiscale,
+            dto.TypeImpot,
+            dto.BienImmobilierId,
+            null,
+            cancellationToken);
+
+        if (declarationExiste)
+        {
+            return Conflict(new
+            {
+                Message = ObtenirMessageDoublon(dto.TypeImpot)
+            });
+        }
+
+        // Vérifier le bien immobilier éventuel.
         if (dto.BienImmobilierId.HasValue)
         {
             var bienExiste = await _context.BiensImmobiliers
@@ -215,16 +342,43 @@ public class DeclarationsFiscalesController : ControllerBase
             }
         }
 
+        // Vérifier l'option fiscale.
+        OptionDeductionFiscale? option = null;
+
+        if (dto.OptionDeductionFiscaleId.HasValue)
+        {
+            option = await _context.OptionsDeductionFiscales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    o =>
+                        o.Id == dto.OptionDeductionFiscaleId.Value &&
+                        !o.EstSupprime &&
+                        o.SocieteId == societeId.Value &&
+                        o.AnneeFiscale == dto.AnneeFiscale,
+                    cancellationToken);
+
+            if (option == null)
+            {
+                return BadRequest(new
+                {
+                    Message = "L'option de déduction fiscale est introuvable, ne correspond pas à l'année fiscale ou n'appartient pas au propriétaire connecté."
+                });
+            }
+        }
+
         var declaration = new DeclarationFiscale
         {
             Id = Guid.NewGuid(),
 
-            // Le propriétaire est déterminé par le serveur.
             SocieteId = societeId.Value,
+
+            // Revenus fonciers : null = tous les immeubles
+            // de la société.
             BienImmobilierId = dto.BienImmobilierId,
 
             AnneeFiscale = dto.AnneeFiscale,
             TypeImpot = dto.TypeImpot,
+
             BaseImposable = dto.BaseImposable,
             MontantImpot = dto.MontantImpot,
 
@@ -239,13 +393,35 @@ public class DeclarationsFiscalesController : ControllerBase
 
             Statut = dto.Statut,
 
+            OptionDeductionFiscaleId = option?.Id,
+            ModeDeduction = option?.ModeDeduction,
+
+            TotalLoyersBruts = null,
+            ChargesForfaitaires = null,
+            ChargesReellesDeclarees = null,
+            ChargesReellesAdmissibles = null,
+            RevenuNetFoncier = null,
+            AcomptesVerses = null,
+            SoldeImpot = null,
+            DateCalcul = null,
+
             DateCreation = DateTime.UtcNow,
             EstSupprime = false
         };
 
         _context.DeclarationsFiscales.Add(declaration);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (EstViolationUnicite(ex))
+        {
+            return Conflict(new
+            {
+                Message = ObtenirMessageDoublon(dto.TypeImpot)
+            });
+        }
 
         return CreatedAtAction(
             nameof(GetDeclarationFiscale),
@@ -263,12 +439,16 @@ public class DeclarationsFiscalesController : ControllerBase
                 declaration.DateDeclaration,
                 declaration.ReferenceDeclaration,
                 declaration.Observations,
-                declaration.Statut
+                declaration.Statut,
+                declaration.OptionDeductionFiscaleId,
+                declaration.ModeDeduction,
+                declaration.DateCreation
             });
     }
 
     // ============================================================
     // PUT : api/DeclarationsFiscales/{id}
+    // Modification d'une déclaration
     // ============================================================
 
     [HttpPut("{id:guid}")]
@@ -309,8 +489,15 @@ public class DeclarationsFiscalesController : ControllerBase
             return BadRequest(new { Message = erreur });
         }
 
-        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
-            cancellationToken);
+        erreur = ValiderPerimetreDeclaration(dto);
+
+        if (erreur != null)
+        {
+            return BadRequest(new { Message = erreur });
+        }
+
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
@@ -336,7 +523,47 @@ public class DeclarationsFiscalesController : ControllerBase
             });
         }
 
-        // Vérifier le nouveau bien éventuel.
+        // Empêcher la modification du périmètre après calcul
+        // ou après association de charges.
+        var declarationDejaCalculee =
+            declaration.DateCalcul.HasValue ||
+            await _context.DeclarationsChargesBiens
+                .AnyAsync(
+                    c =>
+                        c.DeclarationFiscaleId == declaration.Id &&
+                        !c.EstSupprime,
+                    cancellationToken);
+
+        if (declarationDejaCalculee &&
+            (declaration.AnneeFiscale != dto.AnneeFiscale ||
+             declaration.OptionDeductionFiscaleId != dto.OptionDeductionFiscaleId ||
+             declaration.BienImmobilierId != dto.BienImmobilierId ||
+             declaration.TypeImpot != dto.TypeImpot))
+        {
+            return BadRequest(new
+            {
+                Message = "Cette déclaration possède déjà un calcul fiscal ou des charges retenues. Son année, son bien, son type d'impôt et son option de déduction ne peuvent plus être modifiés directement. Un processus de recalcul est nécessaire."
+            });
+        }
+
+        // Vérifier l'unicité en excluant la déclaration actuelle.
+        var declarationExiste = await DeclarationExisteDejaAsync(
+            societeId.Value,
+            dto.AnneeFiscale,
+            dto.TypeImpot,
+            dto.BienImmobilierId,
+            declaration.Id,
+            cancellationToken);
+
+        if (declarationExiste)
+        {
+            return Conflict(new
+            {
+                Message = ObtenirMessageDoublon(dto.TypeImpot)
+            });
+        }
+
+        // Vérifier le bien immobilier éventuel.
         if (dto.BienImmobilierId.HasValue)
         {
             var bienExiste = await _context.BiensImmobiliers
@@ -357,10 +584,36 @@ public class DeclarationsFiscalesController : ControllerBase
             }
         }
 
+        // Vérifier l'option fiscale.
+        OptionDeductionFiscale? option = null;
+
+        if (dto.OptionDeductionFiscaleId.HasValue)
+        {
+            option = await _context.OptionsDeductionFiscales
+                .AsNoTracking()
+                .FirstOrDefaultAsync(
+                    o =>
+                        o.Id == dto.OptionDeductionFiscaleId.Value &&
+                        !o.EstSupprime &&
+                        o.SocieteId == societeId.Value &&
+                        o.AnneeFiscale == dto.AnneeFiscale,
+                    cancellationToken);
+
+            if (option == null)
+            {
+                return BadRequest(new
+                {
+                    Message = "L'option de déduction fiscale est introuvable, ne correspond pas à l'année fiscale ou n'appartient pas au propriétaire connecté."
+                });
+            }
+        }
+
+        // Appliquer les modifications.
         declaration.BienImmobilierId = dto.BienImmobilierId;
 
         declaration.AnneeFiscale = dto.AnneeFiscale;
         declaration.TypeImpot = dto.TypeImpot;
+
         declaration.BaseImposable = dto.BaseImposable;
         declaration.MontantImpot = dto.MontantImpot;
 
@@ -375,13 +628,27 @@ public class DeclarationsFiscalesController : ControllerBase
 
         declaration.Statut = dto.Statut;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        declaration.OptionDeductionFiscaleId = option?.Id;
+        declaration.ModeDeduction = option?.ModeDeduction;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (EstViolationUnicite(ex))
+        {
+            return Conflict(new
+            {
+                Message = ObtenirMessageDoublon(dto.TypeImpot)
+            });
+        }
 
         return NoContent();
     }
 
     // ============================================================
     // DELETE : api/DeclarationsFiscales/{id}
+    // Suppression logique
     // ============================================================
 
     [HttpDelete("{id:guid}")]
@@ -398,8 +665,8 @@ public class DeclarationsFiscalesController : ControllerBase
             });
         }
 
-        var societeId = await GetSocieteIdUtilisateurConnecteAsync(
-            cancellationToken);
+        var societeId =
+            await GetSocieteIdUtilisateurConnecteAsync(cancellationToken);
 
         if (societeId == null)
         {
@@ -425,6 +692,8 @@ public class DeclarationsFiscalesController : ControllerBase
             });
         }
 
+        // Les associations de charges sont conservées
+        // pour préserver l'historique fiscal.
         declaration.EstSupprime = true;
         declaration.DateSuppression = DateTime.UtcNow;
 
@@ -434,13 +703,67 @@ public class DeclarationsFiscalesController : ControllerBase
     }
 
     // ============================================================
-    // VALIDATION
+    // VALIDATION DU TYPE ET DU PÉRIMÈTRE FISCAL
     // ============================================================
+
+    private static string? ValiderPerimetreDeclaration(
+        DeclarationFiscaleRequest dto)
+    {
+        switch (dto.TypeImpot)
+        {
+            case TypeImpotFiscal.RevenusFonciers:
+
+                if (dto.BienImmobilierId.HasValue)
+                {
+                    return "Une déclaration de revenus fonciers doit être globale à la société. Aucun bien immobilier ne doit être sélectionné.";
+                }
+
+                if (!dto.OptionDeductionFiscaleId.HasValue)
+                {
+                    return "Une option de déduction fiscale doit être sélectionnée pour une déclaration de revenus fonciers.";
+                }
+
+                break;
+
+            case TypeImpotFiscal.ProprieteFonciere:
+
+                if (!dto.BienImmobilierId.HasValue)
+                {
+                    return "Une déclaration de propriété foncière doit obligatoirement être associée à un bien immobilier.";
+                }
+
+                if (dto.OptionDeductionFiscaleId.HasValue)
+                {
+                    return "L'option de déduction des revenus fonciers ne s'applique pas à une déclaration de propriété foncière.";
+                }
+
+                break;
+
+            default:
+
+                // Les autres types sont globaux à la société
+                // tant qu'une règle métier spécifique n'est pas définie.
+                if (dto.BienImmobilierId.HasValue)
+                {
+                    return "Ce type de déclaration doit être global à la société. Aucun bien immobilier ne doit être sélectionné.";
+                }
+
+                if (dto.OptionDeductionFiscaleId.HasValue)
+                {
+                    return "L'option de déduction fiscale est réservée aux déclarations de revenus fonciers.";
+                }
+
+                break;
+        }
+
+        return null;
+    }
 
     private static string? ValiderDeclaration(
         DeclarationFiscaleRequest dto)
     {
-        if (dto.AnneeFiscale < 1900 || dto.AnneeFiscale > 2100)
+        if (dto.AnneeFiscale < 1900 ||
+            dto.AnneeFiscale > 2100)
         {
             return "L'année fiscale doit être comprise entre 1900 et 2100.";
         }
@@ -448,6 +771,11 @@ public class DeclarationsFiscalesController : ControllerBase
         if (!Enum.IsDefined(typeof(TypeImpotFiscal), dto.TypeImpot))
         {
             return "Le type d'impôt sélectionné est invalide.";
+        }
+
+        if (dto.TypeImpot == TypeImpotFiscal.NonDefini)
+        {
+            return "Vous devez sélectionner un type d'impôt valide.";
         }
 
         if (!Enum.IsDefined(
@@ -468,9 +796,9 @@ public class DeclarationsFiscalesController : ControllerBase
             return "Le montant de l'impôt ne peut pas être négatif.";
         }
 
-        if (dto.ReferenceDeclaration?.Trim().Length > 150)
+        if (dto.ReferenceDeclaration?.Trim().Length > 200)
         {
-            return "La référence de la déclaration ne doit pas dépasser 150 caractères.";
+            return "La référence de la déclaration ne doit pas dépasser 200 caractères.";
         }
 
         if (dto.Observations?.Trim().Length > 2000)
@@ -492,6 +820,86 @@ public class DeclarationsFiscalesController : ControllerBase
 
         return null;
     }
+
+    // ============================================================
+    // VÉRIFICATION DES DOUBLONS
+    // ============================================================
+
+    private async Task<bool> DeclarationExisteDejaAsync(
+        Guid societeId,
+        int anneeFiscale,
+        TypeImpotFiscal typeImpot,
+        Guid? bienImmobilierId,
+        Guid? declarationIdExclue,
+        CancellationToken cancellationToken)
+    {
+        var query = _context.DeclarationsFiscales
+            .AsNoTracking()
+            .Where(d =>
+                !d.EstSupprime &&
+                d.SocieteId == societeId &&
+                d.AnneeFiscale == anneeFiscale &&
+                d.TypeImpot == typeImpot);
+
+        if (declarationIdExclue.HasValue)
+        {
+            query = query.Where(
+                d => d.Id != declarationIdExclue.Value);
+        }
+
+        if (typeImpot == TypeImpotFiscal.RevenusFonciers)
+        {
+            // Une seule déclaration globale par société et année.
+            query = query.Where(
+                d => d.BienImmobilierId == null);
+        }
+        else if (typeImpot == TypeImpotFiscal.ProprieteFonciere)
+        {
+            // Une déclaration par immeuble et par année.
+            query = query.Where(
+                d => d.BienImmobilierId == bienImmobilierId);
+        }
+        else
+        {
+            // Les autres types sont globaux à la société.
+            query = query.Where(
+                d => d.BienImmobilierId == null);
+        }
+
+        return await query.AnyAsync(cancellationToken);
+    }
+
+    private static string ObtenirMessageDoublon(
+        TypeImpotFiscal typeImpot)
+    {
+        return typeImpot switch
+        {
+            TypeImpotFiscal.RevenusFonciers =>
+                "Une déclaration globale de revenus fonciers existe déjà pour cette société et cette année fiscale.",
+
+            TypeImpotFiscal.ProprieteFonciere =>
+                "Une déclaration de propriété foncière existe déjà pour ce bien et cette année fiscale.",
+
+            _ =>
+                "Une déclaration de ce type existe déjà pour cette société et cette année fiscale."
+        };
+    }
+
+    // ============================================================
+    // GESTION DES VIOLATIONS D'UNICITÉ SQL SERVER
+    // ============================================================
+
+    private static bool EstViolationUnicite(
+        DbUpdateException exception)
+    {
+        return exception.GetBaseException() is SqlException sqlException
+            && (sqlException.Number == 2601 ||
+                sqlException.Number == 2627);
+    }
+
+    // ============================================================
+    // NORMALISATION DES TEXTES
+    // ============================================================
 
     private static string? NormaliserTexteOptionnel(string? valeur)
     {

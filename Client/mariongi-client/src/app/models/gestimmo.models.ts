@@ -9,7 +9,6 @@ export interface BaseEntity {
   dateSuppression?: string | null;
 }
 
-
 // ============================================================
 // ENUMS
 // ============================================================
@@ -26,7 +25,6 @@ export enum TypeBien {
   Parking = 9,
   Autre = 10
 }
-
 
 /**
  * Le statut concerne principalement les unités locatives.
@@ -65,6 +63,16 @@ export const ROLES = {
 } as const;
 
 
+// ============================================================
+// STATUT DE DÉDUCTIBILITÉ FISCALE
+// ============================================================
+
+export enum StatutDeductibilite {
+  AQualifier = 0,
+  Deductible = 1,
+  NonDeductible = 2,
+  PartiellementDeductible = 3
+}
 // ============================================================
 // STATUT CONTRAT
 // ============================================================
@@ -389,6 +397,12 @@ export interface UniteLocativeDetailDto extends UniteLocativeDto {
   nombreDemandesVisite?: number;
 }
 
+export enum TypePaiement {
+  Loyer = 1,
+  ChargesLocatives = 2,
+  Caution = 3,
+  Autre = 4
+}
 
 // ============================================================
 // CONTRAT ASSOCIÉ À UNE UNITÉ LOCATIVE
@@ -401,6 +415,8 @@ export interface ContratUniteDto {
   dateDebut: string;
   dateFin?: string | null;
   montantLoyer: number;
+  montantChargesLocatives?: number | null;
+  montantCaution?: number | null;
 }
 
 
@@ -637,6 +653,20 @@ export interface PaiementDto extends BaseEntity {
    * 2026-10-01 = loyer d'octobre 2026
    */
   moisLoyer: string;
+
+  /**
+   * Part du paiement correspondant au loyer.
+   * Peut être null pour les anciens paiements
+   * qui n'ont pas encore été ventilés.
+   */
+  montantLoyerEncaisse?: number | null;
+
+  /**
+   * Part du paiement correspondant aux charges locatives.
+   * Peut être null pour les anciens paiements
+   * qui n'ont pas encore été ventilés.
+   */
+  montantChargesLocativesEncaisse?: number | null;
 }
 
 
@@ -657,6 +687,9 @@ export interface PaiementListItem {
   uniteReference: string;
   bienReference: string;
   bienNom: string;
+  montantLoyerEncaisse?: number | null;
+  montantChargesLocativesEncaisse?: number | null;
+  typePaiement: TypePaiement;
 }
 
 
@@ -1551,12 +1584,20 @@ export interface ModifierTrancheIRPPRequest
   extends CreerTrancheIRPPRequest {
 }
 
+
+
+// ============================================================
+// CHARGES DES BIENS IMMOBILIERS
+// ============================================================
+
 export enum TypeCharge {
   TaxeFonciere = 1,
   Entretien = 2,
   Assurance = 3,
   InteretEmprunt = 4
 }
+
+
 
 export const TYPES_CHARGES_OPTIONS = [
   { label: 'Taxe foncière', value: TypeCharge.TaxeFonciere },
@@ -1565,48 +1606,186 @@ export const TYPES_CHARGES_OPTIONS = [
   { label: 'Intérêts d’emprunt', value: TypeCharge.InteretEmprunt }
 ];
 
+export const STATUTS_DEDUCTIBILITE_OPTIONS = [
+  { label: 'À qualifier', value: StatutDeductibilite.AQualifier },
+  { label: 'Déductible', value: StatutDeductibilite.Deductible },
+  { label: 'Non déductible', value: StatutDeductibilite.NonDeductible },
+  {
+    label: 'Partiellement déductible',
+    value: StatutDeductibilite.PartiellementDeductible
+  }
+];
+
+
 // ============================================================
-// MODÈLES
+// CHARGE BIEN - DTO DE CONSULTATION
+// GET /api/ChargesBiens
+// GET /api/ChargesBiens/{id}
 // ============================================================
 
 export interface ChargeBienDto {
   id: string;
+
   bienImmobilierId: string;
   nomBienImmobilier: string;
+
   uniteLocativeId: string | null;
   referenceUnite: string | null;
+
   dateDepense: string;
+  dateFacture: string | null;
+  datePaiement: string | null;
+
   typeCharge: TypeCharge;
   description: string;
+
+  nomFournisseur: string | null;
+  numeroContribuableFournisseur: string | null;
+
   montantTTC: number;
   montantHT: number | null;
   montantTVA: number | null;
+
   referenceFacture: string | null;
-  estDeductibleFiscalement: boolean;
+  cheminJustificatif: string | null;
+
+  // Qualification fiscale
+  statutDeductibilite: StatutDeductibilite;
+  montantDeductibleFiscalement: number | null;
   justificationNonDeductibilite: string | null;
+  dateValidationFiscale: string | null;
+
+  observations: string | null;
+
   dateCreation: string;
 }
+
+export enum ModeDeductionCharges {
+  Forfait30Pourcent = 1,
+  FraisReels = 2
+}
+
+// ============================================================
+// OPTION DE DÉDUCTION FISCALE
+// ============================================================
+
+/**
+ * DTO retourné par OptionsDeductionFiscalesController.
+ */
+export interface OptionDeductionFiscaleDto {
+  id: string;
+  societeId: string;
+  anneeFiscale: number;
+  modeDeduction: ModeDeductionCharges;
+  dateConfirmation: string | null;
+  estVerrouillee: boolean;
+  dateVerrouillage: string | null;
+  observations: string | null;
+  dateCreation: string;
+}
+
+/**
+ * Requête de création d'une option de déduction fiscale.
+ */
+export interface CreerOptionDeductionFiscaleRequest {
+  anneeFiscale: number;
+  modeDeduction: ModeDeductionCharges;
+  observations: string | null;
+}
+
+/**
+ * Requête de modification d'une option de déduction fiscale.
+ */
+export interface ModifierOptionDeductionFiscaleRequest
+  extends CreerOptionDeductionFiscaleRequest {
+}
+
+/**
+ * Options destinées au composant de sélection PrimeNG.
+ */
+export const MODES_DEDUCTION_OPTIONS = [
+  {
+    label: 'Forfait de 30 %',
+    value: ModeDeductionCharges.Forfait30Pourcent
+  },
+  {
+    label: 'Frais réels',
+    value: ModeDeductionCharges.FraisReels
+  }
+];
+
+// ============================================================
+// CHARGE BIEN - REQUÊTE DE CRÉATION
+// POST /api/ChargesBiens
+// ============================================================
 
 export interface CreerChargeBienRequest {
   bienImmobilierId: string;
   uniteLocativeId: string | null;
+
   dateDepense: string;
+  dateFacture: string | null;
+  datePaiement: string | null;
+
   typeCharge: TypeCharge;
   description: string;
+
+  nomFournisseur: string | null;
+  numeroContribuableFournisseur: string | null;
+
   montantTTC: number;
   montantHT: number | null;
   montantTVA: number | null;
+
   referenceFacture: string | null;
-  estDeductibleFiscalement: boolean;
-  justificationNonDeductibilite: string | null;
+  cheminJustificatif: string | null;
+
+  observations: string | null;
 }
+
+
+// ============================================================
+// CHARGE BIEN - REQUÊTE DE MODIFICATION
+// PUT /api/ChargesBiens/{id}
+// ============================================================
 
 export interface ModifierChargeBienRequest
   extends CreerChargeBienRequest {}
 
+
+// ============================================================
+// RÉPONSE DES OPÉRATIONS SUR UNE CHARGE
+// POST / PUT / DELETE
+// ============================================================
+
+export interface ChargeBienOperationResponse {
+  message: string;
+
+  id?: string;
+
+  bienImmobilierId?: string;
+  uniteLocativeId?: string | null;
+
+  dateDepense?: string;
+  typeCharge?: TypeCharge;
+  montantTTC?: number;
+
+  statutDeductibilite?: StatutDeductibilite;
+  montantDeductibleFiscalement?: number | null;
+}
+
+// ============================================================
+// SUPPRESSION D'UNE CHARGE
+// DELETE /api/ChargesBiens/{id}
+// ============================================================
+
 export interface SupprimerChargeBienResponse {
   message: string;
 }
+
+// ============================================================
+// FILTRES DE RECHERCHE DES CHARGES
+// ============================================================
 
 export interface FiltreChargesBiens {
   bienImmobilierId?: string | null;
@@ -1615,8 +1794,6 @@ export interface FiltreChargesBiens {
   dateDebut?: string | null;
   dateFin?: string | null;
 }
-
-
 
 export interface PrestataireDto {
   id: string;
@@ -1661,8 +1838,6 @@ export interface PrestataireOption {
   value: string;
 }
 
-
-
 export enum TypeValeurFiscale {
   Estimee = 1,
   Declaree = 2,
@@ -1701,7 +1876,6 @@ export interface CreerValeurFiscaleBienRequest {
 export type ModifierValeurFiscaleBienRequest =
   CreerValeurFiscaleBienRequest;
 
-
   export enum TypeImpotFiscal {
   NonDefini = 0,
   ProprieteFonciere = 1,
@@ -1737,32 +1911,153 @@ export interface BienDeclarationFiscaleDto {
 export interface DeclarationFiscaleDto {
   id: string;
   societeId: string;
+
   bienImmobilierId: string | null;
   bienImmobilier: BienDeclarationFiscaleDto | null;
+
   anneeFiscale: number;
   typeImpot: TypeImpotFiscal;
+
   baseImposable: number | null;
   montantImpot: number;
+
   dateEcheance: string | null;
   dateDeclaration: string | null;
+
   referenceDeclaration: string | null;
   observations: string | null;
+
   statut: StatutDeclarationFiscale;
+
+  // Option de déduction
+  optionDeductionFiscaleId: string | null;
+  modeDeduction: ModeDeductionCharges | null;
+
+  // Résultats du calcul fiscal
+  totalLoyersBruts: number | null;
+  chargesForfaitaires: number | null;
+  chargesReellesDeclarees: number | null;
+  chargesReellesAdmissibles: number | null;
+  revenuNetFoncier: number | null;
+
+  acomptesVerses: number | null;
+  soldeImpot: number | null;
+
+  dateCalcul: string | null;
+
   dateCreation: string;
 }
 
 export interface DeclarationFiscaleRequest {
-  // Le PUT vérifie que dto.Id correspond à l'identifiant de l'URL.
-  // Le POST n'a pas besoin de cet identifiant.
   id?: string;
+
   bienImmobilierId: string | null;
   anneeFiscale: number;
   typeImpot: TypeImpotFiscal;
+
   baseImposable: number | null;
   montantImpot: number;
+
   dateEcheance: string | null;
   dateDeclaration: string | null;
+
   referenceDeclaration: string | null;
   observations: string | null;
+
   statut: StatutDeclarationFiscale;
+
+  // Option de déduction fiscale
+  optionDeductionFiscaleId: string | null;
+}
+
+// ============================================================
+// DECLARATION CHARGE BIEN
+// ============================================================
+
+export interface DeclarationChargeBienDto {
+  id: string;
+  declarationFiscaleId: string;
+  chargeBienId: string;
+  descriptionCharge: string;
+  dateDepense: string;
+  montantTTC: number;
+  statutDeductibilite: StatutDeductibilite;
+
+  /**
+   * Montant fiscalement admissible au moment
+   * de l'association de la charge à la déclaration.
+   */
+  montantDeductibleFiscalement: number | null;
+
+  /**
+   * Montant effectivement retenu dans la déclaration.
+   */
+  montantRetenu: number;
+
+  dateCreation?: string;
+}
+
+export interface AjouterDeclarationChargeBienRequest {
+  declarationFiscaleId: string;
+  chargeBienId: string;
+  montantRetenu: number;
+}
+
+export interface ModifierDeclarationChargeBienRequest {
+  montantRetenu: number;
+}
+
+// ============================================================
+// AJOUT D'UNE CHARGE À UNE DÉCLARATION
+// POST /api/DeclarationChargeBiens
+// ============================================================
+
+export interface AjouterDeclarationChargeBienRequest {
+  declarationFiscaleId: string;
+  chargeBienId: string;
+  montantRetenu: number;
+}
+
+// ============================================================
+// MODIFICATION D'UNE CHARGE RETENUE
+// PUT /api/DeclarationChargeBiens/{id}
+// ============================================================
+
+export interface ModifierDeclarationChargeBienRequest {
+  montantRetenu: number;
+}
+
+// ============================================================
+// SUPPRESSION D'UNE CHARGE RETENUE
+// DELETE /api/DeclarationChargeBiens/{id}
+// ============================================================
+
+export interface DeclarationChargeBienOperationResponse {
+  message: string;
+  id?: string;
+}
+
+export interface CalculFiscalResponse {
+  message: string;
+  id: string;
+  anneeFiscale: number;
+  modeDeduction: number | null;
+
+  totalLoyersBruts: number | null;
+  chargesForfaitaires: number | null;
+  chargesReellesDeclarees: number | null;
+  chargesReellesAdmissibles: number | null;
+
+  revenuNetFoncier: number | null;
+  baseImposable: number | null;
+
+  montantImpotPrincipal: number | null;
+  tauxCac: number | null;
+  montantCac: number | null;
+
+  montantImpot: number;
+  acomptesVerses: number | null;
+  soldeImpot: number | null;
+
+  dateCalcul: string | null;
 }

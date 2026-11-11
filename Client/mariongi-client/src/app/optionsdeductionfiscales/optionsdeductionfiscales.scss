@@ -1,0 +1,513 @@
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color: #1e293b;
+}
+
+:host ::ng-deep {
+  .p-inputtext,
+  .p-textarea,
+  .p-select {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.875rem;
+  }
+
+  .p-datatable {
+    font-size: 0.875rem;
+  }
+
+  .p-datatable .p-datatable-thead > tr > th {
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+    color: #475569;
+    border-color: #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .p-datatable .p-datatable-tbody > tr > td {
+    padding: 0.85rem 1rem;
+    border-color: #edf0f5;
+    vertical-align: middle;
+  }
+
+  .p-datatable .p-datatable-tbody > tr:hover {
+    background: #f8fafc;
+  }
+
+  .p-paginator {
+    padding: 0.85rem 0.5rem 0.2rem;
+    border: 0;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .p-dialog {
+    overflow: hidden;
+    border-radius: 14px;
+  }
+
+  .p-dialog .p-dialog-header {
+    padding: 1.15rem 1.4rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .p-dialog .p-dialog-content {
+    padding: 1.25rem 1.4rem 1.4rem;
+  }
+
+  .p-dialog .p-dialog-footer {
+    border-top: 1px solid #e2e8f0;
+  }
+}
+
+/* ============================================================
+   Conteneur principal
+   ============================================================ */
+
+.options-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  width: 100%;
+  min-width: 0;
+  padding: 1.5rem;
+  box-sizing: border-box;
+  color: #1e293b;
+  background: #f8fafc;
+  border-radius: 14px;
+}
+
+/* ============================================================
+   En-tête
+   ============================================================ */
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.page-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.45rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.page-header p {
+  margin: 0.3rem 0 0;
+  color: #64748b;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ============================================================
+   Résumé
+   ============================================================ */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(150px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  align-items: stretch;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 150px;
+  padding: 0.85rem;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgb(15 23 42 / 3%);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.summary-card:hover {
+  box-shadow: 0 4px 10px rgb(15 23 42 / 6%);
+  transform: translateY(-1px);
+}
+
+.summary-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 2rem;
+  width: 2rem;
+  height: 2rem;
+  min-width: 2rem;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+.summary-card__icon i {
+  font-size: 1rem;
+}
+
+.summary-card__icon--blue {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.summary-card__icon--orange {
+  color: #c2410c;
+  background: #ffedd5;
+}
+
+.summary-card__icon--green {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.summary-card__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.summary-card__label {
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.summary-card__value {
+  color: #1e293b;
+  font-size: 1.4rem;
+  font-weight: 750;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-card__description {
+  color: #94a3b8;
+  font-size: 0.7rem;
+  line-height: 1.3;
+}
+
+/* ============================================================
+   Cartes de contenu
+   ============================================================ */
+
+.content-card {
+  width: 100%;
+  min-width: 0;
+  padding: 1.35rem;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 3px 8px rgb(15 23 42 / 3%);
+}
+
+/* ============================================================
+   Titres de section
+   ============================================================ */
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.section-heading h2 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.section-heading p {
+  margin: 0.35rem 0 0;
+  color: #64748b;
+  font-size: 0.825rem;
+  line-height: 1.5;
+}
+
+.result-count {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   Filtres
+   ============================================================ */
+
+.filters-grid {
+  display: grid;
+  grid-template-columns: minmax(13rem, 1fr) auto;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 10px;
+}
+
+.filter-field,
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.filter-field label,
+.form-field label {
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.filter-field input,
+.form-field input,
+.form-field textarea,
+.form-field p-select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.filter-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* ============================================================
+   Tableau
+   ============================================================ */
+
+.actions-column {
+  width: 7rem;
+  text-align: center;
+}
+
+.table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.mode-label {
+  color: #1e293b;
+  font-weight: 650;
+}
+
+.observations {
+  display: inline-block;
+  max-width: 220px;
+  overflow: hidden;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* ============================================================
+   État vide
+   ============================================================ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 14rem;
+  padding: 2rem 1rem;
+  text-align: center;
+}
+
+.empty-state > i {
+  color: #64748b;
+  font-size: 2rem;
+}
+
+.empty-state strong {
+  margin-top: 0.25rem;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.empty-state span {
+  max-width: 28rem;
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   Dialogue et formulaire
+   ============================================================ */
+
+.dialog-intro {
+  margin-bottom: 1.35rem;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 9px;
+}
+
+.dialog-intro p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.825rem;
+  line-height: 1.6;
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.1rem 1rem;
+  min-width: 0;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.required {
+  color: #dc2626;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.775rem;
+  line-height: 1.45;
+}
+
+.information-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 9px;
+  color: #64748b;
+  font-size: 0.825rem;
+  line-height: 1.6;
+}
+
+.information-box i {
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: #2563eb;
+  font-size: 1rem;
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 1200px) {
+  .summary-grid {
+    grid-template-columns: repeat(8, minmax(145px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .options-page {
+    gap: 1rem;
+    padding: 0.85rem;
+  }
+
+  .page-header {
+    align-items: flex-start;
+  }
+
+  .page-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .page-header p {
+    font-size: 0.8rem;
+  }
+
+  .content-card {
+    padding: 0.85rem;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .filters-grid,
+  .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .filter-actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .full-width {
+    grid-column: auto;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 600px) {
+  .summary-grid {
+    grid-template-columns: repeat(8, 145px);
+  }
+}

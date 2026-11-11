@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Enums;
+﻿using MarionGI.Domain.Enums;
 
 namespace MarionGI.Domain.Entities;
 
@@ -49,7 +48,10 @@ public class ChargeBien : BaseEntity
     // Informations fiscales.
     // Cette propriété représente une qualification fiscale
     // validée, et non une déduction automatique.
-    public bool EstDeductibleFiscalement { get; set; }
+    public StatutDeductibilite StatutDeductibilite { get; set; }
+        = StatutDeductibilite.AQualifier;
+
+    public decimal? MontantDeductibleFiscalement { get; set; }
 
     public string? JustificationNonDeductibilite { get; set; }
 

@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Entities;
+﻿using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
@@ -21,55 +20,38 @@ public class MarionDbContext : DbContext
     public DbSet<Societe> Societes => Set<Societe>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
-    public DbSet<BienImmobilier> BiensImmobiliers =>
-        Set<BienImmobilier>();
-
-    public DbSet<UniteLocative> UnitesLocatives =>
-        Set<UniteLocative>();
+    public DbSet<BienImmobilier> BiensImmobiliers => Set<BienImmobilier>();
+    public DbSet<UniteLocative> UnitesLocatives => Set<UniteLocative>();
 
     public DbSet<Contrat> Contrats => Set<Contrat>();
     public DbSet<Paiement> Paiements => Set<Paiement>();
 
-    public DbSet<DemandeVisite> DemandesVisite =>
-        Set<DemandeVisite>();
+    public DbSet<DemandeVisite> DemandesVisite => Set<DemandeVisite>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<JournalAudit> JournauxAudit => Set<JournalAudit>();
 
-    public DbSet<Notification> Notifications =>
-        Set<Notification>();
-
-    public DbSet<JournalAudit> JournauxAudit =>
-        Set<JournalAudit>();
-
-    public DbSet<TicketIncident> TicketsIncidents =>
-        Set<TicketIncident>();
-
-    public DbSet<TicketIntervenant> TicketsIntervenants =>
-        Set<TicketIntervenant>();
-
-    public DbSet<TicketPhoto> TicketsPhotos =>
-        Set<TicketPhoto>();
-
-    public DbSet<Prestataire> Prestataires =>
-        Set<Prestataire>();
+    public DbSet<TicketIncident> TicketsIncidents => Set<TicketIncident>();
+    public DbSet<TicketIntervenant> TicketsIntervenants => Set<TicketIntervenant>();
+    public DbSet<TicketPhoto> TicketsPhotos => Set<TicketPhoto>();
+    public DbSet<Prestataire> Prestataires => Set<Prestataire>();
 
     // Fiscalité
 
-    public DbSet<ChargeBien> ChargesBiens =>
-        Set<ChargeBien>();
+    public DbSet<OptionDeductionFiscale> OptionsDeductionFiscales =>
+        Set<OptionDeductionFiscale>();
 
-    public DbSet<TrancheIRPP> TranchesIRPP =>
-        Set<TrancheIRPP>();
+    public DbSet<DeclarationChargeBien> DeclarationsChargesBiens =>
+        Set<DeclarationChargeBien>();
 
-    public DbSet<ParametreFiscal> ParametresFiscaux =>
-        Set<ParametreFiscal>();
-
-    public DbSet<RegimeFiscal> RegimesFiscaux =>
-        Set<RegimeFiscal>();
-
+    public DbSet<ChargeBien> ChargesBiens => Set<ChargeBien>();
+    public DbSet<TrancheIRPP> TranchesIRPP => Set<TrancheIRPP>();
+    public DbSet<ParametreFiscal> ParametresFiscaux => Set<ParametreFiscal>();
+    public DbSet<RegimeFiscal> RegimesFiscaux => Set<RegimeFiscal>();
     public DbSet<ValeurFiscaleBien> ValeursFiscalesBiens =>
         Set<ValeurFiscaleBien>();
 
     public DbSet<DeclarationFiscale> DeclarationsFiscales =>
-    Set<DeclarationFiscale>();
+        Set<DeclarationFiscale>();
 
     // ============================================================
     // 2. Conventions EF Core
@@ -163,8 +145,7 @@ public class MarionDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(s => s.NumeroContribuable)
-                .HasDatabaseName(
-                    "IX_Societes_NumeroContribuable");
+                .HasDatabaseName("IX_Societes_NumeroContribuable");
         });
 
         // ========================================================
@@ -206,24 +187,14 @@ public class MarionDbContext : DbContext
             entity.Property(u => u.TentativesConnexionEchouees)
                 .HasDefaultValue(0);
 
-            entity.HasIndex(u => new
-            {
-                u.SocieteId,
-                u.Email
-            })
+            entity.HasIndex(u => new { u.SocieteId, u.Email })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_Utilisateurs_SocieteId_Email")
+                .HasDatabaseName("IX_Utilisateurs_SocieteId_Email")
                 .HasFilter("[EstSupprime] = 0");
 
-            entity.HasIndex(u => new
-            {
-                u.SocieteId,
-                u.Telephone
-            })
+            entity.HasIndex(u => new { u.SocieteId, u.Telephone })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_Utilisateurs_SocieteId_Telephone")
+                .HasDatabaseName("IX_Utilisateurs_SocieteId_Telephone")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.HasOne(u => u.Societe)
@@ -288,60 +259,29 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(100)
                 .IsRequired();
 
-            entity.Property(b => b.Region)
-                .HasMaxLength(100);
+            entity.Property(b => b.Region).HasMaxLength(100);
+            entity.Property(b => b.Departement).HasMaxLength(100);
+            entity.Property(b => b.Arrondissement).HasMaxLength(100);
+            entity.Property(b => b.NumeroTitreFoncier).HasMaxLength(100);
+            entity.Property(b => b.NumeroLot).HasMaxLength(100);
+            entity.Property(b => b.NumeroParcelle).HasMaxLength(100);
+            entity.Property(b => b.ReferenceCadastrale).HasMaxLength(150);
 
-            entity.Property(b => b.Departement)
-                .HasMaxLength(100);
+            entity.Property(b => b.Superficie).HasPrecision(10, 2);
+            entity.Property(b => b.ValeurAcquisition).HasPrecision(18, 2);
+            entity.Property(b => b.ValeurEstimee).HasPrecision(18, 2);
 
-            entity.Property(b => b.Arrondissement)
-                .HasMaxLength(100);
+            entity.Property(b => b.Type).IsRequired();
+            entity.Property(b => b.StatutFoncier).IsRequired(false);
 
-            entity.Property(b => b.NumeroTitreFoncier)
-                .HasMaxLength(100);
-
-            entity.Property(b => b.NumeroLot)
-                .HasMaxLength(100);
-
-            entity.Property(b => b.NumeroParcelle)
-                .HasMaxLength(100);
-
-            entity.Property(b => b.ReferenceCadastrale)
-                .HasMaxLength(150);
-
-            entity.Property(b => b.Superficie)
-                .HasPrecision(10, 2);
-
-            entity.Property(b => b.ValeurAcquisition)
-                .HasPrecision(18, 2);
-
-            entity.Property(b => b.ValeurEstimee)
-                .HasPrecision(18, 2);
-
-            entity.Property(b => b.Type)
-                .IsRequired();
-
-            entity.Property(b => b.StatutFoncier)
-                .IsRequired(false);
-
-            entity.HasIndex(b => new
-            {
-                b.SocieteId,
-                b.Reference
-            })
+            entity.HasIndex(b => new { b.SocieteId, b.Reference })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_BiensImmobiliers_SocieteId_Reference")
+                .HasDatabaseName("IX_BiensImmobiliers_SocieteId_Reference")
                 .HasFilter("[EstSupprime] = 0");
 
-            entity.HasIndex(b => new
-            {
-                b.SocieteId,
-                b.Nom
-            })
+            entity.HasIndex(b => new { b.SocieteId, b.Nom })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_BiensImmobiliers_SocieteId_Nom")
+                .HasDatabaseName("IX_BiensImmobiliers_SocieteId_Nom")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.Property(b => b.Photos)
@@ -354,8 +294,7 @@ public class MarionDbContext : DbContext
                         ? new List<string>()
                         : JsonSerializer.Deserialize<List<string>>(
                             v,
-                            (JsonSerializerOptions?)null)
-                          ?? new List<string>());
+                            (JsonSerializerOptions?)null) ?? new List<string>());
 
             entity.HasOne(b => b.Societe)
                 .WithMany(s => s.BiensImmobiliers)
@@ -385,30 +324,15 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(50)
                 .IsRequired();
 
-            entity.Property(u => u.Superficie)
-                .HasPrecision(10, 2);
+            entity.Property(u => u.Superficie).HasPrecision(10, 2);
+            entity.Property(u => u.Loyer).HasPrecision(18, 2).IsRequired();
+            entity.Property(u => u.ChargesLocativesMensuelles).HasPrecision(18, 2);
+            entity.Property(u => u.MontantCaution).HasPrecision(18, 2);
+            entity.Property(u => u.MotifExoneration).HasMaxLength(1000);
 
-            entity.Property(u => u.Loyer)
-                .HasPrecision(18, 2)
-                .IsRequired();
-
-            entity.Property(u => u.ChargesLocativesMensuelles)
-                .HasPrecision(18, 2);
-
-            entity.Property(u => u.MontantCaution)
-                .HasPrecision(18, 2);
-
-            entity.Property(u => u.MotifExoneration)
-                .HasMaxLength(1000);
-
-            entity.HasIndex(u => new
-            {
-                u.BienImmobilierId,
-                u.Reference
-            })
+            entity.HasIndex(u => new { u.BienImmobilierId, u.Reference })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_UnitesLocatives_BienImmobilierId_Reference")
+                .HasDatabaseName("IX_UnitesLocatives_BienImmobilierId_Reference")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.Property(u => u.Photos)
@@ -421,8 +345,7 @@ public class MarionDbContext : DbContext
                         ? new List<string>()
                         : JsonSerializer.Deserialize<List<string>>(
                             v,
-                            (JsonSerializerOptions?)null)
-                          ?? new List<string>());
+                            (JsonSerializerOptions?)null) ?? new List<string>());
 
             entity.HasOne(u => u.BienImmobilier)
                 .WithMany(b => b.UnitesLocatives)
@@ -463,11 +386,8 @@ public class MarionDbContext : DbContext
                 .HasDatabaseName("IX_Contrats_Reference")
                 .HasFilter("[EstSupprime] = 0");
 
-            entity.Property(c => c.DateDebut)
-                .IsRequired();
-
-            entity.Property(c => c.DateFin)
-                .IsRequired();
+            entity.Property(c => c.DateDebut).IsRequired();
+            entity.Property(c => c.DateFin).IsRequired();
 
             entity.Property(c => c.MontantLoyer)
                 .HasPrecision(18, 2)
@@ -477,11 +397,8 @@ public class MarionDbContext : DbContext
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            entity.Property(c => c.MontantChargesLocatives)
-                .HasPrecision(18, 2);
-
-            entity.Property(c => c.TauxRevisionLoyer)
-                .HasPrecision(9, 6);
+            entity.Property(c => c.MontantChargesLocatives).HasPrecision(18, 2);
+            entity.Property(c => c.TauxRevisionLoyer).HasPrecision(9, 6);
 
             entity.Property(c => c.FrequencePaiement)
                 .IsRequired()
@@ -495,11 +412,8 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(StatutContrat.Actif);
 
-            entity.Property(c => c.CheminDocumentContrat)
-                .HasMaxLength(1000);
-
-            entity.Property(c => c.Observations)
-                .HasMaxLength(4000);
+            entity.Property(c => c.CheminDocumentContrat).HasMaxLength(1000);
+            entity.Property(c => c.Observations).HasMaxLength(4000);
 
             entity.HasOne(c => c.UniteLocative)
                 .WithMany(u => u.Contrats)
@@ -534,9 +448,11 @@ public class MarionDbContext : DbContext
             entity.Property(p => p.DatePaiement)
                 .IsRequired();
 
+            // Nullable : les cautions et autres paiements
+            // ne sont pas nécessairement associés à un mois de loyer.
             entity.Property(p => p.MoisLoyer)
                 .HasColumnType("datetime")
-                .IsRequired();
+                .IsRequired(false);
 
             entity.Property(p => p.ReferenceTransactionOperateur)
                 .HasMaxLength(200);
@@ -558,26 +474,41 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(StatutTransaction.EnAttente);
 
+            // Index 1 : recherche générale par contrat.
+            // Non unique.
             entity.HasIndex(p => p.ContratId)
                 .HasDatabaseName("IX_Paiements_ContratId");
 
+            // Index 2 : recherche par contrat et mois de loyer.
+            // Non unique.
             entity.HasIndex(p => new
             {
                 p.ContratId,
                 p.MoisLoyer
             })
-                .HasDatabaseName(
-                    "IX_Paiements_ContratId_MoisLoyer");
+                .HasDatabaseName("IX_Paiements_ContratId_MoisLoyer");
 
+            // Index 3 : paiements en attente uniquement.
+            // Non unique et filtré.
+            entity.HasIndex(p => new
+            {
+                p.ContratId,
+                p.MoisLoyer
+            })
+                .HasDatabaseName("IX_Paiements_ContratId_MoisLoyer_EnAttente")
+                .HasFilter(
+                    "[EstSupprime] = 0 AND [StatutTransaction] = 1");
+
+            // Numéro de quittance unique pour les paiements non supprimés.
             entity.HasIndex(p => p.NumeroQuittance)
                 .IsUnique()
                 .HasDatabaseName("IX_Paiements_NumeroQuittance")
                 .HasFilter("[EstSupprime] = 0");
 
+            // Référence opérateur unique lorsqu'elle est renseignée.
             entity.HasIndex(p => p.ReferenceTransactionOperateur)
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_Paiements_ReferenceTransactionOperateur")
+                .HasDatabaseName("IX_Paiements_ReferenceTransactionOperateur")
                 .HasFilter(
                     "[EstSupprime] = 0 AND " +
                     "[ReferenceTransactionOperateur] IS NOT NULL");
@@ -598,59 +529,41 @@ public class MarionDbContext : DbContext
 
             entity.HasQueryFilter(c => !c.EstSupprime);
 
-            entity.Property(c => c.DateDepense)
-                .IsRequired();
-
-            entity.Property(c => c.TypeCharge)
-                .IsRequired();
+            entity.Property(c => c.DateDepense).IsRequired();
+            entity.Property(c => c.TypeCharge).IsRequired();
 
             entity.Property(c => c.Description)
                 .HasMaxLength(2000)
                 .IsRequired();
 
-            entity.Property(c => c.NomFournisseur)
-                .HasMaxLength(200);
-
-            entity.Property(c => c.NumeroContribuableFournisseur)
-                .HasMaxLength(100);
+            entity.Property(c => c.NomFournisseur).HasMaxLength(200);
+            entity.Property(c => c.NumeroContribuableFournisseur).HasMaxLength(100);
 
             entity.Property(c => c.MontantTTC)
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            entity.Property(c => c.MontantHT)
-                .HasPrecision(18, 2);
+            entity.Property(c => c.MontantHT).HasPrecision(18, 2);
+            entity.Property(c => c.MontantTVA).HasPrecision(18, 2);
+            entity.Property(c => c.ReferenceFacture).HasMaxLength(100);
+            entity.Property(c => c.CheminJustificatif).HasMaxLength(1000);
 
-            entity.Property(c => c.MontantTVA)
-                .HasPrecision(18, 2);
-
-            entity.Property(c => c.ReferenceFacture)
-                .HasMaxLength(100);
-
-            entity.Property(c => c.CheminJustificatif)
-                .HasMaxLength(1000);
-
-            entity.Property(c => c.EstDeductibleFiscalement)
+            entity.Property(c => c.StatutDeductibilite)
+                .HasConversion<int>()
                 .IsRequired()
-                .HasDefaultValue(false);
+                .HasDefaultValue(StatutDeductibilite.AQualifier);
 
-            entity.Property(c => c.JustificationNonDeductibilite)
-                .HasMaxLength(1000);
+            entity.Property(c => c.MontantDeductibleFiscalement)
+                .HasPrecision(18, 2);
 
-            entity.Property(c => c.Observations)
-                .HasMaxLength(2000);
+            entity.Property(c => c.JustificationNonDeductibilite).HasMaxLength(1000);
+            entity.Property(c => c.Observations).HasMaxLength(2000);
 
-            entity.HasIndex(c => new
-            {
-                c.BienImmobilierId,
-                c.DateDepense
-            })
-                .HasDatabaseName(
-                    "IX_ChargesBiens_BienImmobilierId_DateDepense");
+            entity.HasIndex(c => new { c.BienImmobilierId, c.DateDepense })
+                .HasDatabaseName("IX_ChargesBiens_BienImmobilierId_DateDepense");
 
             entity.HasIndex(c => c.UniteLocativeId)
-                .HasDatabaseName(
-                    "IX_ChargesBiens_UniteLocativeId");
+                .HasDatabaseName("IX_ChargesBiens_UniteLocativeId");
 
             entity.HasOne(c => c.BienImmobilier)
                 .WithMany(b => b.Charges)
@@ -664,8 +577,6 @@ public class MarionDbContext : DbContext
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
         });
-
-
 
         // ========================================================
         // VALEUR FISCALE DU BIEN IMMOBILIER
@@ -685,7 +596,6 @@ public class MarionDbContext : DbContext
                     "OR [DateValidationOfficielle] >= [DateEvaluation]");
             });
 
-
             entity.HasQueryFilter(v => !v.EstSupprime);
 
             entity.Property(v => v.Montant)
@@ -696,27 +606,18 @@ public class MarionDbContext : DbContext
                 .HasConversion<int>()
                 .IsRequired();
 
-            entity.Property(v => v.DateEvaluation)
-                .IsRequired();
+            entity.Property(v => v.DateEvaluation).IsRequired();
+            entity.Property(v => v.ReferenceJustificative).HasMaxLength(500);
+            entity.Property(v => v.CheminJustificatif).HasMaxLength(1000);
+            entity.Property(v => v.Observations).HasMaxLength(2000);
 
-            entity.Property(v => v.ReferenceJustificative)
-                .HasMaxLength(500);
-
-            entity.Property(v => v.CheminJustificatif)
-                .HasMaxLength(1000);
-
-            entity.Property(v => v.Observations)
-                .HasMaxLength(2000);
-
-            // Recherche par bien et année fiscale.
             entity.HasIndex(v => new
             {
                 v.BienImmobilierId,
                 v.AnneeFiscale,
                 v.TypeValeur
             })
-            .HasDatabaseName(
-                "IX_ValeursFiscalesBiens_Bien_Annee_Type");
+                .HasDatabaseName("IX_ValeursFiscalesBiens_Bien_Annee_Type");
 
             entity.HasOne(v => v.BienImmobilier)
                 .WithMany(b => b.ValeursFiscales)
@@ -724,7 +625,6 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
         });
-
 
         // ========================================================
         // 3.9. DEMANDE DE VISITE
@@ -742,29 +642,18 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(30)
                 .IsRequired();
 
-            entity.Property(d => d.EmailProspect)
-                .HasMaxLength(200);
+            entity.Property(d => d.EmailProspect).HasMaxLength(200);
+            entity.Property(d => d.Observations).HasMaxLength(1000);
+            entity.Property(d => d.CommentaireInterne).HasMaxLength(2000);
 
-            entity.Property(d => d.Observations)
-                .HasMaxLength(1000);
-
-            entity.Property(d => d.CommentaireInterne)
-                .HasMaxLength(2000);
-
-            entity.Property(d => d.DateSouhaitee)
-                .IsRequired();
+            entity.Property(d => d.DateSouhaitee).IsRequired();
 
             entity.Property(d => d.Statut)
                 .IsRequired()
                 .HasDefaultValue(StatutDemandeVisite.EnAttente);
 
-            entity.HasIndex(d => new
-            {
-                d.UniteLocativeId,
-                d.DateSouhaitee
-            })
-                .HasDatabaseName(
-                    "IX_DemandesVisite_UniteLocativeId_DateSouhaitee");
+            entity.HasIndex(d => new { d.UniteLocativeId, d.DateSouhaitee })
+                .HasDatabaseName("IX_DemandesVisite_UniteLocativeId_DateSouhaitee");
 
             entity.HasOne(d => d.UniteLocative)
                 .WithMany(u => u.DemandesVisite)
@@ -794,8 +683,7 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(1000)
                 .IsRequired();
 
-            entity.Property(n => n.Lu)
-                .HasDefaultValue(false);
+            entity.Property(n => n.Lu).HasDefaultValue(false);
 
             entity.HasOne(n => n.Utilisateur)
                 .WithMany()
@@ -845,15 +733,13 @@ public class MarionDbContext : DbContext
                 .HasDatabaseName("IX_TicketsIncidents_Reference")
                 .HasFilter("[EstSupprime] = 0");
 
-            entity.Property(t => t.ResultatReparation)
-                .HasMaxLength(4000);
+            entity.Property(t => t.ResultatReparation).HasMaxLength(4000);
 
             entity.Property(t => t.Description)
                 .HasMaxLength(4000)
                 .IsRequired();
 
-            entity.Property(t => t.DateIncident)
-                .IsRequired();
+            entity.Property(t => t.DateIncident).IsRequired();
 
             entity.Property(t => t.Priorite)
                 .IsRequired()
@@ -863,8 +749,7 @@ public class MarionDbContext : DbContext
                 .IsRequired()
                 .HasDefaultValue(StatutIncident.Ouvert);
 
-            entity.Property(t => t.CoutEstime)
-                .HasPrecision(18, 2);
+            entity.Property(t => t.CoutEstime).HasPrecision(18, 2);
 
             entity.Property(t => t.CoutTotal)
                 .HasPrecision(18, 2)
@@ -872,38 +757,22 @@ public class MarionDbContext : DbContext
 
             entity.Property(t => t.ImputableA)
                 .IsRequired()
-                .HasDefaultValue(
-                    ImputabiliteIncident.Indeterminee);
+                .HasDefaultValue(ImputabiliteIncident.Indeterminee);
 
-            entity.Property(t => t.ValidationDevisRequise)
-                .HasDefaultValue(false);
+            entity.Property(t => t.ValidationDevisRequise).HasDefaultValue(false);
+            entity.Property(t => t.DevisValide).HasDefaultValue(false);
 
-            entity.Property(t => t.DevisValide)
-                .HasDefaultValue(false);
+            entity.HasIndex(t => new { t.BienImmobilierId, t.Statut })
+                .HasDatabaseName("IX_TicketsIncidents_BienImmobilierId_Statut");
 
-            entity.HasIndex(t => new
-            {
-                t.BienImmobilierId,
-                t.Statut
-            })
-                .HasDatabaseName(
-                    "IX_TicketsIncidents_BienImmobilierId_Statut");
-
-            entity.HasIndex(t => new
-            {
-                t.UniteLocativeId,
-                t.Statut
-            })
-                .HasDatabaseName(
-                    "IX_TicketsIncidents_UniteLocativeId_Statut");
+            entity.HasIndex(t => new { t.UniteLocativeId, t.Statut })
+                .HasDatabaseName("IX_TicketsIncidents_UniteLocativeId_Statut");
 
             entity.HasIndex(t => t.LocataireId)
-                .HasDatabaseName(
-                    "IX_TicketsIncidents_LocataireId");
+                .HasDatabaseName("IX_TicketsIncidents_LocataireId");
 
             entity.HasIndex(t => t.DeclarantId)
-                .HasDatabaseName(
-                    "IX_TicketsIncidents_DeclarantId");
+                .HasDatabaseName("IX_TicketsIncidents_DeclarantId");
 
             entity.HasOne(t => t.BienImmobilier)
                 .WithMany()
@@ -962,11 +831,8 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(150)
                 .IsRequired();
 
-            entity.Property(p => p.Prenom)
-                .HasMaxLength(150);
-
-            entity.Property(p => p.NomEntreprise)
-                .HasMaxLength(200);
+            entity.Property(p => p.Prenom).HasMaxLength(150);
+            entity.Property(p => p.NomEntreprise).HasMaxLength(200);
 
             entity.Property(p => p.Specialite)
                 .HasMaxLength(200)
@@ -976,40 +842,20 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(30)
                 .IsRequired();
 
-            entity.Property(p => p.Courriel)
-                .HasMaxLength(200);
+            entity.Property(p => p.Courriel).HasMaxLength(200);
+            entity.Property(p => p.Adresse).HasMaxLength(250);
+            entity.Property(p => p.Ville).HasMaxLength(100);
+            entity.Property(p => p.NumeroContribuable).HasMaxLength(100);
+            entity.Property(p => p.Observations).HasMaxLength(2000);
 
-            entity.Property(p => p.Adresse)
-                .HasMaxLength(250);
+            entity.Property(p => p.Actif).HasDefaultValue(true);
 
-            entity.Property(p => p.Ville)
-                .HasMaxLength(100);
-
-            entity.Property(p => p.NumeroContribuable)
-                .HasMaxLength(100);
-
-            entity.Property(p => p.Observations)
-                .HasMaxLength(2000);
-
-            entity.Property(p => p.Actif)
-                .HasDefaultValue(true);
-
-            entity.HasIndex(p => new
-            {
-                p.SocieteId,
-                p.Nom
-            })
-                .HasDatabaseName(
-                    "IX_Prestataires_SocieteId_Nom")
+            entity.HasIndex(p => new { p.SocieteId, p.Nom })
+                .HasDatabaseName("IX_Prestataires_SocieteId_Nom")
                 .HasFilter("[EstSupprime] = 0");
 
-            entity.HasIndex(p => new
-            {
-                p.SocieteId,
-                p.Specialite
-            })
-                .HasDatabaseName(
-                    "IX_Prestataires_SocieteId_Specialite")
+            entity.HasIndex(p => new { p.SocieteId, p.Specialite })
+                .HasDatabaseName("IX_Prestataires_SocieteId_Specialite")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.HasOne(p => p.Societe)
@@ -1033,33 +879,18 @@ public class MarionDbContext : DbContext
         {
             entity.HasQueryFilter(i => !i.EstSupprime);
 
-            entity.Property(i => i.MontantDevis)
-                .HasPrecision(18, 2);
-
-            entity.Property(i => i.MontantFacture)
-                .HasPrecision(18, 2);
-
-            entity.Property(i => i.ReferenceDevis)
-                .HasMaxLength(100);
-
-            entity.Property(i => i.ReferenceFacture)
-                .HasMaxLength(100);
-
-            entity.Property(i => i.Observations)
-                .HasMaxLength(2000);
+            entity.Property(i => i.MontantDevis).HasPrecision(18, 2);
+            entity.Property(i => i.MontantFacture).HasPrecision(18, 2);
+            entity.Property(i => i.ReferenceDevis).HasMaxLength(100);
+            entity.Property(i => i.ReferenceFacture).HasMaxLength(100);
+            entity.Property(i => i.Observations).HasMaxLength(2000);
 
             entity.HasIndex(i => i.TicketIncidentId)
-                .HasDatabaseName(
-                    "IX_TicketsIntervenants_TicketIncidentId");
+                .HasDatabaseName("IX_TicketsIntervenants_TicketIncidentId");
 
-            entity.HasIndex(i => new
-            {
-                i.TicketIncidentId,
-                i.PrestataireId
-            })
+            entity.HasIndex(i => new { i.TicketIncidentId, i.PrestataireId })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_TicketsIntervenants_TicketIncidentId_PrestataireId")
+                .HasDatabaseName("IX_TicketsIntervenants_TicketIncidentId_PrestataireId")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.HasOne(i => i.TicketIncident)
@@ -1086,26 +917,17 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(1000)
                 .IsRequired();
 
-            entity.Property(p => p.NomFichier)
-                .HasMaxLength(255);
+            entity.Property(p => p.NomFichier).HasMaxLength(255);
+            entity.Property(p => p.Description).HasMaxLength(1000);
 
-            entity.Property(p => p.Description)
-                .HasMaxLength(1000);
-
-            entity.Property(p => p.Type)
-                .IsRequired();
+            entity.Property(p => p.Type).IsRequired();
 
             entity.Property(p => p.DateAjout)
                 .IsRequired()
                 .HasDefaultValueSql("GETUTCDATE()");
 
-            entity.HasIndex(p => new
-            {
-                p.TicketIncidentId,
-                p.DateAjout
-            })
-                .HasDatabaseName(
-                    "IX_TicketsPhotos_TicketIncidentId_DateAjout");
+            entity.HasIndex(p => new { p.TicketIncidentId, p.DateAjout })
+                .HasDatabaseName("IX_TicketsPhotos_TicketIncidentId_DateAjout");
 
             entity.HasOne(p => p.TicketIncident)
                 .WithMany(t => t.Photos)
@@ -1133,31 +955,19 @@ public class MarionDbContext : DbContext
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            entity.Property(t => t.SeuilMax)
-                .HasPrecision(18, 2);
+            entity.Property(t => t.SeuilMax).HasPrecision(18, 2);
 
-            // Convention : 0.10 représente 10 %.
             entity.Property(t => t.Taux)
                 .HasPrecision(9, 6)
                 .IsRequired();
 
-            entity.Property(t => t.OrdreTranche)
-                .IsRequired();
+            entity.Property(t => t.OrdreTranche).IsRequired();
+            entity.Property(t => t.Description).HasMaxLength(500);
+            entity.Property(t => t.ReferenceLegale).HasMaxLength(500);
 
-            entity.Property(t => t.Description)
-                .HasMaxLength(500);
-
-            entity.Property(t => t.ReferenceLegale)
-                .HasMaxLength(500);
-
-            entity.HasIndex(t => new
-            {
-                t.AnneeFiscale,
-                t.OrdreTranche
-            })
+            entity.HasIndex(t => new { t.AnneeFiscale, t.OrdreTranche })
                 .IsUnique()
-                .HasDatabaseName(
-                    "IX_TranchesIRPP_AnneeFiscale_OrdreTranche")
+                .HasDatabaseName("IX_TranchesIRPP_AnneeFiscale_OrdreTranche")
                 .HasFilter("[EstSupprime] = 0");
         });
 
@@ -1177,8 +987,7 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(500)
                 .IsRequired();
 
-            entity.Property(p => p.Valeur)
-                .HasPrecision(18, 4);
+            entity.Property(p => p.Valeur).HasPrecision(18, 4);
 
             entity.Property(p => p.TypeImpot)
                 .HasConversion<int>()
@@ -1188,21 +997,16 @@ public class MarionDbContext : DbContext
                 .HasConversion<int>()
                 .IsRequired();
 
-            entity.Property(p => p.ReferenceLegale)
-                .HasMaxLength(500);
+            entity.Property(p => p.ReferenceLegale).HasMaxLength(500);
+            entity.Property(p => p.ConditionsApplication).HasMaxLength(2000);
 
-            entity.Property(p => p.ConditionsApplication)
-                .HasMaxLength(2000);
-
-            // Plusieurs versions d'une même règle peuvent exister.
             entity.HasIndex(p => new
             {
                 p.AnneeFiscale,
                 p.CodeRegle,
                 p.RegimeFiscalId
             })
-                .HasDatabaseName(
-                    "IX_ParametresFiscaux_Annee_Code_Regime")
+                .HasDatabaseName("IX_ParametresFiscaux_Annee_Code_Regime")
                 .HasFilter("[EstSupprime] = 0");
 
             entity.HasOne(p => p.RegimeFiscal)
@@ -1220,6 +1024,9 @@ public class MarionDbContext : DbContext
             });
         });
 
+        // ========================================================
+        // 3.18. DECLARATION FISCALE
+        // ========================================================
 
         modelBuilder.Entity<DeclarationFiscale>(entity =>
         {
@@ -1235,18 +1042,14 @@ public class MarionDbContext : DbContext
                 .HasConversion<int>()
                 .IsRequired();
 
-            entity.Property(d => d.BaseImposable)
-                .HasPrecision(18, 2);
+            entity.Property(d => d.BaseImposable).HasPrecision(18, 2);
 
             entity.Property(d => d.MontantImpot)
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            entity.Property(d => d.ReferenceDeclaration)
-                .HasMaxLength(200);
-
-            entity.Property(d => d.Observations)
-                .HasMaxLength(2000);
+            entity.Property(d => d.ReferenceDeclaration).HasMaxLength(200);
+            entity.Property(d => d.Observations).HasMaxLength(2000);
 
             entity.HasIndex(d => new
             {
@@ -1254,8 +1057,31 @@ public class MarionDbContext : DbContext
                 d.AnneeFiscale,
                 d.TypeImpot
             })
-                .HasDatabaseName(
-                    "IX_DeclarationsFiscales_Societe_Annee_Type");
+                .HasDatabaseName("IX_DeclarationsFiscales_Societe_Annee_Type");
+
+            entity.HasIndex(d => new
+            {
+                d.SocieteId,
+                d.AnneeFiscale
+            })
+                .IsUnique()
+                .HasDatabaseName("IX_DeclarationsFiscales_RevenusFonciers_Societe_Annee")
+                .HasFilter(
+                    $"[EstSupprime] = 0 AND " +
+                    $"[TypeImpot] = {(int)TypeImpotFiscal.RevenusFonciers} AND " +
+                    "[BienImmobilierId] IS NULL");
+
+            entity.HasIndex(d => new
+            {
+                d.BienImmobilierId,
+                d.AnneeFiscale
+            })
+                .IsUnique()
+                .HasDatabaseName("IX_DeclarationsFiscales_ProprieteFonciere_Bien_Annee")
+                .HasFilter(
+                    $"[EstSupprime] = 0 AND " +
+                    $"[TypeImpot] = {(int)TypeImpotFiscal.ProprieteFonciere} AND " +
+                    "[BienImmobilierId] IS NOT NULL");
 
             entity.HasOne(d => d.Societe)
                 .WithMany(s => s.DeclarationsFiscales)
@@ -1268,11 +1094,27 @@ public class MarionDbContext : DbContext
                 .HasForeignKey(d => d.BienImmobilierId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(d => d.ModeDeduction)
+                .HasConversion<int>();
+
+            entity.Property(d => d.TotalLoyersBruts).HasPrecision(18, 2);
+            entity.Property(d => d.ChargesForfaitaires).HasPrecision(18, 2);
+            entity.Property(d => d.ChargesReellesDeclarees).HasPrecision(18, 2);
+            entity.Property(d => d.ChargesReellesAdmissibles).HasPrecision(18, 2);
+            entity.Property(d => d.RevenuNetFoncier).HasPrecision(18, 2);
+            entity.Property(d => d.AcomptesVerses).HasPrecision(18, 2);
+            entity.Property(d => d.SoldeImpot).HasPrecision(18, 2);
+
+            entity.HasOne(d => d.OptionDeductionFiscale)
+                .WithMany()
+                .HasForeignKey(d => d.OptionDeductionFiscaleId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-
         // ========================================================
-        // 3.18. REGIME FISCAL
+        // 3.19. REGIME FISCAL
         // ========================================================
 
         modelBuilder.Entity<RegimeFiscal>(entity =>
@@ -1291,11 +1133,8 @@ public class MarionDbContext : DbContext
                 .HasMaxLength(500)
                 .IsRequired();
 
-            entity.Property(r => r.ReferenceLegale)
-                .HasMaxLength(500);
-
-            entity.Property(r => r.EstActif)
-                .HasDefaultValue(true);
+            entity.Property(r => r.ReferenceLegale).HasMaxLength(500);
+            entity.Property(r => r.EstActif).HasDefaultValue(true);
 
             entity.HasIndex(r => r.Code)
                 .IsUnique()
@@ -1309,6 +1148,83 @@ public class MarionDbContext : DbContext
         });
 
         // ========================================================
+        // 3.20. OPTION DE DEDUCTION FISCALE
+        // ========================================================
+
+        modelBuilder.Entity<OptionDeductionFiscale>(entity =>
+        {
+            entity.ToTable("OptionsDeductionFiscales");
+
+            entity.HasQueryFilter(o => !o.EstSupprime);
+
+            entity.Property(o => o.ModeDeduction)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.Property(o => o.Observations).HasMaxLength(2000);
+            entity.Property(o => o.EstVerrouillee).HasDefaultValue(false);
+
+            entity.HasIndex(o => new { o.SocieteId, o.AnneeFiscale })
+                .IsUnique()
+                .HasDatabaseName("IX_OptionsDeductionFiscales_Societe_Annee")
+                .HasFilter("[EstSupprime] = 0");
+
+            entity.HasOne(o => o.Societe)
+                .WithMany()
+                .HasForeignKey(o => o.SocieteId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========================================================
+        // 3.21. DECLARATION CHARGE BIEN
+        // ========================================================
+
+        modelBuilder.Entity<DeclarationChargeBien>(entity =>
+        {
+            entity.ToTable("DeclarationsChargesBiens");
+
+            entity.HasQueryFilter(d => !d.EstSupprime);
+
+            entity.Property(d => d.DescriptionCharge)
+                .HasMaxLength(2000)
+                .IsRequired();
+
+            entity.Property(d => d.MontantTTC)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(d => d.MontantRetenu)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.Property(d => d.StatutDeductibilite)
+                .HasConversion<int>()
+                .IsRequired();
+
+            entity.HasIndex(d => new
+            {
+                d.DeclarationFiscaleId,
+                d.ChargeBienId
+            })
+                .IsUnique()
+                .HasDatabaseName("IX_DeclarationsChargesBiens_Declaration_Charge")
+                .HasFilter("[EstSupprime] = 0");
+
+            entity.HasOne(d => d.DeclarationFiscale)
+                .WithMany(f => f.ChargesRetenues)
+                .HasForeignKey(d => d.DeclarationFiscaleId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.ChargeBien)
+                .WithMany()
+                .HasForeignKey(d => d.ChargeBienId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========================================================
         // 4. COMPORTEMENT GLOBAL DES CLES ETRANGERES
         // ========================================================
         // Désactive les suppressions en cascade.
@@ -1316,8 +1232,8 @@ public class MarionDbContext : DbContext
         // ========================================================
 
         foreach (var foreignKey in modelBuilder.Model
-             .GetEntityTypes()
-             .SelectMany(e => e.GetForeignKeys()))
+                     .GetEntityTypes()
+                     .SelectMany(e => e.GetForeignKeys()))
         {
             foreignKey.DeleteBehavior = DeleteBehavior.Restrict;
         }

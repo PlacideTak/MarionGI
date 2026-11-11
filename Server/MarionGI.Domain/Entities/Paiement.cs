@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Enums;
+﻿using MarionGI.Domain.Enums;
 
 namespace MarionGI.Domain.Entities;
 
@@ -12,15 +11,24 @@ public class Paiement : BaseEntity
 
     // Période locative concernée.
     // Convention : premier jour du mois, par exemple 2026-10-01.
-    public DateTime MoisLoyer { get; set; }
+    public DateTime? MoisLoyer { get; set; }
 
     // Montant total exigible pour cette échéance,
     // enregistré comme référence au moment de son établissement.
     public decimal MontantDu { get; set; }
 
-    // Montant de cette transaction.
+    // Montant total de cette transaction.
     // Permet notamment de gérer les paiements partiels.
     public decimal Montant { get; set; }
+
+    // Ventilation du paiement selon la répartition proportionnelle
+    // entre le loyer et les charges locatives.
+    //
+    // Ces propriétés restent nullables pour préserver les anciennes
+    // transactions dont la ventilation n'a pas été enregistrée.
+    public decimal? MontantLoyerEncaisse { get; set; }
+
+    public decimal? MontantChargesLocativesEncaisse { get; set; }
 
     // Date effective du paiement, selon le moyen de paiement.
     public DateTime DatePaiement { get; set; } = DateTime.UtcNow;
@@ -54,4 +62,7 @@ public class Paiement : BaseEntity
     // Premier jour du mois de loyer concerné.
     // DateCreation, héritée de BaseEntity, conserve
     // la date de création de l'enregistrement.
+
+    public TypePaiement? TypePaiement { get; set; }
 }
+

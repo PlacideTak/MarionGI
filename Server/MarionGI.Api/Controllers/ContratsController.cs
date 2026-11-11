@@ -310,7 +310,7 @@ public class ContratsController : ControllerBase
 
             MontantLoyer = request.MontantLoyer,
             MontantCaution = request.MontantCaution,
-            MontantChargesLocatives = request.MontantChargesLocatives,
+            MontantChargesLocatives =    request.MontantChargesLocatives  ?? unite.ChargesLocativesMensuelles,
 
             FrequencePaiement = request.FrequencePaiement,
             DelaiJoursTolerance = request.DelaiJoursTolerance,

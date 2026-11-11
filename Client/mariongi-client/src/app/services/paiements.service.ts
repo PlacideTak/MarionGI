@@ -1,22 +1,30 @@
+
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../environments/environment.development';
-import { ModePaiement, PaiementDto, PaiementListItem } from '../models/gestimmo.models';
+import {
+  ModePaiement,
+  PaiementDto,
+  PaiementListItem,
+  TypePaiement
+} from '../models/gestimmo.models';
 
 export interface InitierPaiementRequest {
   contratId: string;
   montant: number;
+  typePaiement: TypePaiement;
   modePaiement: ModePaiement;
   telephone: string;
-  moisLoyer: string;
+  moisLoyer: string | null;
 }
 
 export interface PaiementEspecesRequest {
   contratId: string;
   montant: number;
-  moisLoyer: string;
+  typePaiement: TypePaiement;
+  moisLoyer: string | null;
 }
 
 export interface PaiementResponse {
@@ -93,9 +101,7 @@ export class PaiementsService {
       }
     ).subscribe({
       next: (blob) => {
-
         const url = window.URL.createObjectURL(blob);
-
         const a = document.createElement('a');
 
         a.href = url;
@@ -121,13 +127,12 @@ export class PaiementsService {
   // RÉCUPÉRER LES PAIEMENTS
   // ============================================================
 
+  getPaiements(): Observable<PaiementListItem[]> {
 
-    getPaiements(): Observable<PaiementListItem[]> {
-      return this.http.get<PaiementListItem[]>(
-        `${this.apiUrl}`
-      );
-    }
-
+    return this.http.get<PaiementListItem[]>(
+      this.apiUrl
+    );
+  }
 
   // ============================================================
   // TÉLÉCHARGER TOUTES LES QUITTANCES D'UN CONTRAT

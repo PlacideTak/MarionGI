@@ -580,3 +580,77 @@ $success-hover: #246348;
     }
   }
 }
+
+
+.paiement-type-cell,
+.paiement-montant-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.paiement-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paiement-type-loyer {
+  color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.paiement-type-charges {
+  color: #047857;
+  background: #d1fae5;
+}
+
+.paiement-type-caution {
+  color: #92400e;
+  background: #fef3c7;
+}
+
+.paiement-type-autre {
+  color: #6b21a8;
+  background: #f3e8ff;
+}
+
+.paiement-type-inconnu {
+  color: #475569;
+  background: #e2e8f0;
+}
+
+.paiement-montant {
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 750;
+  white-space: nowrap;
+
+  span {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+}
+
+.paiement-montant-detail {
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 768px) {
+  .paiement-type-cell,
+  .paiement-montant-cell {
+    gap: 0.3rem;
+  }
+
+  .paiement-montant {
+    font-size: 0.9rem;
+  }
+}

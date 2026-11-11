@@ -1,4 +1,5 @@
-﻿using MarionGI.Application.Dtos;
+﻿
+using MarionGI.Application.Dtos;
 using MarionGI.Domain.Enums;
 using MarionGI.Infrastructure.Pdf;
 using MarionGI.Persistence.Context;
@@ -38,6 +39,7 @@ public class RapportsController : ControllerBase
     // 1. DASHBOARD / KPI
     // ============================================================
 
+
     [HttpGet("dashboard-kpi")]
     public async Task<IActionResult> GetKpis()
     {
@@ -52,6 +54,28 @@ public class RapportsController : ControllerBase
             }
 
             var maintenant = DateTime.UtcNow;
+
+            // ========================================================
+            // PÉRIODE ANNUELLE : DU 1ER JANVIER AU 31 DÉCEMBRE
+            // ========================================================
+
+            var anneeEnCours = maintenant.Year;
+
+            var debutAnnee = new DateTime(
+                anneeEnCours,
+                1,
+                1,
+                0,
+                0,
+                0,
+                DateTimeKind.Utc);
+
+            var debutAnneeSuivante =
+                debutAnnee.AddYears(1);
+
+            // ========================================================
+            // PÉRIODE MENSUELLE : CONSERVÉE POUR LES IMPAYÉS
+            // ========================================================
 
             var debutMois = new DateTime(
                 maintenant.Year,
@@ -92,30 +116,44 @@ public class RapportsController : ControllerBase
                             societeId.Value)
                     .CountAsync();
 
+            // Une unité est louée si :
+            // - son statut enregistré est Loue ;
+            // - OU elle possède au moins un contrat actif.
+
             var unitesLouees =
                 await _context.UnitesLocatives
                     .AsNoTracking()
                     .Where(u =>
                         !u.EstSupprime &&
-                        u.Statut ==
-                            StatutDisponibilite.Loue &&
                         u.BienImmobilier != null &&
                         !u.BienImmobilier.EstSupprime &&
                         u.BienImmobilier.SocieteId ==
-                            societeId.Value)
+                            societeId.Value &&
+                        (
+                            u.Statut == StatutDisponibilite.Loue ||
+                            u.Contrats.Any(c =>
+                                !c.EstSupprime &&
+                                c.Statut == StatutContrat.Actif)
+                        ))
                     .CountAsync();
+
+            // Une unité est disponible uniquement si :
+            // - son statut enregistré est Disponible ;
+            // - ET elle ne possède aucun contrat actif.
 
             var unitesDisponibles =
                 await _context.UnitesLocatives
                     .AsNoTracking()
                     .Where(u =>
                         !u.EstSupprime &&
-                        u.Statut ==
-                            StatutDisponibilite.Disponible &&
                         u.BienImmobilier != null &&
                         !u.BienImmobilier.EstSupprime &&
                         u.BienImmobilier.SocieteId ==
-                            societeId.Value)
+                            societeId.Value &&
+                        u.Statut == StatutDisponibilite.Disponible &&
+                        !u.Contrats.Any(c =>
+                            !c.EstSupprime &&
+                            c.Statut == StatutContrat.Actif))
                     .CountAsync();
 
             var tauxOccupation =
@@ -124,10 +162,13 @@ public class RapportsController : ControllerBase
                     : 0;
 
             // ========================================================
-            // 3. ENCAISSEMENTS DU MOIS
+            // 3. ENCAISSEMENTS DE L'ANNÉE PAR TYPE DE PAIEMENT
+            // ========================================================
+            // Une seule requête SQL regroupe les paiements confirmés
+            // de l'année par type : Loyer, ChargesLocatives et Caution.
             // ========================================================
 
-            var encaissementsMois =
+            var totauxEncaissementsAnnee =
                 await _context.Paiements
                     .AsNoTracking()
                     .Where(p =>
@@ -142,19 +183,47 @@ public class RapportsController : ControllerBase
                         !p.Contrat.UniteLocative.BienImmobilier.EstSupprime &&
                         p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
                             societeId.Value &&
-                        p.DatePaiement >= debutMois &&
-                        p.DatePaiement < debutMoisSuivant)
-                    .SumAsync(p => (decimal?)p.Montant)
-                    ?? 0m;
+                        p.DatePaiement >= debutAnnee &&
+                        p.DatePaiement < debutAnneeSuivante)
+                    .GroupBy(p => p.TypePaiement)
+                    .Select(g => new
+                    {
+                        TypePaiement = g.Key,
+                        Total = g.Sum(p => p.Montant),
+                        NombrePaiements = g.Count()
+                    })
+                    .ToListAsync();
+
+            // Total des loyers encaissés durant l'année.
+
+            var encaissementsLoyersAnnee =
+                totauxEncaissementsAnnee
+                    .FirstOrDefault(x =>
+                        x.TypePaiement == TypePaiement.Loyer)
+                    ?.Total ?? 0m;
+
+            // Total des charges locatives encaissées durant l'année.
+
+            var encaissementsChargesAnnee =
+                totauxEncaissementsAnnee
+                    .FirstOrDefault(x =>
+                        x.TypePaiement == TypePaiement.ChargesLocatives)
+                    ?.Total ?? 0m;
+
+            // Total des cautions encaissées durant l'année.
+
+            var encaissementsCautionsAnnee =
+                totauxEncaissementsAnnee
+                    .FirstOrDefault(x =>
+                        x.TypePaiement == TypePaiement.Caution)
+                    ?.Total ?? 0m;
 
             // ========================================================
-            // 4. ÉVOLUTION DES ENCAISSEMENTS SUR 12 MOIS
+            // 4. ÉVOLUTION DES LOYERS ENCAISSÉS DE JANVIER À DÉCEMBRE
             // ========================================================
-            // Une seule requête SQL au lieu de 12 requêtes.
+            // Le graphique reste consacré aux loyers.
+            // Une seule requête SQL récupère les paiements de l'année.
             // ========================================================
-
-            var debutPeriodeGraphique =
-                debutMois.AddMonths(-11);
 
             var paiementsGraphique =
                 await _context.Paiements
@@ -163,6 +232,7 @@ public class RapportsController : ControllerBase
                         !p.EstSupprime &&
                         p.StatutTransaction ==
                             StatutTransaction.Confirme &&
+                        p.TypePaiement == TypePaiement.Loyer &&
                         p.Contrat != null &&
                         !p.Contrat.EstSupprime &&
                         p.Contrat.UniteLocative != null &&
@@ -171,8 +241,8 @@ public class RapportsController : ControllerBase
                         !p.Contrat.UniteLocative.BienImmobilier.EstSupprime &&
                         p.Contrat.UniteLocative.BienImmobilier.SocieteId ==
                             societeId.Value &&
-                        p.DatePaiement >= debutPeriodeGraphique &&
-                        p.DatePaiement < debutMoisSuivant)
+                        p.DatePaiement >= debutAnnee &&
+                        p.DatePaiement < debutAnneeSuivante)
                     .Select(p => new
                     {
                         p.DatePaiement,
@@ -183,10 +253,10 @@ public class RapportsController : ControllerBase
             var labels = new List<string>();
             var datasets = new List<decimal>();
 
-            for (var i = 11; i >= 0; i--)
+            for (var i = 0; i < 12; i++)
             {
                 var mois =
-                    debutMois.AddMonths(-i);
+                    debutAnnee.AddMonths(i);
 
                 var moisSuivant =
                     mois.AddMonths(1);
@@ -487,7 +557,14 @@ public class RapportsController : ControllerBase
                         u.Type,
                         u.Superficie,
                         u.Loyer,
-                        u.Statut,
+
+                        Statut =
+                            u.Contrats.Any(c =>
+                                !c.EstSupprime &&
+                                c.Statut == StatutContrat.Actif)
+                                ? StatutDisponibilite.Loue
+                                : u.Statut,
+
                         u.DateCreation,
 
                         Bien = new
@@ -535,8 +612,35 @@ public class RapportsController : ControllerBase
                         tauxOccupation,
                         2),
 
+                // Année de référence du tableau de bord.
+
+                AnneeEnCours = anneeEnCours,
+
+                // Totaux annuels par type de paiement.
+
+                EncaissementsLoyersAnnee =
+                    encaissementsLoyersAnnee,
+
+                EncaissementsChargesAnnee =
+                    encaissementsChargesAnnee,
+
+                EncaissementsCautionsAnnee =
+                    encaissementsCautionsAnnee,
+
+                // Anciennes propriétés conservées pour compatibilité.
+                // EncaissementsMois correspond désormais aux loyers annuels.
+
+                EncaissementsLoyersMois =
+                    encaissementsLoyersAnnee,
+
+                EncaissementsChargesMois =
+                    encaissementsChargesAnnee,
+
+                EncaissementsCautionsMois =
+                    encaissementsCautionsAnnee,
+
                 EncaissementsMois =
-                    encaissementsMois,
+                    encaissementsLoyersAnnee,
 
                 EncaissementsGraph = new
                 {
@@ -578,6 +682,7 @@ public class RapportsController : ControllerBase
                 });
         }
     }
+
 
     // ============================================================
     // 2. RAPPORT D'UNE SOCIÉTÉ
@@ -1704,7 +1809,7 @@ public class RapportsController : ControllerBase
 
     [HttpPost("export-pdf")]
     public async Task<IActionResult> ExporterRapportPdf(
-     [FromBody] ExportRapportPdfRequest request)
+        [FromBody] ExportRapportPdfRequest request)
     {
         try
         {

@@ -1,3 +1,4 @@
+
 import {
   Component,
   inject,
@@ -52,6 +53,7 @@ import {
   StatutBien,
   StatutContrat,
   ModePaiement,
+  TypePaiement,
   ROLES,
   UniteLocativeDto,
   UniteLocativeDetailDto,
@@ -60,18 +62,14 @@ import {
   ContratUniteDto
 } from '../models/gestimmo.models';
 
-
 interface MoisLoyerOption {
   label: string;
   value: string;
 }
 
-
 @Component({
   selector: 'app-unites-locatives',
-
   standalone: true,
-
   imports: [
     CommonModule,
     FormsModule,
@@ -96,9 +94,7 @@ interface MoisLoyerOption {
   templateUrl: './uniteslocatives.html',
   styleUrls: ['./uniteslocatives.scss']
 })
-export class UnitesLocatives
-  implements OnInit, OnDestroy {
-
+export class UnitesLocatives implements OnInit, OnDestroy {
 
   // ============================================================
   // SERVICES
@@ -158,21 +154,10 @@ export class UnitesLocatives
   // PHOTOS
   // ============================================================
 
-  /**
-   * Nouvelles photos sélectionnées depuis l'ordinateur.
-   */
   fichiersSelectionnes: File[] = [];
 
-  /**
-   * URLs temporaires utilisées pour prévisualiser
-   * les nouvelles photos.
-   */
   previsualisations: string[] = [];
 
-  /**
-   * Photos déjà enregistrées sur le serveur et
-   * conservées lors d'une modification.
-   */
   photosExistantes: string[] = [];
 
 
@@ -189,67 +174,91 @@ export class UnitesLocatives
   // PAIEMENT
   // ============================================================
 
-  /**
-   * Affiche la popup de paiement.
-   */
   displayPaiementModal = false;
 
-  /**
-   * Indique qu'un paiement est actuellement envoyé
-   * au backend.
-   */
   paiementEnCours = false;
 
-  /**
-   * Unité concernée par le paiement.
-   */
   unitePaiement: UniteLocativeDetailDto | null = null;
 
-  /**
-   * Contrat actif concerné par le paiement.
-   */
   contratPaiement: ContratUniteDto | null = null;
 
   /**
-   * Montant saisi dans la popup.
+   * Type de paiement sélectionné.
    *
-   * Par défaut, il correspond au loyer du contrat actif.
+   * Par défaut, le paiement concerne le loyer.
+   */
+  typePaiementSelectionne: TypePaiement =
+    TypePaiement.Loyer;
+
+  /**
+   * Montant du paiement.
+   *
+   * Le montant est initialisé selon le type de paiement,
+   * mais reste modifiable pour permettre les paiements partiels.
    */
   montantPaiement = 0;
 
   /**
-   * Mois de loyer sélectionné pour le paiement.
+   * Mois concerné par le paiement.
    *
-   * Format envoyé au backend :
-   * YYYY-MM-01T00:00:00
-   *
-   * Exemple :
-   * 2026-10-01T00:00:00
+   * Obligatoire pour le loyer et les charges locatives.
+   * Facultatif pour la caution et les autres paiements.
    */
   moisLoyerPaiement = '';
 
-  /**
-   * Liste des mois de loyer couverts par le contrat actif.
-   */
   moisLoyerOptions: MoisLoyerOption[] = [];
 
-  /**
-   * Mode de paiement sélectionné.
-   */
   modePaiementSelectionne: ModePaiement | null = null;
 
-  /**
-   * Téléphone utilisé pour les paiements électroniques.
-   */
   telephonePaiement = '';
 
-  /**
-   * Enum exposé au template.
-   */
   readonly ModePaiement = ModePaiement;
 
+  readonly TypePaiement = TypePaiement;
+
   /**
-   * Liste des modes de paiement disponibles.
+   * Types de paiement proposés dans la popup.
+   */
+  readonly typesPaiement = [
+    {
+      label: 'Loyer',
+      value: TypePaiement.Loyer
+    },
+    {
+      label: 'Charges locatives',
+      value: TypePaiement.ChargesLocatives
+    },
+    {
+      label: 'Caution',
+      value: TypePaiement.Caution
+    },
+    {
+      label: 'Autre',
+      value: TypePaiement.Autre
+    }
+  ];
+
+  /**
+   * Indique si le mois de paiement doit être renseigné.
+   */
+  get moisLoyerRequis(): boolean {
+    return this.typePaiementSelectionne === TypePaiement.Loyer ||
+          this.typePaiementSelectionne === TypePaiement.ChargesLocatives;
+  }
+
+  /**
+   * Indique si la sélection du mois doit être affichée.
+   *
+   * Pour la caution et les autres paiements, le mois
+   * n'est pas nécessaire.
+   */
+  get afficherSelectionMois(): boolean {
+
+    return this.moisLoyerRequis;
+  }
+
+  /**
+   * Modes de paiement disponibles.
    */
   readonly modesPaiement = [
     {
@@ -287,13 +296,6 @@ export class UnitesLocatives
     ]);
   }
 
-
-  /**
-   * Indique si l'utilisateur dispose d'un droit
-   * fonctionnel pour accéder au paiement.
-   *
-   * Le backend reste l'autorité finale.
-   */
   get canAccessPaiement(): boolean {
 
     return this.authService.hasRole([
@@ -303,13 +305,6 @@ export class UnitesLocatives
     ]);
   }
 
-
-  /**
-   * Indique si l'utilisateur peut enregistrer
-   * un paiement en espèces.
-   *
-   * Le backend applique également cette règle.
-   */
   get canPayCash(): boolean {
 
     return this.authService.hasRole([
@@ -350,70 +345,72 @@ export class UnitesLocatives
   // FORMULAIRE UNITÉ
   // ============================================================
 
-initForm(): void {
-  this.uniteForm = this.fb.group({
-    reference: [
-      '',
-      [
-        Validators.required,
-        Validators.maxLength(50)
-      ]
-    ],
+  initForm(): void {
 
-    type: [
-      TypeUniteLocative.Appartement,
-      Validators.required
-    ],
+    this.uniteForm = this.fb.group({
 
-    superficie: [
-      0,
-      [
-        Validators.required,
-        Validators.min(1)
-      ]
-    ],
+      reference: [
+        '',
+        [
+          Validators.required,
+          Validators.maxLength(50)
+        ]
+      ],
 
-    nombrePieces: [null],
+      type: [
+        TypeUniteLocative.Appartement,
+        Validators.required
+      ],
 
-    etage: [null],
+      superficie: [
+        0,
+        [
+          Validators.required,
+          Validators.min(1)
+        ]
+      ],
 
-    loyer: [
-      0,
-      [
-        Validators.required,
+      nombrePieces: [null],
+
+      etage: [null],
+
+      loyer: [
+        0,
+        [
+          Validators.required,
+          Validators.min(0)
+        ]
+      ],
+
+      chargesLocativesMensuelles: [
+        null,
         Validators.min(0)
+      ],
+
+      montantCaution: [
+        null,
+        Validators.min(0)
+      ],
+
+      statut: [
+        StatutBien.Disponible,
+        Validators.required
+      ],
+
+      datePremiereMiseEnLocation: [null],
+
+      dateDerniereRenovation: [null],
+
+      estExonereeFiscalement: [false],
+
+      motifExoneration: [null],
+
+      bienImmobilierId: [
+        null,
+        Validators.required
       ]
-    ],
-
-    chargesLocativesMensuelles: [
-      null,
-      Validators.min(0)
-    ],
-
-    montantCaution: [
-      null,
-      Validators.min(0)
-    ],
-
-    statut: [
-      StatutBien.Disponible,
-      Validators.required
-    ],
-
-    datePremiereMiseEnLocation: [null],
-
-    dateDerniereRenovation: [null],
-
-    estExonereeFiscalement: [false],
-
-    motifExoneration: [null],
-
-    bienImmobilierId: [
-      null,
-      Validators.required
-    ]
-  });
-}
+    });
+  }
 
 
   // ============================================================
@@ -445,11 +442,8 @@ initForm(): void {
           this.chargementBiens = false;
 
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
             detail:
               'Impossible de charger les biens immobiliers.'
           });
@@ -487,11 +481,8 @@ initForm(): void {
           this.chargement = false;
 
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
             detail:
               'Impossible de charger la liste des unités locatives.'
           });
@@ -504,13 +495,6 @@ initForm(): void {
   // PAIEMENT - GESTION DES MOIS
   // ============================================================
 
-  /**
-   * Convertit une date provenant de l'API en date locale
-   * sans subir de décalage lié au fuseau horaire.
-   *
-   * Exemple :
-   * "2026-10-01T00:00:00" -> 01/10/2026
-   */
   private creerDateLocale(
     valeur: string | Date
   ): Date {
@@ -524,28 +508,22 @@ initForm(): void {
       );
     }
 
-    const texte =
-      String(valeur);
+    const texte = String(valeur);
 
-    const partieDate =
-      texte.substring(0, 10);
+    const partieDate = texte.substring(0, 10);
 
-    const morceaux =
-      partieDate.split('-');
+    const morceaux = partieDate.split('-');
 
     if (morceaux.length !== 3) {
 
       return new Date(NaN);
     }
 
-    const annee =
-      Number(morceaux[0]);
+    const annee = Number(morceaux[0]);
 
-    const mois =
-      Number(morceaux[1]);
+    const mois = Number(morceaux[1]);
 
-    const jour =
-      Number(morceaux[2]);
+    const jour = Number(morceaux[2]);
 
     return new Date(
       annee,
@@ -554,10 +532,6 @@ initForm(): void {
     );
   }
 
-
-  /**
-   * Retourne le premier jour du mois.
-   */
   private premierJourDuMois(
     date: Date
   ): Date {
@@ -569,59 +543,30 @@ initForm(): void {
     );
   }
 
-
-  /**
-   * Transforme une date en valeur utilisable
-   * par le backend pour MoisLoyer.
-   *
-   * Exemple :
-   * 01/10/2026 -> 2026-10-01T00:00:00
-   */
   private formatMoisLoyer(
     date: Date
   ): string {
 
-    const annee =
-      date.getFullYear();
+    const annee = date.getFullYear();
 
-    const mois =
-      String(
-        date.getMonth() + 1
-      ).padStart(2, '0');
+    const mois = String(
+      date.getMonth() + 1
+    ).padStart(2, '0');
 
     return `${annee}-${mois}-01T00:00:00`;
   }
 
-
-  /**
-   * Génère tous les mois couverts par le contrat.
-   *
-   * Exemple :
-   *
-   * Contrat :
-   * 01/08/2026 -> 30/11/2026
-   *
-   * Résultat :
-   * Août 2026
-   * Septembre 2026
-   * Octobre 2026
-   * Novembre 2026
-   */
   private genererMoisLoyerOptions(
     contrat: ContratUniteDto
   ): MoisLoyerOption[] {
 
-    const dateDebut =
-      this.creerDateLocale(
-        contrat.dateDebut
-      );
+    const dateDebut = this.creerDateLocale(
+      contrat.dateDebut
+    );
 
-    const dateFin =
-      contrat.dateFin
-        ? this.creerDateLocale(
-            contrat.dateFin
-          )
-        : new Date();
+    const dateFin = contrat.dateFin
+      ? this.creerDateLocale(contrat.dateFin)
+      : new Date();
 
     if (
       Number.isNaN(dateDebut.getTime()) ||
@@ -631,93 +576,65 @@ initForm(): void {
       return [];
     }
 
-    let moisCourant =
-      this.premierJourDuMois(
-        dateDebut
+    let moisCourant = this.premierJourDuMois(
+      dateDebut
+    );
+
+    const dernierMois = this.premierJourDuMois(
+      dateFin
+    );
+
+    const options: MoisLoyerOption[] = [];
+
+    while (moisCourant <= dernierMois) {
+
+      const valeur = this.formatMoisLoyer(
+        moisCourant
       );
 
-    const dernierMois =
-      this.premierJourDuMois(
-        dateFin
+      const libelle = moisCourant.toLocaleDateString(
+        'fr-FR',
+        {
+          month: 'long',
+          year: 'numeric'
+        }
       );
-
-    const options:
-      MoisLoyerOption[] = [];
-
-    while (
-      moisCourant <= dernierMois
-    ) {
-
-      const valeur =
-        this.formatMoisLoyer(
-          moisCourant
-        );
-
-      const libelle =
-        moisCourant.toLocaleDateString(
-          'fr-FR',
-          {
-            month: 'long',
-            year: 'numeric'
-          }
-        );
 
       options.push({
-
         label:
           libelle.charAt(0).toUpperCase() +
           libelle.slice(1),
-
-        value:
-          valeur
+        value: valeur
       });
 
-      moisCourant =
-        new Date(
-          moisCourant.getFullYear(),
-          moisCourant.getMonth() + 1,
-          1
-        );
+      moisCourant = new Date(
+        moisCourant.getFullYear(),
+        moisCourant.getMonth() + 1,
+        1
+      );
     }
 
     return options;
   }
 
-
-  /**
-   * Détermine le mois à présélectionner.
-   *
-   * Le mois courant est privilégié lorsqu'il est
-   * couvert par le contrat.
-   *
-   * Si le contrat ne couvre pas le mois courant,
-   * le premier mois du contrat est sélectionné.
-   */
   private determinerMoisLoyerParDefaut(
     contrat: ContratUniteDto
   ): string {
 
-    if (
-      this.moisLoyerOptions.length === 0
-    ) {
+    if (this.moisLoyerOptions.length === 0) {
 
       return '';
     }
 
-    const maintenant =
-      new Date();
+    const maintenant = new Date();
 
-    const moisCourant =
-      this.formatMoisLoyer(
-        this.premierJourDuMois(
-          maintenant
-        )
-      );
+    const moisCourant = this.formatMoisLoyer(
+      this.premierJourDuMois(maintenant)
+    );
 
     const moisCourantExiste =
       this.moisLoyerOptions.some(
-        option =>
-          option.value === moisCourant
+        option => option.value === moisCourant
       );
 
     if (moisCourantExiste) {
@@ -730,31 +647,81 @@ initForm(): void {
 
 
   // ============================================================
-  // OUVRIR PAIEMENT
+  // PAIEMENT - CHANGEMENT DU TYPE
   // ============================================================
 
   /**
-   * Ouvre la popup de paiement.
+   * Met à jour le montant proposé et le mois
+   * en fonction du type de paiement sélectionné.
    *
-   * Le contrat actif est récupéré depuis le détail
-   * de l'unité afin de disposer de son identifiant.
+   * Le montant reste modifiable par l'utilisateur.
    */
+
+onTypePaiementChange(type: TypePaiement | string | number): void {
+
+  const typeNumerique = Number(type);
+
+  this.typePaiementSelectionne = typeNumerique as TypePaiement;
+
+
+  if (!this.contratPaiement) {
+    return;
+  }
+
+  switch (this.typePaiementSelectionne) {
+
+    case TypePaiement.Loyer:
+      this.montantPaiement = this.contratPaiement.montantLoyer ?? 0;
+      this.moisLoyerPaiement =
+        this.determinerMoisLoyerParDefaut(this.contratPaiement);
+      break;
+
+    case TypePaiement.ChargesLocatives:
+      this.montantPaiement =
+        this.contratPaiement.montantChargesLocatives ?? 0;
+      this.moisLoyerPaiement =
+        this.determinerMoisLoyerParDefaut(this.contratPaiement);
+      break;
+
+    case TypePaiement.Caution:
+
+      this.montantPaiement =
+        this.contratPaiement.montantCaution ?? 0;
+
+      this.moisLoyerPaiement = '';
+
+      break;
+
+    case TypePaiement.Autre:
+
+      this.montantPaiement = 0;
+      this.moisLoyerPaiement = '';
+
+      break;
+
+    default:
+
+      this.montantPaiement = 0;
+      this.moisLoyerPaiement = '';
+
+      break;
+  }
+}
+
+
+  // ============================================================
+  // OUVRIR PAIEMENT
+  // ============================================================
+
   ouvrirPaiement(
     unite: UniteLocativeDto
   ): void {
 
-    // ----------------------------------------------------------
-    // Vérification des droits
-    // ----------------------------------------------------------
-
     if (!this.canAccessPaiement) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Accès refusé',
-
         detail:
           'Vous n’êtes pas autorisé à effectuer un paiement.'
       });
@@ -762,19 +729,11 @@ initForm(): void {
       return;
     }
 
-
-    // ----------------------------------------------------------
-    // Vérification rapide
-    // ----------------------------------------------------------
-
     if (!unite.aContratActif) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Paiement impossible',
-
         detail:
           'Cette unité ne possède aucun contrat actif.'
       });
@@ -782,46 +741,24 @@ initForm(): void {
       return;
     }
 
-
-    // ----------------------------------------------------------
-    // Récupération du détail de l'unité
-    // ----------------------------------------------------------
-
     this.uniteService
       .getUniteById(unite.id)
       .subscribe({
 
-        next: (
-          data: UniteLocativeDetailDto
-        ) => {
+        next: (data: UniteLocativeDetailDto) => {
 
-          const contrats =
-            data.contrats ?? [];
+          const contrats = data.contrats ?? [];
 
-
-          // ----------------------------------------------------
-          // Recherche du contrat actif
-          // ----------------------------------------------------
-
-          const contratActif =
-            contrats.find(
-              contrat =>
-                contrat.statut === StatutContrat.Actif
-            );
-
-
-          // ----------------------------------------------------
-          // Aucun contrat actif
-          // ----------------------------------------------------
+          const contratActif = contrats.find(
+            contrat =>
+              contrat.statut === StatutContrat.Actif
+          );
 
           if (!contratActif) {
 
             this.messageService.add({
-
               severity: 'warn',
-
               summary: 'Paiement impossible',
-
               detail:
                 'Aucun contrat actif n’a été trouvé pour cette unité.'
             });
@@ -829,49 +766,31 @@ initForm(): void {
             return;
           }
 
+          this.unitePaiement = data;
 
-          // ----------------------------------------------------
-          // Initialisation de la popup
-          // ----------------------------------------------------
-
-          this.unitePaiement =
-            data;
-
-          this.contratPaiement =
-            contratActif;
-
-          this.montantPaiement =
-            contratActif.montantLoyer;
-
-
-          // ----------------------------------------------------
-          // Génération des mois de loyer
-          // ----------------------------------------------------
+          this.contratPaiement = contratActif;
 
           this.moisLoyerOptions =
             this.genererMoisLoyerOptions(
               contratActif
             );
 
+          this.typePaiementSelectionne =
+            TypePaiement.Loyer;
 
-          // ----------------------------------------------------
-          // Présélection du mois
-          // ----------------------------------------------------
+          this.montantPaiement =
+            contratActif.montantLoyer ?? 0;
 
           this.moisLoyerPaiement =
             this.determinerMoisLoyerParDefaut(
               contratActif
             );
 
+          this.modePaiementSelectionne = null;
 
-          this.modePaiementSelectionne =
-            null;
+          this.telephonePaiement = '';
 
-          this.telephonePaiement =
-            '';
-
-          this.displayPaiementModal =
-            true;
+          this.displayPaiementModal = true;
         },
 
         error: (err: unknown) => {
@@ -882,11 +801,8 @@ initForm(): void {
           );
 
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
             detail:
               'Impossible de récupérer le contrat actif de cette unité.'
           });
@@ -901,18 +817,11 @@ initForm(): void {
 
   confirmerPaiement(): void {
 
-    // ----------------------------------------------------------
-    // Contrat obligatoire
-    // ----------------------------------------------------------
-
     if (!this.contratPaiement) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Paiement impossible',
-
         detail:
           'Aucun contrat actif n’est associé au paiement.'
       });
@@ -920,69 +829,90 @@ initForm(): void {
       return;
     }
 
-
     // ----------------------------------------------------------
-    // Mois de loyer obligatoire
+    // Vérification du type de paiement
     // ----------------------------------------------------------
 
-    if (!this.moisLoyerPaiement) {
+    if (
+      ![
+        TypePaiement.Loyer,
+        TypePaiement.ChargesLocatives,
+        TypePaiement.Caution,
+        TypePaiement.Autre
+      ].includes(this.typePaiementSelectionne)
+    ) {
 
       this.messageService.add({
-
         severity: 'warn',
-
-        summary: 'Mois de loyer',
-
+        summary: 'Type de paiement',
         detail:
-          'Le mois de loyer à payer est obligatoire.'
+          'Veuillez sélectionner un type de paiement valide.'
       });
 
       return;
     }
-
 
     // ----------------------------------------------------------
     // Vérification du mois
     // ----------------------------------------------------------
 
-    const moisSelectionneExiste =
-      this.moisLoyerOptions.some(
-        option =>
-          option.value ===
-          this.moisLoyerPaiement
-      );
-
-    if (!moisSelectionneExiste) {
+    if (
+      this.moisLoyerRequis &&
+      !this.moisLoyerPaiement
+    ) {
 
       this.messageService.add({
-
         severity: 'warn',
-
-        summary: 'Mois de loyer invalide',
-
+        summary: 'Mois de paiement',
         detail:
-          'Le mois sélectionné ne correspond pas à la période du contrat.'
+          'Veuillez sélectionner le mois concerné par ce paiement.'
       });
 
       return;
     }
 
+    // ----------------------------------------------------------
+    // Vérification de la période du contrat
+    // ----------------------------------------------------------
+
+    if (
+      this.moisLoyerRequis &&
+      this.moisLoyerPaiement
+    ) {
+
+      const moisSelectionneExiste =
+        this.moisLoyerOptions.some(
+          option =>
+            option.value === this.moisLoyerPaiement
+        );
+
+      if (!moisSelectionneExiste) {
+
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Mois invalide',
+          detail:
+            'Le mois sélectionné ne correspond pas à la période du contrat.'
+        });
+
+        return;
+      }
+    }
 
     // ----------------------------------------------------------
     // Montant
     // ----------------------------------------------------------
 
     if (
-      !this.montantPaiement ||
+      this.montantPaiement === null ||
+      this.montantPaiement === undefined ||
+      !Number.isFinite(Number(this.montantPaiement)) ||
       this.montantPaiement <= 0
     ) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Montant invalide',
-
         detail:
           'Veuillez saisir un montant supérieur à zéro.'
       });
@@ -990,21 +920,15 @@ initForm(): void {
       return;
     }
 
-
     // ----------------------------------------------------------
     // Mode de paiement
     // ----------------------------------------------------------
 
-    if (
-      this.modePaiementSelectionne === null
-    ) {
+    if (this.modePaiementSelectionne === null) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Mode de paiement',
-
         detail:
           'Veuillez sélectionner un mode de paiement.'
       });
@@ -1012,24 +936,19 @@ initForm(): void {
       return;
     }
 
-
     // ----------------------------------------------------------
     // Paiement en espèces
     // ----------------------------------------------------------
 
     if (
-      this.modePaiementSelectionne ===
-      ModePaiement.Especes
+      this.modePaiementSelectionne === ModePaiement.Especes
     ) {
 
       if (!this.canPayCash) {
 
         this.messageService.add({
-
           severity: 'warn',
-
           summary: 'Accès refusé',
-
           detail:
             'Seuls les administrateurs et gestionnaires peuvent enregistrer un paiement en espèces.'
         });
@@ -1042,28 +961,21 @@ initForm(): void {
       return;
     }
 
-
     // ----------------------------------------------------------
     // Paiement électronique
     // ----------------------------------------------------------
 
-    if (
-      !this.telephonePaiement.trim()
-    ) {
+    if (!this.telephonePaiement.trim()) {
 
       this.messageService.add({
-
         severity: 'warn',
-
         summary: 'Téléphone obligatoire',
-
         detail:
           'Veuillez saisir le numéro de téléphone utilisé pour le paiement.'
       });
 
       return;
     }
-
 
     this.initierPaiementElectronique();
   }
@@ -1085,15 +997,16 @@ initForm(): void {
 
     this.paiementEnCours = true;
 
-
-    const request:
-      InitierPaiementRequest = {
+    const request: InitierPaiementRequest = {
 
       contratId:
         this.contratPaiement.id,
 
       montant:
         this.montantPaiement,
+
+      typePaiement:
+        this.typePaiementSelectionne,
 
       modePaiement:
         this.modePaiementSelectionne,
@@ -1102,34 +1015,29 @@ initForm(): void {
         this.telephonePaiement.trim(),
 
       moisLoyer:
-        this.moisLoyerPaiement
+        this.moisLoyerRequis
+          ? this.moisLoyerPaiement
+          : null
     };
-
 
     console.log(
       'Paiement électronique envoyé:',
       request
     );
 
-
     this.paiementsService
       .initierPaiement(request)
       .subscribe({
 
-        next: (
-          response: PaiementResponse
-        ) => {
+        next: (response: PaiementResponse) => {
 
           this.paiementEnCours = false;
 
           this.displayPaiementModal = false;
 
           this.messageService.add({
-
             severity: 'success',
-
             summary: 'Paiement initié',
-
             detail:
               response.message ||
               'Le paiement a été initié avec succès.'
@@ -1147,15 +1055,13 @@ initForm(): void {
             err
           );
 
-          const erreur =
-            err as {
-              status?: number;
-              error?: {
-                message?: string;
-                title?: string;
-              } | string;
-            };
-
+          const erreur = err as {
+            status?: number;
+            error?: {
+              message?: string;
+              title?: string;
+            } | string;
+          };
 
           const message =
             typeof erreur.error === 'string'
@@ -1164,15 +1070,10 @@ initForm(): void {
                 erreur.error?.title ||
                 'Impossible d’initier le paiement.';
 
-
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Paiement échoué',
-
-            detail:
-              message
+            detail: message
           });
         }
       });
@@ -1192,9 +1093,7 @@ initForm(): void {
 
     this.paiementEnCours = true;
 
-
-    const request:
-      PaiementEspecesRequest = {
+    const request: PaiementEspecesRequest = {
 
       contratId:
         this.contratPaiement.id,
@@ -1202,35 +1101,33 @@ initForm(): void {
       montant:
         this.montantPaiement,
 
-      moisLoyer:
-        this.moisLoyerPaiement
-    };
+      typePaiement:
+        this.typePaiementSelectionne,
 
+      moisLoyer:
+        this.moisLoyerRequis
+          ? this.moisLoyerPaiement
+          : null
+    };
 
     console.log(
       'Paiement espèces envoyé:',
       request
     );
 
-
     this.paiementsService
       .enregistrerPaiementEspeces(request)
       .subscribe({
 
-        next: (
-          response: PaiementResponse
-        ) => {
+        next: (response: PaiementResponse) => {
 
           this.paiementEnCours = false;
 
           this.displayPaiementModal = false;
 
           this.messageService.add({
-
             severity: 'success',
-
             summary: 'Paiement enregistré',
-
             detail:
               response.message ||
               'Le paiement en espèces a été enregistré avec succès.'
@@ -1248,15 +1145,13 @@ initForm(): void {
             err
           );
 
-          const erreur =
-            err as {
-              status?: number;
-              error?: {
-                message?: string;
-                title?: string;
-              } | string;
-            };
-
+          const erreur = err as {
+            status?: number;
+            error?: {
+              message?: string;
+              title?: string;
+            } | string;
+          };
 
           const message =
             typeof erreur.error === 'string'
@@ -1265,15 +1160,10 @@ initForm(): void {
                 erreur.error?.title ||
                 'Impossible d’enregistrer le paiement.';
 
-
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
-            detail:
-              message
+            detail: message
           });
         }
       });
@@ -1307,6 +1197,9 @@ initForm(): void {
 
     this.unitePaiement = null;
 
+    this.typePaiementSelectionne =
+      TypePaiement.Loyer;
+
     this.montantPaiement = 0;
 
     this.moisLoyerPaiement = '';
@@ -1336,22 +1229,22 @@ initForm(): void {
 
     this.selectedUniteId = null;
 
-this.uniteForm.reset({
-  reference: '',
-  type: TypeUniteLocative.Appartement,
-  superficie: 0,
-  nombrePieces: null,
-  etage: null,
-  loyer: 0,
-  chargesLocativesMensuelles: null,
-  montantCaution: null,
-  statut: StatutBien.Disponible,
-  datePremiereMiseEnLocation: null,
-  dateDerniereRenovation: null,
-  estExonereeFiscalement: false,
-  motifExoneration: null,
-  bienImmobilierId: null
-});
+    this.uniteForm.reset({
+      reference: '',
+      type: TypeUniteLocative.Appartement,
+      superficie: 0,
+      nombrePieces: null,
+      etage: null,
+      loyer: 0,
+      chargesLocativesMensuelles: null,
+      montantCaution: null,
+      statut: StatutBien.Disponible,
+      datePremiereMiseEnLocation: null,
+      dateDerniereRenovation: null,
+      estExonereeFiscalement: false,
+      motifExoneration: null,
+      bienImmobilierId: null
+    });
 
     this.displayModal = true;
   }
@@ -1361,62 +1254,68 @@ this.uniteForm.reset({
   // MODIFICATION D'UNE UNITÉ
   // ============================================================
 
+  ouvrirModalModification(
+    unite: UniteLocativeDto
+  ): void {
 
-ouvrirModalModification(
-  unite: UniteLocativeDto
-): void {
-  if (!this.canManageUnites) {
-    return;
+    if (!this.canManageUnites) {
+
+      return;
+    }
+
+    this.nettoyerPhotos();
+
+    this.isEditMode = true;
+
+    this.selectedUniteId = unite.id;
+
+    this.uniteForm.reset({
+      reference: unite.reference ?? '',
+      type: unite.type,
+      superficie: unite.superficie ?? 0,
+
+      nombrePieces: unite.nombrePieces ?? null,
+
+      etage: unite.etage ?? null,
+
+      loyer: unite.loyer ?? 0,
+
+      chargesLocativesMensuelles:
+        unite.chargesLocativesMensuelles ?? null,
+
+      montantCaution:
+        unite.montantCaution ?? null,
+
+      statut: unite.statut,
+
+      datePremiereMiseEnLocation:
+        unite.datePremiereMiseEnLocation
+          ? String(unite.datePremiereMiseEnLocation)
+              .substring(0, 10)
+          : null,
+
+      dateDerniereRenovation:
+        unite.dateDerniereRenovation
+          ? String(unite.dateDerniereRenovation)
+              .substring(0, 10)
+          : null,
+
+      estExonereeFiscalement:
+        unite.estExonereeFiscalement ?? false,
+
+      motifExoneration:
+        unite.motifExoneration ?? null,
+
+      bienImmobilierId:
+        unite.bienImmobilierId
+    });
+
+    this.photosExistantes = [
+      ...(unite.photos ?? [])
+    ];
+
+    this.displayModal = true;
   }
-
-  this.nettoyerPhotos();
-
-  this.isEditMode = true;
-  this.selectedUniteId = unite.id;
-
-  this.uniteForm.reset({
-    reference: unite.reference ?? '',
-    type: unite.type,
-    superficie: unite.superficie ?? 0,
-
-    nombrePieces: unite.nombrePieces ?? null,
-    etage: unite.etage ?? null,
-
-    loyer: unite.loyer ?? 0,
-    chargesLocativesMensuelles:
-      unite.chargesLocativesMensuelles ?? null,
-    montantCaution: unite.montantCaution ?? null,
-
-    statut: unite.statut,
-
-    datePremiereMiseEnLocation:
-      unite.datePremiereMiseEnLocation
-        ? String(unite.datePremiereMiseEnLocation)
-            .substring(0, 10)
-        : null,
-
-    dateDerniereRenovation:
-      unite.dateDerniereRenovation
-        ? String(unite.dateDerniereRenovation)
-            .substring(0, 10)
-        : null,
-
-    estExonereeFiscalement:
-      unite.estExonereeFiscalement ?? false,
-
-    motifExoneration:
-      unite.motifExoneration ?? null,
-
-    bienImmobilierId: unite.bienImmobilierId
-  });
-
-  this.photosExistantes = [
-    ...(unite.photos ?? [])
-  ];
-
-  this.displayModal = true;
-}
-
 
 
   // ============================================================
@@ -1427,20 +1326,14 @@ ouvrirModalModification(
     event: Event
   ): void {
 
-    const input =
-      event.target as HTMLInputElement;
+    const input = event.target as HTMLInputElement;
 
-    if (
-      !input.files ||
-      input.files.length === 0
-    ) {
+    if (!input.files || input.files.length === 0) {
 
       return;
     }
 
-    const fichiers =
-      Array.from(input.files);
-
+    const fichiers = Array.from(input.files);
 
     const extensionsAutorisees = [
       'image/jpeg',
@@ -1448,24 +1341,15 @@ ouvrirModalModification(
       'image/webp'
     ];
 
-    const tailleMaximale =
-      10 * 1024 * 1024;
-
+    const tailleMaximale = 10 * 1024 * 1024;
 
     for (const fichier of fichiers) {
 
-      if (
-        !extensionsAutorisees.includes(
-          fichier.type
-        )
-      ) {
+      if (!extensionsAutorisees.includes(fichier.type)) {
 
         this.messageService.add({
-
           severity: 'warn',
-
           summary: 'Format non autorisé',
-
           detail:
             `Le fichier "${fichier.name}" n'est pas une image JPG, PNG ou WebP.`
         });
@@ -1473,24 +1357,17 @@ ouvrirModalModification(
         continue;
       }
 
-
-      if (
-        fichier.size > tailleMaximale
-      ) {
+      if (fichier.size > tailleMaximale) {
 
         this.messageService.add({
-
           severity: 'warn',
-
           summary: 'Fichier trop volumineux',
-
           detail:
             `Le fichier "${fichier.name}" dépasse la taille maximale de 10 Mo.`
         });
 
         continue;
       }
-
 
       const nombreTotal =
         this.photosExistantes.length +
@@ -1499,18 +1376,14 @@ ouvrirModalModification(
       if (nombreTotal >= 20) {
 
         this.messageService.add({
-
           severity: 'warn',
-
           summary: 'Limite atteinte',
-
           detail:
             'Une unité locative peut contenir au maximum 20 photos.'
         });
 
         break;
       }
-
 
       const dejaSelectionne =
         this.fichiersSelectionnes.some(
@@ -1524,16 +1397,12 @@ ouvrirModalModification(
         continue;
       }
 
-
-      this.fichiersSelectionnes.push(
-        fichier
-      );
+      this.fichiersSelectionnes.push(fichier);
 
       this.previsualisations.push(
         URL.createObjectURL(fichier)
       );
     }
-
 
     input.value = '';
   }
@@ -1555,25 +1424,16 @@ ouvrirModalModification(
       return;
     }
 
-    const preview =
-      this.previsualisations[index];
+    const preview = this.previsualisations[index];
 
     if (preview) {
 
-      URL.revokeObjectURL(
-        preview
-      );
+      URL.revokeObjectURL(preview);
     }
 
-    this.fichiersSelectionnes.splice(
-      index,
-      1
-    );
+    this.fichiersSelectionnes.splice(index, 1);
 
-    this.previsualisations.splice(
-      index,
-      1
-    );
+    this.previsualisations.splice(index, 1);
   }
 
 
@@ -1593,10 +1453,7 @@ ouvrirModalModification(
       return;
     }
 
-    this.photosExistantes.splice(
-      index,
-      1
-    );
+    this.photosExistantes.splice(index, 1);
   }
 
 
@@ -1620,13 +1477,9 @@ ouvrirModalModification(
 
   private libererPrevisualisations(): void {
 
-    for (
-      const preview of this.previsualisations
-    ) {
+    for (const preview of this.previsualisations) {
 
-      URL.revokeObjectURL(
-        preview
-      );
+      URL.revokeObjectURL(preview);
     }
 
     this.previsualisations = [];
@@ -1645,10 +1498,12 @@ ouvrirModalModification(
       .getUniteById(unite.id)
       .subscribe({
 
-      next: (data: UniteLocativeDetailDto) => {
-        this.selectedUnite = data;
-        this.displayDetailModal = true;
-      },
+        next: (data: UniteLocativeDetailDto) => {
+
+          this.selectedUnite = data;
+
+          this.displayDetailModal = true;
+        },
 
         error: (err: unknown) => {
 
@@ -1658,11 +1513,8 @@ ouvrirModalModification(
           );
 
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
             detail:
               'Impossible de charger le détail de cette unité.'
           });
@@ -1675,101 +1527,160 @@ ouvrirModalModification(
   // SAUVEGARDE
   // ============================================================
 
-sauvegarder(): void {
-  if (this.uniteForm.invalid) {
-    this.uniteForm.markAllAsTouched();
-    return;
-  }
+  sauvegarder(): void {
 
-  const valeurs = this.uniteForm.getRawValue();
+    if (this.uniteForm.invalid) {
 
-  const donneesCommunes = {
-    reference: valeurs.reference,
-    type: valeurs.type,
-    superficie: Number(valeurs.superficie),
-    nombrePieces: valeurs.nombrePieces !== null && valeurs.nombrePieces !== ''
-      ? Number(valeurs.nombrePieces)
-      : null,
-    etage: valeurs.etage !== null && valeurs.etage !== ''
-      ? Number(valeurs.etage)
-      : null,
-    loyer: Number(valeurs.loyer),
-    chargesLocativesMensuelles:
-      valeurs.chargesLocativesMensuelles !== null &&
-      valeurs.chargesLocativesMensuelles !== ''
-        ? Number(valeurs.chargesLocativesMensuelles)
-        : null,
-    montantCaution:
-      valeurs.montantCaution !== null && valeurs.montantCaution !== ''
-        ? Number(valeurs.montantCaution)
-        : null,
-    statut: valeurs.statut,
-    datePremiereMiseEnLocation: valeurs.datePremiereMiseEnLocation || null,
-    dateDerniereRenovation: valeurs.dateDerniereRenovation || null,
-    estExonereeFiscalement: valeurs.estExonereeFiscalement,
-    motifExoneration: valeurs.motifExoneration || null,
-    bienImmobilierId: valeurs.bienImmobilierId
-  };
+      this.uniteForm.markAllAsTouched();
 
-  if (!this.isEditMode) {
-    const creation: CreerUniteLocativeRequest = {
+      return;
+    }
+
+    const valeurs = this.uniteForm.getRawValue();
+
+    const donneesCommunes = {
+
+      reference: valeurs.reference,
+
+      type: valeurs.type,
+
+      superficie: Number(valeurs.superficie),
+
+      nombrePieces:
+        valeurs.nombrePieces !== null &&
+        valeurs.nombrePieces !== ''
+          ? Number(valeurs.nombrePieces)
+          : null,
+
+      etage:
+        valeurs.etage !== null &&
+        valeurs.etage !== ''
+          ? Number(valeurs.etage)
+          : null,
+
+      loyer: Number(valeurs.loyer),
+
+      chargesLocativesMensuelles:
+        valeurs.chargesLocativesMensuelles !== null &&
+        valeurs.chargesLocativesMensuelles !== ''
+          ? Number(valeurs.chargesLocativesMensuelles)
+          : null,
+
+      montantCaution:
+        valeurs.montantCaution !== null &&
+        valeurs.montantCaution !== ''
+          ? Number(valeurs.montantCaution)
+          : null,
+
+      statut: valeurs.statut,
+
+      datePremiereMiseEnLocation:
+        valeurs.datePremiereMiseEnLocation || null,
+
+      dateDerniereRenovation:
+        valeurs.dateDerniereRenovation || null,
+
+      estExonereeFiscalement:
+        valeurs.estExonereeFiscalement,
+
+      motifExoneration:
+        valeurs.motifExoneration || null,
+
+      bienImmobilierId:
+        valeurs.bienImmobilierId
+    };
+
+    if (!this.isEditMode) {
+
+      const creation: CreerUniteLocativeRequest = {
+        ...donneesCommunes,
+        fichiers: [...this.fichiersSelectionnes]
+      };
+
+      this.uniteService
+        .createUnite(creation)
+        .subscribe({
+
+          next: () => {
+
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Succès',
+              detail: 'Unité locative créée.'
+            });
+
+            this.chargerUnites();
+
+            this.fermerModal();
+          },
+
+          error: (erreur) => {
+
+            console.error(
+              'Erreur lors de la création :',
+              erreur
+            );
+
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Erreur',
+              detail:
+                'Impossible de créer l’unité locative.'
+            });
+          }
+        });
+
+      return;
+    }
+
+    if (!this.selectedUniteId) {
+
+      return;
+    }
+
+    const modification: ModifierUniteLocativeRequest = {
       ...donneesCommunes,
+      photosExistantes: [...this.photosExistantes],
       fichiers: [...this.fichiersSelectionnes]
     };
 
-    this.uniteService.createUnite(creation).subscribe({
-      next: () => {
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Succès',
-          detail: 'Unité locative créée.'
-        });
-        this.chargerUnites();
-        this.fermerModal();
-      },
-      error: (erreur) => {
-        console.error('Erreur lors de la création :', erreur);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Erreur',
-          detail: 'Impossible de créer l’unité locative.'
-        });
-      }
-    });
+    this.uniteService
+      .updateUnite(
+        this.selectedUniteId,
+        modification
+      )
+      .subscribe({
 
-    return;
+        next: () => {
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Succès',
+            detail: 'Unité locative modifiée.'
+          });
+
+          this.chargerUnites();
+
+          this.fermerModal();
+        },
+
+        error: (erreur) => {
+
+          console.error(
+            'Erreur lors de la modification :',
+            erreur
+          );
+
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Erreur',
+            detail:
+              'Impossible de modifier l’unité locative.'
+          });
+        }
+      });
   }
 
-  if (!this.selectedUniteId) {
-    return;
-  }
-
-  const modification: ModifierUniteLocativeRequest = {
-    ...donneesCommunes,
-    photosExistantes: [...this.photosExistantes],
-    fichiers: [...this.fichiersSelectionnes]
-  };
-
-  this.uniteService.updateUnite(this.selectedUniteId, modification).subscribe({
-    next: () => {
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Succès',
-        detail: 'Unité locative modifiée.'
-      });
-      this.chargerUnites();
-      this.fermerModal();
-    },
-    error: (erreur) => {
-      console.error('Erreur lors de la modification :', erreur);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Erreur',
-        detail: 'Impossible de modifier l’unité locative.'
-      });
-    }
-  });
-}
 
   // ============================================================
   // FERMETURE DE LA MODALE UNITÉ
@@ -1799,15 +1710,13 @@ sauvegarder(): void {
       err
     );
 
-    const erreur =
-      err as {
-        status?: number;
-        error?: {
-          message?: string;
-          title?: string;
-        } | string;
-      };
-
+    const erreur = err as {
+      status?: number;
+      error?: {
+        message?: string;
+        title?: string;
+      } | string;
+    };
 
     const errorMessage =
       typeof erreur.error === 'string'
@@ -1819,7 +1728,6 @@ sauvegarder(): void {
     const messageNormalise =
       errorMessage.toLowerCase();
 
-
     if (
       erreur.status === 409 ||
       messageNormalise.includes('référence') ||
@@ -1828,12 +1736,8 @@ sauvegarder(): void {
     ) {
 
       this.messageService.add({
-
         severity: 'error',
-
-        summary:
-          'Référence existante',
-
+        summary: 'Référence existante',
         detail:
           'Une unité possède déjà cette référence dans ce bien.'
       });
@@ -1841,16 +1745,11 @@ sauvegarder(): void {
       return;
     }
 
-
     this.messageService.add({
-
       severity: 'error',
-
       summary: 'Erreur',
-
       detail:
-        errorMessage ||
-        messageDefaut
+        errorMessage || messageDefaut
     });
   }
 
@@ -1894,11 +1793,8 @@ sauvegarder(): void {
             next: () => {
 
               this.messageService.add({
-
                 severity: 'success',
-
                 summary: 'Succès',
-
                 detail:
                   'Unité locative archivée avec succès.'
               });
@@ -1913,15 +1809,13 @@ sauvegarder(): void {
                 err
               );
 
-              const erreur =
-                err as {
-                  status?: number;
-                  error?: {
-                    message?: string;
-                    title?: string;
-                  } | string;
-                };
-
+              const erreur = err as {
+                status?: number;
+                error?: {
+                  message?: string;
+                  title?: string;
+                } | string;
+              };
 
               const message =
                 typeof erreur.error === 'string'
@@ -1930,9 +1824,7 @@ sauvegarder(): void {
                     erreur.error?.title ||
                     'Erreur lors de la suppression.';
 
-
               this.messageService.add({
-
                 severity:
                   erreur.status === 409
                     ? 'warn'
@@ -1943,8 +1835,7 @@ sauvegarder(): void {
                     ? 'Suppression impossible'
                     : 'Erreur',
 
-                detail:
-                  message
+                detail: message
               });
             }
           });
@@ -1981,15 +1872,11 @@ sauvegarder(): void {
 
         next: (response) => {
 
-          unite.statut =
-            response.statut;
+          unite.statut = response.statut;
 
           this.messageService.add({
-
             severity: 'success',
-
             summary: 'Succès',
-
             detail:
               response.message ||
               'Statut modifié avec succès.'
@@ -2003,14 +1890,12 @@ sauvegarder(): void {
             err
           );
 
-          const erreur =
-            err as {
-              error?: {
-                message?: string;
-                title?: string;
-              } | string;
-            };
-
+          const erreur = err as {
+            error?: {
+              message?: string;
+              title?: string;
+            } | string;
+          };
 
           const message =
             typeof erreur.error === 'string'
@@ -2020,11 +1905,8 @@ sauvegarder(): void {
                 'Impossible de modifier le statut.';
 
           this.messageService.add({
-
             severity: 'error',
-
             summary: 'Erreur',
-
             detail: message
           });
         }
@@ -2040,8 +1922,7 @@ sauvegarder(): void {
     type: TypeUniteLocative
   ): string {
 
-    return this.uniteService
-      .getTypeLibelle(type);
+    return this.uniteService.getTypeLibelle(type);
   }
 
 
@@ -2053,8 +1934,7 @@ sauvegarder(): void {
     statut: StatutBien
   ): string {
 
-    return this.uniteService
-      .getStatutLibelle(statut);
+    return this.uniteService.getStatutLibelle(statut);
   }
 
 
@@ -2066,8 +1946,7 @@ sauvegarder(): void {
     statut: StatutBien
   ): 'success' | 'info' | 'warn' | 'danger' {
 
-    return this.uniteService
-      .getStatutSeverity(statut);
+    return this.uniteService.getStatutSeverity(statut);
   }
 
 
@@ -2079,8 +1958,7 @@ sauvegarder(): void {
     photo: string
   ): string {
 
-    return this.uniteService
-      .getPhotoUrl(photo);
+    return this.uniteService.getPhotoUrl(photo);
   }
 
 
@@ -2100,82 +1978,109 @@ sauvegarder(): void {
   // BIEN SÉLECTIONNÉ
   // ============================================================
 
-  getBienSelectionne():
-    BienDto | undefined {
+  getBienSelectionne(): BienDto | undefined {
 
     const bienId =
-      this.uniteForm?.get(
-        'bienImmobilierId'
-      )?.value;
+      this.uniteForm?.get('bienImmobilierId')?.value;
 
     return this.biens.find(
       b => b.id === bienId
     );
   }
 
-  
+
   // ============================================================
   // INDICATEURS DU TABLEAU DE BORD
   // ============================================================
 
-    get nombreUnitesTotal(): number {
-      return this.unites.length;
-    }
+  get nombreUnitesTotal(): number {
 
-    get nombreUnitesDisponibles(): number {
-      return this.unites.filter(
-        unite => unite.statut === StatutBien.Disponible
-      ).length;
-    }
+    return this.unites.length;
+  }
 
-    get nombreUnitesOccupees(): number {
-      return this.unites.filter(
-        unite => unite.statut === StatutBien.Loue
-      ).length;
-    }
+  get nombreUnitesDisponibles(): number {
 
-    get loyerMensuelTotal(): number {
-      return this.unites.reduce(
-        (total, unite) => total + (unite.loyer ?? 0),
-        0
-      );
-    }
+    return this.unites.filter(
+      unite => unite.statut === StatutBien.Disponible
+    ).length;
+  }
+
+  get nombreUnitesOccupees(): number {
+
+    return this.unites.filter(
+      unite => unite.statut === StatutBien.Loue
+    ).length;
+  }
+
+  get loyerMensuelTotal(): number {
+
+    return this.unites.reduce(
+      (total, unite) =>
+        total + (unite.loyer ?? 0),
+      0
+    );
+  }
+
+
   // ============================================================
   // FILTRES
   // ============================================================
 
   rechercheUnite = '';
+
   typeFiltre: TypeUniteLocative | null = null;
+
   statutFiltre: StatutBien | null = null;
 
   appliquerRecherche(table: any): void {
-    table.filterGlobal(this.rechercheUnite.trim(), 'contains');
+
+    table.filterGlobal(
+      this.rechercheUnite.trim(),
+      'contains'
+    );
   }
 
   appliquerFiltreType(table: any): void {
+
     if (this.typeFiltre === null) {
+
       table.filter(null, 'type', 'equals');
+
       return;
     }
 
-    table.filter(this.typeFiltre, 'type', 'equals');
+    table.filter(
+      this.typeFiltre,
+      'type',
+      'equals'
+    );
   }
 
   appliquerFiltreStatut(table: any): void {
+
     if (this.statutFiltre === null) {
+
       table.filter(null, 'statut', 'equals');
+
       return;
     }
 
-    table.filter(this.statutFiltre, 'statut', 'equals');
+    table.filter(
+      this.statutFiltre,
+      'statut',
+      'equals'
+    );
   }
 
   reinitialiserFiltres(table: any): void {
+
     this.rechercheUnite = '';
+
     this.typeFiltre = null;
+
     this.statutFiltre = null;
+
     table.clear();
   }
 
 }
-

@@ -66,7 +66,16 @@ export const APP_NAV_ITEMS: NavItem[] = [
       ROLES.Gestionnaire
     ]
   },
-
+ {
+    label: 'Options de déductions fiscales',
+    icon: 'pi pi-calculator',
+    route: 'optionsdeductionfiscales',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
   {
     label: 'Déclarations fiscales',
     icon: 'pi pi-file-edit',
@@ -77,6 +86,17 @@ export const APP_NAV_ITEMS: NavItem[] = [
       ROLES.Gestionnaire
     ]
   },
+   {
+    label: 'Affectation des charges aux déclarations fiscales',
+    icon: 'pi pi-calculator',
+    route: 'declarationschargesbiens',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
+  
   {
     label: 'Biens immobiliers',
     icon: 'pi pi-building',
@@ -154,7 +174,16 @@ export const APP_NAV_ITEMS: NavItem[] = [
       ROLES.Locataire
     ]
   },
-
+ {
+    label: 'Calcul fiscal',
+    icon: 'pi pi-calculator',
+    route: 'calculfiscal',
+    roles: [
+      ROLES.Administrateur,
+      ROLES.Admin,
+      ROLES.Gestionnaire
+    ]
+  },
   {
     label: 'Rapports',
     icon: 'pi pi-chart-bar',

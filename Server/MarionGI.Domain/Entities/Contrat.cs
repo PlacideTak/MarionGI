@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Enums;
+﻿using MarionGI.Domain.Enums;
 
 namespace MarionGI.Domain.Entities;
 

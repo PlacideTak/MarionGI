@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -138,6 +139,14 @@ export class DashboardHome implements OnInit {
 
 
   // ============================================================
+  // DONNÉES FINANCIÈRES
+  // ============================================================
+
+  readonly anneeEnCours =
+    signal<number>(new Date().getFullYear());
+
+
+  // ============================================================
   // DONNÉES DU GRAPHIQUE
   // ============================================================
 
@@ -155,7 +164,7 @@ export class DashboardHome implements OnInit {
     datasets: [
 
       {
-        label: 'Encaissements (FCFA)',
+        label: 'Loyers encaissés (FCFA)',
 
         data: this.chartValues(),
 
@@ -202,7 +211,7 @@ export class DashboardHome implements OnInit {
               context.parsed.y ?? 0;
 
             return (
-              `Encaissements : ` +
+              `Loyers encaissés : ` +
               `${val.toLocaleString('fr-FR')} FCFA`
             );
 
@@ -312,6 +321,18 @@ export class DashboardHome implements OnInit {
       next: (kpiDto: any) => {
 
         // ------------------------------------------------------
+        // ANNÉE DE RÉFÉRENCE
+        // ------------------------------------------------------
+
+        const annee =
+          kpiDto.anneeEnCours ??
+          kpiDto.AnneeEnCours ??
+          new Date().getFullYear();
+
+        this.anneeEnCours.set(annee);
+
+
+        // ------------------------------------------------------
         // UNITÉS DISPONIBLES
         // ------------------------------------------------------
 
@@ -322,12 +343,22 @@ export class DashboardHome implements OnInit {
 
 
         // ------------------------------------------------------
-        // ENCAISSEMENTS DU MOIS
+        // ENCAISSEMENTS ANNUELS PAR TYPE
         // ------------------------------------------------------
 
-        const encaissementsMois =
-          kpiDto.encaissementsMois ??
-          kpiDto.EncaissementsMois ??
+        const encaissementsLoyers =
+          kpiDto.encaissementsLoyersAnnee ??
+          kpiDto.EncaissementsLoyersAnnee ??
+          0;
+
+        const encaissementsCharges =
+          kpiDto.encaissementsChargesAnnee ??
+          kpiDto.EncaissementsChargesAnnee ??
+          0;
+
+        const encaissementsCautions =
+          kpiDto.encaissementsCautionsAnnee ??
+          kpiDto.EncaissementsCautionsAnnee ??
           0;
 
 
@@ -368,10 +399,7 @@ export class DashboardHome implements OnInit {
                 // ------------------------------------------------
                 // NORMALISATION PRIME NG
                 // ------------------------------------------------
-                //
-                // Le backend peut envoyer "warning".
-                // PrimeNG attend "warn".
-                //
+
                 const severite: AlertSeverity =
                   severiteBrute === 'warning'
                     ? 'warn'
@@ -436,8 +464,20 @@ export class DashboardHome implements OnInit {
           },
 
           {
-            label: 'Loyers encaissés (mois)',
-            value: encaissementsMois,
+            label: `Loyers encaissés (${annee})`,
+            value: encaissementsLoyers,
+            isCurrency: true
+          },
+
+          {
+            label: `Charges locatives encaissées (${annee})`,
+            value: encaissementsCharges,
+            isCurrency: true
+          },
+
+          {
+            label: `Cautions encaissées (${annee})`,
+            value: encaissementsCautions,
             isCurrency: true
           },
 
@@ -456,7 +496,7 @@ export class DashboardHome implements OnInit {
 
 
         // ======================================================
-        // GRAPHIQUE
+        // GRAPHIQUE DES LOYERS ENCAISSÉS
         // ======================================================
 
         const graph =
@@ -510,15 +550,15 @@ export class DashboardHome implements OnInit {
                     unite.Reference ??
                     'N/A',
 
-                    bienReference:
-                      unite.bien?.reference ??
-                      unite.bien?.Reference ??
-                      'N/A',
+                  bienReference:
+                    unite.bien?.reference ??
+                    unite.bien?.Reference ??
+                    'N/A',
 
-                    bienNom:
-                      unite.bien?.nom ??
-                      unite.bien?.Nom ??
-                      'N/A',
+                  bienNom:
+                    unite.bien?.nom ??
+                    unite.bien?.Nom ??
+                    'N/A',
 
                   type:
                     this.getTypeUniteLibelle(

@@ -1,0 +1,502 @@
+$primary: #2563eb;
+$text: #1e293b;
+$text-secondary: #64748b;
+$border: #e2e8f0;
+$background: #f8fafc;
+$white: #ffffff;
+$success: #16a34a;
+$danger: #dc2626;
+$warning: #d97706;
+
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  color: $text;
+}
+
+.calcul-fiscal-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  padding: 1.5rem;
+  background: $background;
+  border-radius: 12px;
+}
+
+/* ============================================================
+   EN-TÊTE DE PAGE
+   ============================================================ */
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h1 {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: $text;
+  }
+
+  .page-subtitle {
+    margin: 0.45rem 0 0;
+    color: $text-secondary;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   CARTES ET SECTIONS
+   ============================================================ */
+
+.section-card {
+  min-width: 0;
+  padding: 1.5rem;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.035);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.35rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $text;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: $text-secondary;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================================
+   INFORMATIONS GÉNÉRALES
+   ============================================================ */
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 1rem;
+  background: $background;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+
+  strong {
+    overflow-wrap: anywhere;
+    font-size: 0.95rem;
+    font-weight: 650;
+    color: $text;
+  }
+}
+
+.info-label {
+  color: $text-secondary;
+  font-size: 0.8rem;
+}
+
+/* ============================================================
+   PÉRIMÈTRE GLOBAL DE LA SOCIÉTÉ
+   ============================================================ */
+
+.global-scope-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+
+  > i {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    color: $primary;
+    font-size: 1.3rem;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  strong {
+    color: #1e40af;
+    font-size: 0.9rem;
+  }
+
+  span {
+    color: #1d4ed8;
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+}
+
+.scope-hint {
+  display: inline-block;
+  margin-top: 0.25rem;
+  color: $text-secondary;
+  font-size: 0.76rem;
+}
+
+/* ============================================================
+   RÉSULTATS FISCAUX
+   ============================================================ */
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 1.15rem;
+  background: #f8fafc;
+  border: 1px solid $border;
+  border-radius: 10px;
+
+  .result-label {
+    color: $text-secondary;
+    font-size: 0.83rem;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .result-value {
+    overflow-wrap: anywhere;
+    color: $text;
+    font-size: 1.25rem;
+    font-weight: 750;
+    line-height: 1.35;
+  }
+
+  .result-description {
+    color: $text-secondary;
+    font-size: 0.76rem;
+    line-height: 1.4;
+  }
+}
+
+.deduction-card {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+
+  .result-value {
+    color: $primary;
+  }
+}
+
+.balance-card {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+
+  .result-value {
+    color: $success;
+  }
+}
+
+/* ============================================================
+   MESSAGES D'INFORMATION
+   ============================================================ */
+
+.calculation-info,
+.calculation-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  i {
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+  }
+}
+
+.calculation-info {
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+}
+
+.calculation-success {
+  color: #166534;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+}
+
+.calculation-warning {
+  color: #92400e;
+  background: #fffbeb;
+  border-color: #fcd34d;
+}
+
+/* ============================================================
+   AVERTISSEMENT DE PÉRIMÈTRE
+   ============================================================ */
+
+.warning-card {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.warning-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+
+  > i {
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    color: $warning;
+    font-size: 1.5rem;
+  }
+
+  h2 {
+    margin: 0;
+    color: #92400e;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.55rem 0 0;
+    color: #78350f;
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+}
+
+/* ============================================================
+   TABLEAU DES CHARGES
+   ============================================================ */
+
+.table-container {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.charge-description {
+  display: inline-block;
+  max-width: 280px;
+  color: $text;
+  font-weight: 550;
+  overflow-wrap: anywhere;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.amount-cell {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.actions-cell {
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* ============================================================
+   CHARGEMENT ET ABSENCE DE DONNÉES
+   ============================================================ */
+
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 180px;
+  color: $text-secondary;
+  font-size: 0.9rem;
+
+  i {
+    font-size: 1.25rem;
+    color: $primary;
+  }
+
+  &.compact {
+    min-height: 100px;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 2.5rem 1rem;
+  color: $text-secondary;
+  text-align: center;
+
+  > i {
+    color: #94a3b8;
+    font-size: 2rem;
+  }
+
+  strong {
+    color: $text;
+    font-size: 1rem;
+  }
+
+  span {
+    max-width: 500px;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  &.page-empty {
+    min-height: 300px;
+    background: $white;
+    border: 1px dashed $border;
+    border-radius: 12px;
+  }
+}
+
+/* ============================================================
+   ACTIONS EN BAS DE PAGE
+   ============================================================ */
+
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1.25rem 1.5rem;
+  background: $white;
+  border: 1px solid $border;
+  border-radius: 12px;
+
+  strong {
+    color: $text;
+    font-size: 0.95rem;
+  }
+
+  p {
+    margin: 0.35rem 0 0;
+    color: $text-secondary;
+    font-size: 0.83rem;
+    line-height: 1.5;
+  }
+}
+
+/* ============================================================
+   ÉCRANS MOYENS
+   ============================================================ */
+
+@media (max-width: 1024px) {
+
+  .info-grid,
+  .results-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ============================================================
+   MOBILES
+   ============================================================ */
+
+@media (max-width: 640px) {
+
+  .calcul-fiscal-page {
+    padding: 0.85rem;
+    gap: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+
+    h1 {
+      font-size: 1.4rem;
+    }
+  }
+
+  .header-actions {
+    width: 100%;
+
+    button {
+      flex: 1;
+    }
+  }
+
+  .section-card {
+    padding: 1rem;
+  }
+
+  .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-grid,
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .global-scope-banner {
+    padding: 0.85rem;
+  }
+
+  .footer-actions {
+    align-items: stretch;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .warning-content {
+    gap: 0.75rem;
+  }
+}

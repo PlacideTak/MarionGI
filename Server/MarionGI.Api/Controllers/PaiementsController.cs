@@ -42,21 +42,22 @@ public class PaiementsController : ControllerBase
         [FromServices] IPaiementProvider paiementProvider,
         CancellationToken cancellationToken)
     {
-        if (request == null)
-        {
-            return BadRequest(new
-            {
-                Message = "Les données du paiement sont obligatoires."
-            });
-        }
-
-        if (request.ContratId == Guid.Empty ||
+        if (request == null ||
+            request.ContratId == Guid.Empty ||
             request.Montant <= 0 ||
             string.IsNullOrWhiteSpace(request.Telephone))
         {
             return BadRequest(new
             {
                 Message = "Le contrat, un montant positif et le téléphone sont obligatoires."
+            });
+        }
+
+        if (!Enum.IsDefined(typeof(TypePaiement), request.TypePaiement))
+        {
+            return BadRequest(new
+            {
+                Message = "Le type de paiement est invalide."
             });
         }
 
@@ -108,81 +109,109 @@ public class PaiementsController : ControllerBase
             });
         }
 
-        var moisLoyer = NormaliserMoisLoyer(request.MoisLoyer);
+        var erreurFinanciere = ValiderConditionsFinancieres(contrat,   request.TypePaiement);
 
-        if (!MoisDansPeriodeContrat(contrat, moisLoyer))
+        if (erreurFinanciere != null)
+        {
+            return BadRequest(erreurFinanciere);
+        }
+
+        if (!MoisEtTypeValides(
+                contrat,
+                request.TypePaiement,
+                request.MoisLoyer))
         {
             return BadRequest(new
             {
-                Message = "Le mois sélectionné ne correspond pas à la période du contrat."
+                Message = "Un mois valide est obligatoire pour un loyer ou des charges locatives. Il ne doit pas être renseigné pour une caution ou un autre paiement."
             });
         }
 
-        // Le montant exigible est figé sur chaque transaction.
-        var montantDu = CalculerMontantDu(contrat);
+        var moisLoyer = request.MoisLoyer.HasValue
+            ? NormaliserMoisLoyer(request.MoisLoyer.Value)
+            : (DateTime?)null;
 
-        var montantDejaConfirme = await _context.Paiements
-            .Where(p =>
-                p.ContratId == contrat.Id &&
-                p.MoisLoyer == moisLoyer &&
-                !p.EstSupprime &&
-                p.StatutTransaction == StatutTransaction.Confirme)
-            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
+        var montantDu = CalculerMontantDu(
+            contrat,
+            request.TypePaiement,
+            request.Montant);
 
-        var montantRestant = montantDu - montantDejaConfirme;
+        var montantDejaConfirme =
+            await CalculerMontantDejaConfirmeAsync(
+                contrat.Id,
+                request.TypePaiement,
+                moisLoyer,
+                cancellationToken);
 
-        if (montantRestant <= 0)
+        var montantRestant = request.TypePaiement == TypePaiement.Autre
+            ? (decimal?)null
+            : montantDu - montantDejaConfirme;
+
+        if (montantRestant.HasValue && montantRestant.Value <= 0)
         {
             return Conflict(new
             {
-                Message = "Cette échéance de loyer est déjà intégralement payée.",
+                Message = "Le montant exigible pour ce type de paiement est déjà intégralement réglé.",
+                TypePaiement = request.TypePaiement,
                 MontantDu = montantDu,
                 MontantDejaConfirme = montantDejaConfirme
             });
         }
 
-        if (request.Montant > montantRestant)
+        if (montantRestant.HasValue &&
+            request.Montant > montantRestant.Value)
         {
             return BadRequest(new
             {
                 Message = "Le versement dépasse le solde exigible.",
+                TypePaiement = request.TypePaiement,
                 MontantDu = montantDu,
                 MontantDejaConfirme = montantDejaConfirme,
-                MontantRestant = montantRestant
+                MontantRestant = montantRestant.Value
             });
         }
 
-        // Une transaction en attente empêche une seconde tentative
-        // simultanée pour la même échéance.
-        var paiementEnAttente = await _context.Paiements
-            .AnyAsync(p =>
-                p.ContratId == contrat.Id &&
-                p.MoisLoyer == moisLoyer &&
-                !p.EstSupprime &&
-                p.StatutTransaction == StatutTransaction.EnAttente,
-                cancellationToken);
+        var paiementEnAttente = await ExistePaiementEnAttenteAsync(
+            contrat.Id,
+            request.TypePaiement,
+            moisLoyer,
+            cancellationToken);
 
         if (paiementEnAttente)
         {
             return Conflict(new
             {
-                Message = "Un paiement est déjà en cours pour cette échéance."
+                Message = "Un paiement de ce type est déjà en cours pour ce contrat ou cette échéance."
             });
         }
+
+        var maintenant = DateTime.UtcNow;
 
         var paiement = new Paiement
         {
             Id = Guid.NewGuid(),
             ContratId = contrat.Id,
+            TypePaiement = request.TypePaiement,
             MoisLoyer = moisLoyer,
             MontantDu = montantDu,
             Montant = request.Montant,
-            DatePaiement = DateTime.UtcNow,
+
+            MontantLoyerEncaisse =
+                request.TypePaiement == TypePaiement.Loyer
+                    ? request.Montant
+                    : 0m,
+
+            MontantChargesLocativesEncaisse =
+                request.TypePaiement == TypePaiement.ChargesLocatives
+                    ? request.Montant
+                    : 0m,
+
+            DatePaiement = maintenant,
             ModePaiement = request.ModePaiement,
             StatutTransaction = StatutTransaction.EnAttente,
             NumeroQuittance = GenererNumeroQuittance(),
             EnregistreParUtilisateurId = utilisateurId.Value,
-            DateCreation = DateTime.UtcNow,
+            DateCreation = maintenant,
             EstSupprime = false
         };
 
@@ -192,6 +221,11 @@ public class PaiementsController : ControllerBase
 
         try
         {
+            var description = ConstruireDescriptionPaiement(
+                request.TypePaiement,
+                moisLoyer,
+                paiement.NumeroQuittance);
+
             var resultat = await paiementProvider.InitierAsync(
                 new InitierPaiementContext(
                     PaiementId: paiement.Id,
@@ -200,14 +234,14 @@ public class PaiementsController : ControllerBase
                     EmailClient: contrat.Locataire?.Email
                         ?? "client@mariongi.cm",
                     ModePaiement: paiement.ModePaiement,
-                    Description:
-                        $"Loyer {moisLoyer:MM/yyyy} - {paiement.NumeroQuittance}"
+                    Description: description
                 ));
 
             if (!resultat.Succes)
             {
                 paiement.StatutTransaction = StatutTransaction.Echoue;
                 paiement.MotifEchec = resultat.MessageErreur;
+
                 await _context.SaveChangesAsync(cancellationToken);
 
                 return BadRequest(new
@@ -226,21 +260,27 @@ public class PaiementsController : ControllerBase
             {
                 Message = "Demande de paiement envoyée sur le mobile.",
                 paiement.Id,
+                paiement.TypePaiement,
                 paiement.NumeroQuittance,
                 paiement.MoisLoyer,
                 paiement.Montant,
+                paiement.MontantLoyerEncaisse,
+                paiement.MontantChargesLocativesEncaisse,
                 paiement.MontantDu,
-                MontantRestant = montantRestant - paiement.Montant,
+                MontantDejaConfirme = montantDejaConfirme,
+                MontantRestant = montantRestant.HasValue
+                    ? montantRestant.Value - paiement.Montant
+                    : (decimal?)null,
                 paiement.ReferenceTransactionOperateur,
                 Statut = paiement.StatutTransaction.ToString()
             });
         }
         catch
         {
-            // Le paiement est conservé en échec si l'appel fournisseur
-            // échoue avant qu'une transaction soit initiée avec succès.
             paiement.StatutTransaction = StatutTransaction.Echoue;
-            paiement.MotifEchec = "Erreur lors de l'initialisation auprès du fournisseur.";
+            paiement.MotifEchec =
+                "Erreur lors de l'initialisation auprès du fournisseur.";
+
             await _context.SaveChangesAsync(cancellationToken);
 
             throw;
@@ -269,7 +309,16 @@ public class PaiementsController : ControllerBase
             });
         }
 
+        if (!Enum.IsDefined(typeof(TypePaiement), request.TypePaiement))
+        {
+            return BadRequest(new
+            {
+                Message = "Le type de paiement est invalide."
+            });
+        }
+
         var utilisateurId = GetCurrentUserId();
+
         var societeId = await GetSocieteIdUtilisateurConnecteAsync(
             cancellationToken);
 
@@ -307,55 +356,71 @@ public class PaiementsController : ControllerBase
                 Message = "Le contrat n'est pas actif."
             });
         }
+        var erreurFinanciere = ValiderConditionsFinancieres(contrat,   request.TypePaiement);
 
-        var moisLoyer = NormaliserMoisLoyer(request.MoisLoyer);
+        if (erreurFinanciere != null)
+        {
+            return BadRequest(erreurFinanciere);
+        }
 
-        if (!MoisDansPeriodeContrat(contrat, moisLoyer))
+        if (!MoisEtTypeValides(
+                contrat,
+                request.TypePaiement,
+                request.MoisLoyer))
         {
             return BadRequest(new
             {
-                Message = "Le mois sélectionné ne correspond pas à la période du contrat."
+                Message = "Un mois valide est obligatoire pour un loyer ou des charges locatives. Il ne doit pas être renseigné pour une caution ou un autre paiement."
             });
         }
 
-        var montantDu = CalculerMontantDu(contrat);
+        var moisLoyer = request.MoisLoyer.HasValue
+            ? NormaliserMoisLoyer(request.MoisLoyer.Value)
+            : (DateTime?)null;
 
-        var montantDejaConfirme = await _context.Paiements
-            .Where(p =>
-                p.ContratId == contrat.Id &&
-                p.MoisLoyer == moisLoyer &&
-                !p.EstSupprime &&
-                p.StatutTransaction == StatutTransaction.Confirme)
-            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
+        var montantDu = CalculerMontantDu(
+            contrat,
+            request.TypePaiement,
+            request.Montant);
 
-        var montantRestant = montantDu - montantDejaConfirme;
+        var montantDejaConfirme =
+            await CalculerMontantDejaConfirmeAsync(
+                contrat.Id,
+                request.TypePaiement,
+                moisLoyer,
+                cancellationToken);
 
-        if (montantRestant <= 0 || request.Montant > montantRestant)
+        var montantRestant = request.TypePaiement == TypePaiement.Autre
+            ? (decimal?)null
+            : montantDu - montantDejaConfirme;
+
+        if (montantRestant.HasValue &&
+            (montantRestant.Value <= 0 ||
+             request.Montant > montantRestant.Value))
         {
             return Conflict(new
             {
-                Message = montantRestant <= 0
-                    ? "Cette échéance est déjà intégralement payée."
+                Message = montantRestant.Value <= 0
+                    ? "Le montant exigible pour ce type de paiement est déjà intégralement réglé."
                     : "Le versement dépasse le solde exigible.",
+                TypePaiement = request.TypePaiement,
                 MontantDu = montantDu,
                 MontantDejaConfirme = montantDejaConfirme,
-                MontantRestant = Math.Max(0, montantRestant)
+                MontantRestant = Math.Max(0m, montantRestant.Value)
             });
         }
 
-        var paiementEnAttente = await _context.Paiements
-            .AnyAsync(p =>
-                p.ContratId == contrat.Id &&
-                p.MoisLoyer == moisLoyer &&
-                !p.EstSupprime &&
-                p.StatutTransaction == StatutTransaction.EnAttente,
-                cancellationToken);
+        var paiementEnAttente = await ExistePaiementEnAttenteAsync(
+            contrat.Id,
+            request.TypePaiement,
+            moisLoyer,
+            cancellationToken);
 
         if (paiementEnAttente)
         {
             return Conflict(new
             {
-                Message = "Une transaction Mobile Money est en cours pour cette échéance."
+                Message = "Une transaction Mobile Money de ce type est déjà en cours pour ce contrat ou cette échéance."
             });
         }
 
@@ -365,9 +430,21 @@ public class PaiementsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             ContratId = contrat.Id,
+            TypePaiement = request.TypePaiement,
             MoisLoyer = moisLoyer,
             MontantDu = montantDu,
             Montant = request.Montant,
+
+            MontantLoyerEncaisse =
+                request.TypePaiement == TypePaiement.Loyer
+                    ? request.Montant
+                    : 0m,
+
+            MontantChargesLocativesEncaisse =
+                request.TypePaiement == TypePaiement.ChargesLocatives
+                    ? request.Montant
+                    : 0m,
+
             DatePaiement = maintenant,
             DateConfirmation = maintenant,
             ModePaiement = ModePaiement.Especes,
@@ -379,17 +456,24 @@ public class PaiementsController : ControllerBase
         };
 
         _context.Paiements.Add(paiement);
+
         await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new
         {
             Message = "Paiement en espèces enregistré.",
             paiement.Id,
+            paiement.TypePaiement,
             paiement.NumeroQuittance,
             paiement.MoisLoyer,
             paiement.Montant,
+            paiement.MontantLoyerEncaisse,
+            paiement.MontantChargesLocativesEncaisse,
             paiement.MontantDu,
-            MontantRestant = montantRestant - paiement.Montant,
+            MontantDejaConfirme = montantDejaConfirme + paiement.Montant,
+            MontantRestant = montantRestant.HasValue
+                ? Math.Max(0m, montantRestant.Value - paiement.Montant)
+                : (decimal?)null,
             paiement.DatePaiement,
             paiement.DateConfirmation,
             Statut = paiement.StatutTransaction.ToString()
@@ -420,24 +504,31 @@ public class PaiementsController : ControllerBase
             });
         }
 
-        var montantConfirme = await _context.Paiements
-            .Where(p =>
-                p.ContratId == paiement.ContratId &&
-                p.MoisLoyer == paiement.MoisLoyer &&
-                !p.EstSupprime &&
-                p.StatutTransaction == StatutTransaction.Confirme)
-            .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
+        var montantConfirme =
+            await CalculerMontantDejaConfirmeAsync(
+                paiement.ContratId,
+                paiement.TypePaiement,
+                paiement.MoisLoyer,
+                cancellationToken);
+
+        decimal? montantRestant = paiement.TypePaiement
+            == TypePaiement.Autre
+                ? null
+                : Math.Max(0m, paiement.MontantDu - montantConfirme);
 
         return Ok(new
         {
             paiement.Id,
             paiement.ContratId,
+            paiement.TypePaiement,
             paiement.NumeroQuittance,
             paiement.MoisLoyer,
             paiement.Montant,
+            paiement.MontantLoyerEncaisse,
+            paiement.MontantChargesLocativesEncaisse,
             paiement.MontantDu,
             MontantTotalConfirme = montantConfirme,
-            MontantRestant = Math.Max(0, paiement.MontantDu - montantConfirme),
+            MontantRestant = montantRestant,
             paiement.ModePaiement,
             paiement.StatutTransaction,
             paiement.DatePaiement,
@@ -545,8 +636,12 @@ public class PaiementsController : ControllerBase
                 ContratId = p.ContratId,
                 DatePaiement = p.DatePaiement,
                 DateConfirmation = p.DateConfirmation,
+                TypePaiement = p.TypePaiement,
                 MoisLoyer = p.MoisLoyer,
                 Montant = p.Montant,
+                MontantLoyerEncaisse = p.MontantLoyerEncaisse,
+                MontantChargesLocativesEncaisse =
+                    p.MontantChargesLocativesEncaisse,
                 MontantDu = p.MontantDu,
                 Mode = p.ModePaiement,
                 Statut = p.StatutTransaction,
@@ -579,7 +674,9 @@ public class PaiementsController : ControllerBase
         Guid contratId,
         CancellationToken cancellationToken)
     {
-        if (!await EstContratAccessibleAsync(contratId, cancellationToken))
+        if (!await EstContratAccessibleAsync(
+                contratId,
+                cancellationToken))
         {
             return NotFound(new
             {
@@ -622,11 +719,15 @@ public class PaiementsController : ControllerBase
             foreach (var paiement in paiements)
             {
                 var pdf = _pdfService.GenererQuittance(paiement);
+
                 var entry = archive.CreateEntry(
                     $"Quittance_{paiement.NumeroQuittance}.pdf");
 
                 await using var entryStream = entry.Open();
-                await entryStream.WriteAsync(pdf.AsMemory(), cancellationToken);
+
+                await entryStream.WriteAsync(
+                    pdf.AsMemory(),
+                    cancellationToken);
             }
         }
 
@@ -655,6 +756,7 @@ public class PaiementsController : ControllerBase
             leaveOpen: true);
 
         var rawBody = await reader.ReadToEndAsync(cancellationToken);
+
         Request.Body.Position = 0;
 
         if (string.IsNullOrWhiteSpace(rawBody))
@@ -708,7 +810,6 @@ public class PaiementsController : ControllerBase
             return NotFound(new { error = "Paiement introuvable." });
         }
 
-        // Éviter qu'un événement répété écrase une transaction traitée.
         if (paiement.StatutTransaction != StatutTransaction.EnAttente)
         {
             return Ok(new { message = "Événement déjà traité." });
@@ -718,38 +819,81 @@ public class PaiementsController : ControllerBase
         {
             case "payment.complete":
                 {
-                    var dejaConfirme = await _context.Paiements
-                        .Where(p =>
-                            p.ContratId == paiement.ContratId &&
-                            p.MoisLoyer == paiement.MoisLoyer &&
-                            p.Id != paiement.Id &&
-                            !p.EstSupprime &&
-                            p.StatutTransaction == StatutTransaction.Confirme)
-                        .SumAsync(p => (decimal?)p.Montant, cancellationToken) ?? 0m;
-
-                    if (dejaConfirme + paiement.Montant > paiement.MontantDu)
+                    // Les anciens paiements sans TypePaiement conservent
+                    // leur ancien fonctionnement : échéance mensuelle globale.
+                    if (paiement.TypePaiement == null)
                     {
-                        paiement.StatutTransaction = StatutTransaction.Echoue;
-                        paiement.MotifEchec =
-                            "La confirmation dépasserait le montant exigible de l'échéance.";
-                        await _context.SaveChangesAsync(cancellationToken);
+                        var dejaConfirme = await _context.Paiements
+                            .Where(p =>
+                                p.ContratId == paiement.ContratId &&
+                                p.TypePaiement == null &&
+                                p.MoisLoyer == paiement.MoisLoyer &&
+                                p.Id != paiement.Id &&
+                                !p.EstSupprime &&
+                                p.StatutTransaction == StatutTransaction.Confirme)
+                            .SumAsync(
+                                p => (decimal?)p.Montant,
+                                cancellationToken) ?? 0m;
 
-                        return Conflict(new
+                        if (dejaConfirme + paiement.Montant >
+                            paiement.MontantDu)
                         {
-                            error = "Le montant confirmé dépasse le solde exigible."
-                        });
+                            paiement.StatutTransaction =
+                                StatutTransaction.Echoue;
+
+                            paiement.MotifEchec =
+                                "La confirmation dépasserait le montant exigible de l'ancienne échéance.";
+
+                            await _context.SaveChangesAsync(cancellationToken);
+
+                            return Conflict(new
+                            {
+                                error = "Le montant confirmé dépasse le solde exigible."
+                            });
+                        }
+                    }
+                    else if (paiement.TypePaiement != TypePaiement.Autre)
+                    {
+                        var dejaConfirme =
+                            await CalculerMontantDejaConfirmeAsync(
+                                paiement.ContratId,
+                                paiement.TypePaiement.Value,
+                                paiement.MoisLoyer,
+                                cancellationToken,
+                                paiement.Id);
+
+                        if (dejaConfirme + paiement.Montant >
+                            paiement.MontantDu)
+                        {
+                            paiement.StatutTransaction =
+                                StatutTransaction.Echoue;
+
+                            paiement.MotifEchec =
+                                "La confirmation dépasserait le montant exigible pour ce type de paiement.";
+
+                            await _context.SaveChangesAsync(cancellationToken);
+
+                            return Conflict(new
+                            {
+                                error = "Le montant confirmé dépasse le solde exigible."
+                            });
+                        }
                     }
 
+                    // La ventilation a été figée à l'initiation.
+                    // Elle n'est jamais recalculée à partir du contrat actuel.
                     paiement.StatutTransaction = StatutTransaction.Confirme;
                     paiement.DateConfirmation = DateTime.UtcNow;
                     paiement.DatePaiement = DateTime.UtcNow;
                     paiement.MotifEchec = null;
+
                     break;
                 }
 
             case "payment.failed":
                 paiement.StatutTransaction = StatutTransaction.Echoue;
-                paiement.MotifEchec = "Le fournisseur a signalé l'échec de la transaction.";
+                paiement.MotifEchec =
+                    "Le fournisseur a signalé l'échec de la transaction.";
                 break;
 
             default:
@@ -873,17 +1017,202 @@ public class PaiementsController : ControllerBase
     }
 
     // ============================================================
-    // 10. CALCULER LE MONTANT MENSUEL EXIGIBLE
+    // 10. CALCULER LE MONTANT EXIGIBLE SELON LE TYPE
     // ============================================================
 
-    private static decimal CalculerMontantDu(Contrat contrat)
+    private static decimal CalculerMontantDu(
+        Contrat contrat,
+        TypePaiement typePaiement,
+        decimal montantAutre)
     {
-        return contrat.MontantLoyer +
-               (contrat.MontantChargesLocatives ?? 0m);
+        return typePaiement switch
+        {
+            TypePaiement.Loyer =>
+                contrat.MontantLoyer,
+
+            TypePaiement.ChargesLocatives =>
+                contrat.MontantChargesLocatives ?? 0m,
+
+            TypePaiement.Caution =>
+                contrat.MontantCaution,
+
+            // Aucun plafond contractuel prédéfini pour Autre.
+            // MontantDu représente ici le montant de la transaction.
+            TypePaiement.Autre =>
+                montantAutre,
+
+            _ => 0m
+        };
     }
 
     // ============================================================
-    // 11. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
+    // 11. VÉRIFIER LES CONDITIONS FINANCIÈRES
+    // ============================================================
+
+    private static string? ValiderConditionsFinancieres(
+     Contrat contrat,
+     TypePaiement typePaiement)
+    {
+        return typePaiement switch
+        {
+            TypePaiement.Loyer when contrat.MontantLoyer <= 0m =>
+                "Le montant du loyer n'est pas correctement configuré dans ce contrat.",
+
+            TypePaiement.ChargesLocatives
+                when contrat.MontantChargesLocatives.GetValueOrDefault() <= 0m =>
+                "Aucune charge locative mensuelle n'est prévue dans ce contrat.",
+
+            TypePaiement.Caution when contrat.MontantCaution <= 0m =>
+                "Le montant de la caution n'est pas configuré dans ce contrat.",
+
+            TypePaiement.Autre => null,
+
+            TypePaiement.Loyer or
+            TypePaiement.ChargesLocatives or
+            TypePaiement.Caution => null,
+
+            _ => "Le type de paiement sélectionné est invalide."
+        };
+    }
+
+    // ============================================================
+    // 12. VÉRIFIER LA COHÉRENCE DU MOIS AVEC LE TYPE
+    // ============================================================
+    private static bool MoisEtTypeValides(
+        Contrat contrat,
+        TypePaiement typePaiement,
+        DateTime? moisLoyer)
+    {
+        if (typePaiement == TypePaiement.Loyer ||
+            typePaiement == TypePaiement.ChargesLocatives)
+        {
+            if (!moisLoyer.HasValue)
+                return false;
+
+            var moisNormalise = NormaliserMoisLoyer(moisLoyer.Value);
+
+            return MoisDansPeriodeContrat(contrat, moisNormalise);
+        }
+
+        return moisLoyer == null;
+    }
+
+    // ============================================================
+    // 13. CALCULER LE TOTAL DÉJÀ CONFIRMÉ
+    // ============================================================
+
+    private async Task<decimal> CalculerMontantDejaConfirmeAsync(
+     Guid contratId,
+     TypePaiement? typePaiement,
+     DateTime? moisLoyer,
+     CancellationToken cancellationToken,
+     Guid? paiementExcluId = null)
+    {
+        var query = _context.Paiements
+            .AsNoTracking()
+            .Where(p =>
+                p.ContratId == contratId &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.Confirme);
+
+        if (paiementExcluId.HasValue)
+        {
+            query = query.Where(
+                p => p.Id != paiementExcluId.Value);
+        }
+
+        if (typePaiement == null)
+        {
+            query = query.Where(p =>
+                p.TypePaiement == null &&
+                p.MoisLoyer == moisLoyer);
+        }
+        else if (typePaiement == TypePaiement.Loyer)
+        {
+            if (!moisLoyer.HasValue)
+                return 0m;
+
+            var moisNormalise = NormaliserMoisLoyer(
+                moisLoyer.Value);
+
+            query = query.Where(p =>
+                p.TypePaiement == TypePaiement.Loyer &&
+                p.MoisLoyer == moisNormalise);
+        }
+        else
+        {
+            // Charges locatives et caution :
+            // cumul sur l'ensemble du contrat.
+            query = query.Where(p =>
+                p.TypePaiement == typePaiement);
+        }
+
+        return await query.SumAsync(
+            p => (decimal?)p.Montant,
+            cancellationToken) ?? 0m;
+    }
+    // ============================================================
+    // 14. VÉRIFIER L'EXISTENCE D'UN PAIEMENT EN ATTENTE
+    // ============================================================
+
+    private async Task<bool> ExistePaiementEnAttenteAsync(
+     Guid contratId,
+     TypePaiement typePaiement,
+     DateTime? moisLoyer,
+     CancellationToken cancellationToken)
+    {
+        var query = _context.Paiements
+            .Where(p =>
+                p.ContratId == contratId &&
+                p.TypePaiement == typePaiement &&
+                !p.EstSupprime &&
+                p.StatutTransaction == StatutTransaction.EnAttente);
+
+        if (typePaiement == TypePaiement.Loyer)
+        {
+            if (!moisLoyer.HasValue)
+                return false;
+
+            var moisNormalise = NormaliserMoisLoyer(
+                moisLoyer.Value);
+
+            query = query.Where(
+                p => p.MoisLoyer == moisNormalise);
+        }
+
+        // Charges, caution et autres :
+        // une transaction du même type en attente bloque
+        // une nouvelle transaction de ce type sur le contrat.
+
+        return await query.AnyAsync(cancellationToken);
+    }
+    // ============================================================
+    // 15. CONSTRUIRE LA DESCRIPTION DU PAIEMENT
+    // ============================================================
+
+    private static string ConstruireDescriptionPaiement(
+        TypePaiement typePaiement,
+        DateTime? moisLoyer,
+        string numeroQuittance)
+    {
+        var libelle = typePaiement switch
+        {
+            TypePaiement.Loyer => "Loyer",
+            TypePaiement.ChargesLocatives => "Charges locatives",
+            TypePaiement.Caution => "Caution",
+            TypePaiement.Autre => "Autre paiement",
+            _ => "Paiement"
+        };
+
+        var periode = moisLoyer.HasValue
+            ? $" {moisLoyer.Value:MM/yyyy}"
+            : string.Empty;
+
+        return $"{libelle}{periode} - {numeroQuittance}";
+    }
+
+    // ============================================================
+    // 16. SOCIÉTÉ DE L'UTILISATEUR CONNECTÉ
     // ============================================================
 
     private async Task<Guid?> GetSocieteIdUtilisateurConnecteAsync(
@@ -907,7 +1236,7 @@ public class PaiementsController : ControllerBase
     }
 
     // ============================================================
-    // 12. UTILISATEUR CONNECTÉ
+    // 17. UTILISATEUR CONNECTÉ
     // ============================================================
 
     private Guid? GetCurrentUserId()
@@ -923,12 +1252,15 @@ public class PaiementsController : ControllerBase
     }
 
     // ============================================================
-    // 13. NORMALISER LE MOIS DE LOYER
+    // 18. NORMALISER LE MOIS DE LOYER
     // ============================================================
 
     private static DateTime NormaliserMoisLoyer(DateTime moisLoyer)
     {
-        return new DateTime(moisLoyer.Year, moisLoyer.Month, 1);
+        return new DateTime(
+            moisLoyer.Year,
+            moisLoyer.Month,
+            1);
     }
 
     private static bool MoisDansPeriodeContrat(
@@ -943,7 +1275,7 @@ public class PaiementsController : ControllerBase
     }
 
     // ============================================================
-    // 14. SIGNATURE WEBHOOK
+    // 19. SIGNATURE WEBHOOK
     // ============================================================
 
     private static bool VerifierSignature(
@@ -965,16 +1297,18 @@ public class PaiementsController : ControllerBase
             .ToLowerInvariant();
 
         var expectedBytes = Encoding.UTF8.GetBytes(computedHex);
+
         var providedBytes = Encoding.UTF8.GetBytes(
             signature.Trim().ToLowerInvariant());
 
         return expectedBytes.Length == providedBytes.Length &&
                CryptographicOperations.FixedTimeEquals(
-                   expectedBytes, providedBytes);
+                   expectedBytes,
+                   providedBytes);
     }
 
     // ============================================================
-    // 15. NUMÉRO DE QUITTANCE
+    // 20. NUMÉRO DE QUITTANCE
     // ============================================================
 
     private static string GenererNumeroQuittance()
@@ -991,17 +1325,26 @@ public sealed class PaiementListItemDto
 {
     public Guid Id { get; set; }
     public Guid ContratId { get; set; }
+
     public DateTime DatePaiement { get; set; }
     public DateTime? DateConfirmation { get; set; }
-    public DateTime MoisLoyer { get; set; }
+
+    public TypePaiement? TypePaiement { get; set; }
+    public DateTime? MoisLoyer { get; set; }
+
     public decimal Montant { get; set; }
+    public decimal? MontantLoyerEncaisse { get; set; }
+    public decimal? MontantChargesLocativesEncaisse { get; set; }
     public decimal MontantDu { get; set; }
+
     public ModePaiement Mode { get; set; }
     public StatutTransaction Statut { get; set; }
+
     public string NumeroQuittance { get; set; } = string.Empty;
     public string? ReferenceTransactionOperateur { get; set; }
     public decimal? FraisTransaction { get; set; }
     public string? MotifEchec { get; set; }
+
     public string LocataireNom { get; set; } = "N/A";
     public string UniteReference { get; set; } = "N/A";
     public string BienReference { get; set; } = "N/A";
@@ -1015,9 +1358,10 @@ public sealed class PaiementListItemDto
 public record InitierPaiementRequest(
     Guid ContratId,
     decimal Montant,
+    TypePaiement TypePaiement,
     ModePaiement ModePaiement,
     string Telephone,
-    DateTime MoisLoyer);
+    DateTime? MoisLoyer);
 
 // =================================================================
 // DTO : PAIEMENT ESPÈCES
@@ -1026,4 +1370,5 @@ public record InitierPaiementRequest(
 public record PaiementEspecesRequest(
     Guid ContratId,
     decimal Montant,
-    DateTime MoisLoyer);
+    TypePaiement TypePaiement,
+    DateTime? MoisLoyer);

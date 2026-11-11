@@ -1,5 +1,8 @@
+
 @if (canViewStats()) {
-  <!-- ===== VUE ADMIN / GESTIONNAIRE : Dashboard complet ===== -->
+
+  <!-- ===== VUE ADMIN / GESTIONNAIRE : DASHBOARD COMPLET ===== -->
+
   <div class="dashboard-sections">
 
     <!-- ====================================================== -->
@@ -10,23 +13,40 @@
 
       @for (kpi of kpis(); track kpi.label) {
 
-        <p-card styleClass="kpi-card">
+        <p-card
+          styleClass="kpi-card"
+          [styleClass]="
+            'kpi-card ' +
+            (
+              kpi.label.includes('Loyers')
+                ? 'kpi-card--loyers'
+                : kpi.label.includes('Charges')
+                  ? 'kpi-card--charges'
+                  : kpi.label.includes('Cautions')
+                    ? 'kpi-card--cautions'
+                    : ''
+            )
+          ">
 
-          <div class="kpi-label">
-            {{ kpi.label }}
-          </div>
+          <div class="kpi-content">
 
-          <div class="kpi-value">
+            <div class="kpi-label">
+              {{ kpi.label }}
+            </div>
 
-            @if (kpi.isCurrency) {
+            <div class="kpi-value">
 
-              {{ kpi.value | currency:'XAF':'symbol':'1.0-0' }}
+              @if (kpi.isCurrency) {
 
-            } @else {
+                {{ kpi.value | currency:'XAF':'symbol':'1.0-0' }}
 
-              {{ kpi.value }} {{ kpi.unit ?? '' }}
+              } @else {
 
-            }
+                {{ kpi.value }} {{ kpi.unit ?? '' }}
+
+              }
+
+            </div>
 
           </div>
 
@@ -50,7 +70,7 @@
         <ng-template pTemplate="title">
 
           <span class="card-title-text">
-            Évolution des encaissements
+            Évolution des loyers encaissés
           </span>
 
         </ng-template>
@@ -221,9 +241,11 @@
                   </strong>
 
                   @if (unite.bienReference !== 'N/A') {
+
                     <small class="bien-reference">
                       ({{ unite.bienReference }})
                     </small>
+
                   }
 
                 </div>

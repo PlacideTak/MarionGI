@@ -1,0 +1,457 @@
+
+<p-toast position="top-right"></p-toast>
+
+<p-confirmDialog></p-confirmDialog>
+
+<div class="options-page">
+
+  <!-- ========================================================
+       EN-TÊTE
+       ======================================================== -->
+
+  <div class="page-header">
+    <div>
+      <h1>Options de déduction fiscale</h1>
+      <p>
+        Configurez les modes de déduction fiscale applicables à chaque année.
+      </p>
+    </div>
+
+    <p-button
+      label="Nouvelle option"
+      icon="pi pi-plus"
+      (onClick)="ouvrirCreation()">
+    </p-button>
+  </div>
+
+  <!-- ========================================================
+       INDICATEURS
+       ======================================================== -->
+
+  <div class="summary-grid">
+
+    <!-- Nombre d'options -->
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--blue">
+        <i class="pi pi-calculator"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">
+          Nombre d'options
+        </span>
+
+        <strong class="summary-card__value">
+          {{ nombreOptions }}
+        </strong>
+
+        <span class="summary-card__description">
+          Année fiscale sélectionnée
+        </span>
+      </div>
+    </div>
+
+    <!-- Options verrouillées -->
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--green">
+        <i class="pi pi-lock"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">
+          Options verrouillées
+        </span>
+
+        <strong class="summary-card__value">
+          {{ nombreOptionsVerrouillees }}
+        </strong>
+
+        <span class="summary-card__description">
+          Options protégées
+        </span>
+      </div>
+    </div>
+
+    <!-- Options modifiables -->
+    <div class="summary-card">
+      <div class="summary-card__icon summary-card__icon--orange">
+        <i class="pi pi-pencil"></i>
+      </div>
+
+      <div class="summary-card__content">
+        <span class="summary-card__label">
+          Options modifiables
+        </span>
+
+        <strong class="summary-card__value">
+          {{ nombreOptionsModifiables }}
+        </strong>
+
+        <span class="summary-card__description">
+          Options non verrouillées
+        </span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================================
+       FILTRES DE RECHERCHE
+       ======================================================== -->
+
+  <div class="content-card">
+
+    <div class="section-heading">
+      <div>
+        <h2>Filtres de recherche</h2>
+        <p>
+          Recherchez les options selon leur année fiscale.
+        </p>
+      </div>
+    </div>
+
+    <div class="filters-grid">
+
+      <div class="filter-field">
+        <label for="anneeFiltre">
+          Année fiscale
+        </label>
+
+        <input
+          id="anneeFiltre"
+          type="number"
+          pInputText
+          [(ngModel)]="anneeFiltre"
+          min="2000"
+          max="2100"
+          placeholder="Année fiscale">
+      </div>
+
+      <div class="filter-actions">
+
+        <p-button
+          label="Rechercher"
+          icon="pi pi-search"
+          (onClick)="rechercher()">
+        </p-button>
+
+        <p-button
+          label="Réinitialiser"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="reinitialiserFiltre()">
+        </p-button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ========================================================
+       LISTE DES OPTIONS FISCALES
+       ======================================================== -->
+
+  <div class="content-card">
+
+    <div class="section-heading">
+      <div>
+        <h2>Liste des options fiscales</h2>
+        <p>
+          Consultez et gérez les paramètres de déduction de votre société.
+        </p>
+      </div>
+
+      <span class="result-count">
+        {{ options.length }} option(s)
+      </span>
+    </div>
+
+    <p-table
+      [value]="options"
+      [loading]="chargement"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="{first} à {last} sur {totalRecords} options"
+      responsiveLayout="scroll"
+      dataKey="id"
+      emptyMessage="Aucune option de déduction fiscale trouvée.">
+
+      <!-- En-tête -->
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Année fiscale</th>
+          <th>Mode de déduction</th>
+          <th>Date de confirmation</th>
+          <th>Statut</th>
+          <th>Observations</th>
+          <th class="actions-column">Actions</th>
+        </tr>
+      </ng-template>
+
+      <!-- Corps -->
+      <ng-template pTemplate="body" let-option>
+        <tr>
+
+          <!-- Année fiscale -->
+          <td>
+            <strong>{{ option.anneeFiscale }}</strong>
+          </td>
+
+          <!-- Mode de déduction -->
+          <td>
+            <span class="mode-label">
+              {{ libelleModeDeduction(option.modeDeduction) }}
+            </span>
+          </td>
+
+          <!-- Date de confirmation -->
+          <td>
+            {{
+              option.dateConfirmation
+                ? (option.dateConfirmation | date:'dd/MM/yyyy')
+                : 'Non confirmée'
+            }}
+          </td>
+
+          <!-- Statut -->
+          <td>
+            <p-tag
+              [value]="option.estVerrouillee ? 'Verrouillée' : 'Modifiable'"
+              [severity]="option.estVerrouillee ? 'success' : 'warn'">
+            </p-tag>
+          </td>
+
+          <!-- Observations -->
+          <td>
+            <span class="observations">
+              {{ option.observations || '—' }}
+            </span>
+          </td>
+
+          <!-- Actions -->
+          <td>
+            <div class="table-actions">
+
+              <!-- Modifier -->
+              <p-button
+                icon="pi pi-pencil"
+                severity="secondary"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Modifier"
+                [disabled]="estVerrouillee(option)"
+                (onClick)="ouvrirModification(option)">
+              </p-button>
+
+              <!-- Verrouiller -->
+              <p-button
+                icon="pi pi-lock"
+                severity="success"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Verrouiller"
+                [disabled]="estVerrouillee(option)"
+                (onClick)="confirmerVerrouillage(option)">
+              </p-button>
+
+              <!-- Supprimer -->
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                [text]="true"
+                [rounded]="true"
+                pTooltip="Supprimer"
+                (onClick)="confirmerSuppression(option)">
+              </p-button>
+
+            </div>
+          </td>
+
+        </tr>
+      </ng-template>
+
+      <!-- État vide -->
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td colspan="6">
+            <div class="empty-state">
+              <i class="pi pi-calculator"></i>
+
+              <strong>
+                Aucune option fiscale trouvée
+              </strong>
+
+              <span>
+                Aucune option de déduction fiscale n'est disponible
+                pour les critères sélectionnés.
+                Vous pouvez créer une nouvelle option.
+              </span>
+
+              <p-button
+                label="Créer une option"
+                icon="pi pi-plus"
+                [outlined]="true"
+                (onClick)="ouvrirCreation()">
+              </p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+    </p-table>
+
+  </div>
+
+</div>
+
+<!-- ============================================================
+     DIALOGUE DE CRÉATION / MODIFICATION
+     ============================================================ -->
+
+<p-dialog
+  [(visible)]="formulaireVisible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="!enregistrement"
+  [closeOnEscape]="!enregistrement"
+  [style]="{ width: '600px', maxWidth: '95vw' }"
+  [header]="modeModification
+    ? 'Modifier une option fiscale'
+    : 'Nouvelle option de déduction fiscale'">
+
+  <!-- Introduction -->
+  <div class="dialog-intro">
+    <p>
+      Définissez le mode de déduction fiscale applicable
+      à l'année fiscale sélectionnée.
+    </p>
+  </div>
+
+  <!-- Formulaire -->
+  <form [formGroup]="formulaire">
+
+    <div class="form-grid">
+
+      <!-- Année fiscale -->
+      <div class="form-field full-width">
+
+        <label for="anneeFiscale">
+          Année fiscale
+          <span class="required">*</span>
+        </label>
+
+        <input
+          id="anneeFiscale"
+          type="number"
+          pInputText
+          formControlName="anneeFiscale"
+          min="2000"
+          max="2100"
+          placeholder="Ex. 2026">
+
+        @if (
+          formulaire.get('anneeFiscale')?.invalid &&
+          formulaire.get('anneeFiscale')?.touched
+        ) {
+          <small class="field-error">
+            Veuillez saisir une année fiscale valide entre 2000 et 2100.
+          </small>
+        }
+
+      </div>
+
+      <!-- Mode de déduction -->
+      <div class="form-field full-width">
+
+        <label for="modeDeduction">
+          Mode de déduction
+          <span class="required">*</span>
+        </label>
+
+        <p-select
+          inputId="modeDeduction"
+          formControlName="modeDeduction"
+          [options]="modesDeduction"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sélectionner un mode"
+          [showClear]="false"
+          appendTo="body"
+          styleClass="w-full">
+        </p-select>
+
+        @if (
+          formulaire.get('modeDeduction')?.invalid &&
+          formulaire.get('modeDeduction')?.touched
+        ) {
+          <small class="field-error">
+            Veuillez sélectionner un mode de déduction.
+          </small>
+        }
+
+        <small class="field-hint">
+          Choisissez entre le forfait de 30 % et la déduction des frais réels.
+        </small>
+
+      </div>
+
+      <!-- Observations -->
+      <div class="form-field full-width">
+
+        <label for="observations">
+          Observations
+        </label>
+
+        <textarea
+          id="observations"
+          pTextarea
+          formControlName="observations"
+          rows="4"
+          maxlength="1000"
+          placeholder="Informations complémentaires...">
+        </textarea>
+
+        <small class="field-hint">
+          Maximum 1 000 caractères.
+        </small>
+
+      </div>
+
+    </div>
+
+  </form>
+
+  <!-- Pied du dialogue -->
+  <ng-template pTemplate="footer">
+
+    <div class="dialog-actions">
+
+      <p-button
+        label="Annuler"
+        icon="pi pi-times"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="enregistrement"
+        (onClick)="annulerFormulaire()">
+      </p-button>
+
+      <p-button
+        [label]="modeModification
+          ? 'Enregistrer les modifications'
+          : 'Créer l’option'"
+        icon="pi pi-check"
+        [loading]="enregistrement"
+        [disabled]="enregistrement"
+        (onClick)="enregistrer()">
+      </p-button>
+
+    </div>
+
+  </ng-template>
+
+</p-dialog>

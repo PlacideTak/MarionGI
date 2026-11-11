@@ -118,7 +118,6 @@
         'bienAdresse'
       ]">
 
-      <!-- RECHERCHE ET FILTRES -->
       <ng-template pTemplate="caption">
         <div class="units-toolbar">
           <div class="search-field">
@@ -171,7 +170,6 @@
         </div>
       </ng-template>
 
-      <!-- EN-TÊTE DU TABLEAU -->
       <ng-template pTemplate="header">
         <tr>
           <th pSortableColumn="reference">
@@ -206,7 +204,6 @@
         </tr>
       </ng-template>
 
-      <!-- LIGNES -->
       <ng-template pTemplate="body" let-unite>
         <tr>
           <td data-label="Unité">
@@ -322,7 +319,6 @@
         </tr>
       </ng-template>
 
-      <!-- AUCUN RÉSULTAT -->
       <ng-template pTemplate="emptymessage">
         <tr>
           <td colspan="9">
@@ -720,7 +716,6 @@
 
     <!-- NOUVELLES PHOTOS -->
     <div *ngIf="previsualisations.length > 0" class="photo-section">
-      
       <div class="photos-grid">
         <div
           *ngFor="let apercu of previsualisations; let i = index"
@@ -748,7 +743,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- COMPTEUR PHOTOS -->
     <div class="photo-counter">
       <i class="pi pi-images"></i>
@@ -1025,78 +1020,68 @@
   appendTo="body"
   maskStyleClass="paiement-dialog-mask"
   styleClass="paiement-dialog"
-  [style]="{ width: '520px', maxWidth: '95vw' }"
+  [style]="{ width: '480px', maxWidth: '95vw' }"
   [breakpoints]="{ '600px': '95vw' }"
   (onHide)="fermerPaiementModal()">
 
-  <div *ngIf="unitePaiement && contratPaiement" class="paiement-form">
+  <div
+    *ngIf="unitePaiement && contratPaiement"
+    class="paiement-form">
 
-    <!-- INTRODUCTION -->
-    <div class="paiement-intro">
-      <div class="paiement-intro-icon">
-        <i class="pi pi-wallet"></i>
+    <!-- RÉSUMÉ COMPACT DU CONTRAT -->
+    <div class="paiement-contract-summary">
+      <div class="paiement-contract-icon">
+        <i class="pi pi-home"></i>
       </div>
-      <div>
-        <strong>Règlement du loyer</strong>
-        <span>Sélectionnez le mois et le mode de paiement.</span>
+
+      <div class="paiement-contract-details">
+        <strong>
+          {{ unitePaiement.bien?.nom ||
+             unitePaiement.bien?.reference ||
+             unitePaiement.bienReference ||
+             'Bien immobilier' }}
+        </strong>
+
+        <span>
+          Unité {{ unitePaiement.reference }}
+          · Contrat {{ contratPaiement.reference }}
+        </span>
       </div>
     </div>
 
-    <!-- RÉSUMÉ DU CONTRAT -->
-    <div class="paiement-contract-card">
-      <div class="paiement-contract-row">
-        <span class="paiement-contract-label">Contrat</span>
-        <strong class="paiement-contract-value">
-          {{ contratPaiement.reference || 'N/A' }}
-        </strong>
-      </div>
-
-      <div class="paiement-contract-row">
-        <span class="paiement-contract-label">Bien</span>
-        <strong class="paiement-contract-value">
-          {{
-            unitePaiement.bien?.nom ||
-            unitePaiement.bien?.reference ||
-            unitePaiement.bienReference ||
-            'N/A'
-          }}
-        </strong>
-      </div>
-
-      <div class="paiement-contract-row">
-        <span class="paiement-contract-label">Unité</span>
-        <strong class="paiement-contract-value">
-          {{ unitePaiement.reference }}
-        </strong>
-      </div>
-
-      <div class="paiement-contract-row">
-        <span class="paiement-contract-label">Loyer</span>
-        <strong class="paiement-contract-value paiement-contract-value--amount">
-          {{ contratPaiement.montantLoyer | number:'1.0-0' }} FCFA
-        </strong>
-      </div>
-
-      <div class="paiement-contract-row">
-        <span class="paiement-contract-label">Période</span>
-        <strong class="paiement-contract-value paiement-contract-value--period">
-          {{ contratPaiement.dateDebut | date:'dd/MM/yyyy' }}
-          <ng-container *ngIf="contratPaiement.dateFin; else contratSansFin">
-            — {{ contratPaiement.dateFin | date:'dd/MM/yyyy' }}
-          </ng-container>
-          <ng-template #contratSansFin>— en cours</ng-template>
-        </strong>
-      </div>
-    </div>
-
-    <!-- FORMULAIRE DE PAIEMENT -->
-    <div class="paiement-section-title">
-      <i class="pi pi-credit-card"></i>
-      Informations du paiement
-    </div>
-
+    <!-- TYPE DE PAIEMENT -->
     <div class="paiement-field">
-      <label for="moisLoyerPaiement">Mois de loyer</label>
+      <label for="typePaiement">Nature du paiement *</label>
+
+      <p-select
+        inputId="typePaiement"
+        [options]="typesPaiement"
+        [(ngModel)]="typePaiementSelectionne"
+        [ngModelOptions]="{ standalone: true }"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Sélectionner"
+        [disabled]="paiementEnCours"
+        (onChange)="onTypePaiementChange($event.value)"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+
+    <!-- MOIS OBLIGATOIRE POUR LOYER ET CHARGES -->
+    <div
+      *ngIf="
+        typePaiementSelectionne === TypePaiement.Loyer ||
+        typePaiementSelectionne === TypePaiement.ChargesLocatives
+      "
+      class="paiement-field">
+
+      <label for="moisLoyerPaiement">
+        {{ typePaiementSelectionne === TypePaiement.Loyer
+            ? 'Mois de loyer *'
+            : 'Mois des charges *' }}
+      </label>
+
       <p-select
         inputId="moisLoyerPaiement"
         [options]="moisLoyerOptions"
@@ -1109,11 +1094,41 @@
         styleClass="w-full"
         appendTo="body">
       </p-select>
-      <small>Sélectionnez le mois couvert par ce paiement.</small>
     </div>
 
-    <div class="paiement-field">
-      <label for="montantPaiement">Montant</label>
+    <!-- MOIS FACULTATIF POUR CAUTION ET AUTRE -->
+    <div
+      *ngIf="
+        typePaiementSelectionne === TypePaiement.Caution ||
+        typePaiementSelectionne === TypePaiement.Autre
+      "
+      class="paiement-field">
+
+      <label for="moisLoyerPaiementFacultatif">
+        Mois de référence (facultatif)
+      </label>
+
+      <p-select
+        inputId="moisLoyerPaiementFacultatif"
+        [options]="moisLoyerOptions"
+        [(ngModel)]="moisLoyerPaiement"
+        [ngModelOptions]="{ standalone: true }"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Aucun mois associé"
+        [showClear]="true"
+        [disabled]="paiementEnCours"
+        styleClass="w-full"
+        appendTo="body">
+      </p-select>
+    </div>
+
+    <!-- MONTANT -->
+    <div class="paiement-amount-section">
+      <label for="montantPaiement">
+        Montant à payer *
+      </label>
+
       <p-inputNumber
         inputId="montantPaiement"
         [(ngModel)]="montantPaiement"
@@ -1127,10 +1142,16 @@
         styleClass="w-full"
         inputStyleClass="w-full">
       </p-inputNumber>
+
+      <small>
+        Paiement partiel autorisé dans la limite du solde restant.
+      </small>
     </div>
 
+    <!-- MODE DE PAIEMENT -->
     <div class="paiement-field">
-      <label for="modePaiement">Mode de paiement</label>
+      <label for="modePaiement">Mode de paiement *</label>
+
       <p-select
         inputId="modePaiement"
         [options]="modesPaiement"
@@ -1145,12 +1166,18 @@
       </p-select>
     </div>
 
-    <!-- TÉLÉPHONE -->
+    <!-- TÉLÉPHONE MOBILE MONEY -->
     <div
-      *ngIf="modePaiementSelectionne !== null && modePaiementSelectionne !== ModePaiement.Especes"
+      *ngIf="
+        modePaiementSelectionne !== null &&
+        modePaiementSelectionne !== ModePaiement.Especes
+      "
       class="paiement-field">
 
-      <label for="telephonePaiement">Numéro de téléphone</label>
+      <label for="telephonePaiement">
+        Numéro Mobile Money *
+      </label>
+
       <input
         id="telephonePaiement"
         pInputText
@@ -1168,7 +1195,9 @@
       *ngIf="modePaiementSelectionne === ModePaiement.Especes"
       class="paiement-info">
       <i class="pi pi-info-circle"></i>
-      <span>Le paiement en espèces sera enregistré immédiatement.</span>
+      <span>
+        Le paiement en espèces sera enregistré immédiatement.
+      </span>
     </div>
 
     <!-- ACTIONS -->
@@ -1182,7 +1211,7 @@
       </p-button>
 
       <p-button
-        label="Confirmer le paiement"
+        label="Confirmer"
         icon="pi pi-check"
         severity="success"
         [loading]="paiementEnCours"
@@ -1190,5 +1219,7 @@
         (onClick)="confirmerPaiement()">
       </p-button>
     </div>
+
   </div>
 </p-dialog>
+

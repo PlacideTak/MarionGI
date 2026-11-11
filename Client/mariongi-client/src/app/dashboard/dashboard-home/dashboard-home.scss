@@ -1,11 +1,10 @@
+
 $border: #e2e8f0;
 $text: #334155;
 $bg-soft: #f8fafc;
 
 // ==========================================
 // CONTENEUR
-// (remplace les classes PrimeFlex "flex flex-column gap-4 p-2 md:p-4" :
-//  le SCSS pilote désormais l'espacement à chaque taille d'écran)
 // ==========================================
 
 .dashboard-sections {
@@ -22,20 +21,30 @@ $bg-soft: #f8fafc;
 }
 
 // ==========================================
-// KPIs : 1 colonne (mobile), 2 (≥ 480px), 4 (≥ 992px)
+// KPIs : 1 colonne (mobile), 2 (≥ 480px), 3 (≥ 992px)
+// Adapté aux 6 indicateurs du tableau de bord
+// ==========================================
+
+// ==========================================
+// KPIs : 1 colonne (mobile), 2 (tablette),
+// 3 (petits écrans desktop), 6 (grand écran)
 // ==========================================
 
 .kpi-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
 
   @media (min-width: 480px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (min-width: 992px) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (min-width: 1400px) {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -47,7 +56,6 @@ $bg-soft: #f8fafc;
 }
 
 .kpi-value {
-  // Taille fluide : les montants en XAF restent lisibles sans déborder
   font-size: clamp(1.25rem, 4.5vw, 1.5rem);
   font-weight: 700;
   color: #1b5e20;
@@ -55,12 +63,44 @@ $bg-soft: #f8fafc;
 }
 
 // ==========================================
-// STATISTIQUES + ALERTES : empilées, puis 2/3 - 1/3 dès 992px
+// DISTINCTION VISUELLE DES ENCAISSEMENTS
+// Les classes sont appliquées depuis le HTML
+// ==========================================
+
+:host ::ng-deep {
+
+  .kpi-card--loyers {
+    border-top: 3px solid #16a34a;
+
+    .kpi-value {
+      color: #15803d;
+    }
+  }
+
+  .kpi-card--charges {
+    border-top: 3px solid #2563eb;
+
+    .kpi-value {
+      color: #1d4ed8;
+    }
+  }
+
+  .kpi-card--cautions {
+    border-top: 3px solid #d97706;
+
+    .kpi-value {
+      color: #b45309;
+    }
+  }
+}
+
+// ==========================================
+// STATISTIQUES + ALERTES
 // ==========================================
 
 .stats-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr); // minmax(0, …) : le graphique ne force pas la largeur
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
 
   @media (min-width: 992px) {
@@ -90,7 +130,7 @@ $bg-soft: #f8fafc;
     border: 1px solid $border;
     border-radius: 12px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    overflow: hidden; // les éléments internes ne dépassent pas des coins arrondis
+    overflow: hidden;
     min-width: 0;
 
     .p-card-content {
@@ -124,9 +164,8 @@ $bg-soft: #f8fafc;
 
 // ==========================================
 // GRAPHIQUE
-// Prérequis côté composant : chartOptions doit contenir
-//   maintainAspectRatio: false
-// sinon Chart.js ignore la hauteur du wrapper.
+// Prérequis : chartOptions doit contenir
+// maintainAspectRatio: false
 // ==========================================
 
 .chart-wrapper {
@@ -205,7 +244,7 @@ $bg-soft: #f8fafc;
 .alerts-list__content {
   flex: 1 1 auto;
   min-width: 0;
-  overflow-wrap: anywhere; // messages longs : pas de débordement
+  overflow-wrap: anywhere;
 }
 
 .alerts-list__title {
@@ -241,35 +280,31 @@ $bg-soft: #f8fafc;
 :host ::ng-deep .properties-card .p-datatable {
   font-size: 0.9rem;
 
-  // .p-datatable-wrapper = PrimeNG ≤ 17 ; .p-datatable-table-container = PrimeNG 18+
   .p-datatable-wrapper,
   .p-datatable-table-container {
-    overflow-x: auto; // défilement de secours
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 }
 
 // ==========================================
-// VUE LOCATAIRE : image de bienvenue
-// (ces classes n'étaient pas définies dans votre SCSS ; si elles le sont
-//  dans un style global, supprimez ce bloc)
+// VUE LOCATAIRE : IMAGE DE BIENVENUE
 // ==========================================
 
-// Le bloc de bienvenue est AU-DESSUS de l'image ; l'image occupe tout le reste de la hauteur
 :host {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto; // le composant remplit le .dashboard-content du layout
+  flex: 1 1 auto;
   min-width: 0;
 }
 
 .welcome-background-container {
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto; // prend toute la hauteur restante de l'écran
+  flex: 1 1 auto;
   gap: 1.25rem;
   width: 100%;
-  padding: 1.5rem 1.5rem 0; // pas de marge basse : l'image va jusqu'en bas
+  padding: 1.5rem 1.5rem 0;
   box-sizing: border-box;
 }
 
@@ -293,12 +328,10 @@ $bg-soft: #f8fafc;
   }
 }
 
-// Zone de l'image : s'étire jusqu'en bas ; l'image est posée en absolu dedans
-// (méthode fiable pour qu'une image remplisse une hauteur flexible)
 .cover-wrapper {
   position: relative;
   flex: 1 1 auto;
-  min-height: 240px; // hauteur minimale sur écrans très bas
+  min-height: 240px;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -330,7 +363,7 @@ $bg-soft: #f8fafc;
 }
 
 // ==========================================
-// MOBILE (≤ 600px) : tableau -> cartes
+// MOBILE (≤ 600px) : TABLEAU -> CARTES
 // ==========================================
 
 @media (max-width: 600px) {
@@ -356,7 +389,6 @@ $bg-soft: #f8fafc;
       min-width: 0 !important;
     }
 
-    // En-tête masqué : libellés fournis par data-label
     .p-datatable-thead {
       display: none;
     }
@@ -433,6 +465,10 @@ $bg-soft: #f8fafc;
     }
   }
 }
+
+// ==========================================
+// CELLULES DU TABLEAU DES BIENS
+// ==========================================
 
 .property-cell {
   display: flex;

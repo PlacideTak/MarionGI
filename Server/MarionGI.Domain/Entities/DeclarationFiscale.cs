@@ -41,4 +41,35 @@ public class DeclarationFiscale : BaseEntity
 
     // Statut de suivi dans MarionGI.
     public StatutDeclarationFiscale Statut { get; set; }
+
+    // Option annuelle de déduction retenue.
+    public Guid? OptionDeductionFiscaleId { get; set; }
+
+    public virtual OptionDeductionFiscale? OptionDeductionFiscale {get; set; }
+
+    // Copie du mode retenu au moment du calcul.
+    // Permet de préserver l'historique.
+    public ModeDeductionCharges? ModeDeduction { get; set; }
+
+    // Données du calcul des revenus fonciers.
+    public decimal? TotalLoyersBruts { get; set; }
+
+    public decimal? ChargesForfaitaires { get; set; }
+
+    public decimal? ChargesReellesDeclarees { get; set; }
+
+    public decimal? ChargesReellesAdmissibles { get; set; }
+
+    public decimal? RevenuNetFoncier { get; set; }
+
+    // Acomptes déjà versés.
+    public decimal? AcomptesVerses { get; set; }
+
+    // Solde après imputation des acomptes.
+    public decimal? SoldeImpot { get; set; }
+
+    public DateTime? DateCalcul { get; set; }
+
+    public virtual ICollection<DeclarationChargeBien> ChargesRetenues { get; set; }
+    = new List<DeclarationChargeBien>();
 }

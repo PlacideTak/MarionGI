@@ -91,9 +91,27 @@ export const routes: Routes = [
             path: 'valeursfiscalesbiens', 
             loadComponent: () => import('./valeursfiscalesbiens/valeursfiscalesbiens').then(m => m.ValeursFiscalesBiens) 
           },
-           { 
+          { 
             path: 'declarationsfiscales', 
             loadComponent: () => import('./declarationsfiscales/declarationsfiscales').then(m => m.DeclarationsFiscales) 
+          },
+          { 
+            path: 'optionsdeductionfiscales', 
+            loadComponent: () => import('./optionsdeductionfiscales/optionsdeductionfiscales').then(m => m.OptionsDeductionFiscales) 
+          },
+          { 
+            path: 'declarationschargesbiens', 
+            loadComponent: () => import('./declarationschargesbiens/declarationschargesbiens').then(m => m.DeclarationsChargesBiens) 
+          },
+          {
+            path: 'calculfiscal',
+            loadComponent: () =>
+              import('./calculfiscal/calculfiscal').then(m => m.Calculfiscal)
+          },
+          {
+            path: 'calculfiscal/:id',
+            loadComponent: () =>
+              import('./calculfiscal/calculfiscal').then(m => m.Calculfiscal)
           }
         ]
       }

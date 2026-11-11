@@ -25,4 +25,6 @@ public class DeclarationFiscaleRequest
     public string? Observations { get; set; }
 
     public StatutDeclarationFiscale Statut { get; set; }
+
+    public Guid? OptionDeductionFiscaleId { get; set; }
 }

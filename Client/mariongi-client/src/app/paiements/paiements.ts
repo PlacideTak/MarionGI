@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnInit,
@@ -44,17 +45,16 @@ import {
 import {
   PaiementListItem,
   ModePaiement,
-  StatutTransaction
+  StatutTransaction,
+  TypePaiement
 } from '../models/gestimmo.models';
 
 import {
   PaiementsService
 } from '../services/paiements.service';
 
-
 @Component({
   selector: 'app-paiements-list',
-
   standalone: true,
 
   imports: [
@@ -70,7 +70,6 @@ import {
   ],
 
   templateUrl: './paiements.html',
-
   styleUrls: ['./paiements.scss']
 })
 export class Paiements implements OnInit {
@@ -85,7 +84,6 @@ export class Paiements implements OnInit {
   private readonly route =
     inject(ActivatedRoute);
 
-
   // =========================================================
   // DONNÉES
   // =========================================================
@@ -96,7 +94,6 @@ export class Paiements implements OnInit {
 
   chargementEnCours = true;
 
-
   // =========================================================
   // CONTRAT SÉLECTIONNÉ
   // =========================================================
@@ -105,84 +102,96 @@ export class Paiements implements OnInit {
 
   modeContrat = false;
 
-
   // =========================================================
   // FILTRES
   // =========================================================
 
   filtreTexte = '';
 
+  filtreTypePaiement?: TypePaiement;
+
   filtreStatut?: StatutTransaction;
 
   filtreMode?: ModePaiement;
-
 
   // =========================================================
   // ENUMS EXPOSÉS AU TEMPLATE
   // =========================================================
 
-  readonly StatutTransaction =
-    StatutTransaction;
+  readonly StatutTransaction = StatutTransaction;
 
-  readonly ModePaiement =
-    ModePaiement;
+  readonly ModePaiement = ModePaiement;
 
+  readonly TypePaiement = TypePaiement;
+
+  // =========================================================
+  // OPTIONS TYPE DE PAIEMENT
+  // =========================================================
+
+  readonly typesPaiementOptions = [
+    {
+      label: 'Loyer',
+      value: TypePaiement.Loyer
+    },
+    {
+      label: 'Charges locatives',
+      value: TypePaiement.ChargesLocatives
+    },
+    {
+      label: 'Caution',
+      value: TypePaiement.Caution
+    },
+    {
+      label: 'Autre',
+      value: TypePaiement.Autre
+    }
+  ];
 
   // =========================================================
   // OPTIONS STATUT
   // =========================================================
 
   readonly statutsOptions = [
-
     {
       label: 'En attente',
       value: StatutTransaction.EnAttente
     },
-
     {
       label: 'Confirmé',
       value: StatutTransaction.Confirme
     },
-
     {
       label: 'Échoué',
       value: StatutTransaction.Echoue
     }
   ];
 
-
   // =========================================================
   // OPTIONS MODE DE PAIEMENT
   // =========================================================
 
   readonly modesOptions = [
-
     {
       label: 'Orange Money',
       value: ModePaiement.OrangeMoney
     },
-
     {
       label: 'MTN Money',
       value: ModePaiement.MtnMoney
     },
-
     {
       label: 'Espèces',
       value: ModePaiement.Especes
     },
-
     {
       label: 'M2U',
       value: ModePaiement.M2u
     },
-
     {
       label: 'SARAH Money',
       value: ModePaiement.SaraMoney
     }
   ];
-
 
   // =========================================================
   // INITIALISATION
@@ -192,41 +201,117 @@ export class Paiements implements OnInit {
 
     this.route.queryParamMap.subscribe(params => {
 
-      this.contratId =
-        params.get('contratId');
+      this.contratId = params.get('contratId');
 
-      this.modeContrat =
-        !!this.contratId;
+      this.modeContrat = !!this.contratId;
 
       this.chargerPaiements();
     });
   }
-
 
   // =========================================================
   // STATISTIQUES DES PAIEMENTS
   // =========================================================
 
   get totalPaiements(): number {
+
     return this.paiements.length;
   }
 
   get nombrePaiementsEnAttente(): number {
+
     return this.paiements.filter(
       p => p.statut === StatutTransaction.EnAttente
     ).length;
   }
 
   get nombrePaiementsConfirmes(): number {
+
     return this.paiements.filter(
       p => p.statut === StatutTransaction.Confirme
     ).length;
   }
 
   get nombrePaiementsEchoues(): number {
+
     return this.paiements.filter(
       p => p.statut === StatutTransaction.Echoue
     ).length;
+  }
+
+  // =========================================================
+  // LIBELLÉ DU TYPE DE PAIEMENT
+  // =========================================================
+
+  getLibelleTypePaiement(
+    type: TypePaiement
+  ): string {
+
+    switch (type) {
+
+      case TypePaiement.Loyer:
+        return 'Loyer';
+
+      case TypePaiement.ChargesLocatives:
+        return 'Charges locatives';
+
+      case TypePaiement.Caution:
+        return 'Caution';
+
+      case TypePaiement.Autre:
+        return 'Autre';
+
+      default:
+        return 'Non défini';
+    }
+  }
+
+  // =========================================================
+  // CLASSE CSS DU TYPE DE PAIEMENT
+  // =========================================================
+
+  getClasseTypePaiement(
+    type: TypePaiement
+  ): string {
+
+    switch (type) {
+
+      case TypePaiement.Loyer:
+        return 'paiement-type-loyer';
+
+      case TypePaiement.ChargesLocatives:
+        return 'paiement-type-charges';
+
+      case TypePaiement.Caution:
+        return 'paiement-type-caution';
+
+      case TypePaiement.Autre:
+        return 'paiement-type-autre';
+
+      default:
+        return 'paiement-type-inconnu';
+    }
+  }
+
+  // =========================================================
+  // MONTANT DÉTAILLÉ SELON LE TYPE DE PAIEMENT
+  // =========================================================
+
+  getMontantDetail(
+    paiement: PaiementListItem
+  ): number | null {
+
+    switch (paiement.typePaiement) {
+
+      case TypePaiement.Loyer:
+        return paiement.montantLoyerEncaisse ?? null;
+
+      case TypePaiement.ChargesLocatives:
+        return paiement.montantChargesLocativesEncaisse ?? null;
+
+      default:
+        return null;
+    }
   }
 
   // =========================================================
@@ -243,29 +328,19 @@ export class Paiements implements OnInit {
 
         next: (data: PaiementListItem[]) => {
 
-          this.paiements =
-            data ?? [];
+          this.paiements = data ?? [];
 
-
-          // ---------------------------------------------------
-          // FILTRAGE PAR CONTRAT
-          // ---------------------------------------------------
-
+          // Filtrage par contrat si nécessaire.
           if (this.contratId) {
 
-            this.paiements =
-              this.paiements.filter(
-                p =>
-                  p.contratId === this.contratId
-              );
+            this.paiements = this.paiements.filter(
+              p => p.contratId === this.contratId
+            );
           }
 
+          this.appliquerFiltres();
 
-          this.paiementsFiltres =
-            [...this.paiements];
-
-          this.chargementEnCours =
-            false;
+          this.chargementEnCours = false;
         },
 
         error: (err: unknown) => {
@@ -279,12 +354,10 @@ export class Paiements implements OnInit {
 
           this.paiementsFiltres = [];
 
-          this.chargementEnCours =
-            false;
+          this.chargementEnCours = false;
         }
       });
   }
-
 
   // =========================================================
   // FILTRER LES PAIEMENTS
@@ -292,77 +365,80 @@ export class Paiements implements OnInit {
 
   appliquerFiltres(): void {
 
-    const texte =
-      this.filtreTexte
-        .trim()
-        .toLowerCase();
+    const texte = this.filtreTexte
+      .trim()
+      .toLowerCase();
 
+    this.paiementsFiltres = this.paiements.filter(p => {
 
-    this.paiementsFiltres =
-      this.paiements.filter(p => {
+      // Recherche textuelle.
+      const matchTexte =
 
-        // -----------------------------------------------------
-        // RECHERCHE TEXTE
-        // -----------------------------------------------------
+        !texte ||
 
-        const matchTexte =
+        (
+          p.numeroQuittance
+            ?.toLowerCase()
+            .includes(texte) ?? false
+        ) ||
 
-          !texte ||
+        (
+          p.bienReference
+            ?.toLowerCase()
+            .includes(texte) ?? false
+        ) ||
 
-          (
-            p.numeroQuittance
-              ?.toLowerCase()
-              .includes(texte)
-            ?? false
-          ) ||
+        (
+          p.bienNom
+            ?.toLowerCase()
+            .includes(texte) ?? false
+        ) ||
 
-          (
-            p.bienReference
-              ?.toLowerCase()
-              .includes(texte)
-            ?? false
-          ) ||
+        (
+          p.uniteReference
+            ?.toLowerCase()
+            .includes(texte) ?? false
+        ) ||
 
-          (
-            p.bienNom
-              ?.toLowerCase()
-              .includes(texte)
-            ?? false
-          );
+        (
+          p.locataireNom
+            ?.toLowerCase()
+            .includes(texte) ?? false
+        ) ||
 
+        this.getLibelleTypePaiement(p.typePaiement)
+          .toLowerCase()
+          .includes(texte);
 
-        // -----------------------------------------------------
-        // FILTRE STATUT
-        // -----------------------------------------------------
+      // Filtre par type de paiement.
+      const matchTypePaiement =
 
-        const matchStatut =
+        this.filtreTypePaiement == null ||
 
-          this.filtreStatut == null ||
+        p.typePaiement === this.filtreTypePaiement;
 
-          p.statut ===
-            this.filtreStatut;
+      // Filtre par statut.
+      const matchStatut =
 
+        this.filtreStatut == null ||
 
-        // -----------------------------------------------------
-        // FILTRE MODE
-        // -----------------------------------------------------
+        p.statut === this.filtreStatut;
 
-        const matchMode =
+      // Filtre par mode de paiement.
+      const matchMode =
 
-          this.filtreMode == null ||
+        this.filtreMode == null ||
 
-          p.mode ===
-            this.filtreMode;
+        p.mode === this.filtreMode;
 
-
-        return (
-          matchTexte &&
-          matchStatut &&
-          matchMode
-        );
-      });
+      return (
+        matchTexte &&
+        matchTypePaiement &&
+        matchStatut &&
+        matchMode
+      );
+    });
   }
-
 
   // =========================================================
   // RÉINITIALISER LES FILTRES
@@ -372,31 +448,24 @@ export class Paiements implements OnInit {
 
     this.filtreTexte = '';
 
-    this.filtreStatut =
-      undefined;
+    this.filtreTypePaiement = undefined;
 
-    this.filtreMode =
-      undefined;
+    this.filtreStatut = undefined;
 
-    this.paiementsFiltres =
-      [...this.paiements];
+    this.filtreMode = undefined;
+
+    this.appliquerFiltres();
   }
-
 
   // =========================================================
   // TÉLÉCHARGER LA QUITTANCE
   // =========================================================
 
-  telechargerQuittance(
-    paiementId: string
-  ): void {
+  telechargerQuittance(paiementId: string): void {
 
     this.paiementsService
-      .telechargerQuittanceBlob(
-        paiementId
-      );
+      .telechargerQuittanceBlob(paiementId);
   }
-
 
   // =========================================================
   // COULEUR DU STATUT
@@ -404,11 +473,7 @@ export class Paiements implements OnInit {
 
   getSeverity(
     statut: StatutTransaction
-  ):
-    'success'
-    | 'warn'
-    | 'danger'
-    | 'info' {
+  ): 'success' | 'warn' | 'danger' | 'info' {
 
     switch (statut) {
 
@@ -425,7 +490,6 @@ export class Paiements implements OnInit {
         return 'info';
     }
   }
-
 
   // =========================================================
   // LIBELLÉ DU STATUT
@@ -451,7 +515,6 @@ export class Paiements implements OnInit {
     }
   }
 
-
   // =========================================================
   // LIBELLÉ DU MODE DE PAIEMENT
   // =========================================================
@@ -460,10 +523,9 @@ export class Paiements implements OnInit {
     mode: ModePaiement
   ): string {
 
-    const found =
-      this.modesOptions.find(
-        m => m.value === mode
-      );
+    const found = this.modesOptions.find(
+      m => m.value === mode
+    );
 
     return found?.label ?? 'Autre';
   }

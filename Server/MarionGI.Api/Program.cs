@@ -1,13 +1,16 @@
 ﻿using MarionGI.Api;
 using MarionGI.Api.Middlewares;
 using MarionGI.Api.PaiementProvider;
+using MarionGI.Application;
 using MarionGI.Application.Interfaces;
 using MarionGI.Application.Services;
+using MarionGI.Domain.Entities;
 using MarionGI.Infrastructure.Identity;
 using MarionGI.Infrastructure.Pdf;
 using MarionGI.Infrastructure.Services;
 using MarionGI.Infrastructure.Sms;
 using MarionGI.Persistence.Context;
+using MarionGI.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -38,7 +41,11 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ISmsService, MockSmsService>();
 builder.Services.AddScoped<IQuittancePdfService, QuittancePdfService>();
 builder.Services.AddScoped<IRapportPdfService, RapportPdfService>();
+// Repository
+builder.Services.AddScoped<ICalculFiscalRepository, CalculFiscalRepository>();
 
+// Service métier
+builder.Services.AddScoped<ICalculFiscalService, CalculFiscalService>();
 // 🎯 AJOUT: Service métier pour les Contrats
 //builder.Services.AddScoped<IContratService, ContratService>();
 
@@ -157,6 +164,35 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole(
             "Administrateur",
             "Gestionnaire"));
+    //----
+    // ========================================================
+    // DECLARATIONS CHARGES FISCALES DES BIENS
+    // ========================================================
+
+    // Lecture : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationChargeBiens.Read", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Création : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationChargeBiens.Create", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Modification : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationChargeBiens.Update", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+
+    // Suppression logique : Administrateur et Gestionnaire
+    options.AddPolicy("DeclarationChargeBiens.Delete", policy =>
+        policy.RequireRole(
+            "Administrateur",
+            "Gestionnaire"));
+    //**********************************************************************
 
     // ========================================================
     // UTILISATEURS
@@ -393,6 +429,41 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("ParametresFiscaux.Delete", policy =>
         policy.RequireRole("Administrateur"));
 
+
+    // ========================================================
+    // OPTIONS DE DÉDUCTION FISCALES
+    // ========================================================
+
+    options.AddPolicy("OptionsDeductionFiscales.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("OptionsDeductionFiscales.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("OptionsDeductionFiscales.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("OptionsDeductionFiscales.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+
+    // ========================================================
+    // GESTION DES CHARGES FISCALES DES BIENS
+    // ========================================================
+
+    options.AddPolicy("DeclarationChargeBiens.Read", policy =>
+        policy.RequireRole("Administrateur", "Gestionnaire"));
+
+    options.AddPolicy("DeclarationChargeBiens.Create", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("DeclarationChargeBiens.Update", policy =>
+        policy.RequireRole("Administrateur"));
+
+    options.AddPolicy("DeclarationChargeBiens.Delete", policy =>
+        policy.RequireRole("Administrateur"));
+
+    
     // ========================================================
     // RAPPORTS
     // ========================================================

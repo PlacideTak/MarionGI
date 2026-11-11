@@ -1,5 +1,4 @@
-﻿
-using MarionGI.Domain.Entities;
+﻿using MarionGI.Domain.Entities;
 using MarionGI.Domain.Enums;
 using MarionGI.Persistence.Context;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +21,6 @@ public class ChargesBiensController : ControllerBase
 
     // ============================================================
     // GET : api/ChargesBiens
-    // Filtres : bien, unité, type et période
     // ============================================================
     [HttpGet]
     [Authorize(Policy = "Charges.Read")]
@@ -126,8 +124,9 @@ public class ChargesBiensController : ControllerBase
                 ReferenceFacture = c.ReferenceFacture,
                 CheminJustificatif = c.CheminJustificatif,
 
-                EstDeductibleFiscalement =
-                    c.EstDeductibleFiscalement,
+                StatutDeductibilite = c.StatutDeductibilite,
+                MontantDeductibleFiscalement =
+                    c.MontantDeductibleFiscalement,
 
                 JustificationNonDeductibilite =
                     c.JustificationNonDeductibilite,
@@ -193,8 +192,9 @@ public class ChargesBiensController : ControllerBase
                 ReferenceFacture = c.ReferenceFacture,
                 CheminJustificatif = c.CheminJustificatif,
 
-                EstDeductibleFiscalement =
-                    c.EstDeductibleFiscalement,
+                StatutDeductibilite = c.StatutDeductibilite,
+                MontantDeductibleFiscalement =
+                    c.MontantDeductibleFiscalement,
 
                 JustificationNonDeductibilite =
                     c.JustificationNonDeductibilite,
@@ -239,8 +239,6 @@ public class ChargesBiensController : ControllerBase
             request.MontantHT,
             request.MontantTVA,
             request.ReferenceFacture,
-            request.EstDeductibleFiscalement,
-            request.JustificationNonDeductibilite,
             request.NomFournisseur,
             request.NumeroContribuableFournisseur,
             request.CheminJustificatif,
@@ -310,13 +308,10 @@ public class ChargesBiensController : ControllerBase
             ReferenceFacture = NettoyerTexte(request.ReferenceFacture),
             CheminJustificatif = NettoyerTexte(request.CheminJustificatif),
 
-            EstDeductibleFiscalement =
-                request.EstDeductibleFiscalement,
-
-            JustificationNonDeductibilite =
-                NettoyerTexte(request.JustificationNonDeductibilite),
-
-            // La validation fiscale est gérée séparément.
+            // Toute nouvelle charge doit être qualifiée fiscalement.
+            StatutDeductibilite = StatutDeductibilite.AQualifier,
+            MontantDeductibleFiscalement = null,
+            JustificationNonDeductibilite = null,
             DateValidationFiscale = null,
 
             Observations = NettoyerTexte(request.Observations),
@@ -340,7 +335,8 @@ public class ChargesBiensController : ControllerBase
                 charge.UniteLocativeId,
                 charge.DateDepense,
                 charge.TypeCharge,
-                charge.MontantTTC
+                charge.MontantTTC,
+                charge.StatutDeductibilite
             });
     }
 
@@ -367,8 +363,6 @@ public class ChargesBiensController : ControllerBase
             request.MontantHT,
             request.MontantTVA,
             request.ReferenceFacture,
-            request.EstDeductibleFiscalement,
-            request.JustificationNonDeductibilite,
             request.NomFournisseur,
             request.NumeroContribuableFournisseur,
             request.CheminJustificatif,
@@ -429,6 +423,25 @@ public class ChargesBiensController : ControllerBase
             }
         }
 
+        // Vérifier si les données ayant une incidence fiscale
+        // ont été modifiées.
+        var qualificationARevoir =
+            charge.BienImmobilierId != request.BienImmobilierId ||
+            charge.UniteLocativeId != request.UniteLocativeId ||
+            charge.DateDepense != request.DateDepense ||
+            charge.DateFacture != request.DateFacture ||
+            charge.DatePaiement != request.DatePaiement ||
+            charge.TypeCharge != request.TypeCharge ||
+            charge.Description != request.Description.Trim() ||
+            charge.NomFournisseur != NettoyerTexte(request.NomFournisseur) ||
+            charge.NumeroContribuableFournisseur !=
+                NettoyerTexte(request.NumeroContribuableFournisseur) ||
+            charge.MontantTTC != request.MontantTTC ||
+            charge.MontantHT != request.MontantHT ||
+            charge.MontantTVA != request.MontantTVA ||
+            charge.ReferenceFacture != NettoyerTexte(request.ReferenceFacture) ||
+            charge.CheminJustificatif != NettoyerTexte(request.CheminJustificatif);
+
         charge.BienImmobilierId = request.BienImmobilierId;
         charge.UniteLocativeId = request.UniteLocativeId;
 
@@ -450,29 +463,195 @@ public class ChargesBiensController : ControllerBase
         charge.ReferenceFacture = NettoyerTexte(request.ReferenceFacture);
         charge.CheminJustificatif = NettoyerTexte(request.CheminJustificatif);
 
-        charge.EstDeductibleFiscalement =
-            request.EstDeductibleFiscalement;
-
-        charge.JustificationNonDeductibilite =
-            NettoyerTexte(request.JustificationNonDeductibilite);
-
         charge.Observations = NettoyerTexte(request.Observations);
 
-        // Les données ayant été modifiées, une nouvelle validation
-        // fiscale sera nécessaire si ce mécanisme est utilisé.
-        charge.DateValidationFiscale = null;
+        // Une modification des données fiscales invalide
+        // la qualification précédemment effectuée.
+        if (qualificationARevoir)
+        {
+            charge.StatutDeductibilite =
+                StatutDeductibilite.AQualifier;
+
+            charge.MontantDeductibleFiscalement = null;
+            charge.JustificationNonDeductibilite = null;
+            charge.DateValidationFiscale = null;
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return Ok(new
         {
-            message = "Charge modifiée avec succès.",
+            message = qualificationARevoir
+                ? "Charge modifiée. Sa qualification fiscale doit être réexaminée."
+                : "Charge modifiée avec succès.",
+
             charge.Id,
             charge.BienImmobilierId,
             charge.UniteLocativeId,
             charge.DateDepense,
             charge.TypeCharge,
-            charge.MontantTTC
+            charge.MontantTTC,
+            charge.StatutDeductibilite,
+            charge.MontantDeductibleFiscalement
+        });
+    }
+
+
+    // ============================================================
+    // PUT : api/ChargesBiens/{id}/qualification-fiscale
+    // Qualification fiscale d'une charge
+    // ============================================================
+    [HttpPut("{id:guid}/qualification-fiscale")]
+    [Authorize(Policy = "Charges.Update")]
+    public async Task<IActionResult> QualifierCharge(
+        Guid id,
+        [FromBody] QualifierChargeBienRequest request,
+        CancellationToken cancellationToken)
+    {
+        var societeId = GetSocieteId();
+
+        if (societeId == null)
+            return Unauthorized(new { message = "Société introuvable." });
+
+        if (!Enum.IsDefined(
+            typeof(StatutDeductibilite),
+            request.StatutDeductibilite))
+        {
+            return BadRequest(new
+            {
+                message = "Le statut de déductibilité est invalide."
+            });
+        }
+
+        var charge = await _context.ChargesBiens
+            .FirstOrDefaultAsync(c =>
+                c.Id == id &&
+                !c.EstSupprime &&
+                !c.BienImmobilier.EstSupprime &&
+                c.BienImmobilier.SocieteId == societeId.Value,
+                cancellationToken);
+
+        if (charge == null)
+        {
+            return NotFound(new
+            {
+                message = "Charge introuvable."
+            });
+        }
+
+        var justification = NettoyerTexte(
+            request.JustificationNonDeductibilite);
+
+        // Vérification du montant déductible
+        switch (request.StatutDeductibilite)
+        {
+            case StatutDeductibilite.AQualifier:
+
+                if (request.MontantDeductibleFiscalement.HasValue)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Une charge à qualifier ne peut pas avoir de montant déductible."
+                    });
+                }
+
+                break;
+
+            case StatutDeductibilite.NonDeductible:
+
+                if (request.MontantDeductibleFiscalement.HasValue &&
+                    request.MontantDeductibleFiscalement.Value != 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Une charge non déductible doit avoir un montant déductible égal à zéro ou nul."
+                    });
+                }
+
+                if (string.IsNullOrWhiteSpace(justification))
+                {
+                    return BadRequest(new
+                    {
+                        message = "La justification de la non-déductibilité est obligatoire."
+                    });
+                }
+
+                break;
+
+            case StatutDeductibilite.Deductible:
+
+                if (!request.MontantDeductibleFiscalement.HasValue ||
+                    request.MontantDeductibleFiscalement.Value <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Le montant déductible doit être supérieur à zéro."
+                    });
+                }
+
+                if (request.MontantDeductibleFiscalement.Value >
+                    charge.MontantTTC)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Le montant déductible ne peut pas dépasser le montant TTC de la charge."
+                    });
+                }
+
+                break;
+
+            case StatutDeductibilite.PartiellementDeductible:
+
+                if (!request.MontantDeductibleFiscalement.HasValue ||
+                    request.MontantDeductibleFiscalement.Value <= 0)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Le montant partiellement déductible doit être supérieur à zéro."
+                    });
+                }
+
+                if (request.MontantDeductibleFiscalement.Value >=
+                    charge.MontantTTC)
+                {
+                    return BadRequest(new
+                    {
+                        message = "Pour une déductibilité partielle, le montant déductible doit être inférieur au montant TTC."
+                    });
+                }
+
+                break;
+        }
+
+        // Enregistrement de la qualification fiscale
+        charge.StatutDeductibilite = request.StatutDeductibilite;
+
+        charge.MontantDeductibleFiscalement =
+            request.StatutDeductibilite == StatutDeductibilite.Deductible ||
+            request.StatutDeductibilite == StatutDeductibilite.PartiellementDeductible
+                ? request.MontantDeductibleFiscalement
+                : null;
+
+        charge.JustificationNonDeductibilite =
+            request.StatutDeductibilite == StatutDeductibilite.NonDeductible
+                ? justification
+                : null;
+
+        charge.DateValidationFiscale =
+            request.StatutDeductibilite == StatutDeductibilite.AQualifier
+                ? null
+                : DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return Ok(new
+        {
+            message = "Qualification fiscale enregistrée avec succès.",
+            charge.Id,
+            charge.StatutDeductibilite,
+            charge.MontantDeductibleFiscalement,
+            charge.JustificationNonDeductibilite,
+            charge.DateValidationFiscale
         });
     }
 
@@ -529,8 +708,6 @@ public class ChargesBiensController : ControllerBase
         decimal? montantHT,
         decimal? montantTVA,
         string? referenceFacture,
-        bool estDeductibleFiscalement,
-        string? justificationNonDeductibilite,
         string? nomFournisseur,
         string? numeroContribuableFournisseur,
         string? cheminJustificatif,
@@ -567,31 +744,24 @@ public class ChargesBiensController : ControllerBase
         if (DepasseLongueur(referenceFacture, 100))
             return "La référence de facture ne doit pas dépasser 100 caractères.";
 
-        if (DepasseLongueur(justificationNonDeductibilite, 1000))
-            return "La justification ne doit pas dépasser 1000 caractères.";
-
         if (DepasseLongueur(nomFournisseur, 200))
             return "Le nom du fournisseur ne doit pas dépasser 200 caractères.";
 
         if (DepasseLongueur(numeroContribuableFournisseur, 100))
             return "Le numéro de contribuable du fournisseur ne doit pas dépasser 100 caractères.";
 
-        if (DepasseLongueur(cheminJustificatif, 500))
-            return "Le chemin du justificatif ne doit pas dépasser 500 caractères.";
+        if (DepasseLongueur(cheminJustificatif, 1000))
+            return "Le chemin du justificatif ne doit pas dépasser 1000 caractères.";
 
         if (DepasseLongueur(observations, 2000))
             return "Les observations ne doivent pas dépasser 2000 caractères.";
 
-        if (!estDeductibleFiscalement &&
-            string.IsNullOrWhiteSpace(justificationNonDeductibilite))
-        {
-            return "Une justification est requise pour une charge déclarée non déductible.";
-        }
-
         return null;
     }
 
-    private static bool DepasseLongueur(string? valeur, int longueurMax)
+    private static bool DepasseLongueur(
+        string? valeur,
+        int longueurMax)
     {
         return !string.IsNullOrWhiteSpace(valeur) &&
                valeur.Trim().Length > longueurMax;
@@ -647,10 +817,14 @@ public class ChargeBienListeDto
     public string? ReferenceFacture { get; set; }
     public string? CheminJustificatif { get; set; }
 
-    public bool EstDeductibleFiscalement { get; set; }
+    public StatutDeductibilite StatutDeductibilite { get; set; }
+
+    public decimal? MontantDeductibleFiscalement { get; set; }
+
     public string? JustificationNonDeductibilite { get; set; }
 
     public DateTime? DateValidationFiscale { get; set; }
+
     public string? Observations { get; set; }
 
     public DateTime DateCreation { get; set; }
@@ -681,9 +855,6 @@ public class CreerChargeBienRequest
     public string? ReferenceFacture { get; set; }
     public string? CheminJustificatif { get; set; }
 
-    public bool EstDeductibleFiscalement { get; set; }
-    public string? JustificationNonDeductibilite { get; set; }
-
     public string? Observations { get; set; }
 }
 
@@ -692,4 +863,16 @@ public class CreerChargeBienRequest
 // ============================================================
 public class ModifierChargeBienRequest : CreerChargeBienRequest
 {
+}
+
+// ============================================================
+// DTO DE QUALIFICATION FISCALE
+// ============================================================
+public class QualifierChargeBienRequest
+{
+    public StatutDeductibilite StatutDeductibilite { get; set; }
+
+    public decimal? MontantDeductibleFiscalement { get; set; }
+
+    public string? JustificationNonDeductibilite { get; set; }
 }
